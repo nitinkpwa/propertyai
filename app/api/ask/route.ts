@@ -1,13 +1,9 @@
 import { NextRequest } from 'next/server'
 import OpenAI from 'openai'
 
-eexport async function POST(req: NextRequest) {
-
-  console.log("OPENAI KEY EXISTS:", !!process.env.OPENAI_API_KEY)
-
-  const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  })
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+})
 
 const SYSTEM_PROMPT = `You are PropertyAI — India's most intelligent real estate advisor for the Tricity region and surrounding growth corridors.
 

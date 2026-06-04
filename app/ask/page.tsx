@@ -22,11 +22,12 @@ function ChatUI() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const didAutoSend = useRef(false)
 
   useEffect(() => {
     const q = searchParams.get('q')
-    if (q) {
-      setInput(q)
+    if (q && !didAutoSend.current) {
+      didAutoSend.current = true
       sendMessage(q)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -37,12 +38,12 @@ function ChatUI() {
   }, [messages, loading])
 
   const sendMessage = async (text?: string) => {
-    const messageText = text || input
-    if (!messageText.trim() || loading) return
+    const messageText = (text || input).trim()
+    if (!messageText || loading) return
 
     const userMessage: Message = { role: 'user', content: messageText }
-    const updatedMessages = [...messages, userMessage]
-    setMessages(updatedMessages)
+    const newMessages = [...messages, userMessage]
+    setMessages(newMessages)
     setInput('')
     setLoading(true)
 
@@ -50,7 +51,7 @@ function ChatUI() {
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: updatedMessages }),
+        body: JSON.stringify({ messages: newMessages }),
       })
 
       if (!res.ok) throw new Error('API error')
@@ -58,8 +59,7 @@ function ChatUI() {
       const reader = res.body?.getReader()
       const decoder = new TextDecoder()
       let aiText = ''
-
-      setMessages(prev => [...prev, { role: 'assistant', content: '' }])
+      let assistantAdded = false
 
       while (reader) {
         const { done, value } = await reader.read()
@@ -73,16 +73,29 @@ function ChatUI() {
             try {
               const parsed = JSON.parse(data)
               const delta = parsed.choices?.[0]?.delta?.content || ''
-              aiText += delta
-              setMessages(prev => {
-                const updated = [...prev]
-                updated[updated.length - 1] = { role: 'assistant', content: aiText }
-                return updated
-              })
+              if (delta) {
+                aiText += delta
+                if (!assistantAdded) {
+                  setMessages(prev => [...prev, { role: 'assistant', content: aiText }])
+                  assistantAdded = true
+                } else {
+                  setMessages(prev => {
+                    const updated = [...prev]
+                    updated[updated.length - 1] = { role: 'assistant', content: aiText }
+                    return updated
+                  })
+                }
+              }
             } catch {}
           }
         }
       }
+
+      // If nothing came back at all
+      if (!assistantAdded) {
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I could not get a response. Please try again.' }])
+      }
+
     } catch {
       setMessages(prev => [...prev, {
         role: 'assistant',
@@ -126,7 +139,7 @@ function ChatUI() {
         <div style={{ maxWidth: '760px', margin: '0 auto' }}>
 
           {/* Empty state */}
-          {isEmpty && (
+          {isEmpty && !loading && (
             <div style={{ textAlign: 'center', paddingTop: '3rem' }}>
               <div style={{
                 width: '64px', height: '64px', borderRadius: '50%',
@@ -137,7 +150,7 @@ function ChatUI() {
                 PropertyAI Assistant
               </h1>
               <p style={{ color: '#6B4226', fontSize: '15px', marginBottom: '2rem' }}>
-                Ask me anything about properties, investments, or the Tricity real estate market
+                Ask me anything about properties, investments, or the Tricity market
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
                 {suggestions.map((s) => (
@@ -185,9 +198,7 @@ function ChatUI() {
                 border: msg.role === 'assistant' ? '1px solid #F5E8D8' : 'none',
                 whiteSpace: 'pre-wrap',
               }}>
-                {msg.content || (loading && i === messages.length - 1 ? (
-                  <span style={{ opacity: 0.5 }}>Thinking...</span>
-                ) : '')}
+                {msg.content}
               </div>
               {msg.role === 'user' && (
                 <div style={{
@@ -199,6 +210,24 @@ function ChatUI() {
               )}
             </div>
           ))}
+
+          {/* Typing indicator — only shown while loading, separate from messages */}
+          {loading && (
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '1rem' }}>
+              <div style={{
+                width: '34px', height: '34px', borderRadius: '50%',
+                background: '#2C1A0E', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: '16px', flexShrink: 0,
+              }}>🤖</div>
+              <div style={{
+                background: '#fff', border: '1px solid #F5E8D8',
+                padding: '12px 16px', borderRadius: '4px 18px 18px 18px',
+                fontSize: '14px', color: '#A67C5B',
+              }}>
+                Thinking...
+              </div>
+            </div>
+          )}
 
           <div ref={bottomRef} />
         </div>
@@ -228,16 +257,14 @@ function ChatUI() {
             onClick={() => sendMessage()}
             disabled={loading || !input.trim()}
             style={{
-              background: loading ? '#C49A6C' : '#F4860A',
+              background: loading || !input.trim() ? '#C49A6C' : '#F4860A',
               color: '#fff', border: 'none',
               width: '48px', height: '48px', borderRadius: '50%',
               fontSize: '20px', cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}
-          >
-            {loading ? '⏳' : '↑'}
-          </button>
+          >↑</button>
         </div>
         <p style={{ textAlign: 'center', fontSize: '11px', color: '#A67C5B', marginTop: '6px' }}>
           PropertyAI may make mistakes. Verify important details before investing.
