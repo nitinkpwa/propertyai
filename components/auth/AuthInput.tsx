@@ -1,0 +1,75 @@
+"use client";
+
+import { useState } from "react";
+
+interface AuthInputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+  error?: string | null;
+}
+
+function EyeIcon({ open }: { open: boolean }) {
+  if (open) {
+    return (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+        <path
+          d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"
+          stroke="currentColor"
+          strokeWidth="1.75"
+        />
+        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.75" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <path
+        d="M3 3l18 18M10.58 10.58A3 3 0 0 0 12 15a3 3 0 0 0 2.42-4.42M9.88 4.24A10.94 10.94 0 0 1 12 4c6.5 0 10 7 10 7a18.3 18.3 0 0 1-4.12 5.12M6.12 6.12A18.3 18.3 0 0 0 2 12s3.5 7 10 7a10.94 10.94 0 0 0 2.76-.36"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export default function AuthInput({
+  label,
+  error,
+  type = "text",
+  className = "",
+  ...props
+}: AuthInputProps) {
+  const [visible, setVisible] = useState(false);
+  const isPassword = type === "password";
+  const inputType = isPassword && visible ? "text" : type;
+
+  return (
+    <div className="mb-4">
+      <label className="mb-2 block text-sm font-medium text-neutral-700">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          type={inputType}
+          className={`w-full rounded-xl border bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none transition-all placeholder:text-neutral-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 ${
+            error ? "border-rose-300" : "border-neutral-200"
+          } ${isPassword ? "pr-12" : ""} ${className}`}
+          {...props}
+        />
+        {isPassword ? (
+          <button
+            type="button"
+            onClick={() => setVisible((value) => !value)}
+            className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-neutral-400 transition-colors hover:text-neutral-600"
+            aria-label={visible ? "Hide password" : "Show password"}
+          >
+            <EyeIcon open={visible} />
+          </button>
+        ) : null}
+      </div>
+      {error ? <p className="mt-1.5 text-xs font-medium text-rose-600">{error}</p> : null}
+    </div>
+  );
+}

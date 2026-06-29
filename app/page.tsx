@@ -96,9 +96,9 @@ export default function HomePage() {
         display: 'flex', alignItems: 'center', padding: '0 2rem', gap: '2rem',
       }}>
         <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none', flexShrink: 0 }}>
-          <img src="/logo.png" alt="Estate Lens" style={{ width: '38px', height: '38px', borderRadius: '8px', objectFit: 'cover' }} />
+          <img src="/logo.png" alt="AreaIQ" style={{ width: '38px', height: '38px', borderRadius: '8px', objectFit: 'cover' }} />
           <span style={{ fontWeight: 800, fontSize: '20px', color: '#111', letterSpacing: '-0.5px' }}>
-            Estate <span style={{ color: '#16A34A' }}>Lens</span>
+            Area<span style={{ color: '#16A34A' }}>IQ</span>
           </span>
         </a>
         <div style={{ display: 'flex', flex: 1, justifyContent: 'center' }}>
@@ -282,7 +282,7 @@ export default function HomePage() {
               <div style={{ display: 'flex', gap: '6px' }}>
                 {['#FF5F57', '#FFBD2E', '#28CA42'].map(c => <div key={c} style={{ width: '10px', height: '10px', borderRadius: '50%', background: c }} />)}
               </div>
-              <span style={{ color: '#9CA3AF', fontSize: '13px' }}>Estate Lens AI Assistant</span>
+              <span style={{ color: '#9CA3AF', fontSize: '13px' }}>AreaIQ AI Assistant</span>
             </div>
             <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -313,11 +313,11 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── WHY ESTATE LENS ── */}
+      {/* ── WHY AREA IQ ── */}
       <section style={{ padding: '88px 2rem', background: '#fff' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>Why Estate Lens</div>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: '#16A34A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '10px' }}>Why AreaIQ</div>
             <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#111', margin: 0, letterSpacing: '-0.5px' }}>The smarter way to find property</h2>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
@@ -380,13 +380,13 @@ export default function HomePage() {
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '3rem', marginBottom: '3rem' }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
-                <img src="/logo.png" alt="Estate Lens" style={{ width: '32px', height: '32px', borderRadius: '7px', objectFit: 'cover' }} />
-                <span style={{ fontWeight: 800, fontSize: '18px', color: '#fff' }}>Estate <span style={{ color: '#4ADE80' }}>Lens</span></span>
+                <img src="/logo.png" alt="AreaIQ" style={{ width: '32px', height: '32px', borderRadius: '7px', objectFit: 'cover' }} />
+                <span style={{ fontWeight: 800, fontSize: '18px', color: '#fff' }}>Area<span style={{ color: '#4ADE80' }}>IQ</span></span>
               </div>
               <p style={{ color: '#6B8F77', fontSize: '14px', lineHeight: 1.75, margin: '0 0 1rem', maxWidth: '260px' }}>
-                AI-powered real estate intelligence for the Tricity region.
+                AI-Powered Real Estate Intelligence
               </p>
-              <div style={{ fontSize: '13px', color: '#6B8F77' }}>hello@estatelens.in</div>
+              <div style={{ fontSize: '13px', color: '#6B8F77' }}>hello@areaiq.in</div>
             </div>
             {[
               { title: 'Properties', links: ['Buy in Mohali', 'Rent in Chandigarh', 'Commercial Panchkula', 'Plots & Land', 'New Projects'] },
@@ -402,7 +402,7 @@ export default function HomePage() {
             ))}
           </div>
           <div style={{ borderTop: '1px solid #14361E', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div style={{ fontSize: '13px', color: '#4D6B58' }}>© 2025 Estate Lens. AI-Powered Real Estate Intelligence.</div>
+            <div style={{ fontSize: '13px', color: '#4D6B58' }}>© 2025 AreaIQ. AI-Powered Real Estate Intelligence.</div>
             <div style={{ fontSize: '13px', color: '#4D6B58' }}>Chandigarh · Mohali · Panchkula · Tricity</div>
           </div>
         </div>

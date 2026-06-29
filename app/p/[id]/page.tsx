@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
+import { isPropertySaved, toggleSavedProperty } from '@/lib/buyer/queries'
 import { useParams } from 'next/navigation'
 
 export default function PropertyDetailPage() {
@@ -33,19 +34,16 @@ export default function PropertyDetailPage() {
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (!authUser) return
     setUser(authUser)
-    const { data } = await supabase.from('saved_properties').select('id').eq('user_id', authUser.id).eq('property_id', params.id).single()
-    if (data) setSaved(true)
+    const saved = await isPropertySaved(authUser.id, params.id as string)
+    setSaved(saved)
   }
 
   const toggleSave = async () => {
     if (!user) { window.location.href = '/login'; return }
-    if (saved) {
-      await supabase.from('saved_properties').delete().eq('user_id', user.id).eq('property_id', params.id)
-      setSaved(false)
-    } else {
-      await supabase.from('saved_properties').insert({ user_id: user.id, property_id: params.id })
-      setSaved(true)
-    }
+    const next = !saved
+    setSaved(next)
+    const ok = await toggleSavedProperty(user.id, params.id as string, next)
+    if (!ok) setSaved(!next)
   }
 
   const sendInquiry = async () => {

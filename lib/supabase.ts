@@ -1,66 +1,92 @@
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from "@supabase/ssr";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 export type Profile = {
-  id: string
-  email: string
-  full_name: string
-  phone: string
-  role: 'buyer' | 'seller' | 'broker' | 'builder'
-  avatar_url?: string
-  created_at: string
-}
+  id: string;
+  email: string;
+  full_name: string;
+  phone: string;
+  role: "buyer" | "seller" | "broker" | "builder";
+  avatar_url?: string;
+  city?: string | null;
+  budget_min?: number | null;
+  budget_max?: number | null;
+  preferred_locations?: string[] | null;
+  preferred_property_types?: string[] | null;
+  company?: string | null;
+  rera_number?: string | null;
+  gst?: string | null;
+  address?: string | null;
+  logo_url?: string | null;
+  created_at: string;
+};
 
 export type Property = {
-  id: string
-  seller_id: string
-  title: string
-  description: string
-  type: 'buy' | 'rent' | 'commercial'
-  sub_type: 'flat' | 'plot' | 'house' | 'sco' | 'office' | 'warehouse' | 'coworking' | 'builder_floor'
-  price: number
-  area_sqft: number
-  bedrooms?: number
-  bathrooms?: number
-  location: string
-  city: string
-  sector?: string
-  lat?: number
-  lng?: number
-  photos: string[]
-  amenities: string[]
-  status: 'active' | 'sold' | 'rented' | 'paused'
-  is_featured: boolean
-  contact_name: string
-  contact_phone: string
-  created_at: string
-}
+  id: string;
+  seller_id: string;
+  title: string;
+  description: string;
+  type: "buy" | "rent" | "commercial";
+  sub_type:
+    | "flat"
+    | "plot"
+    | "house"
+    | "sco"
+    | "office"
+    | "warehouse"
+    | "coworking"
+    | "builder_floor";
+  price: number;
+  area_sqft: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  location: string;
+  city: string;
+  sector?: string;
+  lat?: number;
+  lng?: number;
+  photos: string[];
+  amenities: string[];
+  status: "active" | "sold" | "rented" | "paused" | "draft";
+  is_featured: boolean;
+  contact_name: string;
+  contact_phone: string;
+  created_at: string;
+};
 
 export type SavedProperty = {
-  id: string
-  user_id: string
-  property_id: string
-  created_at: string
-  property?: Property
-}
+  id: string;
+  user_id: string;
+  property_id: string;
+  created_at: string;
+  property?: Property;
+};
 
 export type Conversation = {
-  id: string
-  user_id: string
-  title: string
-  messages: { role: string; content: string }[]
-  created_at: string
-}
+  id: string;
+  user_id: string;
+  title: string;
+  messages: { role: string; content: string }[];
+  created_at: string;
+};
 
 export type Inquiry = {
-  id: string
-  from_user_id: string
-  property_id: string
-  message: string
-  status: 'new' | 'read' | 'replied'
-  created_at: string
+  id: string;
+  from_user_id: string;
+  property_id: string;
+  message: string;
+  status: "new" | "read" | "replied";
+  created_at: string;
+};
+
+export function getSiteUrl() {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
+  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
