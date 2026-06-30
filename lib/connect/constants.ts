@@ -78,6 +78,7 @@ export const CONNECT_PRICING = [
     name: "Starter",
     description: "For emerging builders launching their first projects.",
     price: "Coming Soon",
+    featured: false,
   },
   {
     name: "Professional",
@@ -89,6 +90,7 @@ export const CONNECT_PRICING = [
     name: "Enterprise",
     description: "For large portfolios with channel partner networks.",
     price: "Coming Soon",
+    featured: false,
   },
 ] as const;
 

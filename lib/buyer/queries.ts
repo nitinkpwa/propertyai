@@ -249,7 +249,7 @@ export async function fetchRecentViewedCards(userId: string, limit = 4) {
   const seen = new Set<string>();
   const cards: PropertyCardProps[] = [];
 
-  for (const row of (data as PropertyViewRow[]) ?? []) {
+  for (const row of (data as unknown as PropertyViewRow[]) ?? []) {
     if (seen.has(row.property_id)) continue;
     seen.add(row.property_id);
     const card = mapViewRow(row);

@@ -92,7 +92,10 @@ export async function fetchSellerProperties(
     return [];
   }
 
-  const properties = (data ?? []) as SellerPropertyRow[];
+  const properties = (data ?? []) as Omit<
+    SellerPropertyRow,
+    "view_count" | "save_count" | "lead_count"
+  >[];
   if (properties.length === 0) return [];
 
   const ids = properties.map((p) => p.id);
