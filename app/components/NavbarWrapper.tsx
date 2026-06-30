@@ -9,7 +9,13 @@ import { isAuthRoute } from "@/lib/auth/constants";
 function NavbarWrapperInner() {
   const pathname = usePathname();
 
-  if (isAuthRoute(pathname) || pathname.startsWith("/seller") || pathname.startsWith("/connect/dashboard")) {
+  if (
+    pathname === "/" ||
+    isAuthRoute(pathname) ||
+    pathname.startsWith("/seller") ||
+    pathname.startsWith("/connect/dashboard") ||
+    pathname.startsWith("/admin")
+  ) {
     return null;
   }
 

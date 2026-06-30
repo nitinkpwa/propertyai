@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { EMERALD } from "@/lib/auth/constants";
+import Logo from "@/components/common/Logo";
 
 interface AuthLayoutProps {
   title: string;
@@ -18,17 +18,7 @@ export default function AuthLayout({
     <div className="min-h-screen bg-neutral-50">
       <header className="border-b border-neutral-200/80 bg-white/95 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="group flex items-center gap-3 no-underline">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-transform duration-200 group-hover:scale-105"
-              style={{ backgroundColor: EMERALD }}
-            >
-              A
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-neutral-900">
-              Area<span style={{ color: EMERALD }}>IQ</span>
-            </span>
-          </Link>
+          <Logo showTagline />
         </div>
       </header>
 

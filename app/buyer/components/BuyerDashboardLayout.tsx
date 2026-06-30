@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Logo from "@/components/common/Logo";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { getDashboardPath } from "@/lib/auth/profile";
 import { isBuyerRole } from "@/lib/buyer/types";
@@ -81,6 +82,7 @@ export default function BuyerDashboardLayout({
                 <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
               </svg>
             </button>
+            <Logo size="dashboard" href="/buyer" iconOnly />
             <div>
               <p className="text-sm font-semibold text-neutral-900">Buyer Dashboard</p>
               <p className="text-xs text-neutral-500">{profile?.full_name ?? "AreaIQ"}</p>

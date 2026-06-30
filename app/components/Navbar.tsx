@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import UserMenu from "./UserMenu";
+import Logo from "@/components/common/Logo";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { EMERALD } from "@/lib/auth/constants";
 import { getInitials } from "@/lib/auth/profile";
@@ -49,19 +50,27 @@ function NavLink({
   active,
   onNavigate,
   className = "",
+  light = false,
 }: {
   href: string;
   label: string;
   active: boolean;
   onNavigate?: () => void;
   className?: string;
+  light?: boolean;
 }) {
   return (
     <Link
       href={href}
       onClick={onNavigate}
       className={`group relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${className} ${
-        active ? "text-neutral-900" : "text-neutral-600 hover:text-neutral-900"
+        active
+          ? light
+            ? "text-white"
+            : "text-neutral-900"
+          : light
+            ? "text-white/70 hover:text-white"
+            : "text-neutral-600 hover:text-neutral-900"
       }`}
     >
       {label}
@@ -82,6 +91,7 @@ function NavbarInner() {
   const { user, profile, loading, dashboardPath, signOut } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isHomeHero = pathname === "/" && !scrolled;
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
@@ -117,30 +127,14 @@ function NavbarInner() {
         className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-out ${
           scrolled
             ? "border-b border-neutral-200/80 bg-white/95 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.04)] backdrop-blur-xl"
-            : "border-b border-transparent bg-transparent"
+            : isHomeHero
+              ? "border-b border-transparent bg-transparent"
+              : "border-b border-transparent bg-white/80 backdrop-blur-md"
         }`}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           {/* Left — logo + tagline */}
-          <Link
-            href="/"
-            className="group flex shrink-0 items-center gap-3 no-underline"
-          >
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-transform duration-200 group-hover:scale-105"
-              style={{ backgroundColor: EMERALD }}
-            >
-              A
-            </div>
-            <div className="flex flex-col">
-              <span className="text-lg font-semibold tracking-tight text-neutral-900">
-                Area<span style={{ color: EMERALD }}>IQ</span>
-              </span>
-              <span className="hidden text-xs font-medium text-neutral-500 sm:block">
-                AI-Powered Real Estate Intelligence
-              </span>
-            </div>
-          </Link>
+          <Logo showTagline variant={isHomeHero ? "light" : "default"} priority />
 
           {/* Center — desktop nav */}
           <nav
@@ -153,6 +147,7 @@ function NavbarInner() {
                 href={link.href}
                 label={link.label}
                 active={isLinkActive(link.href, pathname, searchParams)}
+                light={isHomeHero}
               />
             ))}
           </nav>
@@ -161,7 +156,11 @@ function NavbarInner() {
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/seller"
-              className="hidden rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition-all duration-200 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md sm:inline-flex"
+              className={`hidden rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all duration-200 sm:inline-flex ${
+                isHomeHero
+                  ? "border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
+                  : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md"
+              }`}
             >
               List Property
             </Link>
@@ -171,26 +170,30 @@ function NavbarInner() {
             <button
               type="button"
               onClick={() => setMobileOpen((open) => !open)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 lg:hidden"
+              className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border shadow-sm transition-colors lg:hidden ${
+                isHomeHero
+                  ? "border-white/20 bg-white/10 text-white hover:bg-white/20"
+                  : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
+              }`}
               aria-expanded={mobileOpen}
               aria-controls="mobile-nav"
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
             >
               <span className="relative h-4 w-5">
                 <span
-                  className={`absolute left-0 h-0.5 w-5 rounded-full bg-neutral-800 transition-all duration-300 ${
+                  className={`absolute left-0 h-0.5 w-5 rounded-full transition-all duration-300 ${
                     mobileOpen ? "top-2 rotate-45" : "top-0"
-                  }`}
+                  } ${isHomeHero ? "bg-white" : "bg-neutral-800"}`}
                 />
                 <span
-                  className={`absolute left-0 top-2 h-0.5 w-5 rounded-full bg-neutral-800 transition-all duration-300 ${
+                  className={`absolute left-0 top-2 h-0.5 w-5 rounded-full transition-all duration-300 ${
                     mobileOpen ? "opacity-0" : "opacity-100"
-                  }`}
+                  } ${isHomeHero ? "bg-white" : "bg-neutral-800"}`}
                 />
                 <span
-                  className={`absolute left-0 h-0.5 w-5 rounded-full bg-neutral-800 transition-all duration-300 ${
+                  className={`absolute left-0 h-0.5 w-5 rounded-full transition-all duration-300 ${
                     mobileOpen ? "top-2 -rotate-45" : "top-4"
-                  }`}
+                  } ${isHomeHero ? "bg-white" : "bg-neutral-800"}`}
                 />
               </span>
             </button>
@@ -343,13 +346,7 @@ function NavbarFallback() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-transparent bg-transparent">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3">
-          <div
-            className="h-9 w-9 rounded-xl"
-            style={{ backgroundColor: EMERALD }}
-          />
-          <span className="text-lg font-semibold text-neutral-900">AreaIQ</span>
-        </div>
+        <Logo href="/" />
       </div>
     </header>
   );

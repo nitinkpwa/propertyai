@@ -46,8 +46,8 @@ export async function GET(request: Request) {
     (data.user.user_metadata?.role as
       | "buyer"
       | "seller"
-      | "broker"
       | "builder"
+      | "admin"
       | undefined) ?? "buyer";
 
   const phone = data.user.user_metadata?.phone

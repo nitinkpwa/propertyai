@@ -24,7 +24,7 @@ function isConnectAuthPage(pathname: string) {
 }
 
 export async function middleware(request: NextRequest) {
-  const { supabaseResponse, user } = await updateSession(request);
+  const { supabaseResponse, user, profileRole } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
   if (isProtectedPath(pathname) && !user) {
@@ -36,6 +36,14 @@ export async function middleware(request: NextRequest) {
     }
     url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
+  }
+
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+    if (user && profileRole !== "admin") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/buyer";
+      return NextResponse.redirect(url);
+    }
   }
 
   if (isConnectAuthPage(pathname) && user) {

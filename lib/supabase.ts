@@ -10,7 +10,7 @@ export type Profile = {
   email: string;
   full_name: string;
   phone: string;
-  role: "buyer" | "seller" | "broker" | "builder";
+  role: "buyer" | "seller" | "builder" | "admin";
   avatar_url?: string;
   city?: string | null;
   budget_min?: number | null;

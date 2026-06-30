@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import Logo from "@/components/common/Logo";
 import type { ConnectTab } from "@/lib/connect/types";
-import { EMERALD } from "@/lib/connect/constants";
 import { getInitials } from "@/lib/auth/profile";
 
 const SIDEBAR_ITEMS: Array<{ key: ConnectTab; label: string; icon: string }> = [
@@ -90,28 +90,10 @@ export default function ConnectShell({
             >
               ☰
             </button>
-            <Link href="/connect" className="flex items-center gap-2 no-underline">
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold text-white"
-                style={{ backgroundColor: EMERALD }}
-              >
-                A
-              </div>
-              <span className="text-sm font-semibold text-neutral-900">Connect</span>
-            </Link>
+            <Logo size="dashboard" suffix="Connect" href="/connect" />
           </div>
 
-          <Link href="/connect" className="hidden items-center gap-2.5 no-underline lg:flex">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm"
-              style={{ backgroundColor: EMERALD }}
-            >
-              A
-            </div>
-            <span className="text-base font-semibold tracking-tight text-neutral-900">
-              Area<span style={{ color: EMERALD }}>IQ</span> Connect
-            </span>
-          </Link>
+          <Logo size="dashboard" suffix="Connect" href="/connect" className="hidden lg:flex" />
 
           <h1 className="absolute left-1/2 hidden -translate-x-1/2 text-sm font-semibold text-neutral-900 sm:block lg:text-base">
             Builder Portal
@@ -155,6 +137,7 @@ export default function ConnectShell({
       <div className="flex">
         <aside className="fixed bottom-0 left-0 top-16 hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
           <div className="border-b border-neutral-100 px-4 py-4">
+            <Logo size="dashboard" suffix="Connect" href="/connect" className="mb-3" />
             <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">
               Builder Account
             </p>

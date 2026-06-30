@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Logo from "@/components/common/Logo";
 import { EMERALD } from "@/lib/auth/constants";
 import { getInitials } from "@/lib/auth/profile";
 import { BUYER_NAV, isBuyerNavActive } from "@/lib/buyer/constants";
@@ -81,6 +82,7 @@ export default function BuyerSidebar({
       }`}
     >
       <div className="border-b border-neutral-100 p-5">
+        <Logo size="dashboard" href="/" className="mb-4" />
         <div className="flex items-center gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)]"

@@ -1,3 +1,4 @@
+import { isAdminRole } from "@/lib/auth/admin";
 import type { User } from "@supabase/supabase-js";
 import { supabase, type Profile } from "@/lib/supabase";
 import { mobileToAuthEmail, normalizeMobileNumber } from "@/lib/auth/mobile";
@@ -51,10 +52,10 @@ export async function upsertProfile(input: {
   return data;
 }
 
-export function getDashboardPath(role?: Profile["role"] | null): string {
+export function getDashboardPath(role?: Profile["role"] | string | null): string {
+  if (isAdminRole(role)) return "/admin";
   switch (role) {
     case "seller":
-    case "broker":
       return "/seller";
     case "builder":
       return "/builder";

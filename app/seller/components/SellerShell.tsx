@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import Logo from "@/components/common/Logo";
 import type { SellerTab } from "@/lib/seller/types";
 import { EMERALD, getInitials } from "@/lib/seller/constants";
 
@@ -99,28 +100,10 @@ export default function SellerShell({
             >
               ☰
             </button>
-            <Link href="/" className="flex items-center gap-2 no-underline">
-              <div
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold text-white"
-                style={{ backgroundColor: EMERALD }}
-              >
-                A
-              </div>
-              <span className="text-sm font-semibold text-neutral-900">AreaIQ</span>
-            </Link>
+            <Logo size="dashboard" href="/" />
           </div>
 
-          <Link href="/" className="hidden items-center gap-2.5 no-underline lg:flex">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm"
-              style={{ backgroundColor: EMERALD }}
-            >
-              A
-            </div>
-            <span className="text-base font-semibold tracking-tight text-neutral-900">
-              Area<span style={{ color: EMERALD }}>IQ</span>
-            </span>
-          </Link>
+          <Logo size="dashboard" href="/" className="hidden lg:flex" />
 
           <h1 className="absolute left-1/2 hidden -translate-x-1/2 text-sm font-semibold text-neutral-900 sm:block lg:text-base">
             Seller Dashboard
@@ -170,6 +153,7 @@ export default function SellerShell({
       <div className="flex">
         <aside className="fixed bottom-0 left-0 top-16 hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
           <div className="border-b border-neutral-100 px-4 py-4">
+            <Logo size="dashboard" href="/" className="mb-3" />
             <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">
               Seller Portal
             </p>

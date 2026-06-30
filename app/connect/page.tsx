@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import Logo from "@/components/common/Logo";
 import {
   CONNECT_FAQ,
   CONNECT_FEATURES,
@@ -39,6 +40,9 @@ export default function ConnectLandingPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.08),transparent_50%)]" />
         <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
+            <div className="mb-6 flex justify-center">
+              <Logo size="hero" suffix="Connect" showTagline href="/connect" priority />
+            </div>
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">
               Builder & Developer Portal
             </p>
@@ -273,9 +277,7 @@ export default function ConnectLandingPage() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <p className="text-lg font-bold text-white">
-                Area<span style={{ color: EMERALD }}>IQ</span> Connect
-              </p>
+              <Logo size="footer" suffix="Connect" variant="dark" showTagline href="/connect" />
               <p className="mt-2 max-w-sm text-sm text-neutral-400">
                 The B2B platform for builders, developers, and real estate companies on
                 AreaIQ.

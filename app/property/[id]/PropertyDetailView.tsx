@@ -10,6 +10,7 @@ import LocationSection from "./components/LocationSection";
 import PropertyGallery from "./components/PropertyGallery";
 import PropertyOverview from "./components/PropertyOverview";
 import SimilarProperties from "./components/SimilarProperties";
+import Logo from "@/components/common/Logo";
 
 interface PropertyDetailViewProps {
   property: PropertyDetail;
@@ -46,14 +47,7 @@ export default function PropertyDetailView({ property }: PropertyDetailViewProps
 
       <footer className="mt-12 border-t border-neutral-200 bg-neutral-900 text-neutral-400">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500 text-sm font-bold text-white">
-              A
-            </div>
-            <span className="text-sm font-semibold text-white">
-              Area<span className="text-emerald-400">IQ</span>
-            </span>
-          </div>
+          <Logo size="footer" variant="dark" href="/" />
           <p className="text-center text-xs sm:text-sm">
             AI-Powered Property Intelligence · Chandigarh · Mohali · Panchkula
           </p>

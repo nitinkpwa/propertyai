@@ -6,11 +6,11 @@ import { Suspense, useState } from "react";
 import AuthAlert from "@/components/auth/AuthAlert";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthInput from "@/components/auth/AuthInput";
+import Logo from "@/components/common/Logo";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { mobileToAuthEmail } from "@/lib/auth/mobile";
 import { fetchProfile } from "@/lib/auth/profile";
 import { validateLogin } from "@/lib/auth/validation";
-import { EMERALD } from "@/lib/connect/constants";
 import { supabase } from "@/lib/supabase";
 
 function ConnectLoginForm() {
@@ -66,17 +66,9 @@ function ConnectLoginForm() {
     <div className="min-h-screen bg-[#FAFAFA] pt-24 pb-16">
       <div className="mx-auto w-full max-w-md px-4 sm:px-6">
         <div className="mb-8 text-center">
-          <Link href="/connect" className="inline-flex items-center gap-2 no-underline">
-            <div
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm"
-              style={{ backgroundColor: EMERALD }}
-            >
-              A
-            </div>
-            <span className="text-lg font-semibold text-neutral-900">
-              Area<span style={{ color: EMERALD }}>IQ</span> Connect
-            </span>
-          </Link>
+          <div className="flex justify-center">
+            <Logo size="dashboard" suffix="Connect" href="/connect" />
+          </div>
           <h1 className="mt-6 text-2xl font-bold tracking-tight text-neutral-900">
             Builder Login
           </h1>
