@@ -1,5 +1,6 @@
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
 import { mapPropertyRowToCardProps } from "@/lib/properties/queries";
+import { trackCrmEvent } from "@/lib/crm/queries";
 import { supabase, type Property } from "@/lib/supabase";
 import type {
   BuyerProfileUpdate,
@@ -10,6 +11,7 @@ import type {
   SiteVisitRow,
 } from "./types";
 import { toBhkOption } from "./types";
+import { updateBuyerProfileSafe } from "@/lib/buyer/profileUpdate";
 
 type PropertyRow = Property & {
   growth_score?: number | null;
@@ -63,7 +65,7 @@ export async function fetchBuyerStats(userId: string): Promise<BuyerStats> {
       .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
       .gte("visit_date", today)
-      .in("status", ["scheduled", "confirmed"]),
+      .in("status", ["pending_approval", "accepted", "scheduled"]),
   ]);
 
   return {
@@ -120,6 +122,12 @@ export async function addSavedProperty(
     return false;
   }
 
+  void trackCrmEvent({
+    activityType: "property_saved",
+    title: "Property saved",
+    propertyId,
+  });
+
   return true;
 }
 
@@ -137,6 +145,12 @@ export async function removeSavedPropertyByPropertyId(
     console.error("removeSavedPropertyByPropertyId:", error.message);
     return false;
   }
+
+  void trackCrmEvent({
+    activityType: "property_unsaved",
+    title: "Property removed from saved",
+    propertyId,
+  });
 
   return true;
 }
@@ -230,7 +244,14 @@ export async function recordPropertyView(
 
   if (error) {
     console.error("recordPropertyView:", error.message);
+    return;
   }
+
+  void trackCrmEvent({
+    activityType: "property_viewed",
+    title: "Viewed property",
+    propertyId,
+  });
 }
 
 export async function fetchRecentViewedCards(userId: string, limit = 4) {
@@ -289,7 +310,7 @@ export async function fetchSiteVisits(userId: string): Promise<SiteVisitRow[]> {
   const { data, error } = await supabase
     .from("site_visits")
     .select(
-      "id, property_id, visit_date, visit_time, status, builder_name, property:properties(title, location, city)",
+      "id, property_id, visit_date, visit_time, status, purpose, visit_location, builder_name, checklist, property:properties(title, location, city)",
     )
     .eq("user_id", userId)
     .order("visit_date", { ascending: true })
@@ -307,25 +328,8 @@ export async function updateBuyerProfile(
   userId: string,
   payload: BuyerProfileUpdate,
 ): Promise<{ error: string | null }> {
-  const { error } = await supabase
-    .from("profiles")
-    .update({
-      full_name: payload.full_name.trim(),
-      phone: payload.phone.trim(),
-      city: payload.city.trim() || null,
-      budget_min: payload.budget_min,
-      budget_max: payload.budget_max,
-      preferred_locations: payload.preferred_locations,
-      preferred_property_types: payload.preferred_property_types,
-    })
-    .eq("id", userId);
-
-  if (error) {
-    console.error("updateBuyerProfile:", error.message);
-    return { error: error.message };
-  }
-
-  return { error: null };
+  const result = await updateBuyerProfileSafe(userId, payload);
+  return { error: result.error };
 }
 
 export function formatVisitTime(time: string): string {

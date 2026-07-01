@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ConnectEmptyModule from "../components/ConnectEmptyModule";
 import ConnectShell from "../components/ConnectShell";
+import ConnectCrmPanel from "@/components/crm/ConnectCrmPanel";
 import { fetchConnectDashboardStats } from "@/lib/connect/queries";
 import type { ConnectDashboardStats, ConnectTab } from "@/lib/connect/types";
 import { fetchProfile } from "@/lib/auth/profile";
@@ -226,7 +227,20 @@ export default function ConnectDashboardPage() {
 
       {tab === "home" ? <DashboardHome stats={stats} /> : null}
       {tab === "profile" && profile ? <CompanyProfileCard profile={profile} /> : null}
-      {tab !== "home" && tab !== "profile" ? (
+      {tab === "leads" && profile ? (
+        <ConnectCrmPanel connectPartnerId={profile.id} mode="leads" />
+      ) : null}
+      {tab === "visits" && profile ? (
+        <ConnectCrmPanel connectPartnerId={profile.id} mode="visits" />
+      ) : null}
+      {tab === "inventory" && profile ? (
+        <ConnectCrmPanel connectPartnerId={profile.id} mode="properties" />
+      ) : null}
+      {tab !== "home" &&
+      tab !== "profile" &&
+      tab !== "leads" &&
+      tab !== "visits" &&
+      tab !== "inventory" ? (
         <ConnectEmptyModule {...MODULE_EMPTY[tab]} />
       ) : null}
     </ConnectShell>

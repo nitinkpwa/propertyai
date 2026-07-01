@@ -18,6 +18,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,17 +27,20 @@ export default function RegisterPage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
 
+  const isBuyer = accountType === "buyer";
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
 
     const validationError = validateRegistration({
       fullName,
-      username,
+      username: isBuyer ? undefined : username,
       mobile,
       password,
       confirmPassword,
       accountType,
+      email: isBuyer ? email : undefined,
     });
 
     if (validationError) {
@@ -50,10 +54,11 @@ export default function RegisterPage() {
     try {
       await registerAccount({
         fullName: fullName.trim(),
-        username,
+        username: isBuyer ? undefined : username,
         phone: mobile,
         password,
         role: accountType,
+        contactEmail: isBuyer && email.trim() ? email.trim() : undefined,
       });
 
       router.push(getDashboardPath(accountType));
@@ -67,8 +72,12 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Create your account"
-      subtitle="Join AreaIQ and start exploring smarter property decisions"
+      title={isBuyer ? "Start your property journey" : "Create your account"}
+      subtitle={
+        isBuyer
+          ? "Join AreaIQ in seconds — no long forms, no OTP."
+          : "Join AreaIQ and start listing smarter"
+      }
       footer={
         <p className="text-sm text-neutral-500">
           Already have an account?{" "}
@@ -92,18 +101,20 @@ export default function RegisterPage() {
           onChange={(event) => setFullName(event.target.value)}
         />
 
-        <AuthInput
-          label="Username"
-          autoComplete="username"
-          placeholder="yourname"
-          value={username}
-          onChange={(event) => setUsername(event.target.value.toLowerCase())}
-        />
+        {!isBuyer ? (
+          <AuthInput
+            label="Username"
+            autoComplete="username"
+            placeholder="yourname"
+            value={username}
+            onChange={(event) => setUsername(event.target.value.toLowerCase())}
+          />
+        ) : null}
 
         <AccountTypeSelector value={accountType} onChange={setAccountType} />
 
         <AuthInput
-          label="Phone Number"
+          label="Mobile Number"
           type="tel"
           autoComplete="tel"
           inputMode="numeric"
@@ -111,6 +122,17 @@ export default function RegisterPage() {
           value={mobile}
           onChange={(event) => setMobile(event.target.value)}
         />
+
+        {isBuyer ? (
+          <AuthInput
+            label="Email (optional)"
+            type="email"
+            autoComplete="email"
+            placeholder="you@email.com"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        ) : null}
 
         <AuthInput
           label="Password"
@@ -131,9 +153,15 @@ export default function RegisterPage() {
           error={fieldError}
         />
 
+        {isBuyer ? (
+          <p className="pb-2 text-xs leading-relaxed text-neutral-500">
+            Budget, preferences, and timeline are collected later as you explore — keeping signup fast.
+          </p>
+        ) : null}
+
         <div className="pt-2">
           <AuthButton type="submit" loading={loading} loadingText="Creating account...">
-            Create Account
+            {isBuyer ? "Create Buyer Account" : "Create Account"}
           </AuthButton>
         </div>
       </form>

@@ -48,6 +48,15 @@ export async function signInWithIdentifier(
   }
 
   const profile = await fetchProfile(data.user.id);
+
+  if (profile?.role === "buyer") {
+    void fetch("/api/crm/bootstrap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: "login" }),
+    });
+  }
+
   return { user: data.user, session: data.session, profile };
 }
 
@@ -75,13 +84,17 @@ export async function checkPhoneTaken(phone: string): Promise<boolean> {
 
 export async function registerAccount(input: {
   fullName: string;
-  username: string;
+  username?: string;
   phone: string;
   password: string;
   role: AccountType;
+  contactEmail?: string;
 }): Promise<{ user: User; session: Session; profile: Profile | null }> {
-  const normalizedUsername = normalizeUsername(input.username);
   const normalizedPhone = normalizeMobileNumber(input.phone);
+  const normalizedUsername =
+    input.role === "buyer"
+      ? normalizeUsername(`buyer_${normalizedPhone}`)
+      : normalizeUsername(input.username ?? "");
 
   if (await checkUsernameTaken(normalizedUsername)) {
     throw new Error("USERNAME_TAKEN");
@@ -114,13 +127,28 @@ export async function registerAccount(input: {
     username: normalizedUsername,
     role: input.role,
     phone: normalizedPhone,
+    contactEmail: input.contactEmail?.trim() || undefined,
   });
 
   if (data.session) {
+    if (input.role === "buyer") {
+      void fetch("/api/crm/bootstrap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event: "register" }),
+      });
+    }
     return { user: data.user, session: data.session, profile };
   }
 
   const signedIn = await signInWithIdentifier(normalizedPhone, input.password);
+  if (input.role === "buyer") {
+    void fetch("/api/crm/bootstrap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ event: "register" }),
+    });
+  }
   return { ...signedIn, profile: signedIn.profile ?? profile };
 }
 

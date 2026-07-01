@@ -3,6 +3,7 @@ import {
   createUserConversation,
   fetchUserConversationSummaries,
 } from "@/lib/ask/conversations/serverQueries";
+import { recordLeadActivity } from "@/lib/crm/service";
 import { createSupabaseServerClient, getAuthenticatedUser } from "@/lib/supabase/server";
 import type { PropertyContext } from "@/lib/ask/engine/types";
 
@@ -58,6 +59,15 @@ export async function POST(req: NextRequest) {
   if (!conversation) {
     return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
   }
+
+  await recordLeadActivity(supabase, {
+    buyerId: user.id,
+    activityType: "ai_chat_started",
+    title: "Started AI chat",
+    description: title || "New conversation",
+    conversationId: conversation.id,
+    propertyId: propertyContext?.id,
+  });
 
   return NextResponse.json({ conversation });
 }

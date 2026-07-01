@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { processAskMessage, type PropertyContext } from "@/lib/ask/engine";
 import { logAsk } from "@/lib/ask/engine/logger";
 import type { ConversationMessage } from "@/lib/ask/openai-client";
+import { buildBuyerProfileContext } from "@/lib/buyer/aiContext";
+import { createSupabaseServerClient, getAuthenticatedUser } from "@/lib/supabase/server";
 
 function sanitizeHistory(raw: unknown): ConversationMessage[] {
   if (!Array.isArray(raw)) return [];
@@ -60,7 +62,27 @@ export async function POST(req: NextRequest) {
       hasPropertyContext: Boolean(propertyContext),
     });
 
-    const response = await processAskMessage(message, history, propertyContext, excludePropertyIds);
+    let buyerProfileContext = "";
+    const user = await getAuthenticatedUser();
+    if (user) {
+      const supabase = await createSupabaseServerClient();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select(
+          "buying_purpose, budget_min, budget_max, buying_timeline, loan_status, preferred_locations, preferred_property_types, city",
+        )
+        .eq("id", user.id)
+        .maybeSingle();
+      buyerProfileContext = buildBuyerProfileContext(profile);
+    }
+
+    const response = await processAskMessage(
+      message,
+      history,
+      propertyContext,
+      excludePropertyIds,
+      buyerProfileContext,
+    );
 
     logAsk({
       event: "api_ask_query_response",

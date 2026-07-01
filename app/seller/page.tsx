@@ -13,6 +13,7 @@ import NotificationsTab from "./components/NotificationsTab";
 import ProfileTab from "./components/ProfileTab";
 import SellerShell from "./components/SellerShell";
 import { emptyForm } from "@/lib/seller/constants";
+import { manageSiteVisit } from "@/lib/crm/queries";
 import {
   duplicateProperty,
   fetchSellerAnalytics,
@@ -23,18 +24,14 @@ import {
   fetchSellerProperties,
   fetchSellerSiteVisits,
   formToPayload,
-  rescheduleVisit,
   saveSellerProperty,
   softDeleteProperty,
-  updateLeadStatus,
   updatePropertyStatus,
   updateSellerProfile,
-  updateVisitStatus,
   uploadPropertyPhotos,
   uploadSellerAsset,
 } from "@/lib/seller/queries";
 import type {
-  LeadStatus,
   PropertyFormState,
   SellerAnalytics,
   SellerDashboardStats,
@@ -44,7 +41,6 @@ import type {
   SellerPropertyRow,
   SellerTab,
   SellerVisitRow,
-  VisitStatus,
 } from "@/lib/seller/types";
 
 const TAB_TITLES: Record<SellerTab, string> = {
@@ -269,21 +265,23 @@ export default function SellerDashboard() {
     await refresh();
   };
 
-  const handleLeadStatus = async (id: string, status: LeadStatus) => {
-    if (!user) return;
-    await updateLeadStatus(id, user.id, status);
+  const handleVisitAccept = async (id: string) => {
+    await manageSiteVisit(id, "accept");
     await refresh();
   };
 
-  const handleVisitStatus = async (id: string, status: VisitStatus) => {
-    if (!user) return;
-    await updateVisitStatus(id, user.id, status);
+  const handleVisitReject = async (id: string) => {
+    await manageSiteVisit(id, "reject");
     await refresh();
   };
 
-  const handleReschedule = async (id: string, date: string, time: string) => {
-    if (!user) return;
-    await rescheduleVisit(id, user.id, date, time);
+  const handleVisitReschedule = async (id: string, date: string, time: string) => {
+    await manageSiteVisit(id, "reschedule", { visitDate: date, visitTime: time });
+    await refresh();
+  };
+
+  const handleVisitComplete = async (id: string) => {
+    await manageSiteVisit(id, "complete");
     await refresh();
   };
 
@@ -308,7 +306,9 @@ export default function SellerDashboard() {
     );
   }
 
-  const newLeads = leads.filter((l) => l.status === "new").length;
+  const newLeads =
+    leads.filter((l) => l.status === "new").length +
+    visits.filter((v) => v.status === "pending_approval").length;
 
   return (
     <SellerShell
@@ -363,9 +363,17 @@ export default function SellerDashboard() {
             onCancel={cancelEdit}
           />
         ) : null}
-        {tab === "leads" ? <LeadsTab leads={leads} onUpdateStatus={handleLeadStatus} /> : null}
+        {tab === "leads" && user ? (
+          <LeadsTab sellerId={user.id} />
+        ) : null}
         {tab === "visits" ? (
-          <VisitsTab visits={visits} onUpdateStatus={handleVisitStatus} onReschedule={handleReschedule} />
+          <VisitsTab
+            visits={visits}
+            onAccept={handleVisitAccept}
+            onReject={handleVisitReject}
+            onReschedule={handleVisitReschedule}
+            onComplete={handleVisitComplete}
+          />
         ) : null}
         {tab === "analytics" ? <AnalyticsTab analytics={analytics} /> : null}
         {tab === "notifications" ? <NotificationsTab notifications={notifications} /> : null}

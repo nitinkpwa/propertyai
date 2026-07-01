@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Logo from "@/components/common/Logo";
+import ProfileCompletionRing from "@/components/premium/ProfileCompletionRing";
+import { useProgressiveProfileOptional } from "@/components/buyer/ProgressiveProfileProvider";
 import { EMERALD } from "@/lib/auth/constants";
 import { getInitials } from "@/lib/auth/profile";
 import { BUYER_NAV, isBuyerNavActive } from "@/lib/buyer/constants";
@@ -54,6 +56,13 @@ function NavIcon({ icon }: { icon: (typeof BUYER_NAV)[number]["icon"] }) {
           <path d="M16 2v4M8 2v4M3 10h18" />
         </svg>
       );
+    case "crm":
+      return (
+        <svg {...props}>
+          <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" strokeLinecap="round" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+      );
     case "user":
       return (
         <svg {...props}>
@@ -74,6 +83,8 @@ export default function BuyerSidebar({
 }: BuyerSidebarProps) {
   const pathname = usePathname();
   const initials = getInitials(fullName);
+  const profileCtx = useProgressiveProfileOptional();
+  const completeness = profileCtx?.completeness.percent ?? 0;
 
   return (
     <aside
@@ -123,6 +134,19 @@ export default function BuyerSidebar({
       </nav>
 
       <div className="space-y-2 border-t border-neutral-100 p-3">
+        {profileCtx && completeness < 100 ? (
+          <button
+            type="button"
+            onClick={() => profileCtx.openModal()}
+            className="flex w-full items-center gap-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-left ring-1 ring-emerald-100 transition hover:bg-emerald-100/80"
+          >
+            <ProfileCompletionRing percent={completeness} size="sm" showLabel={false} />
+            <div>
+              <p className="text-xs font-semibold text-emerald-800">Profile {completeness}%</p>
+              <p className="text-[10px] text-emerald-600">Tap to complete</p>
+            </div>
+          </button>
+        ) : null}
         <Link
           href="/properties"
           onClick={onCloseMobile}

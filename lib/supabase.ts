@@ -18,6 +18,13 @@ export type Profile = {
   budget_max?: number | null;
   preferred_locations?: string[] | null;
   preferred_property_types?: string[] | null;
+  buying_purpose?: string | null;
+  buying_timeline?: string | null;
+  loan_status?: string | null;
+  occupation?: string | null;
+  family_size?: number | null;
+  buyer_notes?: string | null;
+  contact_email?: string | null;
   company?: string | null;
   rera_number?: string | null;
   gst?: string | null;

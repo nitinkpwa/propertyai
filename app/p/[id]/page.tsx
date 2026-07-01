@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { isPropertySaved, toggleSavedProperty } from '@/lib/buyer/queries'
+import { sendCrmInquiry } from '@/lib/crm/queries'
 import { useParams } from 'next/navigation'
 
 export default function PropertyDetailPage() {
@@ -49,12 +50,11 @@ export default function PropertyDetailPage() {
   const sendInquiry = async () => {
     if (!user) { window.location.href = '/login'; return }
     if (!inquiryMsg.trim()) return
-    await supabase.from('inquiries').insert({
-      from_user_id: user.id,
-      property_id: params.id,
-      seller_id: property.seller_id,
+    const result = await sendCrmInquiry({
+      propertyId: params.id as string,
       message: inquiryMsg,
     })
+    if ('error' in result) return
     setInquirySent(true)
     setInquiryMsg('')
   }
@@ -183,20 +183,13 @@ export default function PropertyDetailPage() {
                 {saved ? '❤️ Saved' : '🤍 Save Property'}
               </button>
 
-              {/* Contact */}
-              {property.contact_phone && (
-                <a href={`tel:${property.contact_phone}`} style={{ display: 'block', width: '100%', padding: '11px', borderRadius: '10px', background: '#25D366', color: '#fff', fontSize: '14px', fontWeight: 700, textAlign: 'center', textDecoration: 'none', marginBottom: '10px' }}>
-                  📞 Call {property.contact_phone}
-                </a>
-              )}
-
-              {/* WhatsApp */}
-              {property.contact_phone && (
-                <a href={`https://wa.me/91${property.contact_phone.replace(/\s/g, '')}?text=Hi, I'm interested in your property: ${encodeURIComponent(property.title)}`} target="_blank" rel="noopener noreferrer"
-                  style={{ display: 'block', width: '100%', padding: '11px', borderRadius: '10px', background: '#2C1A0E', color: '#F4860A', fontSize: '14px', fontWeight: 700, textAlign: 'center', textDecoration: 'none', marginBottom: '1rem', border: '1px solid #F4860A' }}>
-                  💬 WhatsApp
-                </a>
-              )}
+              {/* Book site visit — contact hidden until approved */}
+              <a href={`/property/${params.id}`} style={{ display: 'block', width: '100%', padding: '11px', borderRadius: '10px', background: '#F4860A', color: '#fff', fontSize: '14px', fontWeight: 700, textAlign: 'center', textDecoration: 'none', marginBottom: '10px' }}>
+                📅 Book Site Visit
+              </a>
+              <p style={{ fontSize: '11px', color: '#A67C5B', marginBottom: '10px', lineHeight: 1.4 }}>
+                Seller contact is shared only after your visit request is approved.
+              </p>
 
               {/* Send inquiry */}
               <div style={{ borderTop: '1px solid #F5E8D8', paddingTop: '1rem' }}>

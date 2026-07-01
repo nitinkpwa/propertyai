@@ -20,5 +20,11 @@ export default async function PropertyDetailPage({ params }: PageProps) {
     notFound();
   }
 
-  return <PropertyDetailView property={property} />;
+  const publicProperty = {
+    ...property,
+    contactPhone: "",
+    whatsapp: "",
+  };
+
+  return <PropertyDetailView property={publicProperty} />;
 }

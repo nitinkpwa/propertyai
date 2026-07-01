@@ -12,22 +12,31 @@ export function validatePassword(password: string): string | null {
 
 export function validateRegistration(input: {
   fullName: string;
-  username: string;
+  username?: string;
   mobile: string;
   password: string;
   confirmPassword: string;
   accountType: AccountType;
+  email?: string;
 }): string | null {
   if (!input.fullName.trim()) {
     return "Please enter your full name.";
   }
 
-  if (!isValidUsername(input.username)) {
-    return "Username must be 3–30 characters and use letters, numbers, or underscores only.";
+  const isBuyer = input.accountType === "buyer";
+
+  if (!isBuyer) {
+    if (!input.username || !isValidUsername(input.username)) {
+      return "Username must be 3–30 characters and use letters, numbers, or underscores only.";
+    }
   }
 
   if (!isValidMobileNumber(input.mobile)) {
     return "Please enter a valid 10-digit mobile number.";
+  }
+
+  if (input.email?.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email.trim())) {
+    return "Please enter a valid email address.";
   }
 
   const passwordError = validatePassword(input.password);

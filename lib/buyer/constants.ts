@@ -1,5 +1,6 @@
 export const BUYER_NAV = [
   { href: "/buyer", label: "Dashboard", icon: "dashboard" as const },
+  { href: "/buyer/crm", label: "My CRM", icon: "crm" as const },
   { href: "/buyer/saved", label: "Saved Properties", icon: "heart" as const },
   { href: "/buyer/compare", label: "Compare", icon: "compare" as const },
   { href: "/buyer/site-visits", label: "Site Visits", icon: "calendar" as const },

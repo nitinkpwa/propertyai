@@ -108,6 +108,7 @@ export async function processAskMessage(
   history: ConversationMessage[] = [],
   propertyContext?: PropertyContext | null,
   excludePropertyIds: string[] = [],
+  buyerProfileContext?: string,
 ): Promise<AskEngineResponse> {
   const trimmed = message.trim();
 
@@ -145,6 +146,7 @@ export async function processAskMessage(
       classification,
       propertyContext,
       excludePropertyIds,
+      buyerProfileContext,
     };
 
     logAsk({

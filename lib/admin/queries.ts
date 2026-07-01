@@ -1,5 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import type { Profile } from "@/lib/supabase";
+import {
+  ADMIN_CRM_LEAD_SELECT,
+  INQUIRY_WITH_BUYER_SELECT,
+  SITE_VISIT_WITH_USER_SELECT,
+  enrichLeadRowBuyer,
+  enrichVisitRowBuyer,
+  fetchBuyerProfilesByIds,
+} from "@/lib/crm/buyerProfile";
 import type {
   AdminAnalytics,
   AdminConversationRow,
@@ -80,18 +88,97 @@ export async function fetchAdminProfiles(): Promise<Profile[]> {
 }
 
 export async function fetchAdminLeads(): Promise<AdminLeadRow[]> {
-  const { data, error } = await supabase
-    .from("inquiries")
-    .select(
-      "*, property:properties(title, city), buyer:profiles!inquiries_from_user_id_fkey(full_name, email, phone), seller:profiles!inquiries_seller_id_fkey(full_name)",
-    )
-    .order("created_at", { ascending: false });
+  const [inquiryRes, crmRes] = await Promise.all([
+    supabase
+      .from("inquiries")
+      .select(INQUIRY_WITH_BUYER_SELECT)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("crm_leads")
+      .select(ADMIN_CRM_LEAD_SELECT)
+      .order("updated_at", { ascending: false }),
+  ]);
 
-  if (error) {
-    console.error("fetchAdminLeads:", error.message);
-    return [];
+  if (inquiryRes.error) {
+    console.error("fetchAdminLeads inquiries:", inquiryRes.error.message);
   }
-  return (data ?? []) as AdminLeadRow[];
+  if (crmRes.error) {
+    console.error("fetchAdminLeads crm:", crmRes.error.message);
+  }
+
+  const inquiryRows: AdminLeadRow[] = (inquiryRes.data ?? []).map((row) => {
+    const enriched = enrichLeadRowBuyer({
+      ...(row as unknown as Record<string, unknown>),
+      status: (row as { status?: string }).status,
+      leadSource: "Inquiry" as const,
+    });
+    return {
+      ...(row as unknown as AdminLeadRow),
+      buyer: enriched.buyer,
+      leadSource: "Inquiry" as const,
+      crmStatus: null,
+    };
+  });
+
+  const crmRows: AdminLeadRow[] = await Promise.all(
+    ((crmRes.data ?? []) as Array<Record<string, unknown>>).map(async (lead) => {
+      const property = lead.property as {
+        title?: string;
+        city?: string;
+        seller?: { full_name?: string | null };
+      } | null;
+
+      const { data: visitActivity } = await supabase
+        .from("crm_lead_activities")
+        .select("activity_type, property:properties(title, city, seller:profiles!properties_seller_id_fkey(full_name))")
+        .eq("lead_id", lead.id as string)
+        .in("activity_type", ["visit_requested", "site_visit_booked"])
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      const visitProp = visitActivity?.property as {
+        title?: string;
+        city?: string;
+        seller?: { full_name?: string | null };
+      } | null;
+
+      const hasVisit = Boolean(visitActivity);
+      const propTitle = visitProp?.title ?? property?.title ?? null;
+      const sellerName = visitProp?.seller?.full_name ?? property?.seller?.full_name ?? null;
+
+      return {
+        id: lead.id as string,
+        from_user_id: lead.buyer_id as string,
+        property_id: (lead.primary_property_id as string) ?? "",
+        seller_id: "",
+        message: hasVisit ? "Site visit requested" : "CRM lead",
+        status: lead.status as AdminLeadRow["status"],
+        created_at: lead.created_at as string,
+        buyer: enrichLeadRowBuyer({
+          ...(lead as Record<string, unknown>),
+          status: lead.status as string,
+          leadSource: hasVisit ? ("Site Visit" as const) : ("CRM" as const),
+        }).buyer,
+        property: propTitle ? { title: propTitle, city: visitProp?.city ?? property?.city } : null,
+        seller: sellerName ? { full_name: sellerName } : null,
+        leadSource: hasVisit ? ("Site Visit" as const) : ("CRM" as const),
+        crmStatus: lead.status as string,
+        assignedConnect: (lead.connect as { full_name?: string | null } | null)?.full_name ?? null,
+        crmLeadId: lead.id as string,
+      } as AdminLeadRow;
+    }),
+  );
+
+  const seenBuyers = new Set(inquiryRows.map((r) => r.from_user_id));
+  const merged = [
+    ...inquiryRows,
+    ...crmRows.filter((r) => !seenBuyers.has(r.from_user_id) || r.leadSource === "Site Visit"),
+  ];
+
+  return merged.sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
 }
 
 export async function fetchAdminConversations(): Promise<AdminConversationRow[]> {
@@ -114,14 +201,31 @@ export async function fetchAdminSiteVisits(): Promise<AdminSiteVisitRow[]> {
 
   const { data, error } = await supabase
     .from("site_visits")
-    .select("*, property:properties(title, city), user:profiles(full_name, phone)")
+    .select(SITE_VISIT_WITH_USER_SELECT)
     .order("visit_date", { ascending: false });
 
   if (error) {
     console.error("fetchAdminSiteVisits:", error.message);
-    return [];
+
+    const { data: fallback } = await supabase
+      .from("site_visits")
+      .select("*, property:properties(title, city)")
+      .order("visit_date", { ascending: false });
+
+    const visits = (fallback ?? []) as AdminSiteVisitRow[];
+    const userIds = [...new Set(visits.map((v) => v.user_id))];
+    const profileMap = await fetchBuyerProfilesByIds(userIds);
+
+    return visits.map((v) => ({
+      ...v,
+      buyer: profileMap.get(v.user_id) ?? null,
+    }));
   }
-  return (data ?? []) as AdminSiteVisitRow[];
+
+  return ((data ?? []) as AdminSiteVisitRow[]).map((row) => {
+    const enriched = enrichVisitRowBuyer({ ...row } as Record<string, unknown>);
+    return { ...row, buyer: enriched.buyer };
+  });
 }
 
 export function buildOverviewStats(input: {

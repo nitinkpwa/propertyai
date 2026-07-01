@@ -1,3 +1,8 @@
+import {
+  SITE_VISIT_WITH_BUYER_SELECT,
+  enrichVisitRowBuyer,
+  fetchBuyerProfilesByIds,
+} from "@/lib/crm/buyerProfile";
 import { supabase } from "@/lib/supabase";
 import { PROPERTIES_BASE_SELECT } from "./propertySchema";
 import type {
@@ -72,7 +77,7 @@ export async function fetchSellerDashboardStats(
 
   stats.totalViews = views.count ?? 0;
   stats.savedByBuyers = saves.count ?? 0;
-  stats.leadsReceived = leads.count ?? 0;
+  stats.leadsReceived = (leads.count ?? 0) + (visits.count ?? 0);
   stats.siteVisits = visits.count ?? 0;
 
   return stats;
@@ -159,32 +164,38 @@ export async function fetchSellerSiteVisits(sellerId: string): Promise<SellerVis
 
   const { data, error } = await supabase
     .from("site_visits")
-    .select("*, property:properties(title, location, city)")
+    .select(SITE_VISIT_WITH_BUYER_SELECT)
     .in("property_id", propertyIds)
-    .order("visit_date", { ascending: true });
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error("fetchSellerSiteVisits:", error.message);
-    return [];
+
+    const { data: fallback, error: fallbackError } = await supabase
+      .from("site_visits")
+      .select("*, property:properties(title, location, city)")
+      .in("property_id", propertyIds)
+      .order("created_at", { ascending: false });
+
+    if (fallbackError) {
+      console.error("fetchSellerSiteVisits fallback:", fallbackError.message);
+      return [];
+    }
+
+    const visits = (fallback ?? []) as SellerVisitRow[];
+    const userIds = [...new Set(visits.map((v) => v.user_id))];
+    const profileMap = await fetchBuyerProfilesByIds(userIds);
+
+    return visits.map((v) => ({
+      ...v,
+      buyer: profileMap.get(v.user_id) ?? null,
+    }));
   }
 
-  const visits = (data ?? []) as SellerVisitRow[];
-  const userIds = [...new Set(visits.map((v) => v.user_id))];
-  if (userIds.length === 0) return visits;
-
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, full_name, phone, email")
-    .in("id", userIds);
-
-  const profileMap = Object.fromEntries(
-    (profiles ?? []).map((p) => [p.id, p]),
-  );
-
-  return visits.map((v) => ({
-    ...v,
-    buyer: profileMap[v.user_id] ?? null,
-  }));
+  return ((data ?? []) as SellerVisitRow[]).map((row) => {
+    const enriched = enrichVisitRowBuyer({ ...row } as Record<string, unknown>);
+    return { ...row, buyer: enriched.buyer };
+  });
 }
 
 export async function updateVisitStatus(

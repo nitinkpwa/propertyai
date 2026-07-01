@@ -26,6 +26,7 @@ export async function upsertProfile(input: {
   username?: string;
   role?: Profile["role"];
   phone?: string;
+  contactEmail?: string;
 }): Promise<Profile | null> {
   const normalizedPhone = input.phone
     ? normalizeMobileNumber(input.phone)
@@ -39,7 +40,7 @@ export async function upsertProfile(input: {
       ? normalizeUsername(String(input.user.user_metadata.username))
       : "";
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     id: input.user.id,
     email: input.user.email ?? (normalizedPhone ? mobileToAuthEmail(normalizedPhone) : ""),
     full_name: input.fullName.trim(),
@@ -47,6 +48,10 @@ export async function upsertProfile(input: {
     phone: normalizedPhone,
     role: input.role ?? (input.user.user_metadata?.role as Profile["role"]) ?? "buyer",
   };
+
+  if (input.contactEmail) {
+    payload.contact_email = input.contactEmail.trim();
+  }
 
   const { data, error } = await supabase
     .from("profiles")

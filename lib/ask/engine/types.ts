@@ -108,6 +108,7 @@ export interface HandlerContext {
   classification: IntentClassification;
   propertyContext?: PropertyContext | null;
   excludePropertyIds?: string[];
+  buyerProfileContext?: string;
 }
 
 export const EMPTY_ENTITIES: IntentEntities = {

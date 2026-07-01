@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:apply-site-visit": "node scripts/apply-site-visit-schema.mjs",
+    "db:check-site-visit": "node scripts/check-site-visit-schema.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -26,6 +28,7 @@
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
+    "pg": "^8.22.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

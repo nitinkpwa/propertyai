@@ -5,6 +5,8 @@ import AuthInput from "@/components/auth/AuthInput";
 import AuthButton from "@/components/auth/AuthButton";
 import AdminEmptyState from "./components/AdminEmptyState";
 import AdminShell, { type AdminNavItem } from "./components/AdminShell";
+import AdminCrmPanel from "@/components/crm/AdminCrmPanel";
+import BuyerProfileGrid from "@/components/crm/BuyerProfileGrid";
 import Logo from "@/components/common/Logo";
 import {
   isAdminSessionActive,
@@ -212,6 +214,7 @@ export default function AdminPage() {
     { key: "users", label: "Users", icon: "👤", count: profiles.length },
     { key: "builders", label: "AreaIQ Connect", icon: "🏗️", count: builders.length },
     { key: "leads", label: "Leads", icon: "📩", count: leads.length },
+    { key: "crm", label: "CRM", icon: "🔗" },
     { key: "visits", label: "Site Visits", icon: "📅", count: siteVisits.length },
     { key: "chats", label: "AI Chats", icon: "🤖", count: conversations.length },
     { key: "analytics", label: "Analytics", icon: "📈" },
@@ -674,36 +677,38 @@ export default function AdminPage() {
             <h1 className="text-2xl font-bold text-neutral-900">Leads</h1>
             {searchInput}
           </div>
-          <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-            <table className="min-w-full text-sm">
-              <thead className="border-b border-neutral-200 bg-neutral-50">
-                <tr>
-                  {["Name", "Phone", "Email", "Property", "Message", "Status", "Date"].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {leads.filter((l) => {
-                  const q = searchQ.toLowerCase();
-                  return !q || l.buyer?.full_name?.toLowerCase().includes(q) || l.property?.title?.toLowerCase().includes(q);
-                }).map((lead) => (
-                  <tr key={lead.id} className="border-b border-neutral-100">
-                    <td className="px-4 py-3 font-medium text-neutral-900">{lead.buyer?.full_name ?? "—"}</td>
-                    <td className="px-4 py-3 text-neutral-600">{lead.buyer?.phone ?? "—"}</td>
-                    <td className="px-4 py-3 text-neutral-600">{lead.buyer?.email ?? "—"}</td>
-                    <td className="px-4 py-3 text-neutral-600">{lead.property?.title ?? "—"}</td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-neutral-500">{lead.message}</td>
-                    <td className="px-4 py-3"><span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(lead.status)}`}>{lead.status}</span></td>
-                    <td className="px-4 py-3 text-neutral-500">{formatDateTime(lead.created_at)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {leads.length === 0 ? <p className="py-12 text-center text-sm text-neutral-500">No enquiries yet</p> : null}
+          <div className="space-y-4">
+            {leads.filter((l) => {
+              const q = searchQ.toLowerCase();
+              return !q || l.buyer?.full_name?.toLowerCase().includes(q) || l.property?.title?.toLowerCase().includes(q);
+            }).map((lead) => (
+              <article key={lead.crmLeadId ?? lead.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+                <div className="border-b border-neutral-100 px-5 py-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-neutral-900">{lead.buyer?.full_name ?? "Buyer"}</p>
+                      <p className="mt-1 text-sm text-neutral-500">
+                        {lead.property?.title ?? "—"} · {lead.leadSource ?? "Inquiry"}
+                      </p>
+                    </div>
+                    <div className="text-right text-xs text-neutral-500">
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(lead.crmStatus ?? lead.status)}`}>{lead.crmStatus ?? lead.status}</span>
+                      <p className="mt-2">{formatDateTime(lead.created_at)}</p>
+                      {lead.assignedConnect ? <p className="mt-1">Connect: {lead.assignedConnect}</p> : null}
+                    </div>
+                  </div>
+                </div>
+                <div className="px-5 py-4">
+                  <BuyerProfileGrid buyer={lead.buyer} />
+                </div>
+              </article>
+            ))}
           </div>
+          {leads.length === 0 ? <p className="py-12 text-center text-sm text-neutral-500">No enquiries yet</p> : null}
         </div>
       ) : null}
+
+      {tab === "crm" ? <AdminCrmPanel /> : null}
 
       {tab === "visits" ? (
         <div>
@@ -713,27 +718,20 @@ export default function AdminPage() {
           ) : siteVisits.length === 0 ? (
             <AdminEmptyState icon="📅" title="No site visits yet" description="Booked property visits will appear here." />
           ) : (
-            <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-              <table className="min-w-full text-sm">
-                <thead className="border-b border-neutral-200 bg-neutral-50">
-                  <tr>
-                    {["Property", "Buyer", "Date", "Time", "Status"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {siteVisits.map((v) => (
-                    <tr key={v.id} className="border-b border-neutral-100">
-                      <td className="px-4 py-3 text-neutral-900">{v.property?.title ?? "—"}</td>
-                      <td className="px-4 py-3 text-neutral-600">{v.user?.full_name ?? "—"}</td>
-                      <td className="px-4 py-3 text-neutral-600">{v.visit_date}</td>
-                      <td className="px-4 py-3 text-neutral-600">{v.visit_time}</td>
-                      <td className="px-4 py-3 capitalize text-neutral-600">{v.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="space-y-4">
+              {siteVisits.map((v) => (
+                <article key={v.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+                  <div className="border-b border-neutral-100 px-5 py-4">
+                    <p className="font-semibold text-neutral-900">{v.property?.title ?? "Property"}</p>
+                    <p className="mt-1 text-sm text-neutral-500">
+                      {v.visit_date} at {v.visit_time?.slice?.(0, 5) ?? v.visit_time} · <span className="capitalize">{v.status.replace(/_/g, " ")}</span>
+                    </p>
+                  </div>
+                  <div className="px-5 py-4">
+                    <BuyerProfileGrid buyer={v.buyer} />
+                  </div>
+                </article>
+              ))}
             </div>
           )}
         </div>

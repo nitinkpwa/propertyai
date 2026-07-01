@@ -49,6 +49,7 @@ export async function handlePropertySearch(
 ): Promise<AskEngineResponse> {
   const filters = entitiesToFilters(ctx.classification.entities);
   const memoryContext = buildMemoryContext(ctx.classification);
+  const profileContext = ctx.buyerProfileContext ?? "";
   const wantsAlternative = wantsAlternativeProperties(ctx.message);
   if (wantsAlternative && ctx.excludePropertyIds?.length) {
     filters.excludePropertyIds = ctx.excludePropertyIds;
@@ -102,7 +103,7 @@ export async function handlePropertySearch(
     listingsContext,
     !result.isSimilar,
     ctx.history,
-    memoryContext + propertyMemoryContext,
+    memoryContext + propertyMemoryContext + profileContext,
   );
 
   let answer = aiSummary;

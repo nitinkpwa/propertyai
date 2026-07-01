@@ -1,3 +1,4 @@
+import type { BuyerProfileForCRM } from "@/lib/crm/buyerProfile";
 import type { Profile, Property, Conversation, Inquiry } from "@/lib/supabase";
 
 export type AdminTab =
@@ -7,6 +8,7 @@ export type AdminTab =
   | "users"
   | "builders"
   | "leads"
+  | "crm"
   | "visits"
   | "chats"
   | "analytics"
@@ -44,8 +46,12 @@ export interface AdminPropertyRow extends Property {
 export interface AdminLeadRow extends Inquiry {
   seller_id?: string;
   property?: { title?: string; city?: string } | null;
-  buyer?: { full_name?: string | null; email?: string | null; phone?: string | null } | null;
+  buyer?: BuyerProfileForCRM | null;
   seller?: { full_name?: string | null } | null;
+  leadSource?: "Inquiry" | "Site Visit" | "CRM";
+  crmStatus?: string | null;
+  assignedConnect?: string | null;
+  crmLeadId?: string | null;
 }
 
 export interface AdminConversationRow extends Conversation {
@@ -59,9 +65,12 @@ export interface AdminSiteVisitRow {
   visit_date: string;
   visit_time: string;
   status: string;
+  purpose?: string | null;
+  lead_id?: string | null;
+  inquiry_id?: string | null;
   created_at: string;
   property?: { title?: string; city?: string } | null;
-  user?: { full_name?: string | null; phone?: string | null } | null;
+  buyer?: BuyerProfileForCRM | null;
 }
 
 export interface BuilderRow extends Profile {

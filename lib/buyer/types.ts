@@ -35,8 +35,17 @@ export interface SiteVisitRow {
   property_id: string;
   visit_date: string;
   visit_time: string;
-  status: "scheduled" | "confirmed" | "completed" | "cancelled";
+  status:
+    | "pending_approval"
+    | "accepted"
+    | "scheduled"
+    | "completed"
+    | "rejected"
+    | "cancelled";
+  purpose: string | null;
+  visit_location: string | null;
   builder_name: string | null;
+  checklist: string[] | null;
   property: {
     title?: string;
     location?: string;

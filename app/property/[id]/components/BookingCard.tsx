@@ -5,15 +5,14 @@ import type { ReactNode } from "react";
 import { useSavedProperty } from "@/lib/buyer/useSavedProperty";
 import type { PropertyDetail } from "../data";
 import { formatPrice } from "../data";
+import SiteVisitModal from "./SiteVisitModal";
 import {
   EMERALD,
   HeartIcon,
   MapPinIcon,
-  PhoneIcon,
   ShareIcon,
   ShieldIcon,
   SparkIcon,
-  WhatsAppIcon,
 } from "./shared";
 
 interface BookingCardProps {
@@ -23,6 +22,7 @@ interface BookingCardProps {
 export default function BookingCard({ property }: BookingCardProps) {
   const { saved, toggle, saving } = useSavedProperty(property.id);
   const [shared, setShared] = useState(false);
+  const [visitModalOpen, setVisitModalOpen] = useState(false);
 
   const handleShare = useCallback(async () => {
     const url = window.location.href;
@@ -39,10 +39,6 @@ export default function BookingCard({ property }: BookingCardProps) {
       /* user cancelled */
     }
   }, [property.name]);
-
-  const whatsappUrl = `https://wa.me/${property.whatsapp}?text=${encodeURIComponent(
-    `Hi, I'm interested in ${property.name} in ${property.location}, ${property.city}.`,
-  )}`;
 
   return (
     <aside className="lg:sticky lg:top-24 lg:self-start">
@@ -81,32 +77,20 @@ export default function BookingCard({ property }: BookingCardProps) {
             <Row label="Status" value={property.status} highlight />
           </div>
 
+          <p className="text-xs leading-relaxed text-neutral-500">
+            Book a site visit to connect with the seller. Contact details are shared only after your
+            request is approved.
+          </p>
+
           <div className="space-y-2.5 pt-2">
             <button
               type="button"
+              onClick={() => setVisitModalOpen(true)}
               className="flex w-full items-center justify-center rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all hover:shadow-[0_4px_14px_rgba(34,197,94,0.45)] hover:brightness-105 active:scale-[0.98]"
               style={{ backgroundColor: EMERALD }}
             >
               Book Site Visit
             </button>
-
-            <a
-              href={`tel:${property.contactPhone.replace(/\s/g, "")}`}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-800 transition-all hover:border-neutral-300 hover:bg-neutral-50 active:scale-[0.98]"
-            >
-              <PhoneIcon />
-              Contact Builder
-            </a>
-
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-sm font-semibold text-white transition-all hover:brightness-105 active:scale-[0.98]"
-            >
-              <WhatsAppIcon />
-              WhatsApp
-            </a>
 
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -135,6 +119,14 @@ export default function BookingCard({ property }: BookingCardProps) {
           </div>
         </div>
       </div>
+
+      <SiteVisitModal
+        propertyId={property.id}
+        propertyName={property.name}
+        builderName={property.builder.name}
+        open={visitModalOpen}
+        onClose={() => setVisitModalOpen(false)}
+      />
     </aside>
   );
 }

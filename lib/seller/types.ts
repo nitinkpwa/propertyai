@@ -1,4 +1,5 @@
 import type { Property, Profile } from "@/lib/supabase";
+import type { BuyerProfileForCRM } from "@/lib/crm/buyerProfile";
 
 export type SellerTab =
   | "home"
@@ -25,7 +26,13 @@ export type LeadStatus =
   | "interested"
   | "closed";
 
-export type VisitStatus = "scheduled" | "confirmed" | "completed" | "cancelled";
+export type VisitStatus =
+  | "pending_approval"
+  | "accepted"
+  | "scheduled"
+  | "completed"
+  | "rejected"
+  | "cancelled";
 
 export interface SellerProfile extends Profile {
   company?: string | null;
@@ -81,10 +88,15 @@ export interface SellerVisitRow {
   visit_date: string;
   visit_time: string;
   status: VisitStatus;
+  purpose?: string | null;
+  visit_location?: string | null;
   builder_name?: string | null;
+  checklist?: string[] | null;
   created_at: string;
   property?: { title: string; location?: string; city?: string } | null;
-  buyer?: { full_name?: string | null; phone?: string | null; email?: string | null } | null;
+  buyer?: BuyerProfileForCRM | null;
+  lead_id?: string | null;
+  inquiry_id?: string | null;
 }
 
 export interface SellerAnalytics {

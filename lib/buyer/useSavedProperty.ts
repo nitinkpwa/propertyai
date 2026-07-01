@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { useProgressiveProfileOptional } from "@/components/buyer/ProgressiveProfileProvider";
 import {
   fetchSavedPropertyIds,
   isPropertySaved,
@@ -17,6 +18,7 @@ function loginRedirectPath(): string {
 export function useSavedPropertyToggle() {
   const router = useRouter();
   const { user } = useAuth();
+  const profilePrompt = useProgressiveProfileOptional();
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -52,9 +54,11 @@ export function useSavedPropertyToggle() {
           else next.add(propertyId);
           return next;
         });
+      } else if (favorited) {
+        void profilePrompt?.promptIfNeeded("save_property");
       }
     },
-    [user, router],
+    [user, router, profilePrompt],
   );
 
   return { isSaved, handleFavoriteToggle, user };
@@ -63,6 +67,7 @@ export function useSavedPropertyToggle() {
 export function useSavedProperty(propertyId: string) {
   const router = useRouter();
   const { user } = useAuth();
+  const profilePrompt = useProgressiveProfileOptional();
   const [saved, setSaved] = useState(false);
   const [checking, setChecking] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -91,10 +96,14 @@ export function useSavedProperty(propertyId: string) {
     setSaved(next);
 
     const ok = await toggleSavedProperty(user.id, propertyId, next);
-    if (!ok) setSaved(!next);
+    if (!ok) {
+      setSaved(!next);
+    } else if (next) {
+      void profilePrompt?.promptIfNeeded("save_property");
+    }
 
     setSaving(false);
-  }, [user, propertyId, saved, router]);
+  }, [user, propertyId, saved, router, profilePrompt]);
 
   return { saved, toggle, checking, saving, isAuthenticated: !!user };
 }

@@ -25,6 +25,7 @@ import {
   createEmptyConversation,
   mergeSuggestedPropertyIds,
 } from "@/lib/ask/conversations/helpers";
+import { trackCrmEvent } from "@/lib/crm/queries";
 import type {
   AskChatMessage,
   AskConversation,
@@ -276,6 +277,16 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
         };
 
         await persistConversation(updated);
+
+        if (isLoggedIn) {
+          void trackCrmEvent({
+            activityType: "ai_chat_message",
+            title: "Asked AI",
+            description: messageText.slice(0, 160),
+            conversationId: updated.id,
+            propertyId: propertyContext?.id ?? conversation.propertyContext?.id,
+          });
+        }
       } catch (error) {
         console.error("Ask engine error:", error);
         const errorMessage: AskChatMessage = {
