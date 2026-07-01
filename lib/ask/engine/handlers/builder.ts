@@ -2,18 +2,19 @@ import { searchPropertiesByBuilder } from "../../search";
 import type { AskEngineResponse, HandlerContext } from "../types";
 import { classificationToResponseFields } from "../types";
 import { resolveBuilderName } from "../classifier";
+import { buildMemoryContext } from "../memory";
 import { logAsk } from "../logger";
 import { buildListingsContext, generateAreaIQResponse, BUILDER_PROMPT } from "../openai";
 
 export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineResponse> {
   const builderName = resolveBuilderName(ctx.classification);
   const baseFields = classificationToResponseFields(ctx.classification);
+  const memoryContext = buildMemoryContext(ctx.classification);
 
-  const answer = await generateAreaIQResponse(
-    BUILDER_PROMPT,
-    ctx.message,
-    { history: ctx.history },
-  );
+  const answer = await generateAreaIQResponse(BUILDER_PROMPT, ctx.message, {
+    history: ctx.history,
+    memoryContext,
+  });
 
   if (!builderName) {
     return {
@@ -21,6 +22,7 @@ export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineRespo
       answer,
       ...baseFields,
       properties: [],
+      propertyRationales: {},
       suggestions: [],
       followUpQuestions: [
         "Is DLF a good builder?",
@@ -56,6 +58,7 @@ export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineRespo
       ...baseFields,
       builder: builderName,
       properties: [],
+      propertyRationales: {},
       suggestions: [],
       followUpQuestions: [
         "Show properties in Mohali",
@@ -70,6 +73,7 @@ export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineRespo
 
   const enrichedAnswer = await generateAreaIQResponse(BUILDER_PROMPT, ctx.message, {
     history: ctx.history,
+    memoryContext,
     listingsContext: buildListingsContext(listings),
   });
 
@@ -79,6 +83,7 @@ export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineRespo
     ...baseFields,
     builder: builderName,
     properties: listings,
+    propertyRationales: {},
     suggestions: ["Compare these", "Lowest Price", "Ready to Move"],
     followUpQuestions: [
       "Compare with other builders",

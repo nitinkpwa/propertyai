@@ -12,10 +12,11 @@ export async function handleGeneralChat(ctx: HandlerContext): Promise<AskEngineR
     answer,
     ...classificationToResponseFields(ctx.classification),
     properties: [],
+    propertyRationales: {},
     suggestions: [],
     followUpQuestions: [
       "3 BHK in Mohali",
-      "Best investment under 1 crore",
+      "Where should I invest 80 lakh?",
       "Tell me about Aerocity",
     ],
     stats: null,

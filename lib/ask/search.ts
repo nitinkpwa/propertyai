@@ -27,6 +27,12 @@ function mapRows(rows: PropertyRow[]): { cards: PropertyCardProps[]; listings: L
   };
 }
 
+function applyExclusions(rows: PropertyRow[], excludeIds?: string[]): PropertyRow[] {
+  if (!excludeIds?.length) return rows;
+  const excluded = new Set(excludeIds);
+  return rows.filter((row) => !excluded.has(row.id));
+}
+
 interface QueryOptions {
   strict: boolean;
 }
@@ -164,7 +170,8 @@ export async function searchPropertiesFromIntent(
   filters: PropertySearchFilters,
 ): Promise<AskSearchResult> {
   try {
-    const exactRows = await runQuery(filters, { strict: true });
+    const excludeIds = filters.excludePropertyIds;
+    const exactRows = applyExclusions(await runQuery(filters, { strict: true }), excludeIds);
     const exact = mapRows(exactRows);
 
     if (exact.cards.length > 0) {
@@ -179,7 +186,7 @@ export async function searchPropertiesFromIntent(
     }
 
     const fallback = await fetchFallbackProperties(filters);
-    const similar = mapRows(fallback.rows);
+    const similar = mapRows(applyExclusions(fallback.rows, excludeIds));
 
     return {
       properties: similar.cards,
@@ -306,4 +313,84 @@ export async function searchPropertiesByLocality(
     similarReason: null,
     totalExact: mapped.cards.length,
   };
+}
+
+export async function searchPropertiesByName(
+  name: string,
+): Promise<AskSearchResult> {
+  const filters: PropertySearchFilters = {
+    bhk: null,
+    minPrice: null,
+    maxPrice: null,
+    city: null,
+    locality: name,
+    subType: null,
+    listingType: null,
+    possession: null,
+    investment: false,
+    builder: null,
+  };
+
+  const { data, error } = await supabase
+    .from("properties")
+    .select(SELECT)
+    .eq("status", "active")
+    .or(
+      `title.ilike.%${name}%,project_name.ilike.%${name}%,description.ilike.%${name}%,location.ilike.%${name}%`,
+    )
+    .order("created_at", { ascending: false })
+    .limit(RESULT_LIMIT);
+
+  if (error) {
+    console.error("searchPropertiesByName:", error.message);
+    return {
+      properties: [],
+      listings: [],
+      filters,
+      isSimilar: false,
+      similarReason: null,
+      totalExact: 0,
+    };
+  }
+
+  let rows = (data as PropertyRow[]) ?? [];
+  const needle = name.toLowerCase();
+  rows = rows.filter((row) => {
+    const haystack =
+      `${row.title} ${row.project_name ?? ""} ${row.location} ${row.description ?? ""}`.toLowerCase();
+    return haystack.includes(needle);
+  });
+
+  if (rows.length === 0) {
+    return searchPropertiesByLocality(name);
+  }
+
+  const mapped = mapRows(rows.slice(0, RESULT_LIMIT));
+
+  return {
+    properties: mapped.cards,
+    listings: mapped.listings,
+    filters,
+    isSimilar: false,
+    similarReason: null,
+    totalExact: mapped.cards.length,
+  };
+}
+
+export async function searchPropertyById(
+  id: string,
+): Promise<ListingProperty | null> {
+  const { data, error } = await supabase
+    .from("properties")
+    .select(SELECT)
+    .eq("id", id)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (error || !data) {
+    if (error) console.error("searchPropertyById:", error.message);
+    return null;
+  }
+
+  return mapPropertyRowToListing(data as PropertyRow);
 }

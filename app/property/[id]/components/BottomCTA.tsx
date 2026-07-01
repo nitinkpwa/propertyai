@@ -1,7 +1,16 @@
 import Link from "next/link";
+import type { PropertyDetail } from "../data";
 import { EMERALD } from "./shared";
 
-export default function BottomCTA() {
+interface BottomCTAProps {
+  property: PropertyDetail;
+}
+
+export default function BottomCTA({ property }: BottomCTAProps) {
+  const askHref = `/ask?propertyId=${property.id}&q=${encodeURIComponent(
+    "Tell me more about this property",
+  )}`;
+
   return (
     <section className="relative overflow-hidden rounded-3xl border border-neutral-200/80 bg-gradient-to-br from-neutral-900 via-neutral-900 to-emerald-950 p-8 shadow-[0_8px_40px_rgba(0,0,0,0.15)] sm:p-12 lg:p-16">
       <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl" />
@@ -12,16 +21,17 @@ export default function BottomCTA() {
           Need Expert Advice?
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-neutral-400 sm:text-base">
-          Get personalized investment insights, compare projects, and make confident decisions with AreaIQ AI.
+          Get a full intelligence report on {property.name} — price analysis, rental yield,
+          investment scores, and AreaIQ recommendation.
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
           <Link
-            href="/ask"
+            href={askHref}
             className="inline-flex w-full items-center justify-center rounded-xl px-8 py-3.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all hover:shadow-[0_4px_14px_rgba(34,197,94,0.45)] hover:brightness-105 active:scale-[0.98] sm:w-auto"
             style={{ backgroundColor: EMERALD }}
           >
-            Talk to AI
+            Analyze with AreaIQ
           </Link>
           <button
             type="button"

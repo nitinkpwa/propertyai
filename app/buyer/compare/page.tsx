@@ -99,8 +99,8 @@ export default function ComparePage() {
                     { label: "Builder", render: (p: ComparedCard) => p.builderName },
                     { label: "BHK", render: (p: ComparedCard) => `${p.bhk} BHK` },
                     { label: "Area", render: (p: ComparedCard) => `${p.area.toLocaleString("en-IN")} sq ft` },
-                    { label: "Growth Score", render: (p: ComparedCard) => `${p.growthScore}/100` },
-                    { label: "Rental Yield", render: (p: ComparedCard) => `${p.rentalYield}%` },
+                    { label: "Growth Score", render: (p: ComparedCard) => p.growthScore !== null ? `${p.growthScore}/100` : "N/A" },
+                    { label: "Rental Yield", render: (p: ComparedCard) => p.rentalYield !== null ? `${p.rentalYield}%` : "N/A" },
                   ].map((row) => (
                     <tr key={row.label} className="border-b border-neutral-100 last:border-0">
                       <td className="px-4 py-3 font-medium text-neutral-500">{row.label}</td>

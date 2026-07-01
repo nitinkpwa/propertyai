@@ -46,7 +46,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initialize = async () => {
       const {
         data: { session: initialSession },
+        error,
       } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("Failed to restore session:", error.message);
+      }
 
       if (!mounted) return;
 
@@ -60,11 +65,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
       await loadProfile(nextSession?.user ?? null);
       setLoading(false);
+
+      if (event === "SIGNED_OUT") {
+        setProfile(null);
+      }
     });
 
     return () => {
@@ -78,7 +87,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadProfile, user]);
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error("Sign out failed:", error.message);
+    }
     setSession(null);
     setUser(null);
     setProfile(null);

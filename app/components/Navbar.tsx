@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import UserMenu from "./UserMenu";
 import Logo from "@/components/common/Logo";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { EMERALD } from "@/lib/auth/constants";
-import { getInitials } from "@/lib/auth/profile";
+import { getProfileDisplayName, getProfileSubtitle, getInitials } from "@/lib/auth/profile";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -86,6 +86,7 @@ function NavLink({
 }
 
 function NavbarInner() {
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { user, profile, loading, dashboardPath, signOut } = useAuth();
@@ -276,13 +277,15 @@ function NavbarInner() {
                   className="inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
                   style={{ backgroundColor: EMERALD }}
                 >
-                  {getInitials(profile?.full_name, user.email)}
+                  {getInitials(profile?.full_name, profile?.username ?? profile?.phone)}
                 </span>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-neutral-900">
-                    {profile?.full_name ?? user.email}
+                    {getProfileDisplayName(profile, user)}
                   </p>
-                  <p className="truncate text-xs text-neutral-500">{user.email}</p>
+                  <p className="truncate text-xs text-neutral-500">
+                    {getProfileSubtitle(profile)}
+                  </p>
                 </div>
               </div>
               <Link
@@ -291,13 +294,6 @@ function NavbarInner() {
                 className="flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-neutral-700 shadow-sm"
               >
                 Dashboard
-              </Link>
-              <Link
-                href="/buyer"
-                onClick={closeMobile}
-                className="flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-neutral-700 shadow-sm"
-              >
-                Saved Properties
               </Link>
               <Link
                 href="/profile"
@@ -311,6 +307,8 @@ function NavbarInner() {
                 onClick={async () => {
                   await signOut();
                   closeMobile();
+                  router.push("/");
+                  router.refresh();
                 }}
                 className="flex w-full items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600"
               >

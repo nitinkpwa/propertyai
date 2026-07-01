@@ -3,10 +3,13 @@ import type { ListingProperty } from "@/lib/properties/types";
 
 export type AskIntent =
   | "search"
+  | "analysis"
+  | "compare"
   | "knowledge"
   | "locality"
   | "builder"
-  | "investment";
+  | "investment"
+  | "market";
 
 export type { AskEngineIntent, AskEngineResponse } from "./engine/types";
 
@@ -29,6 +32,7 @@ export interface PropertySearchFilters {
   possession: PossessionIntent | null;
   investment: boolean;
   builder: string | null;
+  excludePropertyIds?: string[];
 }
 
 export interface AskSearchResult {
@@ -62,6 +66,7 @@ export interface AskTurn {
   sections: AskSection[];
   stats: AskSearchStats | null;
   listings: ListingProperty[];
+  propertyRationales: Record<string, string>;
   isSimilar: boolean;
   quickActions: readonly string[];
   followUps: readonly string[];

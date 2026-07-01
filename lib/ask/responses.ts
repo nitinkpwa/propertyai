@@ -6,9 +6,18 @@ export function computeSearchStats(listings: ListingProperty[]): AskSearchStats 
 
   const count = listings.length;
   const avgPrice = listings.reduce((sum, p) => sum + p.price, 0) / count;
+
+  const yieldListings = listings.filter((p) => p.rentalYield !== null);
   const avgRentalYield =
-    listings.reduce((sum, p) => sum + p.rentalYield, 0) / count;
-  const bestInvestmentScore = Math.max(...listings.map((p) => p.growthScore));
+    yieldListings.length > 0
+      ? yieldListings.reduce((sum, p) => sum + (p.rentalYield ?? 0), 0) / yieldListings.length
+      : 0;
+
+  const scoreListings = listings.filter((p) => p.growthScore !== null);
+  const bestInvestmentScore =
+    scoreListings.length > 0
+      ? Math.max(...scoreListings.map((p) => p.growthScore ?? 0))
+      : 0;
 
   return { count, avgPrice, avgRentalYield, bestInvestmentScore };
 }
@@ -66,7 +75,7 @@ export function sectionsToPlainText(sections: AskSection[]): string {
 }
 
 export function getTypingStatus(phase: "understanding" | "searching" | "responding"): string {
-  if (phase === "understanding") return "Understanding your query";
-  if (phase === "searching") return "Searching live listings";
-  return "Preparing response";
+  if (phase === "understanding") return "Analyzing your intent";
+  if (phase === "searching") return "Querying AreaIQ database";
+  return "Generating intelligence report";
 }

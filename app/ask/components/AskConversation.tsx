@@ -9,6 +9,29 @@ import { AskResultsGrid } from "./AskResultsSection";
 function formatInline(text: string) {
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/^###\s+(.+)$/gm, '<h4 class="mt-4 mb-1 text-sm font-semibold text-neutral-900">$1</h4>')
+    .replace(/^##\s+(.+)$/gm, '<h3 class="mt-5 mb-2 text-base font-semibold text-neutral-900">$1</h3>')
+    .replace(/^#\s+(.+)$/gm, '<h2 class="mt-6 mb-2 text-lg font-bold text-neutral-900">$1</h2>')
+    .replace(/^\|\s*(.+?)\s*\|$/gm, (match) => {
+      if (match.includes("---")) return "";
+      const cells = match
+        .split("|")
+        .filter(Boolean)
+        .map((c) => c.trim());
+      if (cells.length === 0) return match;
+      const isHeader = cells.some((c) => c.includes("Factor") || c.includes("Score"));
+      const tag = isHeader ? "th" : "td";
+      const row = cells
+        .map(
+          (c) =>
+            `<${tag} class="border border-neutral-200 px-3 py-2 text-left text-sm">${c}</${tag}>`,
+        )
+        .join("");
+      return `<tr>${row}</tr>`;
+    })
+    .replace(/((?:<tr>[\s\S]*?<\/tr>\s*)+)/g, '<table class="my-4 w-full border-collapse overflow-hidden rounded-lg">$1</table>')
+    .replace(/^-\s+(.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
+    .replace(/(<li[\s\S]*?<\/li>)/g, '<ul class="my-2 space-y-1">$1</ul>')
     .replace(/\n/g, "<br />");
 }
 
@@ -37,11 +60,12 @@ export function AskHero({
         <Logo size="hero" showTagline href="/ask" priority />
       </div>
       <h1 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl">
-        Ask AreaIQ
+        AreaIQ Intelligence
       </h1>
       <p className="mx-auto mt-3 max-w-2xl text-base text-neutral-500 sm:text-lg">
-        Search properties, compare projects, discover investment opportunities, and get
-        instant real estate advice.
+        Your Senior Real Estate Intelligence Agent for Chandigarh, Mohali, Panchkula &amp;
+        Zirakpur. Property search, area analysis, investment advice — backed by live database
+        listings.
       </p>
 
       <form
@@ -186,6 +210,9 @@ export function AskResponseCard({ turn }: AskResponseCardProps) {
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white px-5 py-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:px-6 sm:py-6">
       <Logo size="footer" iconOnly href={null} className="mb-3" />
+      <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
+        AreaIQ Intelligence Agent
+      </p>
       <h2 className="mt-2 text-lg font-semibold text-neutral-900 sm:text-xl">
         {turn.headline}
       </h2>
@@ -209,11 +236,13 @@ export function AskResponseCard({ turn }: AskResponseCardProps) {
 
 interface AskRecommendedPropertiesProps {
   listings: ListingProperty[];
+  rationales?: Record<string, string>;
   label?: string;
 }
 
 export function AskRecommendedProperties({
   listings,
+  rationales = {},
   label = "Recommended Properties",
 }: AskRecommendedPropertiesProps) {
   if (listings.length === 0) return null;
@@ -221,7 +250,19 @@ export function AskRecommendedProperties({
   return (
     <div className="space-y-4">
       <h3 className="text-base font-semibold text-neutral-900 sm:text-lg">{label}</h3>
-      <AskResultsGrid listings={listings} />
+      <div className="space-y-6">
+        {listings.map((listing) => (
+          <div key={listing.id} className="space-y-2">
+            <AskResultsGrid listings={[listing]} />
+            {rationales[listing.id] ? (
+              <p className="rounded-lg border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-900">
+                <span className="font-semibold">Why this fits: </span>
+                {rationales[listing.id]}
+              </p>
+            ) : null}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

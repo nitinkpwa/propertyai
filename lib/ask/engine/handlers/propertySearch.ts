@@ -3,9 +3,14 @@ import { searchPropertiesFromIntent } from "../../search";
 import type { AskEngineResponse, HandlerContext } from "../types";
 import { classificationToResponseFields } from "../types";
 import { entitiesToFilters } from "../classifier";
+import { buildMemoryContext, buildPropertyMemoryContext, wantsAlternativeProperties } from "../memory";
 import { logAsk } from "../logger";
-import { buildListingsContext, generatePropertySearchSummary } from "../openai";
-import { NO_MATCHING_PROPERTIES_MESSAGE } from "../prompts";
+import {
+  buildListingsContext,
+  extractPropertyRationales,
+  generatePropertySearchSummary,
+} from "../openai";
+import { NO_EXACT_MATCH_MESSAGE } from "../prompts";
 
 const SEARCH_SUGGESTIONS = [
   "Compare these",
@@ -19,13 +24,39 @@ const SEARCH_FOLLOW_UPS = [
   "Show cheaper options",
   "Show nearby projects",
   "Ready to move",
-  "Rental properties",
+  "Calculate EMI",
 ];
+
+function mapRationalesToIds(
+  listings: Array<{ id: string; name: string }>,
+  answer: string,
+): Record<string, string> {
+  const byName = extractPropertyRationales(
+    answer,
+    listings.map((l) => l.name),
+  );
+  const result: Record<string, string> = {};
+  for (const listing of listings) {
+    if (byName[listing.name]) {
+      result[listing.id] = byName[listing.name];
+    }
+  }
+  return result;
+}
 
 export async function handlePropertySearch(
   ctx: HandlerContext,
 ): Promise<AskEngineResponse> {
   const filters = entitiesToFilters(ctx.classification.entities);
+  const memoryContext = buildMemoryContext(ctx.classification);
+  const wantsAlternative = wantsAlternativeProperties(ctx.message);
+  if (wantsAlternative && ctx.excludePropertyIds?.length) {
+    filters.excludePropertyIds = ctx.excludePropertyIds;
+  }
+  const propertyMemoryContext = buildPropertyMemoryContext(
+    ctx.excludePropertyIds ?? [],
+    wantsAlternative,
+  );
 
   logAsk({
     event: "supabase_query_start",
@@ -49,9 +80,10 @@ export async function handlePropertySearch(
   if (listings.length === 0) {
     return {
       intent: "PROPERTY_SEARCH",
-      answer: NO_MATCHING_PROPERTIES_MESSAGE,
+      answer: `${NO_EXACT_MATCH_MESSAGE}\n\nTry adjusting your budget, BHK, or area. I can also analyze a specific locality or suggest investment options.`,
       ...baseFields,
       properties: [],
+      propertyRationales: {},
       suggestions: [],
       followUpQuestions: [
         "Show properties in Mohali",
@@ -70,11 +102,12 @@ export async function handlePropertySearch(
     listingsContext,
     !result.isSimilar,
     ctx.history,
+    memoryContext + propertyMemoryContext,
   );
 
   let answer = aiSummary;
   if (result.isSimilar) {
-    answer = `${NO_MATCHING_PROPERTIES_MESSAGE} Here are the closest matching properties from our database:\n\n${aiSummary}`;
+    answer = `${NO_EXACT_MATCH_MESSAGE}\n\nHere are the closest matching properties from our database:\n\n${aiSummary}`;
   }
 
   return {
@@ -82,6 +115,7 @@ export async function handlePropertySearch(
     answer,
     ...baseFields,
     properties: listings,
+    propertyRationales: mapRationalesToIds(listings, answer),
     suggestions: SEARCH_SUGGESTIONS,
     followUpQuestions: SEARCH_FOLLOW_UPS,
     stats: computeSearchStats(listings),

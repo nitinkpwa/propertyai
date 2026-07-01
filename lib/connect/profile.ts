@@ -6,6 +6,7 @@ export async function upsertBuilderProfile(input: {
   user: User;
   companyName: string;
   builderName: string;
+  username?: string;
   phone: string;
   email: string;
   city: string;
@@ -15,6 +16,7 @@ export async function upsertBuilderProfile(input: {
   const base = await upsertProfile({
     user: input.user,
     fullName: input.builderName.trim(),
+    username: input.username,
     role: "builder",
     phone: input.phone,
   });

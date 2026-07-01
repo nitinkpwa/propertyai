@@ -1,315 +1,131 @@
 "use client";
 
-import { useEffect, useRef, useState, Suspense } from "react";
+import { useEffect, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import {
-  AskChipRow,
-  AskHero,
-  AskLoadingCard,
-  AskRecommendedProperties,
-  AskResponseCard,
-  AskUserQueryCard,
-} from "./components/AskConversation";
-import { mapEngineResponseToTurn, queryAskEngine, type ConversationMessage } from "@/lib/ask/client";
-import {
-  getFollowUpConfig,
-  getQuickActionConfig,
-  STARTER_SUGGESTIONS,
-  type FollowUpOption,
-  type QuickAction,
-} from "@/lib/ask/followUps";
-import { computeSearchStats, getTypingStatus } from "@/lib/ask/responses";
-import { sortAskListings } from "@/lib/ask/sort";
-import { filterProperties } from "@/lib/properties/filterProperties";
-import type { ListingProperty, PropertyFilterState } from "@/lib/properties/types";
-import { DEFAULT_FILTER_STATE } from "@/lib/properties/types";
-import type { AskTurn } from "@/lib/ask/types";
-
-const SESSION_KEY = "areaiq-ask-session-v6";
-
-type TypingPhase = "understanding" | "searching" | "responding";
+import type { PropertyContext } from "@/lib/ask/client";
+import { useAskChat } from "@/lib/ask/conversations/useAskChat";
+import { AskChatInput } from "./components/AskChatInput";
+import { AskChatMessages } from "./components/AskChatMessages";
+import { AskSidebar } from "./components/AskSidebar";
 
 function AskPageContent() {
   const searchParams = useSearchParams();
   const didAutoSend = useRef(false);
-  const resultsRef = useRef<HTMLDivElement>(null);
 
-  const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [typingPhase, setTypingPhase] = useState<TypingPhase>("understanding");
-  const [turn, setTurn] = useState<AskTurn | null>(null);
-  const [lastSourceListings, setLastSourceListings] = useState<ListingProperty[]>([]);
-  const [lastQuery, setLastQuery] = useState("");
-  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
-
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(SESSION_KEY);
-      if (!raw) return;
-      const saved = JSON.parse(raw) as {
-        turn: AskTurn | null;
-        lastSourceListings: ListingProperty[];
-        lastQuery: string;
-        conversationHistory?: ConversationMessage[];
-      };
-      if (saved.turn) setTurn(saved.turn);
-      if (saved.lastSourceListings) setLastSourceListings(saved.lastSourceListings);
-      if (saved.lastQuery) setLastQuery(saved.lastQuery);
-      if (saved.conversationHistory) setConversationHistory(saved.conversationHistory);
-    } catch (error) {
-      console.error("Failed to restore ask session:", error);
-    }
-  }, []);
+  const {
+    isLoggedIn,
+    authLoading,
+    hydrated,
+    conversations,
+    activeConversation,
+    recentSearches,
+    propertyContext,
+    setPropertyContext,
+    loading,
+    typingStatus,
+    sidebarOpen,
+    setSidebarOpen,
+    messagesEndRef,
+    startNewChat,
+    loadConversation,
+    deleteConversation,
+    sendMessage,
+  } = useAskChat(null);
 
   useEffect(() => {
-    if (!turn) return;
-    try {
-      sessionStorage.setItem(
-        SESSION_KEY,
-        JSON.stringify({ turn, lastSourceListings, lastQuery, conversationHistory }),
-      );
-    } catch (error) {
-      console.error("Failed to persist ask session:", error);
-    }
-  }, [turn, lastSourceListings, lastQuery, conversationHistory]);
-
-  useEffect(() => {
-    if (turn && resultsRef.current) {
-      resultsRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [turn?.id]);
-
-  useEffect(() => {
+    const propertyId = searchParams.get("propertyId");
     const q = searchParams.get("q");
-    if (!q || didAutoSend.current) return;
-    didAutoSend.current = true;
-    runSearch(q);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
 
-  const runSearch = async (text?: string) => {
-    const messageText = (text ?? query).trim();
-    if (!messageText || loading) return;
-
-    setQuery("");
-    setLoading(true);
-    setTypingPhase("understanding");
-    setLastQuery(messageText);
-
-    try {
-      setTypingPhase("understanding");
-      const engineResponse = await queryAskEngine(messageText, conversationHistory);
-
-      setTypingPhase(engineResponse.searchedDatabase ? "searching" : "responding");
-
-      const mappedTurn = mapEngineResponseToTurn(messageText, engineResponse);
-      setTurn(mappedTurn);
-      setLastSourceListings(engineResponse.properties);
-      setConversationHistory((prev) => [
-        ...prev,
-        { role: "user", content: messageText },
-        { role: "assistant", content: engineResponse.answer },
-      ]);
-    } catch (error) {
-      console.error("Ask engine error:", error);
-      setTurn({
-        id: crypto.randomUUID(),
-        userQuery: messageText,
-        intent: "knowledge",
-        headline: "Something went wrong while processing your request.",
-        subtext: "Please try again.",
-        aiContent: null,
-        sections: [],
-        stats: null,
-        listings: [],
-        isSimilar: false,
-        quickActions: [],
-        followUps: [],
-      });
-      setLastSourceListings([]);
-    } finally {
-      setLoading(false);
-      setTypingPhase("understanding");
-    }
-  };
-
-  const applyListingsUpdate = (
-    userMessage: string,
-    listings: ListingProperty[],
-    headline: string,
-    subtext: string | null = "Here are the updated results.",
-  ) => {
-    setLastSourceListings(listings);
-    setTurn((prev) =>
-      prev
-        ? {
-            ...prev,
-            userQuery: userMessage,
-            headline,
-            subtext,
-            stats: computeSearchStats(listings),
-            listings,
-            quickActions: listings.length > 0 ? prev.quickActions : [],
+    if (propertyId) {
+      fetch(`/api/properties/${propertyId}/context`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((ctx: PropertyContext | null) => {
+          if (ctx) {
+            setPropertyContext(ctx);
           }
-        : null,
+        })
+        .catch(() => {});
+    }
+
+    if (!q || didAutoSend.current || !hydrated) return;
+    didAutoSend.current = true;
+    sendMessage(q);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, hydrated]);
+
+  const handleNewChat = async () => {
+    await startNewChat(propertyContext);
+    setSidebarOpen(false);
+  };
+
+  if (authLoading || !hydrated) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] items-center justify-center bg-neutral-50">
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
+      </div>
     );
-  };
-
-  const handleQuickAction = async (action: QuickAction) => {
-    if (loading) return;
-    const config = getQuickActionConfig(action);
-
-    if (config.appendQuery) {
-      await runSearch(`${lastQuery} ${config.appendQuery}`.trim());
-      return;
-    }
-
-    if (config.compareMode) {
-      setTurn((prev) =>
-        prev
-          ? {
-              ...prev,
-              userQuery: "Compare these properties",
-              headline: `Comparing ${lastSourceListings.length} properties on price, rental yield, and AreaIQ score.`,
-              subtext: "Open each listing for full details.",
-              aiContent: lastSourceListings
-                .slice(0, 4)
-                .map(
-                  (p) =>
-                    `**${p.name}** — ${p.location} · ${p.bhk} BHK · Yield ${p.rentalYield}% · Score ${p.growthScore}/100`,
-                )
-                .join("\n\n"),
-              listings: lastSourceListings,
-            }
-          : null,
-      );
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let listings = [...lastSourceListings];
-
-      if (config.possession?.length) {
-        listings = filterProperties(listings, {
-          ...DEFAULT_FILTER_STATE,
-          possession: config.possession,
-        });
-      }
-
-      if (config.filterInvestment) {
-        listings = sortAskListings(listings, "growthScore", "desc");
-      }
-
-      if (config.filterLuxury) {
-        listings = listings.filter((p) => p.price >= 10_000_000);
-      }
-
-      if (config.filterBuilderFloor) {
-        listings = listings.filter((p) => p.propertyType === "builder-floor");
-      }
-
-      if (config.sortKey) {
-        listings = sortAskListings(listings, config.sortKey, config.sortDirection ?? "desc");
-      }
-
-      applyListingsUpdate(action, listings, `Showing ${listings.length} properties — ${action}.`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFollowUp = async (option: FollowUpOption) => {
-    if (loading) return;
-    const config = getFollowUpConfig(option);
-
-    if (config.appendQuery || config.emiMode) {
-      const message = config.emiMode
-        ? `${lastQuery} calculate EMI home loan`
-        : `${lastQuery} ${config.appendQuery ?? ""}`.trim();
-      await runSearch(message);
-      return;
-    }
-
-    if (config.compareMode) {
-      await runSearch("Compare builders for these properties");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let listings = [...lastSourceListings];
-
-      if (config.possession?.length) {
-        const filters: PropertyFilterState = {
-          ...DEFAULT_FILTER_STATE,
-          possession: config.possession,
-        };
-        listings = filterProperties(listings, filters);
-      }
-
-      if (config.sortKey) {
-        listings = sortAskListings(listings, config.sortKey, config.sortDirection ?? "desc");
-      }
-
-      applyListingsUpdate(config.userMessage, listings, `Updated results — ${option}.`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }
 
   return (
-    <div className="min-h-screen bg-neutral-50 pt-16">
-      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        <AskHero
-          query={query}
-          onChange={setQuery}
-          onSubmit={() => runSearch()}
+    <div className="flex h-[calc(100vh-4rem)] bg-white pt-16">
+      {/* Mobile sidebar overlay */}
+      {sidebarOpen ? (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden
+        />
+      ) : null}
+
+      {/* Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-72 transform pt-16 transition-transform lg:static lg:z-0 lg:w-64 lg:translate-x-0 lg:pt-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <AskSidebar
+          conversations={conversations}
+          activeId={activeConversation?.id ?? null}
+          isLoggedIn={isLoggedIn}
+          onNewChat={handleNewChat}
+          onSelect={loadConversation}
+          onDelete={deleteConversation}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </div>
+
+      {/* Main chat area */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex items-center gap-3 border-b border-neutral-200 px-4 py-3 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-100"
+            aria-label="Open conversations"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <span className="truncate text-sm font-semibold text-neutral-900">
+            {activeConversation?.title ?? "AreaIQ Intelligence"}
+          </span>
+        </header>
+
+        <AskChatMessages
+          messages={activeConversation?.messages ?? []}
+          propertyContext={propertyContext}
           loading={loading}
-          suggestions={STARTER_SUGGESTIONS}
-          onSuggestionClick={runSearch}
-          showSuggestions={!turn && !loading}
+          typingStatus={typingStatus}
+          messagesEndRef={messagesEndRef}
+          onFollowUp={sendMessage}
         />
 
-        <div ref={resultsRef} className="mt-10 space-y-6">
-          {turn && !loading ? (
-            <>
-              <AskUserQueryCard query={turn.userQuery} />
-              <AskResponseCard turn={turn} />
-
-              {turn.listings.length > 0 ? (
-                <AskRecommendedProperties
-                  listings={turn.listings}
-                  label={
-                    turn.intent === "search" || turn.intent === "investment"
-                      ? "Property Results"
-                      : "Recommended Properties"
-                  }
-                />
-              ) : null}
-
-              {turn.quickActions.length > 0 ? (
-                <AskChipRow
-                  title="Quick Actions"
-                  options={turn.quickActions}
-                  onSelect={(option) => handleQuickAction(option as QuickAction)}
-                />
-              ) : null}
-
-              {turn.followUps.length > 0 ? (
-                <AskChipRow
-                  title="Suggested Follow-up"
-                  options={turn.followUps}
-                  onSelect={(option) => handleFollowUp(option as FollowUpOption)}
-                />
-              ) : null}
-            </>
-          ) : null}
-
-          {loading ? (
-            <AskLoadingCard status={getTypingStatus(typingPhase)} />
-          ) : null}
-        </div>
+        <AskChatInput
+          onSubmit={sendMessage}
+          loading={loading}
+          recentSearches={recentSearches}
+        />
       </div>
     </div>
   );
@@ -319,7 +135,7 @@ export default function AskPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-neutral-50 pt-16">
+        <div className="flex h-[calc(100vh-4rem)] items-center justify-center bg-neutral-50 pt-16">
           <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
         </div>
       }

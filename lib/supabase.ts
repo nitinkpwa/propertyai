@@ -9,6 +9,7 @@ export type Profile = {
   id: string;
   email: string;
   full_name: string;
+  username?: string | null;
   phone: string;
   role: "buyer" | "seller" | "builder" | "admin";
   avatar_url?: string;
@@ -70,8 +71,16 @@ export type Conversation = {
   id: string;
   user_id: string;
   title: string;
-  messages: { role: string; content: string }[];
+  messages: {
+    role: string;
+    content: string;
+    timestamp?: string;
+    suggested_property_ids?: string[];
+  }[];
+  property_context?: Record<string, unknown> | null;
+  suggested_property_ids?: string[];
   created_at: string;
+  updated_at: string;
 };
 
 export type Inquiry = {

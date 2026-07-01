@@ -21,8 +21,14 @@ export default function BuilderSection({ builder }: BuilderSectionProps) {
         <div className="flex-1">
           <h3 className="text-xl font-bold text-neutral-900 sm:text-2xl">{builder.name}</h3>
           <div className="mt-4 grid grid-cols-2 gap-4 sm:gap-8">
-            <Stat label="Years Experience" value={`${builder.yearsExperience}+`} />
-            <Stat label="Projects Delivered" value={String(builder.projectsDelivered)} />
+            <Stat
+              label="Years Experience"
+              value={builder.yearsExperience !== null ? `${builder.yearsExperience}+` : "Not available"}
+            />
+            <Stat
+              label="Projects Delivered"
+              value={builder.projectsDelivered !== null ? String(builder.projectsDelivered) : "Not available"}
+            />
           </div>
         </div>
 

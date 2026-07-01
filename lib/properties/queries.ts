@@ -1,12 +1,12 @@
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
 import type {
   AISummary,
-  AreaInsight,
   BuilderInfo,
   FloorPlan,
   NearbyPlace,
   PropertyDetail,
 } from "@/app/property/[id]/data";
+import { areaIntelligenceService } from "@/lib/intelligence/AreaIntelligenceService";
 import { supabase, type Property } from "@/lib/supabase";
 import type {
   Amenity,
@@ -24,6 +24,9 @@ type PropertyRow = Property & {
   builder_name?: string | null;
   possession?: string | null;
   project_name?: string | null;
+  nearby_places?: unknown;
+  facing?: string | null;
+  furnishing?: string | null;
   seller?: { full_name?: string | null } | null;
 };
 
@@ -107,12 +110,14 @@ function resolvePhotoUrls(photos: string[] | null | undefined): string[] {
     .filter((url): url is string => Boolean(url));
 }
 
-function hashScore(id: string, salt: number, min: number, max: number): number {
-  let hash = salt;
-  for (let i = 0; i < id.length; i += 1) {
-    hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  }
-  return min + (hash % (max - min + 1));
+function getGrowthScore(row: PropertyRow): number | null {
+  if (typeof row.growth_score === "number") return row.growth_score;
+  return null;
+}
+
+function getRentalYield(row: PropertyRow): number | null {
+  if (typeof row.rental_yield === "number") return row.rental_yield;
+  return null;
 }
 
 function normalizeAmenity(value: string): Amenity | null {
@@ -193,16 +198,6 @@ function getBuilderName(row: PropertyRow): string {
   );
 }
 
-function getGrowthScore(row: PropertyRow): number {
-  if (typeof row.growth_score === "number") return row.growth_score;
-  return hashScore(row.id, 17, 68, 92);
-}
-
-function getRentalYield(row: PropertyRow): number {
-  if (typeof row.rental_yield === "number") return row.rental_yield;
-  return hashScore(row.id, 29, 38, 72) / 10;
-}
-
 function getInitials(name: string): string {
   return name
     .split(/\s+/)
@@ -238,58 +233,58 @@ function buildGalleryImages(photos: string[] | null | undefined) {
   }));
 }
 
-function buildAreaInsights(row: PropertyRow): AreaInsight {
-  const growthScore = getGrowthScore(row);
-  const rentalYield = getRentalYield(row);
+function buildAiSummary(
+  row: PropertyRow,
+  intelligenceReport: Awaited<ReturnType<typeof areaIntelligenceService.generateReport>>,
+): AISummary {
+  const investmentScore =
+    intelligenceReport?.investmentScore.available &&
+    typeof intelligenceReport.investmentScore.value === "number"
+      ? intelligenceReport.investmentScore.value
+      : null;
+
+  let riskLevel: AISummary["riskLevel"] = null;
+  if (investmentScore !== null) {
+    if (investmentScore >= 75) riskLevel = "Low";
+    else if (investmentScore >= 55) riskLevel = "Moderate";
+    else riskLevel = "High";
+  }
+
+  const pros = [
+    `Located in ${row.city} — ${row.location}`,
+    row.rera_verified ? "RERA verified listing" : null,
+    intelligenceReport?.rentalYield.available
+      ? `Estimated rental yield ${intelligenceReport.rentalYield.displayValue}`
+      : null,
+    intelligenceReport?.growthScore.available
+      ? `Area growth score ${intelligenceReport.growthScore.displayValue}/100`
+      : null,
+  ].filter(Boolean) as string[];
 
   return {
-    growthScore,
-    rentalYield,
-    investmentRating: Math.min(95, growthScore - 4),
-    traffic: hashScore(row.id, 41, 55, 85),
-    schoolsNearby: hashScore(row.id, 53, 4, 14),
-    hospitals: hashScore(row.id, 61, 2, 8),
-    airportDistance: `${(hashScore(row.id, 67, 6, 18) / 10).toFixed(1)} km`,
-    metroDistance: `${(hashScore(row.id, 71, 20, 60) / 10).toFixed(1)} km`,
-    futureDevelopments: [
-      `Infrastructure upgrades planned in ${row.city}`,
-      `Growing demand around ${row.location}`,
-      "New commercial corridors under development",
-    ],
-  };
-}
-
-function buildAiSummary(row: PropertyRow, growthScore: number): AISummary {
-  return {
-    summary: `${row.title} in ${row.location}, ${row.city} offers ${
-      row.type === "rent" ? "strong rental potential" : "solid long-term value"
-    } based on current market activity in the area.`,
-    pros: [
-      `Located in ${row.city} with active buyer interest`,
-      row.description
-        ? "Detailed listing information available from the seller"
-        : "Direct contact available for more details",
-      growthScore >= 80
-        ? "Area shows above-average growth indicators"
-        : "Balanced entry point for the locality",
-    ],
+    summary: `${row.title} in ${row.location}, ${row.city}. Review AreaIQ Intelligence Engine below for verified metrics calculated from our database.`,
+    pros: pros.length > 0 ? pros : ["Active listing on AreaIQ with verified seller contact"],
     cons: [
       "Verify possession timeline and documentation before booking",
       "Compare with nearby listings for price benchmarking",
     ],
-    investmentScore: Math.min(95, growthScore - 2),
-    riskLevel: growthScore >= 80 ? "Low" : growthScore >= 70 ? "Moderate" : "Moderate",
+    investmentScore,
+    riskLevel,
   };
 }
 
-function buildNearbyPlaces(city: string): NearbyPlace[] {
-  return [
-    { name: `${city} City Centre`, distance: "4.5 km", type: "mall" },
-    { name: "Nearest School", distance: "2.1 km", type: "school" },
-    { name: "Multi-speciality Hospital", distance: "3.8 km", type: "hospital" },
-    { name: "Public Transit Hub", distance: "1.6 km", type: "metro" },
-    { name: "Business District", distance: "5.4 km", type: "it" },
-  ];
+function buildNearbyPlaces(row: PropertyRow): NearbyPlace[] {
+  const raw = row.nearby_places;
+  if (Array.isArray(raw) && raw.length > 0) {
+    return raw
+      .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
+      .map((item) => ({
+        name: typeof item.name === "string" ? item.name : "Nearby place",
+        distance: typeof item.distance === "string" ? item.distance : "—",
+        type: (typeof item.type === "string" ? item.type : "mall") as NearbyPlace["type"],
+      }));
+  }
+  return [];
 }
 
 function buildFloorPlans(row: PropertyRow): FloorPlan[] {
@@ -313,8 +308,8 @@ function buildBuilderInfo(row: PropertyRow): BuilderInfo {
   return {
     name,
     logoInitials: getInitials(name) || "IQ",
-    yearsExperience: hashScore(row.id, 83, 8, 28),
-    projectsDelivered: hashScore(row.id, 89, 6, 48),
+    yearsExperience: null,
+    projectsDelivered: null,
   };
 }
 
@@ -370,9 +365,9 @@ export function mapPropertyRowToCardProps(row: PropertyRow): PropertyCardProps {
 export function mapPropertyRowToDetail(
   row: PropertyRow,
   similarProperties: PropertyCardProps[] = [],
+  intelligenceReport: Awaited<ReturnType<typeof areaIntelligenceService.generateReport>> = null,
 ): PropertyDetail {
   const possession = mapPossession(row.possession);
-  const growthScore = getGrowthScore(row);
   const bedrooms = row.bedrooms ?? 0;
   const area = row.area_sqft ?? 0;
   const builder = buildBuilderInfo(row);
@@ -397,12 +392,12 @@ export function mapPropertyRowToDetail(
     possession: formatPossessionLabel(possession),
     configuration:
       bedrooms > 0 ? `${bedrooms} BHK` : SUB_TYPE_LABELS[row.sub_type] ?? "—",
-    totalFloors: hashScore(row.id, 97, 4, 24),
+    totalFloors: null,
     parking: amenities.some((item) => item.toLowerCase().includes("parking"))
       ? "Available"
       : "Contact for details",
-    facing: "Contact for details",
-    furnishing: "Unfurnished",
+    facing: row.facing?.trim() || "Contact for details",
+    furnishing: row.furnishing?.trim() || "Contact for details",
     description:
       row.description?.trim() ||
       `${row.title} is listed in ${row.location}, ${row.city}. Contact the seller for full details, site visit scheduling, and documentation.`,
@@ -410,10 +405,10 @@ export function mapPropertyRowToDetail(
     reraVerified: Boolean(row.rera_verified),
     images: buildGalleryImages(row.photos),
     amenities,
-    areaInsights: buildAreaInsights(row),
-    aiSummary: buildAiSummary(row, growthScore),
+    intelligenceReport,
+    aiSummary: buildAiSummary(row, intelligenceReport),
     floorPlans: buildFloorPlans(row),
-    nearbyPlaces: buildNearbyPlaces(row.city),
+    nearbyPlaces: buildNearbyPlaces(row),
     similarProperties: similarProperties ?? [],
     contactPhone: phone,
     whatsapp,
@@ -459,9 +454,12 @@ export async function fetchPropertyDetailById(
     }
 
     const row = data as PropertyRow;
-    const similar = await fetchSimilarListingProperties(row.city, row.id, 4);
+    const [similar, intelligenceReport] = await Promise.all([
+      fetchSimilarListingProperties(row.city, row.id, 4),
+      areaIntelligenceService.generateReport(row.id),
+    ]);
 
-    return mapPropertyRowToDetail(row, similar);
+    return mapPropertyRowToDetail(row, similar, intelligenceReport);
   } catch (error) {
     console.error("Failed to fetch property detail:", error);
     return null;

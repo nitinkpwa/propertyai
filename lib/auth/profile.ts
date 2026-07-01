@@ -1,7 +1,9 @@
-import { isAdminRole } from "@/lib/auth/admin";
 import type { User } from "@supabase/supabase-js";
+import { formatMobileDisplay, mobileToAuthEmail, normalizeMobileNumber } from "@/lib/auth/mobile";
+import { normalizeUsername } from "@/lib/auth/username";
 import { supabase, type Profile } from "@/lib/supabase";
-import { mobileToAuthEmail, normalizeMobileNumber } from "@/lib/auth/mobile";
+
+export { getDashboardPath } from "@/lib/auth/routes";
 
 export async function fetchProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabase
@@ -21,6 +23,7 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
 export async function upsertProfile(input: {
   user: User;
   fullName: string;
+  username?: string;
   role?: Profile["role"];
   phone?: string;
 }): Promise<Profile | null> {
@@ -30,10 +33,17 @@ export async function upsertProfile(input: {
       ? normalizeMobileNumber(String(input.user.user_metadata.phone))
       : "";
 
+  const normalizedUsername = input.username
+    ? normalizeUsername(input.username)
+    : (input.user.user_metadata?.username as string | undefined)
+      ? normalizeUsername(String(input.user.user_metadata.username))
+      : "";
+
   const payload = {
     id: input.user.id,
     email: input.user.email ?? (normalizedPhone ? mobileToAuthEmail(normalizedPhone) : ""),
     full_name: input.fullName.trim(),
+    username: normalizedUsername || null,
     phone: normalizedPhone,
     role: input.role ?? (input.user.user_metadata?.role as Profile["role"]) ?? "buyer",
   };
@@ -52,24 +62,31 @@ export async function upsertProfile(input: {
   return data;
 }
 
-export function getDashboardPath(role?: Profile["role"] | string | null): string {
-  if (isAdminRole(role)) return "/admin";
-  switch (role) {
-    case "seller":
-      return "/seller";
-    case "builder":
-      return "/builder";
-    default:
-      return "/buyer";
-  }
-}
-
-export function getInitials(name?: string | null, email?: string | null): string {
-  const source = name?.trim() || email?.trim() || "U";
+export function getInitials(name?: string | null, fallback?: string | null): string {
+  const source = name?.trim() || fallback?.trim() || "U";
   return source
     .split(/\s+/)
     .filter(Boolean)
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
+}
+
+export function getProfileDisplayName(profile: Profile | null, user?: User | null): string {
+  if (profile?.full_name?.trim()) return profile.full_name.trim();
+  if (profile?.username) return profile.username;
+  if (profile?.phone) return formatMobileDisplay(profile.phone);
+  return user?.user_metadata?.full_name?.trim() || "User";
+}
+
+export function getProfileSubtitle(profile: Profile | null): string {
+  if (profile?.username) return `@${profile.username}`;
+  if (profile?.phone) return formatMobileDisplay(profile.phone);
+  return "AreaIQ member";
+}
+
+export function getProfileLoginIdentifier(profile: Profile | null): string {
+  if (profile?.username) return profile.username;
+  if (profile?.phone) return profile.phone;
+  return "";
 }

@@ -1,17 +1,10 @@
-import { isValidMobileNumber } from "@/lib/auth/mobile";
 import type { AccountType } from "@/lib/auth/mobile";
-
-export function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-}
+import { isValidMobileNumber } from "@/lib/auth/mobile";
+import { isValidUsername } from "@/lib/auth/username";
 
 export function validatePassword(password: string): string | null {
   if (password.length < 8) {
     return "Password must be at least 8 characters.";
-  }
-
-  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) {
-    return "Password must include at least one letter and one number.";
   }
 
   return null;
@@ -19,6 +12,7 @@ export function validatePassword(password: string): string | null {
 
 export function validateRegistration(input: {
   fullName: string;
+  username: string;
   mobile: string;
   password: string;
   confirmPassword: string;
@@ -26,6 +20,10 @@ export function validateRegistration(input: {
 }): string | null {
   if (!input.fullName.trim()) {
     return "Please enter your full name.";
+  }
+
+  if (!isValidUsername(input.username)) {
+    return "Username must be 3–30 characters and use letters, numbers, or underscores only.";
   }
 
   if (!isValidMobileNumber(input.mobile)) {
@@ -47,15 +45,38 @@ export function validateRegistration(input: {
 }
 
 export function validateLogin(input: {
-  mobile: string;
+  identifier: string;
   password: string;
 }): string | null {
-  if (!isValidMobileNumber(input.mobile)) {
-    return "Please enter a valid 10-digit mobile number.";
+  if (!input.identifier.trim()) {
+    return "Please enter your username or phone number.";
   }
 
   if (!input.password) {
     return "Please enter your password.";
+  }
+
+  return null;
+}
+
+export function validatePasswordChange(input: {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}): string | null {
+  if (!input.currentPassword) {
+    return "Please enter your current password.";
+  }
+
+  const passwordError = validatePassword(input.newPassword);
+  if (passwordError) return passwordError;
+
+  if (input.newPassword !== input.confirmPassword) {
+    return "New passwords do not match.";
+  }
+
+  if (input.currentPassword === input.newPassword) {
+    return "Choose a password that is different from your current one.";
   }
 
   return null;

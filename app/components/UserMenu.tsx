@@ -5,7 +5,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { EMERALD } from "@/lib/auth/constants";
-import { getInitials } from "@/lib/auth/profile";
+import {
+  getProfileDisplayName,
+  getProfileSubtitle,
+  getInitials,
+} from "@/lib/auth/profile";
+import { supabase } from "@/lib/supabase";
 
 export default function UserMenu() {
   const router = useRouter();
@@ -58,8 +63,9 @@ export default function UserMenu() {
     );
   }
 
-  const displayName = profile?.full_name || user.email?.split("@")[0] || "User";
-  const initials = getInitials(profile?.full_name, user.email);
+  const displayName = getProfileDisplayName(profile, user);
+  const subtitle = getProfileSubtitle(profile);
+  const initials = getInitials(profile?.full_name, profile?.username ?? profile?.phone);
 
   return (
     <div className="relative hidden sm:block" ref={menuRef}>
@@ -115,12 +121,11 @@ export default function UserMenu() {
             <p className="truncate text-sm font-semibold text-neutral-900">
               {displayName}
             </p>
-            <p className="truncate text-xs text-neutral-500">{user.email}</p>
+            <p className="truncate text-xs text-neutral-500">{subtitle}</p>
           </div>
 
           {[
             { label: "Dashboard", href: dashboardPath },
-            { label: "Saved Properties", href: "/buyer" },
             { label: "Profile", href: "/profile" },
           ].map((item) => (
             <Link

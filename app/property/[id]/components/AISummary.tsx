@@ -12,7 +12,8 @@ const RISK_STYLES = {
 };
 
 export default function AISummary({ summary }: AISummaryProps) {
-  const tone = scoreTone(summary.investmentScore);
+  const hasScore = summary.investmentScore !== null;
+  const tone = hasScore ? scoreTone(summary.investmentScore!) : scoreTone(0);
 
   return (
     <SectionCard className="relative overflow-hidden border-emerald-200/60 bg-gradient-to-br from-white via-white to-emerald-50/30">
@@ -67,19 +68,30 @@ export default function AISummary({ summary }: AISummaryProps) {
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className={`rounded-2xl p-4 sm:p-5 ${tone.bg}`}>
+          <div className={`rounded-2xl p-4 sm:p-5 ${hasScore ? tone.bg : "bg-neutral-50"}`}>
             <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Investment Score</p>
-            <div className="mt-1 flex items-baseline gap-1">
-              <span className={`text-3xl font-bold tabular-nums ${tone.text}`}>{summary.investmentScore}</span>
-              <span className="text-sm text-neutral-400">/ 100</span>
-            </div>
-            <ProgressBar value={summary.investmentScore} className="mt-3" />
+            {hasScore ? (
+              <>
+                <div className="mt-1 flex items-baseline gap-1">
+                  <span className={`text-3xl font-bold tabular-nums ${tone.text}`}>{summary.investmentScore}</span>
+                  <span className="text-sm text-neutral-400">/ 100</span>
+                </div>
+                <ProgressBar value={summary.investmentScore!} className="mt-3" />
+                <p className="mt-2 text-[11px] text-neutral-500">Source: AreaIQ Calculated</p>
+              </>
+            ) : (
+              <p className="mt-2 text-sm text-neutral-500">Insufficient data — AreaIQ needs more market listings to calculate this score.</p>
+            )}
           </div>
           <div className="flex flex-col justify-center rounded-2xl border border-neutral-100 bg-neutral-50/80 p-4 sm:p-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-neutral-500">Risk Level</p>
-            <span className={`mt-2 inline-flex w-fit rounded-full px-4 py-1.5 text-sm font-bold ${RISK_STYLES[summary.riskLevel]}`}>
-              {summary.riskLevel}
-            </span>
+            {summary.riskLevel ? (
+              <span className={`mt-2 inline-flex w-fit rounded-full px-4 py-1.5 text-sm font-bold ${RISK_STYLES[summary.riskLevel]}`}>
+                {summary.riskLevel}
+              </span>
+            ) : (
+              <p className="mt-2 text-sm text-neutral-500">Not available yet</p>
+            )}
           </div>
         </div>
       </div>

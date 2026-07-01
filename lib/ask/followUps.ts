@@ -3,11 +3,11 @@ import type { AskSortKey } from "./types";
 import type { PossessionStatus } from "@/lib/properties/types";
 
 export const STARTER_SUGGESTIONS = [
+  "Tell me about Aerocity",
   "3 BHK under ₹80 lakh in Mohali",
-  "Flats near Airport Road",
-  "Best investment under ₹1 crore",
+  "Where should I invest 80 lakh?",
   "Compare Aerocity vs New Chandigarh",
-  "Villas in New Chandigarh",
+  "Best rental yield properties",
 ] as const;
 
 export const QUICK_ACTIONS = [

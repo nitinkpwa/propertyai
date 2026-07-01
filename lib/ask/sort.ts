@@ -8,9 +8,17 @@ export function sortAskListings(
 ): ListingProperty[] {
   const sorted = [...listings].sort((a, b) => {
     const left =
-      key === "price" ? a.price : key === "rentalYield" ? a.rentalYield : a.growthScore;
+      key === "price"
+        ? a.price
+        : key === "rentalYield"
+          ? a.rentalYield ?? -1
+          : a.growthScore ?? -1;
     const right =
-      key === "price" ? b.price : key === "rentalYield" ? b.rentalYield : b.growthScore;
+      key === "price"
+        ? b.price
+        : key === "rentalYield"
+          ? b.rentalYield ?? -1
+          : b.growthScore ?? -1;
 
     return direction === "asc" ? left - right : right - left;
   });

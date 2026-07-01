@@ -15,7 +15,7 @@ export default function PropertyOverview({ property }: PropertyOverviewProps) {
     { label: "Price / Sq Ft", value: `₹${property.pricePerSqFt.toLocaleString("en-IN")}` },
     { label: "Possession", value: property.possession },
     { label: "Configuration", value: property.configuration },
-    { label: "Total Floors", value: String(property.totalFloors) },
+    { label: "Total Floors", value: property.totalFloors !== null ? String(property.totalFloors) : "Contact for details" },
     { label: "Parking", value: property.parking },
     { label: "Facing", value: property.facing },
     { label: "Furnishing", value: property.furnishing },

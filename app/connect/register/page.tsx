@@ -7,17 +7,17 @@ import AuthAlert from "@/components/auth/AuthAlert";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthInput from "@/components/auth/AuthInput";
 import Logo from "@/components/common/Logo";
+import { registerAccount } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
-import { mobileToAuthEmail } from "@/lib/auth/mobile";
-import { CONNECT_CITIES, EMERALD } from "@/lib/connect/constants";
+import { CONNECT_CITIES } from "@/lib/connect/constants";
 import { upsertBuilderProfile } from "@/lib/connect/profile";
 import { validateBuilderRegistration } from "@/lib/connect/validation";
-import { supabase } from "@/lib/supabase";
 
 export default function ConnectRegisterPage() {
   const router = useRouter();
   const [companyName, setCompanyName] = useState("");
   const [builderName, setBuilderName] = useState("");
+  const [username, setUsername] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
   const [gst, setGst] = useState("");
@@ -27,17 +27,16 @@ export default function ConnectRegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
-    setSuccess(null);
 
     const validationError = validateBuilderRegistration({
       companyName,
       builderName,
+      username,
       mobile,
       email,
       city,
@@ -54,28 +53,19 @@ export default function ConnectRegisterPage() {
     setLoading(true);
 
     try {
-      const authEmail = mobileToAuthEmail(mobile);
-
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: authEmail,
+      const { user } = await registerAccount({
+        fullName: builderName.trim(),
+        username,
+        phone: mobile,
         password,
-        options: {
-          data: {
-            full_name: builderName.trim(),
-            role: "builder",
-            phone: mobile,
-            company: companyName.trim(),
-          },
-        },
+        role: "builder",
       });
 
-      if (signUpError) throw signUpError;
-      if (!data.user) throw new Error("Registration failed");
-
       await upsertBuilderProfile({
-        user: data.user,
+        user,
         companyName,
         builderName,
+        username,
         phone: mobile,
         email,
         city,
@@ -83,13 +73,8 @@ export default function ConnectRegisterPage() {
         reraNumber,
       });
 
-      if (data.session) {
-        router.push("/connect/dashboard");
-        router.refresh();
-        return;
-      }
-
-      setSuccess("Account created. You can now sign in with your phone number.");
+      router.push("/connect/dashboard");
+      router.refresh();
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {
@@ -117,7 +102,6 @@ export default function ConnectRegisterPage() {
 
         <div className="rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
           {error ? <AuthAlert type="error" message={error} /> : null}
-          {success ? <AuthAlert type="success" message={success} /> : null}
 
           <form onSubmit={handleSubmit} className="space-y-1">
             <AuthInput
@@ -132,6 +116,14 @@ export default function ConnectRegisterPage() {
               placeholder="Primary contact name"
               value={builderName}
               onChange={(event) => setBuilderName(event.target.value)}
+            />
+
+            <AuthInput
+              label="Username"
+              autoComplete="username"
+              placeholder="yourname"
+              value={username}
+              onChange={(event) => setUsername(event.target.value.toLowerCase())}
             />
 
             <AuthInput

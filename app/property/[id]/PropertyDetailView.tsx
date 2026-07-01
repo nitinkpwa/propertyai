@@ -30,13 +30,13 @@ export default function PropertyDetailView({ property }: PropertyDetailViewProps
 
             <PropertyOverview property={property} />
             <AmenitiesSection amenities={property.amenities} />
-            <AreaIntelligence insights={property.areaInsights} />
+            <AreaIntelligence propertyId={property.id} />
             <AISummary summary={property.aiSummary} />
             <FloorPlans floorPlans={property.floorPlans} />
             <LocationSection property={property} />
             <BuilderSection builder={property.builder} />
             <SimilarProperties properties={property.similarProperties} />
-            <BottomCTA />
+            <BottomCTA property={property} />
           </div>
 
           <div className="hidden lg:block">

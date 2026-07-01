@@ -18,8 +18,8 @@ export interface PropertyCardProps {
   bhk: number;
   area: number;
   areaUnit?: "sqft" | "sqyd";
-  growthScore: number;
-  rentalYield: number;
+  growthScore: number | null;
+  rentalYield: number | null;
   imageUrl?: string | null;
   imageAlt?: string;
   aiVerified?: boolean;
@@ -48,11 +48,12 @@ function formatArea(area: number, unit: "sqft" | "sqyd"): string {
   return `${area.toLocaleString("en-IN")} ${unit === "sqyd" ? "sq yd" : "sq ft"}`;
 }
 
-function growthTone(score: number): {
+function growthTone(score: number | null): {
   bar: string;
   text: string;
   bg: string;
 } {
+  if (score === null) return { bar: "bg-neutral-300", text: "text-neutral-400", bg: "bg-neutral-50" };
   if (score >= 75) return { bar: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" };
   if (score >= 50) return { bar: "bg-amber-400", text: "text-amber-700", bg: "bg-amber-50" };
   return { bar: "bg-neutral-400", text: "text-neutral-600", bg: "bg-neutral-50" };
@@ -136,8 +137,9 @@ export default function PropertyCard({
   }, [isFavoriteProp, isControlled]);
 
   const locationLabel = city ? `${location}, ${city}` : location;
-  const growth = growthTone(growthScore);
-  const clampedScore = Math.min(100, Math.max(0, growthScore));
+  const clampedScore =
+    growthScore !== null ? Math.min(100, Math.max(0, growthScore)) : null;
+  const growth = clampedScore !== null ? growthTone(clampedScore) : growthTone(0);
 
   const handleFavorite = useCallback(
     (e: React.MouseEvent) => {
@@ -265,22 +267,28 @@ export default function PropertyCard({
 
         {/* Intelligence metrics */}
         <div className="mb-4 grid grid-cols-2 gap-2.5">
-          <div className={`rounded-xl px-3 py-2.5 ${growth.bg}`}>
+          <div className={`rounded-xl px-3 py-2.5 ${growthScore !== null ? growth.bg : "bg-neutral-50"}`}>
             <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
               AreaIQ Growth
             </p>
             <div className="mt-1 flex items-baseline gap-1">
-              <span className={`text-lg font-bold tabular-nums ${growth.text}`}>
-                {clampedScore}
+              <span className={`text-lg font-bold tabular-nums ${growthScore !== null ? growth.text : "text-neutral-400"}`}>
+                {growthScore !== null ? clampedScore : "N/A"}
               </span>
-              <span className="text-xs font-medium text-neutral-400">/ 100</span>
+              {growthScore !== null ? (
+                <span className="text-xs font-medium text-neutral-400">/ 100</span>
+              ) : null}
             </div>
-            <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/70">
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${growth.bar}`}
-                style={{ width: `${clampedScore}%` }}
-              />
-            </div>
+            {growthScore !== null ? (
+              <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/70">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${growth.bar}`}
+                  style={{ width: `${clampedScore}%` }}
+                />
+              </div>
+            ) : (
+              <p className="mt-2 text-[10px] text-neutral-400">Insufficient data</p>
+            )}
           </div>
 
           <div className="rounded-xl bg-neutral-50 px-3 py-2.5">
@@ -288,9 +296,13 @@ export default function PropertyCard({
               Rental Yield
             </p>
             <p className="mt-1 text-lg font-bold tabular-nums text-neutral-900">
-              {rentalYield % 1 === 0 ? rentalYield.toFixed(0) : rentalYield.toFixed(1)}%
+              {rentalYield !== null
+                ? `${rentalYield % 1 === 0 ? rentalYield.toFixed(0) : rentalYield.toFixed(1)}%`
+                : "N/A"}
             </p>
-            <p className="mt-2 text-[11px] font-medium text-neutral-400">Est. annual return</p>
+            <p className="mt-2 text-[11px] font-medium text-neutral-400">
+              {rentalYield !== null ? "AreaIQ calculated" : "Insufficient data"}
+            </p>
           </div>
         </div>
 

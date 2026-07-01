@@ -36,23 +36,30 @@ function matchesAiFilters(
   property: ListingProperty,
   ai: PropertyFilterState["ai"],
 ): boolean {
-  if (ai.highAreaIQScore && property.growthScore < HIGH_GROWTH_THRESHOLD) {
+  if (
+    ai.highAreaIQScore &&
+    (property.growthScore === null || property.growthScore < HIGH_GROWTH_THRESHOLD)
+  ) {
     return false;
   }
   if (
     ai.highAppreciation &&
-    property.growthScore < HIGH_APPRECIATION_THRESHOLD
+    (property.growthScore === null ||
+      property.growthScore < HIGH_APPRECIATION_THRESHOLD)
   ) {
     return false;
   }
   if (
     ai.highRentalYield &&
-    property.rentalYield < HIGH_RENTAL_YIELD_THRESHOLD
+    (property.rentalYield === null ||
+      property.rentalYield < HIGH_RENTAL_YIELD_THRESHOLD)
   ) {
     return false;
   }
   if (ai.bestInvestment) {
     if (
+      property.growthScore === null ||
+      property.rentalYield === null ||
       property.growthScore < BEST_INVESTMENT_GROWTH ||
       property.rentalYield < BEST_INVESTMENT_YIELD
     ) {

@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import AuthInput from "@/components/auth/AuthInput";
+import AuthButton from "@/components/auth/AuthButton";
 import AdminEmptyState from "./components/AdminEmptyState";
 import AdminShell, { type AdminNavItem } from "./components/AdminShell";
 import Logo from "@/components/common/Logo";
+import {
+  isAdminSessionActive,
+  setAdminSession,
+  verifyAdminCredentials,
+} from "@/lib/admin/auth";
 import {
   ADMIN_CITIES,
   ADMIN_SUB_TYPES,
@@ -31,11 +38,9 @@ import type {
   AdminPropertyRow,
   AdminTab,
 } from "@/lib/admin/types";
-import { fetchProfile } from "@/lib/auth/profile";
-import { isAdminRole } from "@/lib/auth/admin";
 import { supabase } from "@/lib/supabase";
 
-type AdminAccessState = "loading" | "signed_out" | "forbidden" | "ready";
+type AdminAccessState = "loading" | "signed_out" | "ready";
 
 const emptyForm = {
   title: "",
@@ -121,38 +126,29 @@ export default function AdminPage() {
   const [userRoleFilter, setUserRoleFilter] = useState("all");
   const [selectedChat, setSelectedChat] = useState<AdminConversationRow | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [adminUsername, setAdminUsername] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
 
   useEffect(() => {
-    let cancelled = false;
-
+    /*
+    TODO(production): Replace sessionStorage admin gate with Supabase role verification:
     async function verifyAdminAccess() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (cancelled) return;
-
-      if (!user) {
-        setAccessState("signed_out");
-        return;
-      }
-
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setAccessState("signed_out"); return; }
       const profile = await fetchProfile(user.id);
-      if (cancelled) return;
-
-      if (!isAdminRole(profile?.role)) {
-        setAccessState("forbidden");
-        return;
-      }
-
+      if (!isAdminRole(profile?.role)) { setAccessState("forbidden"); return; }
       setAdminUserId(user.id);
       setAccessState("ready");
     }
-
     verifyAdminAccess();
-    return () => {
-      cancelled = true;
-    };
+    */
+
+    if (isAdminSessionActive()) {
+      setAccessState("ready");
+    } else {
+      setAccessState("signed_out");
+    }
   }, []);
 
   const loadAll = async () => {
@@ -170,13 +166,26 @@ export default function AdminPage() {
     if (accessState === "ready") loadAll();
   }, [accessState]);
 
-  const leaveAdmin = () => {
-    window.location.href = "/buyer";
+  const logoutAdmin = () => {
+    setAdminSession(false);
+    setAccessState("signed_out");
+    setAdminUsername("");
+    setAdminPassword("");
+    setLoginError("");
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/login?redirect=/admin";
+  const handleAdminLogin = (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoginError("");
+
+    if (verifyAdminCredentials(adminUsername, adminPassword)) {
+      setAdminSession(true);
+      setAccessState("ready");
+      setAdminPassword("");
+      return;
+    }
+
+    setLoginError("Invalid credentials.");
   };
 
   const properties = data?.properties ?? [];
@@ -358,23 +367,45 @@ export default function AdminPage() {
   if (accessState === "signed_out") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA] px-4">
-        <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm text-center">
-          <div className="mb-6 flex items-center justify-center">
+        <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
+          <div className="mb-6 flex flex-col items-center text-center">
             <Logo size="dashboard" suffix="Admin" href={null} />
+            <p className="mt-4 text-sm text-neutral-500">
+              Sign in with your admin credentials
+            </p>
           </div>
-          <p className="mb-1 text-center text-xs text-neutral-500">Sign in with an admin account</p>
-          <p className="mb-6 text-sm text-neutral-600">
-            Admin access requires a Supabase account with{" "}
-            <code className="rounded bg-neutral-100 px-1.5 py-0.5 text-xs">profiles.role = admin</code>.
-          </p>
+
+          {loginError ? (
+            <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+              {loginError}
+            </div>
+          ) : null}
+
+          <form onSubmit={handleAdminLogin} className="space-y-1">
+            <AuthInput
+              label="Admin Username"
+              autoComplete="username"
+              placeholder="Enter admin username"
+              value={adminUsername}
+              onChange={(event) => setAdminUsername(event.target.value)}
+            />
+            <AuthInput
+              label="Admin Password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Enter admin password"
+              value={adminPassword}
+              onChange={(event) => setAdminPassword(event.target.value)}
+            />
+            <div className="pt-2">
+              <AuthButton type="submit">Access Admin</AuthButton>
+            </div>
+          </form>
+
           <a
-            href="/login?redirect=/admin"
-            className="inline-flex w-full items-center justify-center rounded-xl py-3 text-sm font-semibold text-white no-underline"
-            style={{ backgroundColor: EMERALD }}
+            href="/"
+            className="mt-4 block text-center text-sm text-neutral-500 no-underline hover:text-neutral-800"
           >
-            Sign in
-          </a>
-          <a href="/" className="mt-4 block text-sm text-neutral-500 no-underline hover:text-neutral-800">
             ← Back to website
           </a>
         </div>
@@ -382,33 +413,10 @@ export default function AdminPage() {
     );
   }
 
-  if (accessState === "forbidden") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA] px-4">
-        <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm text-center">
-          <p className="text-lg font-bold text-neutral-900">Access denied</p>
-          <p className="mt-2 text-sm text-neutral-600">
-            Your account does not have admin privileges. Contact the AreaIQ team if you need access.
-          </p>
-          <button
-            type="button"
-            onClick={leaveAdmin}
-            className="mt-6 w-full rounded-xl border border-neutral-200 py-3 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
-          >
-            Go to Buyer Dashboard
-          </button>
-          <button
-            type="button"
-            onClick={signOut}
-            className="mt-3 w-full rounded-xl py-3 text-sm font-semibold text-white"
-            style={{ backgroundColor: EMERALD }}
-          >
-            Sign in with a different account
-          </button>
-        </div>
-      </div>
-    );
-  }
+  /*
+  TODO(production): Restore forbidden state when using Supabase admin roles:
+  if (accessState === "forbidden") { ... access denied UI ... }
+  */
 
   const searchInput = (
     <input
@@ -420,7 +428,7 @@ export default function AdminPage() {
   );
 
   return (
-    <AdminShell tab={tab} onTabChange={setTab} navItems={navItems} onLogout={leaveAdmin}>
+    <AdminShell tab={tab} onTabChange={setTab} navItems={navItems} onLogout={logoutAdmin}>
       {loading && !data ? (
         <div className="flex justify-center py-20">
           <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
@@ -837,8 +845,8 @@ export default function AdminPage() {
           <div className="space-y-4">
             <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
               <h2 className="font-semibold text-neutral-900">Admin Access</h2>
-              <p className="mt-2 text-sm text-neutral-500">Session-based admin gate. Sign out to require password again.</p>
-              <button type="button" onClick={signOut} className="mt-4 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Sign Out</button>
+              <p className="mt-2 text-sm text-neutral-500">MVP session gate. Sign out to require admin credentials again.</p>
+              <button type="button" onClick={logoutAdmin} className="mt-4 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Sign Out</button>
             </div>
             <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
               <h2 className="font-semibold text-neutral-900">Supabase Connection</h2>

@@ -1,23 +1,12 @@
 import type { BHKOption, PropertyCardProps } from "../../components/PropertyCard";
-
-export interface AreaInsight {
-  growthScore: number;
-  rentalYield: number;
-  investmentRating: number;
-  traffic: number;
-  schoolsNearby: number;
-  hospitals: number;
-  airportDistance: string;
-  metroDistance: string;
-  futureDevelopments: string[];
-}
+import type { AreaIntelligenceReport } from "@/lib/intelligence/types";
 
 export interface AISummary {
   summary: string;
   pros: string[];
   cons: string[];
-  investmentScore: number;
-  riskLevel: "Low" | "Moderate" | "High";
+  investmentScore: number | null;
+  riskLevel: "Low" | "Moderate" | "High" | null;
 }
 
 export interface FloorPlan {
@@ -36,8 +25,8 @@ export interface NearbyPlace {
 export interface BuilderInfo {
   name: string;
   logoInitials: string;
-  yearsExperience: number;
-  projectsDelivered: number;
+  yearsExperience: number | null;
+  projectsDelivered: number | null;
 }
 
 export interface PropertyDetail {
@@ -55,7 +44,7 @@ export interface PropertyDetail {
   status: string;
   possession: string;
   configuration: string;
-  totalFloors: number;
+  totalFloors: number | null;
   parking: string;
   facing: string;
   furnishing: string;
@@ -64,7 +53,7 @@ export interface PropertyDetail {
   reraVerified: boolean;
   images: { id: string; label: string; gradient: string; url?: string | null }[];
   amenities: string[];
-  areaInsights: AreaInsight;
+  intelligenceReport?: AreaIntelligenceReport | null;
   aiSummary: AISummary;
   floorPlans: FloorPlan[];
   nearbyPlaces: NearbyPlace[];

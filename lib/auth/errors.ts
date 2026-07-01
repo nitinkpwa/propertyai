@@ -1,4 +1,18 @@
+export const INVALID_CREDENTIALS_MESSAGE = "Invalid credentials.";
+
 export function getAuthErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    if (error.message === "INVALID_CREDENTIALS" || error.message === INVALID_CREDENTIALS_MESSAGE) {
+      return INVALID_CREDENTIALS_MESSAGE;
+    }
+    if (error.message === "USERNAME_TAKEN") {
+      return "This username is already taken. Please choose another.";
+    }
+    if (error.message === "PHONE_TAKEN") {
+      return "This phone number is already registered. Please sign in instead.";
+    }
+  }
+
   const message =
     error instanceof Error
       ? error.message
@@ -12,25 +26,30 @@ export function getAuthErrorMessage(error: unknown): string {
     normalized.includes("invalid login credentials") ||
     normalized.includes("invalid email or password")
   ) {
-    return "Wrong mobile number or password. Please try again.";
+    return INVALID_CREDENTIALS_MESSAGE;
   }
 
   if (
     normalized.includes("user already registered") ||
-    normalized.includes("already been registered")
+    normalized.includes("already been registered") ||
+    normalized.includes("duplicate key") && normalized.includes("phone")
   ) {
-    return "This mobile number is already registered. Please sign in instead.";
+    return "This phone number is already registered. Please sign in instead.";
+  }
+
+  if (normalized.includes("duplicate key") && normalized.includes("username")) {
+    return "This username is already taken. Please choose another.";
   }
 
   if (normalized.includes("email not confirmed")) {
-    return "Please check your email and confirm your account before signing in.";
+    return "Your session expired. Please sign in again.";
   }
 
   if (
     normalized.includes("password should be at least") ||
     normalized.includes("weak password")
   ) {
-    return "Password must be at least 8 characters and include letters and numbers.";
+    return "Password must be at least 8 characters.";
   }
 
   if (
@@ -47,6 +66,10 @@ export function getAuthErrorMessage(error: unknown): string {
 
   if (normalized.includes("same as the old password")) {
     return "Choose a password that is different from your current one.";
+  }
+
+  if (normalized.includes("jwt expired") || normalized.includes("session")) {
+    return "Your session expired. Please sign in again.";
   }
 
   return message;

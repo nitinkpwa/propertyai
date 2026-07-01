@@ -7,9 +7,8 @@ import AuthAlert from "@/components/auth/AuthAlert";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthInput from "@/components/auth/AuthInput";
 import Logo from "@/components/common/Logo";
+import { signInWithIdentifier } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
-import { mobileToAuthEmail } from "@/lib/auth/mobile";
-import { fetchProfile } from "@/lib/auth/profile";
 import { validateLogin } from "@/lib/auth/validation";
 import { supabase } from "@/lib/supabase";
 
@@ -18,7 +17,7 @@ function ConnectLoginForm() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "/connect/dashboard";
 
-  const [mobile, setMobile] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +27,7 @@ function ConnectLoginForm() {
     event.preventDefault();
     setError(null);
 
-    const validationError = validateLogin({ mobile, password });
+    const validationError = validateLogin({ identifier, password });
     if (validationError) {
       setFieldError(validationError);
       return;
@@ -38,16 +37,8 @@ function ConnectLoginForm() {
     setLoading(true);
 
     try {
-      const authEmail = mobileToAuthEmail(mobile);
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: authEmail,
-        password,
-      });
+      const { profile } = await signInWithIdentifier(identifier, password);
 
-      if (signInError) throw signInError;
-      if (!data.user) throw new Error("Login failed");
-
-      const profile = await fetchProfile(data.user.id);
       if (profile?.role && profile.role !== "builder") {
         await supabase.auth.signOut();
         throw new Error("This login is for builder accounts only. Please use the main AreaIQ login.");
@@ -82,13 +73,11 @@ function ConnectLoginForm() {
 
           <form onSubmit={handleSubmit} className="space-y-1">
             <AuthInput
-              label="Phone Number"
-              type="tel"
-              autoComplete="tel"
-              inputMode="numeric"
-              placeholder="98765 43210"
-              value={mobile}
-              onChange={(event) => setMobile(event.target.value)}
+              label="Username or Phone Number"
+              autoComplete="username"
+              placeholder="yourname or 9876543210"
+              value={identifier}
+              onChange={(event) => setIdentifier(event.target.value)}
               error={fieldError}
             />
 
@@ -101,18 +90,11 @@ function ConnectLoginForm() {
               onChange={(event) => setPassword(event.target.value)}
             />
 
-            <div className="mb-6 text-right">
-              <Link
-                href={`/forgot-password?redirect=${encodeURIComponent("/connect/dashboard")}`}
-                className="text-sm font-medium text-emerald-600 transition-colors hover:text-emerald-700"
-              >
-                Forgot password?
-              </Link>
+            <div className="pt-4">
+              <AuthButton type="submit" loading={loading} loadingText="Signing in...">
+                Login
+              </AuthButton>
             </div>
-
-            <AuthButton type="submit" loading={loading} loadingText="Signing in...">
-              Login
-            </AuthButton>
           </form>
         </div>
 

@@ -1,7 +1,6 @@
-import type { Property } from "@/lib/supabase";
 import type { PropertySearchFilters } from "../types";
 import type { ConversationMessage } from "../openai-client";
-import type { IntentEntities, IntentClassification } from "./types";
+import type { IntentEntities, IntentClassification, InvestmentPurpose } from "./types";
 import { EMPTY_ENTITIES } from "./types";
 import { logAsk } from "./logger";
 
@@ -18,7 +17,7 @@ export function entitiesToFilters(entities: IntentEntities): PropertySearchFilte
     maxPrice: toPrice(entities.maxPriceLakhs, entities.maxPriceCrore),
     city: entities.city,
     locality: entities.locality,
-    subType: entities.propertyType as Property["sub_type"] | null,
+    subType: entities.propertyType as import("@/lib/supabase").Property["sub_type"] | null,
     listingType: entities.listingType,
     possession: null,
     investment: entities.investmentFocus !== null,
@@ -26,23 +25,48 @@ export function entitiesToFilters(entities: IntentEntities): PropertySearchFilte
   };
 }
 
+const VALID_INTENTS = [
+  "PROPERTY_SEARCH",
+  "PROPERTY_ANALYSIS",
+  "COMPARE",
+  "LOCALITY",
+  "BUILDER",
+  "INVESTMENT",
+  "FINANCE",
+  "KNOWLEDGE",
+  "MARKET_TREND",
+  "SELLING",
+  "GENERAL_CHAT",
+  "UNRELATED",
+  "UNKNOWN",
+] as const;
+
 function normalizeIntent(raw: string): IntentClassification["intent"] {
   const upper = raw.toUpperCase().replace(/\s+/g, "_");
-  const valid = [
-    "PROPERTY_SEARCH",
-    "KNOWLEDGE",
-    "LOCALITY",
-    "BUILDER",
-    "INVESTMENT",
-    "FINANCE",
-    "GENERAL_CHAT",
-    "UNKNOWN",
-  ] as const;
-
-  if (valid.includes(upper as (typeof valid)[number])) {
+  if (VALID_INTENTS.includes(upper as (typeof VALID_INTENTS)[number])) {
     return upper as IntentClassification["intent"];
   }
   return "UNKNOWN";
+}
+
+function normalizeInvestmentPurpose(raw: unknown): InvestmentPurpose | null {
+  if (typeof raw !== "string") return null;
+  const value = raw.toLowerCase().replace(/\s+/g, "-");
+  const valid: InvestmentPurpose[] = [
+    "self-use",
+    "rental",
+    "commercial",
+    "luxury",
+    "appreciation",
+  ];
+  return valid.includes(value as InvestmentPurpose)
+    ? (value as InvestmentPurpose)
+    : null;
+}
+
+function sanitizeCompareTargets(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
 }
 
 function sanitizeEntities(raw: Partial<IntentEntities> | undefined): IntentEntities {
@@ -59,30 +83,9 @@ function sanitizeEntities(raw: Partial<IntentEntities> | undefined): IntentEntit
     listingType: raw.listingType ?? null,
     builder: typeof raw.builder === "string" ? raw.builder : null,
     localityTopic: typeof raw.localityTopic === "string" ? raw.localityTopic : null,
+    propertyName: typeof raw.propertyName === "string" ? raw.propertyName : null,
     investmentFocus: raw.investmentFocus ?? null,
-  };
-}
-
-function buildResponseFields(
-  entities: IntentEntities,
-  topLevel: ClassifierJSON,
-): Pick<IntentClassification, "location" | "builder" | "budget" | "bedrooms"> {
-  const budgetFromEntities = toPrice(entities.maxPriceLakhs, entities.maxPriceCrore);
-
-  return {
-    location:
-      (typeof topLevel.location === "string" ? topLevel.location : null) ??
-      entities.locality ??
-      entities.city ??
-      entities.localityTopic,
-    builder:
-      (typeof topLevel.builder === "string" ? topLevel.builder : null) ?? entities.builder,
-    budget:
-      typeof topLevel.budget === "number"
-        ? topLevel.budget
-        : budgetFromEntities,
-    bedrooms:
-      typeof topLevel.bedrooms === "number" ? topLevel.bedrooms : entities.bhk,
+    compareTargets: sanitizeCompareTargets(raw.compareTargets),
   };
 }
 
@@ -94,7 +97,49 @@ interface ClassifierJSON {
   builder?: string | null;
   budget?: number | null;
   bedrooms?: number | null;
+  propertyName?: string | null;
+  compareTargets?: string[];
+  investmentPurpose?: string | null;
   entities?: Partial<IntentEntities>;
+}
+
+function buildResponseFields(
+  entities: IntentEntities,
+  topLevel: ClassifierJSON,
+): Pick<
+  IntentClassification,
+  | "location"
+  | "builder"
+  | "budget"
+  | "bedrooms"
+  | "propertyName"
+  | "compareTargets"
+  | "investmentPurpose"
+> {
+  const budgetFromEntities = toPrice(entities.maxPriceLakhs, entities.maxPriceCrore);
+  const compareTargets =
+    sanitizeCompareTargets(topLevel.compareTargets).length > 0
+      ? sanitizeCompareTargets(topLevel.compareTargets)
+      : entities.compareTargets;
+
+  return {
+    location:
+      (typeof topLevel.location === "string" ? topLevel.location : null) ??
+      entities.locality ??
+      entities.city ??
+      entities.localityTopic,
+    builder:
+      (typeof topLevel.builder === "string" ? topLevel.builder : null) ?? entities.builder,
+    budget:
+      typeof topLevel.budget === "number" ? topLevel.budget : budgetFromEntities,
+    bedrooms:
+      typeof topLevel.bedrooms === "number" ? topLevel.bedrooms : entities.bhk,
+    propertyName:
+      (typeof topLevel.propertyName === "string" ? topLevel.propertyName : null) ??
+      entities.propertyName,
+    compareTargets,
+    investmentPurpose: normalizeInvestmentPurpose(topLevel.investmentPurpose),
+  };
 }
 
 export async function detectIntent(
@@ -131,6 +176,9 @@ export async function detectIntent(
       builder: null,
       budget: null,
       bedrooms: null,
+      propertyName: null,
+      compareTargets: [],
+      investmentPurpose: null,
     };
   }
 
@@ -155,6 +203,12 @@ export async function detectIntent(
   if (fields.builder && !entities.builder) {
     entities.builder = fields.builder;
   }
+  if (fields.propertyName && !entities.propertyName) {
+    entities.propertyName = fields.propertyName;
+  }
+  if (fields.compareTargets.length > 0) {
+    entities.compareTargets = fields.compareTargets;
+  }
 
   const classification: IntentClassification = {
     intent,
@@ -173,6 +227,7 @@ export async function detectIntent(
     builder: classification.builder,
     budget: classification.budget,
     bedrooms: classification.bedrooms,
+    propertyName: classification.propertyName,
     reasoning: classification.reasoning,
   });
 
@@ -186,4 +241,8 @@ export function resolveLocalitySearchTerm(classification: IntentClassification):
 
 export function resolveBuilderName(classification: IntentClassification): string | null {
   return classification.entities.builder ?? classification.builder;
+}
+
+export function resolvePropertyName(classification: IntentClassification): string | null {
+  return classification.entities.propertyName ?? classification.propertyName;
 }

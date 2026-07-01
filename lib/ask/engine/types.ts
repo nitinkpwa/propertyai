@@ -4,18 +4,30 @@ import type { ConversationMessage } from "../openai-client";
 
 export const ASK_ENGINE_INTENTS = [
   "PROPERTY_SEARCH",
-  "KNOWLEDGE",
+  "PROPERTY_ANALYSIS",
+  "COMPARE",
   "LOCALITY",
   "BUILDER",
   "INVESTMENT",
   "FINANCE",
+  "KNOWLEDGE",
+  "MARKET_TREND",
+  "SELLING",
   "GENERAL_CHAT",
+  "UNRELATED",
   "UNKNOWN",
 ] as const;
 
 export type AskEngineIntent = (typeof ASK_ENGINE_INTENTS)[number];
 
 export type InvestmentFocus = "yield" | "appreciation" | "general";
+
+export type InvestmentPurpose =
+  | "self-use"
+  | "rental"
+  | "commercial"
+  | "luxury"
+  | "appreciation";
 
 export type EntityPropertyType =
   | "flat"
@@ -40,7 +52,9 @@ export interface IntentEntities {
   listingType: EntityListingType | null;
   builder: string | null;
   localityTopic: string | null;
+  propertyName: string | null;
   investmentFocus: InvestmentFocus | null;
+  compareTargets: string[];
 }
 
 export interface IntentClassification {
@@ -52,6 +66,24 @@ export interface IntentClassification {
   builder: string | null;
   budget: number | null;
   bedrooms: number | null;
+  propertyName: string | null;
+  compareTargets: string[];
+  investmentPurpose: InvestmentPurpose | null;
+}
+
+export interface PropertyContext {
+  id: string;
+  name: string;
+  location: string;
+  city: string;
+  price: number;
+  bhk: number;
+  area: number;
+  builderName: string;
+  growthScore: number | null;
+  rentalYield: number | null;
+  possession: string;
+  propertyType: string;
 }
 
 export interface AskEngineResponse {
@@ -62,6 +94,7 @@ export interface AskEngineResponse {
   budget: number | null;
   bedrooms: number | null;
   properties: ListingProperty[];
+  propertyRationales: Record<string, string>;
   suggestions: string[];
   followUpQuestions: string[];
   stats: AskSearchStats | null;
@@ -73,6 +106,8 @@ export interface HandlerContext {
   message: string;
   history: ConversationMessage[];
   classification: IntentClassification;
+  propertyContext?: PropertyContext | null;
+  excludePropertyIds?: string[];
 }
 
 export const EMPTY_ENTITIES: IntentEntities = {
@@ -86,7 +121,9 @@ export const EMPTY_ENTITIES: IntentEntities = {
   listingType: null,
   builder: null,
   localityTopic: null,
+  propertyName: null,
   investmentFocus: null,
+  compareTargets: [],
 };
 
 export function classificationToResponseFields(
@@ -109,6 +146,7 @@ export function emptyEngineResponse(intent: AskEngineIntent): AskEngineResponse 
     budget: null,
     bedrooms: null,
     properties: [],
+    propertyRationales: {},
     suggestions: [],
     followUpQuestions: [],
     stats: null,

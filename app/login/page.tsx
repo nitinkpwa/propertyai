@@ -7,22 +7,17 @@ import AuthAlert from "@/components/auth/AuthAlert";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthLayout from "@/components/auth/AuthLayout";
+import { signInWithIdentifier } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
-import { mobileToAuthEmail } from "@/lib/auth/mobile";
-import {
-  fetchProfile,
-  getDashboardPath,
-  upsertProfile,
-} from "@/lib/auth/profile";
+import { fetchProfile, getDashboardPath, upsertProfile } from "@/lib/auth/profile";
 import { validateLogin } from "@/lib/auth/validation";
-import { supabase } from "@/lib/supabase";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect");
 
-  const [mobile, setMobile] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +27,7 @@ function LoginForm() {
     event.preventDefault();
     setError(null);
 
-    const validationError = validateLogin({ mobile, password });
+    const validationError = validateLogin({ identifier, password });
     if (validationError) {
       setFieldError(validationError);
       return;
@@ -42,31 +37,21 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const authEmail = mobileToAuthEmail(mobile);
-      const { data, error: signInError } = await supabase.auth.signInWithPassword(
-        {
-          email: authEmail,
-          password,
-        },
-      );
+      const { user, profile } = await signInWithIdentifier(identifier, password);
 
-      if (signInError) throw signInError;
-      if (!data.user) throw new Error("Login failed");
-
-      const profile =
-        (await fetchProfile(data.user.id)) ??
+      const resolvedProfile =
+        profile ??
         (await upsertProfile({
-          user: data.user,
-          fullName:
-            (data.user.user_metadata?.full_name as string | undefined) ??
-            "User",
-          phone: mobile,
+          user,
+          fullName: (user.user_metadata?.full_name as string | undefined) ?? "User",
+          username: user.user_metadata?.username as string | undefined,
+          phone: user.user_metadata?.phone as string | undefined,
         }));
 
       const destination =
         redirectTo && redirectTo.startsWith("/")
           ? redirectTo
-          : getDashboardPath(profile?.role);
+          : getDashboardPath(resolvedProfile?.role);
 
       router.push(destination);
       router.refresh();
@@ -97,13 +82,11 @@ function LoginForm() {
 
       <form onSubmit={handleSubmit} className="space-y-1">
         <AuthInput
-          label="Mobile Number"
-          type="tel"
-          autoComplete="tel"
-          inputMode="numeric"
-          placeholder="98765 43210"
-          value={mobile}
-          onChange={(event) => setMobile(event.target.value)}
+          label="Username or Phone Number"
+          autoComplete="username"
+          placeholder="yourname or 9876543210"
+          value={identifier}
+          onChange={(event) => setIdentifier(event.target.value)}
           error={fieldError}
         />
 

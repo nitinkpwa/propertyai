@@ -47,10 +47,14 @@ function pickForCategory(
       )[0];
       break;
     case "rental":
-      picked = [...cards].sort((a, b) => b.rentalYield - a.rentalYield)[0];
+      picked = [...cards].sort(
+        (a, b) => (b.rentalYield ?? 0) - (a.rentalYield ?? 0),
+      )[0];
       break;
     case "growth":
-      picked = [...cards].sort((a, b) => b.growthScore - a.growthScore)[0];
+      picked = [...cards].sort(
+        (a, b) => (b.growthScore ?? 0) - (a.growthScore ?? 0),
+      )[0];
       break;
     case "luxury":
       picked = [...cards].sort((a, b) => b.price - a.price)[0];

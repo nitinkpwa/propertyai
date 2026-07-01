@@ -1,72 +1,171 @@
-import type { PropertyDetail } from "../data";
+"use client";
+
+import { useEffect, useState } from "react";
+import type { AreaIntelligenceReport, IntelligenceMetric } from "@/lib/intelligence/types";
 import { ProgressBar, scoreTone, SectionCard, SectionTitle } from "./shared";
 
 interface AreaIntelligenceProps {
-  insights: PropertyDetail["areaInsights"];
+  propertyId: string;
 }
 
-export default function AreaIntelligence({ insights }: AreaIntelligenceProps) {
-  const metrics = [
-    { label: "Growth Score", value: insights.growthScore, unit: "/ 100", icon: "📈" },
-    { label: "Rental Yield", value: insights.rentalYield, unit: "%", icon: "💰", isPercent: true },
-    { label: "Investment Rating", value: insights.investmentRating, unit: "/ 100", icon: "⭐" },
-    { label: "Traffic Index", value: insights.traffic, unit: "/ 100", icon: "🚗" },
-    { label: "Schools Nearby", value: Math.min(insights.schoolsNearby * 8, 100), unit: `${insights.schoolsNearby} schools`, icon: "🎓", display: insights.schoolsNearby },
-    { label: "Hospitals", value: Math.min(insights.hospitals * 15, 100), unit: `${insights.hospitals} nearby`, icon: "🏥", display: insights.hospitals },
-  ];
+function MetricCard({
+  label,
+  icon,
+  metric,
+  unit = "",
+}: {
+  label: string;
+  icon: string;
+  metric: IntelligenceMetric;
+  unit?: string;
+}) {
+  const numericValue =
+    typeof metric.value === "number" ? metric.value : null;
+  const tone = numericValue !== null ? scoreTone(numericValue) : scoreTone(0);
 
-  const distances = [
-    { label: "Airport", value: insights.airportDistance, icon: "✈️" },
-    { label: "Metro", value: insights.metroDistance, icon: "🚇" },
-  ];
+  return (
+    <div
+      className={`rounded-2xl border border-neutral-100 p-4 sm:p-5 ${
+        metric.available ? tone.bg : "bg-neutral-50"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-lg">{icon}</span>
+        <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          {label}
+        </span>
+      </div>
+
+      <div className="mt-2">
+        <p className={`text-2xl font-bold tabular-nums ${metric.available ? tone.text : "text-neutral-400"}`}>
+          {metric.displayValue}
+          {metric.available && unit ? (
+            <span className="ml-1 text-xs font-medium text-neutral-400">{unit}</span>
+          ) : null}
+        </p>
+      </div>
+
+      {metric.available && numericValue !== null ? (
+        <ProgressBar value={numericValue} className="mt-3" />
+      ) : null}
+
+      <div className="mt-3 space-y-1">
+        {metric.source ? (
+          <p className="text-[11px] font-medium text-neutral-500">
+            Source: <span className="text-neutral-700">{metric.source}</span>
+          </p>
+        ) : null}
+        {!metric.available && metric.explanation ? (
+          <p className="text-xs leading-relaxed text-neutral-500">{metric.explanation}</p>
+        ) : null}
+        {metric.factors?.slice(0, 2).map((factor) => (
+          <p key={factor} className="text-[11px] text-neutral-500">
+            • {factor}
+          </p>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function AreaIntelligence({ propertyId }: AreaIntelligenceProps) {
+  const [report, setReport] = useState<AreaIntelligenceReport | null>(null);
+  const [outlook, setOutlook] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [outlookLoading, setOutlookLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`/api/properties/${propertyId}/intelligence`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.report) setReport(data.report);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    fetch(`/api/properties/${propertyId}/intelligence/insights`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.outlook) setOutlook(data.outlook);
+      })
+      .finally(() => {
+        if (!cancelled) setOutlookLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [propertyId]);
+
+  if (loading) {
+    return (
+      <SectionCard>
+        <SectionTitle
+          title="AreaIQ Intelligence Engine"
+          subtitle="Calculating real metrics from AreaIQ database…"
+        />
+        <div className="flex items-center gap-3 text-sm text-neutral-500">
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
+          Analyzing market data
+        </div>
+      </SectionCard>
+    );
+  }
+
+  if (!report) {
+    return (
+      <SectionCard>
+        <SectionTitle title="AreaIQ Intelligence Engine" />
+        <p className="text-sm text-neutral-500">
+          Intelligence report unavailable for this property.
+        </p>
+      </SectionCard>
+    );
+  }
 
   return (
     <SectionCard className="overflow-hidden">
       <div className="relative">
         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl" />
         <SectionTitle
-          title="Area Intelligence"
-          subtitle="AI-powered location insights powered by AreaIQ"
+          title="AreaIQ Intelligence Engine"
+          subtitle={`${report.availableMetrics.length} metrics calculated from ${report.marketSnapshot.comparableListings} comparable listings in ${report.marketSnapshot.city}`}
         />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {metrics.map((m) => {
-            const tone = scoreTone(m.value);
-            return (
-              <div
-                key={m.label}
-                className={`rounded-2xl border border-neutral-100 p-4 sm:p-5 ${tone.bg} transition-all hover:shadow-sm`}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{m.icon}</span>
-                  <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                    {m.label}
-                  </span>
-                </div>
-                <div className="mt-2 flex items-baseline gap-1">
-                  <span className={`text-2xl font-bold tabular-nums ${tone.text}`}>
-                    {m.display ?? (m.isPercent ? insights.rentalYield : m.value)}
-                  </span>
-                  <span className="text-xs font-medium text-neutral-400">{m.unit}</span>
-                </div>
-                <ProgressBar value={m.value} className="mt-3" />
-              </div>
-            );
-          })}
+          <MetricCard label="Growth Score" icon="📈" metric={report.growthScore} unit="/ 100" />
+          <MetricCard label="Rental Yield" icon="💰" metric={report.rentalYield} />
+          <MetricCard label="Investment Score" icon="⭐" metric={report.investmentScore} unit="/ 100" />
+          <MetricCard label="Demand Index" icon="📊" metric={report.demandIndex} unit="/ 100" />
+          <MetricCard label="Builder Reputation" icon="🏗️" metric={report.builderReputation} />
+          <MetricCard label="Schools Nearby" icon="🎓" metric={report.schoolsNearby} />
+          <MetricCard label="Hospitals Nearby" icon="🏥" metric={report.hospitalsNearby} />
         </div>
 
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {distances.map((d) => (
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            { label: "Airport", metric: report.connectivity.airport, icon: "✈️" },
+            { label: "Metro", metric: report.connectivity.metro, icon: "🚇" },
+            { label: "Highway Access", metric: report.connectivity.highways, icon: "🛣️" },
+          ].map((item) => (
             <div
-              key={d.label}
-              className="flex items-center gap-4 rounded-2xl border border-neutral-100 bg-white/80 px-4 py-4 backdrop-blur-sm sm:px-5"
+              key={item.label}
+              className="rounded-2xl border border-neutral-100 bg-white/80 px-4 py-4 backdrop-blur-sm"
             >
-              <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-neutral-100 text-xl">
-                {d.icon}
-              </span>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">{d.label} Distance</p>
-                <p className="text-sm font-semibold text-neutral-900">{d.value}</p>
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{item.icon}</span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                    {item.label}
+                  </p>
+                  <p className="text-sm font-semibold text-neutral-900">{item.metric.displayValue}</p>
+                  {item.metric.source ? (
+                    <p className="mt-1 text-[11px] text-neutral-500">Source: {item.metric.source}</p>
+                  ) : null}
+                </div>
               </div>
             </div>
           ))}
@@ -74,16 +173,33 @@ export default function AreaIntelligence({ insights }: AreaIntelligenceProps) {
 
         <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 sm:p-6">
           <h3 className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
-            <span>🔮</span> Future Developments
+            <span>🔮</span> Future Outlook
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+              OpenAI Analysis
+            </span>
           </h3>
-          <ul className="mt-3 space-y-2">
-            {insights.futureDevelopments.map((item) => (
-              <li key={item} className="flex items-start gap-2 text-sm text-neutral-700">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
-                {item}
-              </li>
-            ))}
-          </ul>
+          {outlookLoading ? (
+            <p className="mt-3 text-sm text-neutral-500">Generating qualitative outlook…</p>
+          ) : outlook ? (
+            <div
+              className="mt-3 space-y-2 text-sm leading-relaxed text-neutral-700"
+              dangerouslySetInnerHTML={{
+                __html: outlook
+                  .replace(/^-\s+/gm, "• ")
+                  .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                  .replace(/\n/g, "<br />"),
+              }}
+            />
+          ) : (
+            <p className="mt-3 text-sm text-neutral-500">
+              Qualitative outlook unavailable. AreaIQ will generate this when OpenAI is configured
+              and sufficient market data exists.
+            </p>
+          )}
+          <p className="mt-3 text-[11px] text-neutral-500">
+            OpenAI provides explanations only — all scores above are calculated from AreaIQ database
+            facts.
+          </p>
         </div>
       </div>
     </SectionCard>

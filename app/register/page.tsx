@@ -8,31 +8,31 @@ import AuthAlert from "@/components/auth/AuthAlert";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthLayout from "@/components/auth/AuthLayout";
+import { registerAccount } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
-import { mobileToAuthEmail, type AccountType } from "@/lib/auth/mobile";
-import { getDashboardPath, upsertProfile } from "@/lib/auth/profile";
+import type { AccountType } from "@/lib/auth/mobile";
+import { getDashboardPath } from "@/lib/auth/profile";
 import { validateRegistration } from "@/lib/auth/validation";
-import { supabase } from "@/lib/supabase";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [fullName, setFullName] = useState("");
+  const [username, setUsername] = useState("");
   const [mobile, setMobile] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [accountType, setAccountType] = useState<AccountType>("buyer");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
-    setSuccess(null);
 
     const validationError = validateRegistration({
       fullName,
+      username,
       mobile,
       password,
       confirmPassword,
@@ -48,37 +48,16 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const authEmail = mobileToAuthEmail(mobile);
-
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email: authEmail,
-        password,
-        options: {
-          data: {
-            full_name: fullName.trim(),
-            role: accountType,
-            phone: mobile,
-          },
-        },
-      });
-
-      if (signUpError) throw signUpError;
-      if (!data.user) throw new Error("Registration failed");
-
-      await upsertProfile({
-        user: data.user,
+      await registerAccount({
         fullName: fullName.trim(),
-        role: accountType,
+        username,
         phone: mobile,
+        password,
+        role: accountType,
       });
 
-      if (data.session) {
-        router.push(getDashboardPath(accountType));
-        router.refresh();
-        return;
-      }
-
-      setSuccess("Account created. You can now sign in with your mobile number.");
+      router.push(getDashboardPath(accountType));
+      router.refresh();
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {
@@ -103,7 +82,6 @@ export default function RegisterPage() {
       }
     >
       {error ? <AuthAlert type="error" message={error} /> : null}
-      {success ? <AuthAlert type="success" message={success} /> : null}
 
       <form onSubmit={handleSubmit} className="space-y-1">
         <AuthInput
@@ -114,13 +92,18 @@ export default function RegisterPage() {
           onChange={(event) => setFullName(event.target.value)}
         />
 
-        <AccountTypeSelector
-          value={accountType}
-          onChange={setAccountType}
+        <AuthInput
+          label="Username"
+          autoComplete="username"
+          placeholder="yourname"
+          value={username}
+          onChange={(event) => setUsername(event.target.value.toLowerCase())}
         />
 
+        <AccountTypeSelector value={accountType} onChange={setAccountType} />
+
         <AuthInput
-          label="Mobile Number"
+          label="Phone Number"
           type="tel"
           autoComplete="tel"
           inputMode="numeric"
@@ -149,11 +132,7 @@ export default function RegisterPage() {
         />
 
         <div className="pt-2">
-          <AuthButton
-            type="submit"
-            loading={loading}
-            loadingText="Creating account..."
-          >
+          <AuthButton type="submit" loading={loading} loadingText="Creating account...">
             Create Account
           </AuthButton>
         </div>
