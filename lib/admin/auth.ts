@@ -1,31 +1,25 @@
-/**
- * MVP admin gate — hardcoded credentials + sessionStorage session.
- *
- * TODO(production): Remove hardcoded credentials and use Supabase profiles.role = 'admin'
- * with server-side middleware protection instead of client sessionStorage.
- */
+import { createSupabaseServerClient, getAuthenticatedUser } from "@/lib/supabase/server";
 
-export const ADMIN_USERNAME = "admin";
-export const ADMIN_PASSWORD = "propertyai2025";
-export const ADMIN_SESSION_KEY = "admin_auth";
+type AdminAccessResult =
+  | { ok: true; userId: string }
+  | { ok: false; status: 401 | 403; error: string };
 
-export function isAdminSessionActive(): boolean {
-  if (typeof window === "undefined") return false;
-  return sessionStorage.getItem(ADMIN_SESSION_KEY) === "true";
-}
-
-export function setAdminSession(active: boolean): void {
-  if (typeof window === "undefined") return;
-  if (active) {
-    sessionStorage.setItem(ADMIN_SESSION_KEY, "true");
-  } else {
-    sessionStorage.removeItem(ADMIN_SESSION_KEY);
+export async function requireAdminApiAccess(): Promise<AdminAccessResult> {
+  const user = await getAuthenticatedUser();
+  if (!user) {
+    return { ok: false, status: 401, error: "Unauthorized" };
   }
-}
 
-export function verifyAdminCredentials(username: string, password: string): boolean {
-  return (
-    username.trim() === ADMIN_USERNAME &&
-    password === ADMIN_PASSWORD
-  );
+  const supabase = await createSupabaseServerClient();
+  const { data: actor } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (actor?.role !== "admin") {
+    return { ok: false, status: 403, error: "Forbidden" };
+  }
+
+  return { ok: true, userId: user.id };
 }

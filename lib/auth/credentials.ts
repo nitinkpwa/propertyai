@@ -4,13 +4,17 @@ import { mobileToAuthEmail, normalizeMobileNumber } from "@/lib/auth/mobile";
 import { fetchProfile, upsertProfile } from "@/lib/auth/profile";
 import { normalizeUsername } from "@/lib/auth/username";
 import type { Profile } from "@/lib/supabase";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import type { AccountType } from "@/lib/auth/mobile";
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export async function resolveLoginAuthEmail(identifier: string): Promise<string> {
+/** Resolve a login identifier to the Supabase Auth email address. */
+export async function resolveLoginAuthEmail(identifier: string): Promise<string | null> {
   const trimmed = identifier.trim();
-  if (!trimmed) {
-    return `invalid-${crypto.randomUUID()}@areaiq.app`;
+  if (!trimmed) return null;
+
+  if (EMAIL_RE.test(trimmed)) {
+    return trimmed.toLowerCase();
   }
 
   const { data, error } = await supabase.rpc("resolve_login_email", {
@@ -23,23 +27,24 @@ export async function resolveLoginAuthEmail(identifier: string): Promise<string>
     if (/^[6-9]\d{9}$/.test(digits)) {
       return mobileToAuthEmail(digits);
     }
-    return `invalid-${crypto.randomUUID()}@areaiq.app`;
+    return null;
   }
 
   if (typeof data === "string" && data.includes("@")) {
     return data;
   }
 
-  return `invalid-${crypto.randomUUID()}@areaiq.app`;
+  return null;
 }
 
-export async function signInWithIdentifier(
-  identifier: string,
+/** Official Supabase email + password sign-in. */
+export async function signInWithEmailPassword(
+  email: string,
   password: string,
 ): Promise<{ user: User; session: Session; profile: Profile | null }> {
-  const authEmail = await resolveLoginAuthEmail(identifier);
+  const normalizedEmail = email.trim().toLowerCase();
   const { data, error } = await supabase.auth.signInWithPassword({
-    email: authEmail,
+    email: normalizedEmail,
     password,
   });
 
@@ -58,6 +63,18 @@ export async function signInWithIdentifier(
   }
 
   return { user: data.user, session: data.session, profile };
+}
+
+export async function signInWithIdentifier(
+  identifier: string,
+  password: string,
+): Promise<{ user: User; session: Session; profile: Profile | null }> {
+  const authEmail = await resolveLoginAuthEmail(identifier);
+  if (!authEmail) {
+    throw new Error(INVALID_CREDENTIALS_MESSAGE);
+  }
+
+  return signInWithEmailPassword(authEmail, password);
 }
 
 export async function checkUsernameTaken(username: string): Promise<boolean> {

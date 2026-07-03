@@ -9,7 +9,6 @@ const PROTECTED_PREFIXES = [
   "/profile",
   "/connect/dashboard",
 ];
-// TODO(production): Add "/admin" back to PROTECTED_PREFIXES and enforce profiles.role = 'admin' in middleware.
 const AUTH_PAGES = ["/login", "/register", "/forgot-password", "/reset-password"];
 const CONNECT_AUTH_PAGES = ["/connect/login", "/connect/register"];
 
@@ -29,6 +28,10 @@ function isConnectAuthPage(pathname: string) {
   return CONNECT_AUTH_PAGES.some(
     (page) => pathname === page || pathname.startsWith(`${page}/`),
   );
+}
+
+function isAdminPath(pathname: string) {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
 }
 
 export async function middleware(request: NextRequest) {
@@ -56,12 +59,11 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  /*
-  TODO(production): Enforce Supabase admin role on /admin routes:
-  if ((pathname === "/admin" || pathname.startsWith("/admin/")) && user && profileRole !== "admin") {
-    return NextResponse.redirect(new URL("/buyer", request.url));
+  if (isAdminPath(pathname) && user && profileRole !== "admin") {
+    const url = request.nextUrl.clone();
+    url.pathname = getDashboardPath(profileRole);
+    return NextResponse.redirect(url);
   }
-  */
 
   if (isConnectAuthPage(pathname) && user) {
     const redirectTo =

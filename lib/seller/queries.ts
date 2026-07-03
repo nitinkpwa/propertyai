@@ -1,8 +1,4 @@
-import {
-  SITE_VISIT_WITH_BUYER_SELECT,
-  enrichVisitRowBuyer,
-  fetchBuyerProfilesByIds,
-} from "@/lib/crm/buyerProfile";
+import { fetchSiteVisitsWithBuyers } from "@/lib/crm/buyerProfile";
 import { supabase } from "@/lib/supabase";
 import { PROPERTIES_BASE_SELECT } from "./propertySchema";
 import type {
@@ -162,39 +158,9 @@ export async function fetchSellerSiteVisits(sellerId: string): Promise<SellerVis
   const propertyIds = await fetchSellerPropertyIds(sellerId);
   if (propertyIds.length === 0) return [];
 
-  const { data, error } = await supabase
-    .from("site_visits")
-    .select(SITE_VISIT_WITH_BUYER_SELECT)
-    .in("property_id", propertyIds)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("fetchSellerSiteVisits:", error.message);
-
-    const { data: fallback, error: fallbackError } = await supabase
-      .from("site_visits")
-      .select("*, property:properties(title, location, city)")
-      .in("property_id", propertyIds)
-      .order("created_at", { ascending: false });
-
-    if (fallbackError) {
-      console.error("fetchSellerSiteVisits fallback:", fallbackError.message);
-      return [];
-    }
-
-    const visits = (fallback ?? []) as SellerVisitRow[];
-    const userIds = [...new Set(visits.map((v) => v.user_id))];
-    const profileMap = await fetchBuyerProfilesByIds(userIds);
-
-    return visits.map((v) => ({
-      ...v,
-      buyer: profileMap.get(v.user_id) ?? null,
-    }));
-  }
-
-  return ((data ?? []) as SellerVisitRow[]).map((row) => {
-    const enriched = enrichVisitRowBuyer({ ...row } as Record<string, unknown>);
-    return { ...row, buyer: enriched.buyer };
+  return fetchSiteVisitsWithBuyers<SellerVisitRow>({
+    filter: { propertyIds },
+    order: { column: "created_at", ascending: false },
   });
 }
 

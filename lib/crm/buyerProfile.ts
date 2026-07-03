@@ -23,13 +23,13 @@ export const CRM_LEAD_WITH_BUYER_SELECT =
   "*, buyer:profiles!crm_leads_buyer_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at)";
 
 export const CRM_LEAD_WITH_BUYER_AND_CONNECT_SELECT =
-  "*, buyer:profiles!crm_leads_buyer_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at), connect:profiles!crm_leads_assigned_connect_id_fkey(full_name)";
+  "*, buyer:profiles!crm_leads_buyer_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at), connect:profiles!crm_leads_assigned_connect_id_fkey(id, full_name, email, phone, role, company, created_at)";
 
 export const INQUIRY_WITH_BUYER_SELECT =
-  "*, property:properties(title, city), buyer:profiles!inquiries_from_user_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at), seller:profiles!inquiries_seller_id_fkey(full_name)";
+  "*, property:properties(title, city), buyer:profiles!inquiries_from_user_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at), seller:profiles!inquiries_seller_id_fkey(id, full_name, email, phone, role, company, created_at)";
 
 export const ADMIN_CRM_LEAD_SELECT =
-  "*, buyer:profiles!crm_leads_buyer_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at), connect:profiles!crm_leads_assigned_connect_id_fkey(full_name), property:properties!crm_leads_primary_property_id_fkey(title, city, seller_id, seller:profiles!properties_seller_id_fkey(full_name))";
+  "*, buyer:profiles!crm_leads_buyer_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at), connect:profiles!crm_leads_assigned_connect_id_fkey(id, full_name, email, phone, role, company, created_at), property:properties!crm_leads_primary_property_id_fkey(title, city, seller_id, seller:profiles!properties_seller_id_fkey(id, full_name, email, phone, role, company, created_at))";
 
 export const SITE_VISIT_WITH_BUYER_SELECT =
   "*, property:properties(title, location, city), buyer:profiles!site_visits_user_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at)";
@@ -203,4 +203,103 @@ export function enrichVisitRowBuyer<T extends Record<string, unknown>>(
 ): T & { buyer: BuyerProfileForCRM | null } {
   const enriched = resolveBuyerFromRow(row as { buyer?: unknown; user?: unknown });
   return { ...row, buyer: enriched };
+}
+
+/** Site visits join properties only — buyer is resolved via crm_leads in TypeScript. */
+export const SITE_VISIT_BASE_SELECT =
+  "*, property:properties(title, location, city)";
+
+export const SITE_VISIT_ADMIN_SELECT = "*, property:properties(title, city)";
+
+export type SiteVisitQueryFilter = {
+  propertyIds?: string[];
+  userIds?: string[];
+};
+
+/**
+ * Load site visits without embedding profiles (no FK on site_visits → profiles).
+ * Buyer: site_visits.lead_id → crm_leads.buyer_id → profiles, with user_id fallback.
+ */
+export async function fetchSiteVisitsWithBuyers<T = Record<string, unknown>>(
+  options: {
+    select?: string;
+    filter?: SiteVisitQueryFilter;
+    order?: { column: string; ascending: boolean };
+  } = {},
+): Promise<Array<T & { buyer: BuyerProfileForCRM | null }>> {
+  const select = options.select ?? SITE_VISIT_BASE_SELECT;
+  let query = supabase.from("site_visits").select(select);
+
+  if (options.filter?.propertyIds?.length) {
+    query = query.in("property_id", options.filter.propertyIds);
+  }
+  if (options.filter?.userIds?.length) {
+    query = query.in("user_id", options.filter.userIds);
+  }
+
+  const order = options.order ?? { column: "visit_date", ascending: false };
+  query = query.order(order.column, { ascending: order.ascending });
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("fetchSiteVisitsWithBuyers:", error.message);
+    return [];
+  }
+
+  const visits = (data ?? []) as unknown as T[];
+  if (visits.length === 0) return [];
+
+  const leadIds = [
+    ...new Set(
+      visits
+        .map((v) => (v as Record<string, unknown>).lead_id as string | null | undefined)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  const buyerIdByLeadId = new Map<string, string>();
+  if (leadIds.length > 0) {
+    const { data: leads, error: leadError } = await supabase
+      .from("crm_leads")
+      .select("id, buyer_id")
+      .in("id", leadIds);
+
+    if (leadError) {
+      console.error("fetchSiteVisitsWithBuyers crm_leads:", leadError.message);
+    } else {
+      for (const lead of leads ?? []) {
+        if (lead.buyer_id) buyerIdByLeadId.set(lead.id, lead.buyer_id);
+      }
+    }
+  }
+
+  const buyerIds = [
+    ...new Set(
+      visits
+        .map((v) => {
+          const row = v as Record<string, unknown>;
+          const leadId = row.lead_id as string | null | undefined;
+          if (leadId) {
+            const fromLead = buyerIdByLeadId.get(leadId);
+            if (fromLead) return fromLead;
+          }
+          return (row.user_id as string | null | undefined) ?? null;
+        })
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  const profileMap = await fetchBuyerProfilesByIds(buyerIds);
+
+  return visits.map((v) => {
+    const row = v as Record<string, unknown>;
+    const leadId = row.lead_id as string | null | undefined;
+    const buyerId =
+      (leadId ? buyerIdByLeadId.get(leadId) : undefined) ??
+      (row.user_id as string | undefined);
+    return {
+      ...v,
+      buyer: buyerId ? (profileMap.get(buyerId) ?? null) : null,
+    };
+  });
 }

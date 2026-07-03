@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
-import { getSiteUrl, supabase } from "@/lib/supabase";
+import { buildAuthCallbackUrl } from "@/lib/auth/redirects";
+import { supabase } from "@/lib/supabase/client";
 import AuthButton from "./AuthButton";
 
 export default function GoogleSignInButton() {
@@ -17,7 +18,7 @@ export default function GoogleSignInButton() {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${getSiteUrl()}/auth/callback`,
+          redirectTo: buildAuthCallbackUrl(),
         },
       });
 

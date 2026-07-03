@@ -40,14 +40,33 @@ export interface AdminAnalytics {
 
 export interface AdminPropertyRow extends Property {
   approval_status?: string | null;
-  seller?: { full_name?: string | null; phone?: string | null; email?: string | null } | null;
+  seller?: {
+    id?: string | null;
+    full_name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    role?: string | null;
+    company?: string | null;
+    created_at?: string | null;
+  } | null;
+}
+
+export interface AdminProfileEmbed {
+  id?: string | null;
+  full_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  role?: string | null;
+  company?: string | null;
+  created_at?: string | null;
 }
 
 export interface AdminLeadRow extends Inquiry {
   seller_id?: string;
   property?: { title?: string; city?: string } | null;
   buyer?: BuyerProfileForCRM | null;
-  seller?: { full_name?: string | null } | null;
+  seller?: AdminProfileEmbed | null;
+  connect?: AdminProfileEmbed | null;
   leadSource?: "Inquiry" | "Site Visit" | "CRM";
   crmStatus?: string | null;
   assignedConnect?: string | null;
@@ -55,7 +74,7 @@ export interface AdminLeadRow extends Inquiry {
 }
 
 export interface AdminConversationRow extends Conversation {
-  user?: { full_name?: string | null; email?: string | null; phone?: string | null } | null;
+  user?: AdminProfileEmbed | null;
 }
 
 export interface AdminSiteVisitRow {
@@ -82,6 +101,8 @@ export interface BuilderRow extends Profile {
 export interface AdminData {
   properties: AdminPropertyRow[];
   profiles: Profile[];
+  /** Total rows in profiles (COUNT(*) via admin API). */
+  profileCount: number;
   leads: AdminLeadRow[];
   conversations: AdminConversationRow[];
   siteVisits: AdminSiteVisitRow[];

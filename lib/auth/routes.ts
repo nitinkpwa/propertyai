@@ -21,12 +21,9 @@ export function getUnauthorizedRedirect(
   if (!role) return "/login";
   if (isAdminRole(role)) return null;
 
-  /*
-  TODO(production): Block non-admin Supabase users from /admin when role-based auth is enabled:
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
     return getDashboardPath(role);
   }
-  */
 
   if (pathname === "/buyer" || pathname.startsWith("/buyer/")) {
     if (role !== "buyer") return getDashboardPath(role);

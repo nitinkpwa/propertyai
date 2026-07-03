@@ -2,11 +2,12 @@ import { supabase } from "@/lib/supabase";
 import type { Profile } from "@/lib/supabase";
 import {
   ADMIN_CRM_LEAD_SELECT,
+  CRM_LEAD_WITH_BUYER_SELECT,
   INQUIRY_WITH_BUYER_SELECT,
-  SITE_VISIT_WITH_USER_SELECT,
+  SITE_VISIT_ADMIN_SELECT,
   enrichLeadRowBuyer,
-  enrichVisitRowBuyer,
   fetchBuyerProfilesByIds,
+  fetchSiteVisitsWithBuyers,
 } from "@/lib/crm/buyerProfile";
 import type {
   AdminAnalytics,
@@ -18,9 +19,53 @@ import type {
   AdminSiteVisitRow,
   BuilderRow,
 } from "./types";
+import type { AdminLeadSummary } from "./leads/types";
 
 const PROPERTY_SELECT =
-  "*, seller:profiles!properties_seller_id_fkey(full_name, email, phone)";
+  "*, seller:profiles!properties_seller_id_fkey(id, full_name, email, phone, role, company, created_at)";
+
+const PROPERTY_SELECT_FALLBACK = "*";
+
+async function attachSellersToProperties(
+  rows: AdminPropertyRow[],
+): Promise<AdminPropertyRow[]> {
+  const sellerIds = [...new Set(rows.map((p) => p.seller_id).filter(Boolean))];
+  if (sellerIds.length === 0) return rows;
+
+  const { data: sellers } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, phone, role, company, created_at")
+    .in("id", sellerIds);
+
+  const sellerMap = new Map((sellers ?? []).map((s) => [s.id, s]));
+  return rows.map((p) => ({
+    ...p,
+    seller: sellerMap.get(p.seller_id) ?? p.seller ?? null,
+  }));
+}
+
+export async function fetchAdminProperties(): Promise<AdminPropertyRow[]> {
+  const { data, error } = await supabase
+    .from("properties")
+    .select(PROPERTY_SELECT)
+    .order("created_at", { ascending: false });
+
+  if (!error) return (data ?? []) as AdminPropertyRow[];
+
+  console.error("fetchAdminProperties embed failed:", error.message);
+
+  const { data: fallback, error: fallbackError } = await supabase
+    .from("properties")
+    .select(PROPERTY_SELECT_FALLBACK)
+    .order("created_at", { ascending: false });
+
+  if (fallbackError) {
+    console.error("fetchAdminProperties fallback:", fallbackError.message);
+    return [];
+  }
+
+  return attachSellersToProperties((fallback ?? []) as AdminPropertyRow[]);
+}
 
 let approvalColumnCache: boolean | null = null;
 let siteVisitsTableCache: boolean | null = null;
@@ -61,52 +106,123 @@ function countBy<T>(rows: T[], key: (row: T) => string): Array<{ status: string;
   return Object.entries(map).map(([status, count]) => ({ status, count }));
 }
 
-export async function fetchAdminProperties(): Promise<AdminPropertyRow[]> {
-  const { data, error } = await supabase
-    .from("properties")
-    .select(PROPERTY_SELECT)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("fetchAdminProperties:", error.message);
-    return [];
-  }
-  return (data ?? []) as AdminPropertyRow[];
+export interface AdminProfilesResult {
+  profiles: Profile[];
+  count: number;
 }
 
-export async function fetchAdminProfiles(): Promise<Profile[]> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
+export interface AdminBuyerRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone: string | null;
+  created_at: string;
+  role: string;
+}
+
+export interface AdminBuyersResult {
+  buyers: AdminBuyerRow[];
+  leads: AdminLeadSummary[];
+  count: number;
+  error?: string;
+}
+
+export async function fetchAdminProfiles(): Promise<AdminProfilesResult> {
+  const response = await fetch("/api/admin/profiles", { credentials: "include" });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    console.error("fetchAdminProfiles:", body?.error ?? response.statusText);
+    return { profiles: [], count: 0 };
+  }
+
+  const payload = (await response.json()) as AdminProfilesResult;
+  return {
+    profiles: payload.profiles ?? [],
+    count: payload.count ?? payload.profiles?.length ?? 0,
+  };
+}
+
+export async function fetchAdminBuyers(): Promise<AdminBuyersResult> {
+  const response = await fetch("/api/admin/buyers", { credentials: "include" });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    const message = body?.error ?? response.statusText;
+    console.error("fetchAdminBuyers:", message);
+    return { buyers: [], leads: [], count: 0, error: message };
+  }
+
+  const payload = (await response.json()) as Omit<AdminBuyersResult, "error">;
+  return {
+    buyers: payload.buyers ?? [],
+    leads: payload.leads ?? [],
+    count: payload.count ?? payload.buyers?.length ?? 0,
+  };
+}
+
+async function fetchInquiryRowsForAdmin(): Promise<Array<Record<string, unknown>>> {
+  const primary = await supabase
+    .from("inquiries")
+    .select(INQUIRY_WITH_BUYER_SELECT)
     .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("fetchAdminProfiles:", error.message);
+  if (!primary.error) return (primary.data ?? []) as Array<Record<string, unknown>>;
+
+  console.error("fetchAdminLeads inquiries embed failed:", primary.error.message);
+
+  const fallback = await supabase
+    .from("inquiries")
+    .select("*, property:properties(title, city)")
+    .order("created_at", { ascending: false });
+
+  if (fallback.error) {
+    console.error("fetchAdminLeads inquiries fallback:", fallback.error.message);
     return [];
   }
-  return (data ?? []) as Profile[];
+
+  const rows = (fallback.data ?? []) as Array<Record<string, unknown>>;
+  const buyerIds = rows
+    .map((row) => row.from_user_id as string)
+    .filter(Boolean);
+  const buyerMap = await fetchBuyerProfilesByIds(buyerIds);
+
+  return rows.map((row) => ({
+    ...row,
+    buyer: buyerMap.get(row.from_user_id as string) ?? null,
+  }));
+}
+
+async function fetchCrmLeadRowsForAdmin(): Promise<Array<Record<string, unknown>>> {
+  const primary = await supabase
+    .from("crm_leads")
+    .select(ADMIN_CRM_LEAD_SELECT)
+    .order("updated_at", { ascending: false });
+
+  if (!primary.error) return (primary.data ?? []) as Array<Record<string, unknown>>;
+
+  console.error("fetchAdminLeads crm embed failed:", primary.error.message);
+
+  const fallback = await supabase
+    .from("crm_leads")
+    .select(CRM_LEAD_WITH_BUYER_SELECT)
+    .order("updated_at", { ascending: false });
+
+  if (fallback.error) {
+    console.error("fetchAdminLeads crm fallback:", fallback.error.message);
+    return [];
+  }
+
+  return (fallback.data ?? []) as Array<Record<string, unknown>>;
 }
 
 export async function fetchAdminLeads(): Promise<AdminLeadRow[]> {
-  const [inquiryRes, crmRes] = await Promise.all([
-    supabase
-      .from("inquiries")
-      .select(INQUIRY_WITH_BUYER_SELECT)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("crm_leads")
-      .select(ADMIN_CRM_LEAD_SELECT)
-      .order("updated_at", { ascending: false }),
+  const [inquiryData, crmData] = await Promise.all([
+    fetchInquiryRowsForAdmin(),
+    fetchCrmLeadRowsForAdmin(),
   ]);
 
-  if (inquiryRes.error) {
-    console.error("fetchAdminLeads inquiries:", inquiryRes.error.message);
-  }
-  if (crmRes.error) {
-    console.error("fetchAdminLeads crm:", crmRes.error.message);
-  }
-
-  const inquiryRows: AdminLeadRow[] = (inquiryRes.data ?? []).map((row) => {
+  const inquiryRows: AdminLeadRow[] = inquiryData.map((row) => {
     const enriched = enrichLeadRowBuyer({
       ...(row as unknown as Record<string, unknown>),
       status: (row as { status?: string }).status,
@@ -115,13 +231,14 @@ export async function fetchAdminLeads(): Promise<AdminLeadRow[]> {
     return {
       ...(row as unknown as AdminLeadRow),
       buyer: enriched.buyer,
+      seller: (row as { seller?: AdminLeadRow["seller"] }).seller ?? null,
       leadSource: "Inquiry" as const,
       crmStatus: null,
     };
   });
 
   const crmRows: AdminLeadRow[] = await Promise.all(
-    ((crmRes.data ?? []) as Array<Record<string, unknown>>).map(async (lead) => {
+    crmData.map(async (lead) => {
       const property = lead.property as {
         title?: string;
         city?: string;
@@ -161,10 +278,13 @@ export async function fetchAdminLeads(): Promise<AdminLeadRow[]> {
           leadSource: hasVisit ? ("Site Visit" as const) : ("CRM" as const),
         }).buyer,
         property: propTitle ? { title: propTitle, city: visitProp?.city ?? property?.city } : null,
-        seller: sellerName ? { full_name: sellerName } : null,
+        seller:
+          (lead.property as { seller?: AdminLeadRow["seller"] } | null)?.seller ??
+          (sellerName ? { full_name: sellerName, role: "seller" } : null),
         leadSource: hasVisit ? ("Site Visit" as const) : ("CRM" as const),
         crmStatus: lead.status as string,
         assignedConnect: (lead.connect as { full_name?: string | null } | null)?.full_name ?? null,
+        connect: (lead.connect as AdminLeadRow["connect"]) ?? null,
         crmLeadId: lead.id as string,
       } as AdminLeadRow;
     }),
@@ -186,7 +306,9 @@ export async function fetchAdminConversations(): Promise<AdminConversationRow[]>
 
   const { data, error } = await supabase
     .from("conversations")
-    .select("*, user:profiles(full_name, email, phone)")
+    .select(
+      "*, user:profiles(id, full_name, email, phone, role, company, created_at)",
+    )
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -199,32 +321,9 @@ export async function fetchAdminConversations(): Promise<AdminConversationRow[]>
 export async function fetchAdminSiteVisits(): Promise<AdminSiteVisitRow[]> {
   if (!(await hasSiteVisitsTable())) return [];
 
-  const { data, error } = await supabase
-    .from("site_visits")
-    .select(SITE_VISIT_WITH_USER_SELECT)
-    .order("visit_date", { ascending: false });
-
-  if (error) {
-    console.error("fetchAdminSiteVisits:", error.message);
-
-    const { data: fallback } = await supabase
-      .from("site_visits")
-      .select("*, property:properties(title, city)")
-      .order("visit_date", { ascending: false });
-
-    const visits = (fallback ?? []) as AdminSiteVisitRow[];
-    const userIds = [...new Set(visits.map((v) => v.user_id))];
-    const profileMap = await fetchBuyerProfilesByIds(userIds);
-
-    return visits.map((v) => ({
-      ...v,
-      buyer: profileMap.get(v.user_id) ?? null,
-    }));
-  }
-
-  return ((data ?? []) as AdminSiteVisitRow[]).map((row) => {
-    const enriched = enrichVisitRowBuyer({ ...row } as Record<string, unknown>);
-    return { ...row, buyer: enriched.buyer };
+  return fetchSiteVisitsWithBuyers<AdminSiteVisitRow>({
+    select: SITE_VISIT_ADMIN_SELECT,
+    order: { column: "visit_date", ascending: false },
   });
 }
 
@@ -294,13 +393,16 @@ export async function fetchAdminData(): Promise<AdminData> {
   const conversationsTable = await hasConversationsTable();
   const propertyViewsTable = await hasPropertyViewsTable();
 
-  const [properties, profiles, leads, conversations, siteVisits] = await Promise.all([
+  const [properties, profilesResult, leads, conversations, siteVisits] = await Promise.all([
     fetchAdminProperties(),
     fetchAdminProfiles(),
     fetchAdminLeads(),
     conversationsTable ? fetchAdminConversations() : Promise.resolve([]),
     siteVisitsTable ? fetchAdminSiteVisits() : Promise.resolve([]),
   ]);
+
+  const profiles = profilesResult.profiles;
+  const profileCount = profilesResult.count;
 
   const stats = buildOverviewStats({
     properties,
@@ -323,6 +425,7 @@ export async function fetchAdminData(): Promise<AdminData> {
   return {
     properties,
     profiles,
+    profileCount,
     leads,
     conversations,
     siteVisits,

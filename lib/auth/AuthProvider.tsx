@@ -10,7 +10,8 @@ import {
   useState,
 } from "react";
 import { fetchProfile, getDashboardPath } from "@/lib/auth/profile";
-import { supabase, type Profile } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
+import type { Profile } from "@/lib/supabase";
 
 interface AuthContextValue {
   user: User | null;
@@ -45,19 +46,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initialize = async () => {
       const {
-        data: { session: initialSession },
+        data: { user: initialUser },
         error,
-      } = await supabase.auth.getSession();
+      } = await supabase.auth.getUser();
 
       if (error) {
         console.error("Failed to restore session:", error.message);
       }
 
+      const {
+        data: { session: initialSession },
+      } = await supabase.auth.getSession();
+
       if (!mounted) return;
 
+      setUser(initialUser ?? null);
       setSession(initialSession);
-      setUser(initialSession?.user ?? null);
-      await loadProfile(initialSession?.user ?? null);
+      await loadProfile(initialUser ?? null);
       setLoading(false);
     };
 

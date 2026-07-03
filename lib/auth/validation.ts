@@ -58,7 +58,7 @@ export function validateLogin(input: {
   password: string;
 }): string | null {
   if (!input.identifier.trim()) {
-    return "Please enter your username or phone number.";
+    return "Please enter your email, username, or phone number.";
   }
 
   if (!input.password) {

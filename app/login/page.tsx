@@ -7,7 +7,7 @@ import AuthAlert from "@/components/auth/AuthAlert";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthLayout from "@/components/auth/AuthLayout";
-import { signInWithIdentifier } from "@/lib/auth/credentials";
+import { signInWithEmailPassword, signInWithIdentifier } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { fetchProfile, getDashboardPath, upsertProfile } from "@/lib/auth/profile";
 import { validateLogin } from "@/lib/auth/validation";
@@ -37,7 +37,11 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const { user, profile } = await signInWithIdentifier(identifier, password);
+      const trimmed = identifier.trim();
+      const signedIn = trimmed.includes("@")
+        ? await signInWithEmailPassword(trimmed, password)
+        : await signInWithIdentifier(trimmed, password);
+      const { user, profile } = signedIn;
 
       const resolvedProfile =
         profile ??
@@ -82,9 +86,9 @@ function LoginForm() {
 
       <form onSubmit={handleSubmit} className="space-y-1">
         <AuthInput
-          label="Username or Phone Number"
+          label="Email, username, or phone"
           autoComplete="username"
-          placeholder="yourname or 9876543210"
+          placeholder="you@example.com, yourname, or 9876543210"
           value={identifier}
           onChange={(event) => setIdentifier(event.target.value)}
           error={fieldError}

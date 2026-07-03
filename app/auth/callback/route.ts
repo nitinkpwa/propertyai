@@ -7,10 +7,12 @@ import { getDashboardPath } from "@/lib/auth/profile";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/buyer";
+  const next = searchParams.get("next") ?? searchParams.get("redirect_to") ?? "/buyer";
+  const type = searchParams.get("type");
+  const destination = next.startsWith("/") ? next : "/buyer";
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/login`);
+    return NextResponse.redirect(`${origin}/login?error=missing_code`);
   }
 
   const cookieStore = await cookies();
@@ -34,7 +36,15 @@ export async function GET(request: Request) {
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error || !data.user) {
-    return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
+    const codeParam = error?.message.toLowerCase().includes("expired")
+      ? "otp_expired"
+      : "auth_callback_failed";
+    return NextResponse.redirect(`${origin}/forgot-password?error=${codeParam}`);
+  }
+
+  // Password recovery — session established; skip profile upsert.
+  if (destination === "/reset-password" || type === "recovery") {
+    return NextResponse.redirect(`${origin}/reset-password`);
   }
 
   const fullName =
@@ -71,9 +81,8 @@ export async function GET(request: Request) {
     .select("role")
     .single();
 
-  const destination = next.startsWith("/")
-    ? next
-    : getDashboardPath(profile?.role ?? role);
+  const finalDestination =
+    destination !== "/buyer" ? destination : getDashboardPath(profile?.role ?? role);
 
-  return NextResponse.redirect(`${origin}${destination}`);
+  return NextResponse.redirect(`${origin}${finalDestination}`);
 }

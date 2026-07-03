@@ -1,9 +1,8 @@
 import {
   CRM_LEAD_WITH_BUYER_SELECT,
   CRM_LEAD_WITH_BUYER_AND_CONNECT_SELECT,
-  CONNECT_SITE_VISIT_SELECT,
   enrichLeadRowBuyer,
-  enrichVisitRowBuyer,
+  fetchSiteVisitsWithBuyers,
 } from "@/lib/crm/buyerProfile";
 import { supabase } from "@/lib/supabase";
 import {
@@ -220,20 +219,39 @@ export async function fetchAllCrmLeads(): Promise<SellerCrmLeadRow[]> {
     .select(CRM_LEAD_WITH_BUYER_AND_CONNECT_SELECT)
     .order("updated_at", { ascending: false });
 
-  if (error) {
-    console.error("fetchAllCrmLeads:", error.message);
+  if (!error) {
+    return ((data as SellerCrmLeadRow[]) ?? []).map((row) => enrichLeadRowBuyer(row));
+  }
+
+  console.error("fetchAllCrmLeads embed failed:", error.message);
+
+  const { data: fallback, error: fallbackError } = await supabase
+    .from("crm_leads")
+    .select(CRM_LEAD_WITH_BUYER_SELECT)
+    .order("updated_at", { ascending: false });
+
+  if (fallbackError) {
+    console.error("fetchAllCrmLeads fallback:", fallbackError.message);
     return [];
   }
 
-  return ((data as SellerCrmLeadRow[]) ?? []).map((row) => enrichLeadRowBuyer(row));
+  return ((fallback as SellerCrmLeadRow[]) ?? []).map((row) => enrichLeadRowBuyer(row));
 }
 
 export async function fetchConnectPartners(): Promise<
-  Array<{ id: string; full_name: string | null }>
+  Array<{
+    id: string;
+    full_name: string | null;
+    email: string | null;
+    phone: string | null;
+    role: string | null;
+    company: string | null;
+    created_at: string | null;
+  }>
 > {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, full_name")
+    .select("id, full_name, email, phone, role, company, created_at")
     .eq("role", "builder")
     .order("full_name");
 
@@ -271,20 +289,9 @@ export async function fetchAssignedConnectSiteVisits(
   const buyerIds = leads.map((l) => l.buyer_id);
   if (buyerIds.length === 0) return [];
 
-  const { data, error } = await supabase
-    .from("site_visits")
-    .select(CONNECT_SITE_VISIT_SELECT)
-    .in("user_id", buyerIds)
-    .order("visit_date", { ascending: true });
-
-  if (error) {
-    console.error("fetchAssignedConnectSiteVisits:", error.message);
-    return [];
-  }
-
-  return ((data ?? []) as unknown as ConnectSiteVisitRow[]).map((row) => {
-    const enriched = enrichVisitRowBuyer({ ...row } as Record<string, unknown>);
-    return { ...row, buyer: enriched.buyer };
+  return fetchSiteVisitsWithBuyers<ConnectSiteVisitRow>({
+    filter: { userIds: buyerIds },
+    order: { column: "visit_date", ascending: true },
   });
 }
 

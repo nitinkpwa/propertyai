@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveDisplayName } from "@/lib/admin/profileDisplay";
 import type { BuyerProfileForCRM } from "@/lib/crm/buyerProfile";
 
 interface BuyerProfileGridProps {
@@ -10,7 +11,7 @@ interface BuyerProfileGridProps {
 }
 
 const FULL_FIELDS: Array<{ key: keyof BuyerProfileForCRM; label: string }> = [
-  { key: "full_name", label: "Buyer Name" },
+  { key: "full_name", label: "Name" },
   { key: "phone", label: "Phone" },
   { key: "email", label: "Email" },
   { key: "city", label: "City" },
@@ -25,7 +26,7 @@ const FULL_FIELDS: Array<{ key: keyof BuyerProfileForCRM; label: string }> = [
 ];
 
 function displayValue(buyer: BuyerProfileForCRM, key: keyof BuyerProfileForCRM): string {
-  if (key === "full_name") return buyer.full_name ?? buyer.email ?? "";
+  if (key === "full_name") return resolveDisplayName(buyer);
   const value = buyer[key];
   if (value == null || value === "") return "";
   return String(value);
@@ -77,10 +78,11 @@ export function BuyerContactLine({
   buyer: BuyerProfileForCRM | null | undefined;
 }) {
   if (!buyer) return null;
+  const displayName = resolveDisplayName(buyer);
   return (
     <div className="space-y-0.5 text-xs text-neutral-600">
-      {buyer.full_name ? (
-        <p className="text-sm font-semibold text-neutral-900">{buyer.full_name}</p>
+      {displayName ? (
+        <p className="text-sm font-semibold text-neutral-900">{displayName}</p>
       ) : null}
       {buyer.phone ? <p>📞 {buyer.phone}</p> : null}
       {buyer.email ? <p>✉ {buyer.email}</p> : null}

@@ -1,18 +1,23 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthButton from "@/components/auth/AuthButton";
 import AdminEmptyState from "./components/AdminEmptyState";
 import AdminShell, { type AdminNavItem } from "./components/AdminShell";
 import AdminCrmPanel from "@/components/crm/AdminCrmPanel";
+import AdminProfileCard, {
+  AdminProfileInline,
+  AdminPropertySellerInline,
+} from "@/components/admin/AdminProfileCard";
 import BuyerProfileGrid from "@/components/crm/BuyerProfileGrid";
 import Logo from "@/components/common/Logo";
-import {
-  isAdminSessionActive,
-  setAdminSession,
-  verifyAdminCredentials,
-} from "@/lib/admin/auth";
+import { isAdminRole } from "@/lib/auth/admin";
+import { signInWithEmailPassword } from "@/lib/auth/credentials";
+import { getAuthErrorMessage } from "@/lib/auth/errors";
+import { fetchProfile } from "@/lib/auth/profile";
 import {
   ADMIN_CITIES,
   ADMIN_SUB_TYPES,
@@ -34,15 +39,24 @@ import {
   rejectProperty,
   updatePropertyStatus,
 } from "@/lib/admin/queries";
+import {
+  buildProfileLookup,
+  profileMatchesSearch,
+  resolveProfileDisplay,
+  roleBadgeClass,
+} from "@/lib/admin/profileDisplay";
 import type {
   AdminConversationRow,
   AdminData,
   AdminPropertyRow,
   AdminTab,
 } from "@/lib/admin/types";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 
 type AdminAccessState = "loading" | "signed_out" | "ready";
+
+const ADMIN_SETUP_HINT =
+  "No admin account is configured yet. Create a user in Supabase Dashboard → Authentication → Users, add a matching row in Table Editor → profiles (same id), and set role to admin.";
 
 const emptyForm = {
   title: "",
@@ -111,6 +125,7 @@ function StatCard({
 }
 
 export default function AdminPage() {
+  const router = useRouter();
   const [accessState, setAccessState] = useState<AdminAccessState>("loading");
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const [data, setData] = useState<AdminData | null>(null);
@@ -128,37 +143,51 @@ export default function AdminPage() {
   const [userRoleFilter, setUserRoleFilter] = useState("all");
   const [selectedChat, setSelectedChat] = useState<AdminConversationRow | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [adminUsername, setAdminUsername] = useState("");
+  const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
   const [loginError, setLoginError] = useState("");
+  const [supabaseRoleWarning, setSupabaseRoleWarning] = useState<string | null>(null);
 
   useEffect(() => {
-    /*
-    TODO(production): Replace sessionStorage admin gate with Supabase role verification:
     async function verifyAdminAccess() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setAccessState("signed_out"); return; }
-      const profile = await fetchProfile(user.id);
-      if (!isAdminRole(profile?.role)) { setAccessState("forbidden"); return; }
-      setAdminUserId(user.id);
-      setAccessState("ready");
-    }
-    verifyAdminAccess();
-    */
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-    if (isAdminSessionActive()) {
-      setAccessState("ready");
-    } else {
+      if (!user) {
+        setAccessState("signed_out");
+        return;
+      }
+
+      const profile = await fetchProfile(user.id);
+      if (isAdminRole(profile?.role)) {
+        setAdminUserId(user.id);
+        setAccessState("ready");
+        return;
+      }
+
+      await supabase.auth.signOut();
+      setLoginError(
+        `Access denied. Signed-in account does not have profiles.role = admin. ${ADMIN_SETUP_HINT}`,
+      );
       setAccessState("signed_out");
     }
+
+    verifyAdminAccess();
   }, []);
 
   const loadAll = async () => {
     setLoading(true);
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (user) setAdminUserId(user.id);
+
+    if (user) {
+      setAdminUserId(user.id);
+      setSupabaseRoleWarning(null);
+    }
+
     const adminData = await fetchAdminData();
     setData(adminData);
     setLoading(false);
@@ -168,30 +197,57 @@ export default function AdminPage() {
     if (accessState === "ready") loadAll();
   }, [accessState]);
 
-  const logoutAdmin = () => {
-    setAdminSession(false);
+  const logoutAdmin = async () => {
+    await supabase.auth.signOut();
     setAccessState("signed_out");
-    setAdminUsername("");
+    setAdminEmail("");
     setAdminPassword("");
     setLoginError("");
+    setAdminUserId(null);
+    setData(null);
+    setSupabaseRoleWarning(null);
   };
 
-  const handleAdminLogin = (event: React.FormEvent) => {
+  const handleAdminLogin = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoginError("");
 
-    if (verifyAdminCredentials(adminUsername, adminPassword)) {
-      setAdminSession(true);
-      setAccessState("ready");
-      setAdminPassword("");
+    const email = adminEmail.trim().toLowerCase();
+    if (!email || !adminPassword) {
+      setLoginError("Enter your admin email and password.");
       return;
     }
 
-    setLoginError("Invalid credentials.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setLoginError("Enter a valid email address.");
+      return;
+    }
+
+    try {
+      const { user } = await signInWithEmailPassword(email, adminPassword);
+      const profile = await fetchProfile(user.id);
+
+      if (!isAdminRole(profile?.role)) {
+        await supabase.auth.signOut();
+        setLoginError(
+          `Access denied. This account does not have profiles.role = admin. ${ADMIN_SETUP_HINT}`,
+        );
+        return;
+      }
+
+      setAdminUserId(user.id);
+      setAccessState("ready");
+      setAdminPassword("");
+      router.refresh();
+    } catch (err) {
+      setLoginError(getAuthErrorMessage(err));
+    }
   };
 
   const properties = data?.properties ?? [];
   const profiles = data?.profiles ?? [];
+  const profileCount = data?.profileCount ?? profiles.length;
+  const profileLookup = useMemo(() => buildProfileLookup(profiles), [profiles]);
   const leads = data?.leads ?? [];
   const conversations = data?.conversations ?? [];
   const siteVisits = data?.siteVisits ?? [];
@@ -211,7 +267,7 @@ export default function AdminPage() {
     { key: "dashboard", label: "Dashboard", icon: "📊" },
     { key: "properties", label: "Properties", icon: "🏠", count: properties.length },
     { key: "pending", label: "Pending Approval", icon: "⏳", count: pendingProperties.length },
-    { key: "users", label: "Users", icon: "👤", count: profiles.length },
+    { key: "users", label: "Users", icon: "👤", count: profileCount },
     { key: "builders", label: "AreaIQ Connect", icon: "🏗️", count: builders.length },
     { key: "leads", label: "Leads", icon: "📩", count: leads.length },
     { key: "crm", label: "CRM", icon: "🔗" },
@@ -374,7 +430,7 @@ export default function AdminPage() {
           <div className="mb-6 flex flex-col items-center text-center">
             <Logo size="dashboard" suffix="Admin" href={null} />
             <p className="mt-4 text-sm text-neutral-500">
-              Sign in with your admin credentials
+              Sign in with your Supabase admin account
             </p>
           </div>
 
@@ -386,17 +442,18 @@ export default function AdminPage() {
 
           <form onSubmit={handleAdminLogin} className="space-y-1">
             <AuthInput
-              label="Admin Username"
-              autoComplete="username"
-              placeholder="Enter admin username"
-              value={adminUsername}
-              onChange={(event) => setAdminUsername(event.target.value)}
+              label="Admin Email"
+              type="email"
+              autoComplete="email"
+              placeholder="admin@example.com"
+              value={adminEmail}
+              onChange={(event) => setAdminEmail(event.target.value)}
             />
             <AuthInput
-              label="Admin Password"
+              label="Password"
               type="password"
               autoComplete="current-password"
-              placeholder="Enter admin password"
+              placeholder="Enter password"
               value={adminPassword}
               onChange={(event) => setAdminPassword(event.target.value)}
             />
@@ -404,6 +461,10 @@ export default function AdminPage() {
               <AuthButton type="submit">Access Admin</AuthButton>
             </div>
           </form>
+
+          <p className="mt-4 text-center text-xs leading-relaxed text-neutral-500">
+            {ADMIN_SETUP_HINT}
+          </p>
 
           <a
             href="/"
@@ -431,7 +492,26 @@ export default function AdminPage() {
   );
 
   return (
-    <AdminShell tab={tab} onTabChange={setTab} navItems={navItems} onLogout={logoutAdmin}>
+    <AdminShell
+      tab={tab}
+      onTabChange={(next) => {
+        if (next === "leads") {
+          router.push("/admin/leads");
+          return;
+        }
+        setTab(next);
+        setSearchQ("");
+        setUserRoleFilter("all");
+        setStatusFilter("all");
+      }}
+      navItems={navItems}
+      onLogout={logoutAdmin}
+    >
+      {supabaseRoleWarning ? (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          {supabaseRoleWarning}
+        </div>
+      ) : null}
       {loading && !data ? (
         <div className="flex justify-center py-20">
           <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
@@ -457,15 +537,23 @@ export default function AdminPage() {
             <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
               <h2 className="mb-4 font-semibold text-neutral-900">Latest Leads</h2>
               {leads.slice(0, 5).map((l) => (
-                <div key={l.id} className="flex items-center justify-between border-b border-neutral-100 py-3 last:border-0">
-                  <div>
-                    <p className="text-sm font-medium text-neutral-900">{l.buyer?.full_name ?? "Buyer"}</p>
-                    <p className="text-xs text-neutral-500">{l.property?.title ?? "—"}</p>
+                <Link
+                  key={l.id}
+                  href={`/admin/leads/${l.from_user_id}`}
+                  className="flex items-center justify-between border-b border-neutral-100 py-3 last:border-0 hover:bg-neutral-50/80"
+                >
+                  <AdminProfileInline
+                    profile={l.buyer}
+                    profileId={l.from_user_id}
+                    lookup={profileLookup}
+                  />
+                  <div className="ml-3 min-w-0 flex-1">
+                    <p className="truncate text-xs text-neutral-500">{l.property?.title ?? "—"}</p>
                   </div>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(l.status)}`}>
                     {l.status}
                   </span>
-                </div>
+                </Link>
               ))}
               {leads.length === 0 ? <p className="text-sm text-neutral-500">No leads yet</p> : null}
             </div>
@@ -473,7 +561,7 @@ export default function AdminPage() {
               <h2 className="mb-4 font-semibold text-neutral-900">Recent AI Chats</h2>
               {conversations.slice(0, 5).map((c) => (
                 <div key={c.id} className="border-b border-neutral-100 py-3 last:border-0">
-                  <p className="text-sm font-medium text-neutral-900">{c.user?.full_name ?? c.user?.email ?? "User"}</p>
+                  <AdminProfileInline profile={c.user} profileId={c.user_id} lookup={profileLookup} />
                   <p className="mt-1 line-clamp-2 text-xs text-neutral-500">{getChatSummary(c.messages)}</p>
                 </div>
               ))}
@@ -521,7 +609,7 @@ export default function AdminPage() {
               <table className="min-w-full text-sm">
                 <thead className="border-b border-neutral-200 bg-neutral-50">
                   <tr>
-                    {["Property", "Type", "Price", "City", "Contact", "Status", "Date", "Actions"].map((h) => (
+                    {["Property", "Type", "Price", "City", "Seller", "Status", "Date", "Actions"].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">
                         {h}
                       </th>
@@ -539,8 +627,7 @@ export default function AdminPage() {
                       <td className="px-4 py-3 font-semibold text-emerald-700">{formatPrice(prop.price)}</td>
                       <td className="px-4 py-3 text-neutral-600">{prop.city}</td>
                       <td className="px-4 py-3">
-                        <p className="text-neutral-900">{prop.contact_name}</p>
-                        <p className="text-xs text-neutral-500">{prop.contact_phone}</p>
+                        <AdminPropertySellerInline property={prop} lookup={profileLookup} />
                       </td>
                       <td className="px-4 py-3">
                         <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${statusBadgeClass(prop.status)}`}>
@@ -578,19 +665,40 @@ export default function AdminPage() {
           {pendingProperties.length === 0 ? (
             <AdminEmptyState icon="⏳" title="No pending properties" description="Properties awaiting approval will appear here." />
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {pendingProperties.map((prop) => (
-                <div key={prop.id} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                  <div>
+                <article key={prop.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+                  <div className="border-b border-neutral-100 px-5 py-4">
                     <p className="font-semibold text-neutral-900">{prop.title}</p>
-                    <p className="text-sm text-neutral-500">{prop.city} · {formatPrice(prop.price)} · {prop.seller?.full_name ?? "Seller"}</p>
+                    <p className="mt-1 text-sm text-neutral-500">
+                      {prop.city} · {formatPrice(prop.price)}
+                    </p>
                   </div>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={async () => { await approveProperty(prop.id); await loadAll(); }} className="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-semibold text-white">Approve</button>
-                    <button type="button" onClick={async () => { await rejectProperty(prop.id); await loadAll(); }} className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600">Reject</button>
-                    <button type="button" onClick={() => startEdit(prop)} className="rounded-xl border border-neutral-200 px-4 py-2 text-xs font-semibold text-neutral-700">Edit</button>
+                  <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+                    <AdminProfileCard
+                      variant="compact"
+                      profile={{
+                        ...(prop.seller ?? {}),
+                        full_name: prop.seller?.full_name ?? prop.contact_name ?? undefined,
+                        phone: prop.seller?.phone ?? prop.contact_phone ?? undefined,
+                        role: prop.seller?.role ?? "seller",
+                      }}
+                      profileId={prop.seller_id}
+                      lookup={profileLookup}
+                      status={usesApprovalStatus ? prop.approval_status ?? "pending" : prop.status}
+                      statusClassName={statusBadgeClass(
+                        usesApprovalStatus ? prop.approval_status ?? "pending" : prop.status,
+                      )}
+                      subtitle="Listing owner"
+                      className="flex-1 border-0 bg-transparent p-0"
+                    />
+                    <div className="flex gap-2">
+                      <button type="button" onClick={async () => { await approveProperty(prop.id); await loadAll(); }} className="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-semibold text-white">Approve</button>
+                      <button type="button" onClick={async () => { await rejectProperty(prop.id); await loadAll(); }} className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600">Reject</button>
+                      <button type="button" onClick={() => startEdit(prop)} className="rounded-xl border border-neutral-200 px-4 py-2 text-xs font-semibold text-neutral-700">Edit</button>
+                    </div>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
@@ -616,21 +724,31 @@ export default function AdminPage() {
             <table className="min-w-full text-sm">
               <thead className="border-b border-neutral-200 bg-neutral-50">
                 <tr>
-                  {["Name", "Phone", "Role", "Joined", "Status"].map((h) => (
+                  {["User", "Phone", "Email", "Role", "Joined", "Status"].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((p) => (
+                {filteredUsers.map((p) => {
+                  const resolved = resolveProfileDisplay(p);
+                  return (
                   <tr key={p.id} className="border-b border-neutral-100">
-                    <td className="px-4 py-3 font-medium text-neutral-900">{p.full_name || "—"}</td>
-                    <td className="px-4 py-3 text-neutral-600">{p.phone || "—"}</td>
-                    <td className="px-4 py-3 capitalize text-neutral-600">{p.role}</td>
+                    <td className="px-4 py-3">
+                      <AdminProfileInline profile={p} />
+                    </td>
+                    <td className="px-4 py-3 text-neutral-600">{resolved.phone || "—"}</td>
+                    <td className="px-4 py-3 text-neutral-600">{resolved.email || "—"}</td>
+                    <td className="px-4 py-3">
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${roleBadgeClass(p.role)}`}>
+                        {resolved.roleLabel}
+                      </span>
+                    </td>
                     <td className="px-4 py-3 text-neutral-500">{formatDate(p.created_at)}</td>
                     <td className="px-4 py-3"><span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Active</span></td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
             {filteredUsers.length === 0 ? <p className="py-12 text-center text-sm text-neutral-500">No users found</p> : null}
@@ -654,16 +772,21 @@ export default function AdminPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {builders.map((b) => (
+                  {builders.map((b) => {
+                    const resolved = resolveProfileDisplay(b);
+                    return (
                     <tr key={b.id} className="border-b border-neutral-100">
-                      <td className="px-4 py-3 font-medium text-neutral-900">{b.company || b.full_name || "—"}</td>
+                      <td className="px-4 py-3">
+                        <AdminProfileInline profile={b} />
+                      </td>
                       <td className="px-4 py-3 text-neutral-600">{b.project_count}</td>
                       <td className="px-4 py-3 text-neutral-600">{b.listing_count}</td>
-                      <td className="px-4 py-3 text-neutral-600">{b.phone || "—"}</td>
-                      <td className="px-4 py-3 text-neutral-600">{b.full_name || "—"}</td>
+                      <td className="px-4 py-3 text-neutral-600">{resolved.phone || "—"}</td>
+                      <td className="px-4 py-3 text-neutral-600">{b.full_name?.trim() || resolved.email || "—"}</td>
                       <td className="px-4 py-3"><span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Registered</span></td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -671,44 +794,7 @@ export default function AdminPage() {
         </div>
       ) : null}
 
-      {tab === "leads" ? (
-        <div>
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <h1 className="text-2xl font-bold text-neutral-900">Leads</h1>
-            {searchInput}
-          </div>
-          <div className="space-y-4">
-            {leads.filter((l) => {
-              const q = searchQ.toLowerCase();
-              return !q || l.buyer?.full_name?.toLowerCase().includes(q) || l.property?.title?.toLowerCase().includes(q);
-            }).map((lead) => (
-              <article key={lead.crmLeadId ?? lead.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-                <div className="border-b border-neutral-100 px-5 py-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <p className="font-semibold text-neutral-900">{lead.buyer?.full_name ?? "Buyer"}</p>
-                      <p className="mt-1 text-sm text-neutral-500">
-                        {lead.property?.title ?? "—"} · {lead.leadSource ?? "Inquiry"}
-                      </p>
-                    </div>
-                    <div className="text-right text-xs text-neutral-500">
-                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(lead.crmStatus ?? lead.status)}`}>{lead.crmStatus ?? lead.status}</span>
-                      <p className="mt-2">{formatDateTime(lead.created_at)}</p>
-                      {lead.assignedConnect ? <p className="mt-1">Connect: {lead.assignedConnect}</p> : null}
-                    </div>
-                  </div>
-                </div>
-                <div className="px-5 py-4">
-                  <BuyerProfileGrid buyer={lead.buyer} />
-                </div>
-              </article>
-            ))}
-          </div>
-          {leads.length === 0 ? <p className="py-12 text-center text-sm text-neutral-500">No enquiries yet</p> : null}
-        </div>
-      ) : null}
-
-      {tab === "crm" ? <AdminCrmPanel /> : null}
+      {tab === "crm" ? <AdminCrmPanel profileLookup={profileLookup} /> : null}
 
       {tab === "visits" ? (
         <div>
@@ -722,13 +808,21 @@ export default function AdminPage() {
               {siteVisits.map((v) => (
                 <article key={v.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
                   <div className="border-b border-neutral-100 px-5 py-4">
-                    <p className="font-semibold text-neutral-900">{v.property?.title ?? "Property"}</p>
+                    <p className="font-semibold text-neutral-900">{v.property?.title ?? "—"}</p>
                     <p className="mt-1 text-sm text-neutral-500">
-                      {v.visit_date} at {v.visit_time?.slice?.(0, 5) ?? v.visit_time} · <span className="capitalize">{v.status.replace(/_/g, " ")}</span>
+                      {v.visit_date} at {v.visit_time?.slice?.(0, 5) ?? v.visit_time}
                     </p>
                   </div>
-                  <div className="px-5 py-4">
-                    <BuyerProfileGrid buyer={v.buyer} />
+                  <div className="space-y-4 px-5 py-4">
+                    <AdminProfileCard
+                      profile={{ ...(v.buyer ?? {}), role: "buyer" }}
+                      profileId={v.user_id}
+                      lookup={profileLookup}
+                      status={v.status}
+                      statusClassName={statusBadgeClass(v.status)}
+                      subtitle={`Site visit · ${v.property?.city ?? "—"}`}
+                    />
+                    <BuyerProfileGrid buyer={v.buyer} variant="compact" />
                   </div>
                 </article>
               ))}
@@ -748,8 +842,12 @@ export default function AdminPage() {
             <div className={`grid gap-4 ${selectedChat ? "lg:grid-cols-2" : ""}`}>
               <div className="space-y-2">
                 {conversations.filter((c) => {
+                  const resolved = resolveProfileDisplay(c.user, {
+                    profileId: c.user_id,
+                    lookup: profileLookup,
+                  });
                   const q = searchQ.toLowerCase();
-                  return !q || c.user?.full_name?.toLowerCase().includes(q) || c.user?.email?.toLowerCase().includes(q);
+                  return !q || profileMatchesSearch(resolved, q);
                 }).map((c) => (
                   <button
                     key={c.id}
@@ -757,13 +855,16 @@ export default function AdminPage() {
                     onClick={() => setSelectedChat(selectedChat?.id === c.id ? null : c)}
                     className={`w-full rounded-2xl border bg-white p-4 text-left shadow-sm transition-all ${selectedChat?.id === c.id ? "border-emerald-300 ring-1 ring-emerald-200" : "border-neutral-200 hover:shadow-md"}`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium text-neutral-900">{c.user?.full_name ?? c.user?.email ?? "User"}</p>
-                        <p className="mt-1 text-xs text-neutral-500">{getInterest(c.messages)} · {formatDateTime(c.created_at)}</p>
-                      </div>
-                      <span className="text-xs text-neutral-400">{c.messages?.length ?? 0} msgs</span>
-                    </div>
+                    <AdminProfileCard
+                      variant="compact"
+                      profile={c.user}
+                      profileId={c.user_id}
+                      lookup={profileLookup}
+                      status={getInterest(c.messages)}
+                      statusClassName="bg-neutral-100 text-neutral-600"
+                      subtitle={`${formatDateTime(c.created_at)} · ${c.messages?.length ?? 0} messages`}
+                      className="border-0 bg-transparent p-0"
+                    />
                     <p className="mt-2 line-clamp-2 text-sm text-neutral-600">{getChatSummary(c.messages)}</p>
                   </button>
                 ))}
@@ -771,7 +872,16 @@ export default function AdminPage() {
               {selectedChat ? (
                 <div className="sticky top-24 max-h-[70vh] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
                   <div className="border-b border-neutral-100 px-4 py-3">
-                    <p className="font-semibold text-neutral-900">{selectedChat.user?.full_name ?? "Chat"}</p>
+                    <AdminProfileCard
+                      variant="compact"
+                      profile={selectedChat.user}
+                      profileId={selectedChat.user_id}
+                      lookup={profileLookup}
+                      status={getInterest(selectedChat.messages)}
+                      statusClassName="bg-neutral-100 text-neutral-600"
+                      subtitle={`Started ${formatDateTime(selectedChat.created_at)}`}
+                      className="border-0 bg-transparent p-0"
+                    />
                   </div>
                   <div className="max-h-[60vh] space-y-3 overflow-y-auto p-4">
                     {(selectedChat.messages ?? []).map((msg, i) => (

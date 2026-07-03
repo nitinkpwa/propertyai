@@ -74,3 +74,20 @@ export function getAuthErrorMessage(error: unknown): string {
 
   return message;
 }
+
+const RECOVERY_ERROR_MESSAGES: Record<string, string> = {
+  otp_expired:
+    "This reset link has expired or was already used. Request a new password reset email.",
+  access_denied:
+    "Password reset was denied. Check Supabase Redirect URLs include /auth/callback and /auth/confirm.",
+  auth_callback_failed: "Could not complete sign-in from the email link. Request a new reset link.",
+  auth_confirm_failed: "Could not verify the email link. Request a new reset link.",
+  invalid_link: "The reset link is invalid. Request a new password reset email.",
+  session_failed: "Could not establish a session from the reset link. Request a new email.",
+};
+
+export function getRecoveryLinkErrorMessage(code: string | null | undefined): string | null {
+  if (!code) return null;
+  const key = code.toLowerCase();
+  return RECOVERY_ERROR_MESSAGES[key] ?? RECOVERY_ERROR_MESSAGES[key.replace(/ /g, "_")] ?? null;
+}
