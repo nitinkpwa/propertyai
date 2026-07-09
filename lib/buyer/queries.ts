@@ -2,6 +2,7 @@ import type { PropertyCardProps } from "@/app/components/PropertyCard";
 import { mapPropertyRowToCardProps } from "@/lib/properties/queries";
 import { trackCrmEvent } from "@/lib/crm/queries";
 import { supabase, type Property } from "@/lib/supabase";
+import { PROPERTIES_CARD_SELECT } from "@/lib/seller/propertySchema";
 import type {
   BuyerProfileUpdate,
   BuyerStats,
@@ -168,7 +169,7 @@ export async function toggleSavedProperty(
 export async function fetchSavedPropertyCards(userId: string) {
   const { data, error } = await supabase
     .from("saved_properties")
-    .select("*, property:properties(*)")
+    .select(`*, property:properties(${PROPERTIES_CARD_SELECT})`)
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -194,7 +195,7 @@ export async function removeSavedProperty(rowId: string): Promise<boolean> {
 export async function fetchComparedPropertyCards(userId: string) {
   const { data, error } = await supabase
     .from("compared_properties")
-    .select("*, property:properties(*)")
+    .select(`*, property:properties(${PROPERTIES_CARD_SELECT})`)
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
@@ -230,6 +231,13 @@ export async function addComparedProperty(
     console.error("addComparedProperty:", error.message);
     return false;
   }
+
+  void trackCrmEvent({
+    activityType: "property_compared",
+    title: "Property added to compare",
+    propertyId,
+  });
+
   return true;
 }
 
@@ -257,10 +265,10 @@ export async function recordPropertyView(
 export async function fetchRecentViewedCards(userId: string, limit = 4) {
   const { data, error } = await supabase
     .from("property_views")
-    .select("id, property_id, viewed_at, property:properties(*)")
+    .select(`id, property_id, viewed_at, property:properties(${PROPERTIES_CARD_SELECT})`)
     .eq("user_id", userId)
     .order("viewed_at", { ascending: false })
-    .limit(limit);
+    .limit(limit * 3);
 
   if (error) {
     console.error("fetchRecentViewedCards:", error.message);
@@ -275,9 +283,61 @@ export async function fetchRecentViewedCards(userId: string, limit = 4) {
     seen.add(row.property_id);
     const card = mapViewRow(row);
     if (card) cards.push(card);
+    if (cards.length >= limit) break;
   }
 
   return cards;
+}
+
+export async function fetchRecentViewedWithMeta(userId: string, limit = 6) {
+  const { data, error } = await supabase
+    .from("property_views")
+    .select(`id, property_id, viewed_at, property:properties(${PROPERTIES_CARD_SELECT})`)
+    .eq("user_id", userId)
+    .order("viewed_at", { ascending: false })
+    .limit(limit * 3);
+
+  if (error) {
+    console.error("fetchRecentViewedWithMeta:", error.message);
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const results: (PropertyCardProps & { viewedAt: string })[] = [];
+
+  for (const row of (data as unknown as PropertyViewRow[]) ?? []) {
+    if (seen.has(row.property_id)) continue;
+    seen.add(row.property_id);
+    const card = mapViewRow(row);
+    if (card) {
+      results.push({ ...card, viewedAt: row.viewed_at });
+      if (results.length >= limit) break;
+    }
+  }
+
+  return results;
+}
+
+export async function fetchUpcomingVisits(userId: string, limit = 3): Promise<SiteVisitRow[]> {
+  const today = new Date().toISOString().slice(0, 10);
+  const { data, error } = await supabase
+    .from("site_visits")
+    .select(
+      "id, property_id, visit_date, visit_time, status, purpose, visit_location, builder_name, checklist, property:properties(title, location, city)",
+    )
+    .eq("user_id", userId)
+    .gte("visit_date", today)
+    .in("status", ["pending_approval", "accepted", "scheduled"])
+    .order("visit_date", { ascending: true })
+    .order("visit_time", { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.error("fetchUpcomingVisits:", error.message);
+    return [];
+  }
+
+  return (data as SiteVisitRow[]) ?? [];
 }
 
 export async function fetchRecommendedPropertyCards(
@@ -287,7 +347,7 @@ export async function fetchRecommendedPropertyCards(
 ) {
   let query = supabase
     .from("properties")
-    .select("*, seller:profiles!properties_seller_id_fkey(full_name)")
+    .select(`${PROPERTIES_CARD_SELECT}, seller:profiles!properties_seller_id_fkey(full_name)`)
     .eq("status", "active")
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -303,7 +363,7 @@ export async function fetchRecommendedPropertyCards(
     return [];
   }
 
-  return ((data as PropertyRow[]) ?? []).map(rowToCard);
+  return ((data as unknown as PropertyRow[]) ?? []).map(rowToCard);
 }
 
 export async function fetchSiteVisits(userId: string): Promise<SiteVisitRow[]> {

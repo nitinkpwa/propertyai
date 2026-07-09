@@ -8,6 +8,7 @@ import AuthButton from "@/components/auth/AuthButton";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
+import { sanitizeRedirectPath } from "@/lib/auth/routes";
 import { validatePassword } from "@/lib/auth/validation";
 import { supabase } from "@/lib/supabase/client";
 import { getSiteUrl } from "@/lib/supabase";
@@ -79,9 +80,10 @@ function ResetPasswordForm() {
       setSuccess(true);
       await supabase.auth.signOut();
 
-      const redirect = searchParams.get("redirect");
-      const destination =
-        redirect && redirect.startsWith("/") ? `/login?redirect=${encodeURIComponent(redirect)}` : "/login";
+      const redirect = sanitizeRedirectPath(searchParams.get("redirect"), "");
+      const destination = redirect
+        ? `/login?redirect=${encodeURIComponent(redirect)}`
+        : "/login";
 
       setTimeout(() => {
         router.replace(destination);

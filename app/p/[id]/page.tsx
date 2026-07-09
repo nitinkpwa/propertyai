@@ -22,9 +22,12 @@ export default function PropertyDetailPage() {
   }, [params.id])
 
   const fetchProperty = async () => {
+    // Only the seller/partner display name is rendered here; private contact
+    // details (email/phone) are intentionally NOT fetched. Buyers receive
+    // owner contact only through the gated site-visit contact flow.
     const { data } = await supabase
       .from('properties')
-      .select('*, seller:profiles!properties_seller_id_fkey(full_name, email, phone)')
+      .select('*, seller:profiles!properties_seller_id_fkey(full_name), connect_partner:connect_partners!properties_connect_partner_id_fkey(id, company_name, manager_name)')
       .eq('id', params.id)
       .single()
     setProperty(data)
@@ -132,6 +135,11 @@ export default function PropertyDetailPage() {
                 </span>
               </div>
               <div style={{ fontSize: '14px', color: '#6B4226', marginBottom: '0.75rem' }}>📍 {property.location}, {property.city}{property.sector ? ` · ${property.sector}` : ''}</div>
+              {property.connect_partner?.company_name ? (
+                <div style={{ fontSize: '13px', color: '#27500A', background: '#EAF3DE', display: 'inline-block', padding: '4px 12px', borderRadius: '20px', marginBottom: '0.75rem', fontWeight: 600 }}>
+                  🤝 Connect Partner: {property.connect_partner.company_name}
+                </div>
+              ) : null}
               <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#F4860A', marginBottom: '1rem' }}>{formatPrice(property.price)}</div>
 
               {/* Key specs */}

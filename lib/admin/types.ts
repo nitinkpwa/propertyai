@@ -40,6 +40,15 @@ export interface AdminAnalytics {
 
 export interface AdminPropertyRow extends Property {
   approval_status?: string | null;
+  connect_partner_id?: string | null;
+  connect_partner?: {
+    id?: string;
+    company_name?: string | null;
+    manager_name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    status?: string | null;
+  } | null;
   seller?: {
     id?: string | null;
     full_name?: string | null;

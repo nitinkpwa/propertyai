@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { extractNearbyPlacesList } from "@/lib/properties/nearbyPlacesMeta";
 import type { MarketContext, MarketListing, PropertyIntelligenceInput } from "../types";
 import { average, matchesLocality, median, pricePerSqft } from "../utils";
 
@@ -48,14 +49,11 @@ function mapRow(row: PropertyRow): MarketListing {
 }
 
 function parseNearbyPlaces(raw: unknown): PropertyIntelligenceInput["nearbyPlaces"] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
-    .map((item) => ({
-      name: typeof item.name === "string" ? item.name : undefined,
-      distance: typeof item.distance === "string" ? item.distance : undefined,
-      type: typeof item.type === "string" ? item.type : undefined,
-    }));
+  return extractNearbyPlacesList(raw).map((item) => ({
+    name: item.name,
+    distance: item.distance,
+    type: item.type,
+  }));
 }
 
 export async function fetchPropertyIntelligenceInput(

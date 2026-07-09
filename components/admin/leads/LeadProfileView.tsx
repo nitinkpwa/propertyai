@@ -220,7 +220,7 @@ export default function LeadProfileView({
               },
               {
                 label: "Builder Preference",
-                value: lead.connect?.company ?? lead.seller?.full_name ?? lead.assignedManager,
+                value: lead.connect?.full_name ?? lead.seller?.full_name ?? lead.assignedManager,
               },
               { label: "Urgency", value: mapUrgency(lead.buyer) === "—" ? null : mapUrgency(lead.buyer) },
               {

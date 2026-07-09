@@ -1,3 +1,4 @@
+import { extractNearbyPlacesList } from "@/lib/properties/nearbyPlacesMeta";
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
 import type {
   AISummary,
@@ -274,17 +275,11 @@ function buildAiSummary(
 }
 
 function buildNearbyPlaces(row: PropertyRow): NearbyPlace[] {
-  const raw = row.nearby_places;
-  if (Array.isArray(raw) && raw.length > 0) {
-    return raw
-      .filter((item): item is Record<string, unknown> => typeof item === "object" && item !== null)
-      .map((item) => ({
-        name: typeof item.name === "string" ? item.name : "Nearby place",
-        distance: typeof item.distance === "string" ? item.distance : "—",
-        type: (typeof item.type === "string" ? item.type : "mall") as NearbyPlace["type"],
-      }));
-  }
-  return [];
+  return extractNearbyPlacesList(row.nearby_places).map((item) => ({
+    name: item.name,
+    distance: item.distance,
+    type: (item.type ?? "mall") as NearbyPlace["type"],
+  }));
 }
 
 function buildFloorPlans(row: PropertyRow): FloorPlan[] {

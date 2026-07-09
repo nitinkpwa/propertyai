@@ -1,35 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { useProgressiveProfile } from "@/components/buyer/ProgressiveProfileProvider";
 import ProfileCompletionRing from "@/components/premium/ProfileCompletionRing";
 import MetricCard from "@/components/premium/MetricCard";
 import ActivityTimeline from "@/components/crm/ActivityTimeline";
 import LeadStatusBadge from "@/components/crm/LeadStatusBadge";
+import TodaysActions from "@/components/buyer/TodaysActions";
+import QuickActions from "@/components/buyer/QuickActions";
+import AiInsights, { buildDashboardInsights } from "@/components/buyer/AiInsights";
+import UpcomingVisitsPanel from "@/components/buyer/UpcomingVisitsPanel";
+import RecentlyViewedPanel from "@/components/buyer/RecentlyViewedPanel";
+import { DashboardSkeleton } from "@/components/ui/Skeleton";
+import Card, { CardHeader } from "@/components/ui/Card";
+import { ButtonLink } from "@/components/ui/Button";
 import {
-  fetchBuyerStats,
-  fetchRecentViewedCards,
+  fetchRecentViewedWithMeta,
   fetchRecommendedPropertyCards,
+  fetchUpcomingVisits,
+  fetchSiteVisits,
 } from "@/lib/buyer/queries";
 import { fetchBuyerCrmSummary } from "@/lib/crm/queries";
+import { getGreeting } from "@/lib/buyer/design";
 import type { CrmLeadActivity, LeadStatus } from "@/lib/crm/types";
-import type { BuyerStats } from "@/lib/buyer/types";
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
+import type { SiteVisitRow } from "@/lib/buyer/types";
 import EmptyState from "./components/EmptyState";
 import PropertyCardsGrid from "./components/PropertyCardsGrid";
 
 export default function BuyerDashboardPage() {
   const { user, profile } = useAuth();
   const { completeness, openModal } = useProgressiveProfile();
-  const [stats, setStats] = useState<BuyerStats>({
-    savedCount: 0,
-    comparedCount: 0,
-    upcomingVisitsCount: 0,
-  });
-  const [recent, setRecent] = useState<PropertyCardProps[]>([]);
+  const [recent, setRecent] = useState<(PropertyCardProps & { viewedAt: string })[]>([]);
   const [recommended, setRecommended] = useState<PropertyCardProps[]>([]);
+  const [upcomingVisits, setUpcomingVisits] = useState<SiteVisitRow[]>([]);
+  const [pendingApprovals, setPendingApprovals] = useState(0);
   const [crmCounts, setCrmCounts] = useState({
     enquiriesCount: 0,
     savedCount: 0,
@@ -47,15 +54,17 @@ export default function BuyerDashboardPage() {
     const load = async () => {
       setLoading(true);
       const preferred = profile?.preferred_locations ?? [];
-      const [nextStats, nextRecent, nextRecommended, crm] = await Promise.all([
-        fetchBuyerStats(user.id),
-        fetchRecentViewedCards(user.id),
+      const [nextRecent, nextRecommended, crm, upcoming, allVisits] = await Promise.all([
+        fetchRecentViewedWithMeta(user.id, 6),
         fetchRecommendedPropertyCards(user.id, preferred, 4),
         fetchBuyerCrmSummary(user.id),
+        fetchUpcomingVisits(user.id, 3),
+        fetchSiteVisits(user.id),
       ]);
-      setStats(nextStats);
       setRecent(nextRecent);
       setRecommended(nextRecommended);
+      setUpcomingVisits(upcoming);
+      setPendingApprovals(allVisits.filter((v) => v.status === "pending_approval").length);
       setCrmCounts({
         enquiriesCount: crm.enquiriesCount,
         savedCount: crm.savedCount,
@@ -73,28 +82,38 @@ export default function BuyerDashboardPage() {
 
   const firstName = profile?.full_name?.split(" ")[0] ?? "there";
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-16">
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
-      </div>
-    );
-  }
+  const insights = useMemo(
+    () =>
+      buildDashboardInsights({
+        recommendedCount: recommended.length,
+        upcomingVisits: upcomingVisits.length,
+        profileComplete: completeness.isComplete,
+        preferredLocations: profile?.preferred_locations ?? [],
+        savedCount: crmCounts.savedCount,
+      }),
+    [recommended.length, upcomingVisits.length, completeness.isComplete, profile?.preferred_locations, crmCounts.savedCount],
+  );
+
+  if (loading) return <DashboardSkeleton />;
 
   return (
     <div className="mx-auto max-w-6xl space-y-8">
+      {/* Hero Welcome */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-6 text-white shadow-xl shadow-emerald-900/20 sm:p-8">
         <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
-        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-teal-400/10 blur-2xl" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-emerald-100">
-              AreaIQ Intelligence
+              {getGreeting()} · AreaIQ Intelligence
             </p>
             <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-              Welcome back, {firstName}
+              {firstName}, your property journey
             </h1>
-            <p className="mt-2 max-w-md text-sm text-emerald-50/90">
-              Your personalized property journey — saved homes, AI insights, and site visits in one place.
+            <p className="mt-2 max-w-lg text-sm text-emerald-50/90">
+              {upcomingVisits.length > 0
+                ? `You have ${upcomingVisits.length} upcoming visit${upcomingVisits.length > 1 ? "s" : ""}. Let's get you closer to your dream home.`
+                : "Discover, compare, and book site visits — all powered by AI insights tailored to you."}
             </p>
             {leadStatus ? (
               <div className="mt-3 inline-flex rounded-full bg-white/15 px-1 py-1 backdrop-blur">
@@ -120,54 +139,81 @@ export default function BuyerDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-        <MetricCard icon="❤️" label="Saved Properties" value={crmCounts.savedCount} href="/buyer/saved" accent="rose" />
-        <MetricCard icon="👀" label="Viewed Properties" value={crmCounts.viewedCount} accent="blue" />
-        <MetricCard icon="🤖" label="AI Chats" value={crmCounts.chatsCount} href="/ask" accent="violet" />
-        <MetricCard icon="📅" label="Site Visits" value={crmCounts.visitsCount} href="/buyer/site-visits" accent="amber" />
-        <MetricCard icon="📩" label="Inquiries" value={crmCounts.enquiriesCount} href="/buyer/crm" accent="emerald" />
+      <TodaysActions
+        upcomingVisits={upcomingVisits}
+        pendingApprovals={pendingApprovals}
+        profileIncomplete={!completeness.isComplete}
+        onCompleteProfile={() => openModal()}
+      />
+
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <MetricCard icon="❤️" label="Saved" value={crmCounts.savedCount} href="/buyer/saved" accent="rose" />
+            <MetricCard icon="👀" label="Viewed" value={crmCounts.viewedCount} accent="blue" />
+            <MetricCard icon="🤖" label="AI Chats" value={crmCounts.chatsCount} href="/ask" accent="violet" />
+            <MetricCard icon="📅" label="Visits" value={crmCounts.visitsCount} href="/buyer/site-visits" accent="amber" />
+            <MetricCard icon="📩" label="Inquiries" value={crmCounts.enquiriesCount} href="/buyer/crm" accent="emerald" />
+          </div>
+
+          <Card>
+            <CardHeader
+              title="Recent Activity"
+              description="Your property journey timeline"
+              action={
+                <ButtonLink href="/buyer/crm" variant="ghost" size="sm">
+                  Full CRM →
+                </ButtonLink>
+              }
+            />
+            {activities.length === 0 ? (
+              <EmptyState
+                icon="✨"
+                title="Your journey starts here"
+                description="Save properties, chat with AI, or book a site visit to build your timeline."
+                actionLabel="Start Exploring"
+              />
+            ) : (
+              <ActivityTimeline activities={activities} maxItems={8} />
+            )}
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <UpcomingVisitsPanel visits={upcomingVisits} />
+          {pendingApprovals > 0 ? (
+            <Card padding="sm" className="border-amber-100 bg-amber-50/50">
+              <p className="text-sm font-semibold text-amber-900">⏳ Pending Approvals</p>
+              <p className="mt-1 text-xs text-amber-800">
+                {pendingApprovals} visit request{pendingApprovals > 1 ? "s" : ""} awaiting seller confirmation
+              </p>
+              <Link href="/buyer/site-visits" className="mt-2 inline-block text-xs font-semibold text-amber-700 hover:underline">
+                Track status →
+              </Link>
+            </Card>
+          ) : null}
+        </div>
       </div>
 
-      <section className="rounded-3xl border border-neutral-200/80 bg-white p-6 shadow-sm">
-        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-bold text-neutral-900">Recent Activity</h2>
-            <p className="text-sm text-neutral-500">Your property journey timeline</p>
-          </div>
-          <Link
-            href="/buyer/crm"
-            className="rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100 hover:bg-emerald-100"
-          >
-            Full CRM Journey →
-          </Link>
-        </div>
-        {activities.length === 0 ? (
-          <EmptyState
-            icon="✨"
-            title="Your journey starts here"
-            description="Save properties, chat with AI, or book a site visit to build your timeline."
-          />
-        ) : (
-          <ActivityTimeline activities={activities} maxItems={10} />
-        )}
-      </section>
+      <AiInsights insights={insights} />
 
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-neutral-900">Recently Viewed</h2>
-        </div>
-        {recent.length === 0 ? (
+      <QuickActions />
+
+      {recent.length > 0 ? (
+        <RecentlyViewedPanel properties={recent} />
+      ) : (
+        <section>
+          <h2 className="mb-4 text-lg font-bold text-neutral-900">Recently Viewed</h2>
           <EmptyState
             icon="👀"
             title="No recently viewed properties"
-            description="Properties you view will appear here."
+            description="Properties you browse will appear here so you can pick up where you left off."
+            tips={["Browse listings and tap any property to view details", "Your viewing history helps AI refine recommendations"]}
           />
-        ) : (
-          <PropertyCardsGrid properties={recent} columns="4" />
-        )}
-      </section>
+        </section>
+      )}
 
-      <section>
+      <section id="recommended">
         <div className="mb-4">
           <h2 className="text-lg font-bold text-neutral-900">Recommended for You</h2>
           <p className="mt-1 text-sm text-neutral-500">
@@ -182,6 +228,8 @@ export default function BuyerDashboardPage() {
             icon="🏠"
             title="Complete your profile for better picks"
             description="Add budget and preferred areas to unlock smarter recommendations."
+            actionLabel="Complete Profile"
+            actionHref="/buyer/profile"
           />
         ) : (
           <PropertyCardsGrid properties={recommended} columns="4" />

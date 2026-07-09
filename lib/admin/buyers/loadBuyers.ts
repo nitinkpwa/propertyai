@@ -92,15 +92,20 @@ export async function loadAdminBuyersFromProfiles(): Promise<AdminBuyersLoadResu
   const { data: crmRows, error: crmError } = await supabase
     .from("crm_leads")
     .select(ADMIN_CRM_LEAD_SELECT)
-    .in("buyer_id", buyerIds);
+    .in("buyer_id", buyerIds)
+    .order("updated_at", { ascending: false });
 
   if (crmError) {
     console.error("[loadAdminBuyersFromProfiles] CRM batch load failed:", crmError.message);
   }
 
-  const crmByBuyerId = new Map(
-    (crmRows ?? []).map((row) => [row.buyer_id as string, row]),
-  );
+  // Leads are partner-scoped (a buyer may have several); keep the most
+  // recently updated lead per buyer for the buyer-centric admin list.
+  const crmByBuyerId = new Map<string, Record<string, unknown>>();
+  for (const row of crmRows ?? []) {
+    const bid = row.buyer_id as string;
+    if (!crmByBuyerId.has(bid)) crmByBuyerId.set(bid, row);
+  }
 
   const buyers = buyerProfiles.map(toBuyerRow);
   const leads: AdminLeadSummary[] = buyerProfiles.map((profile) => {

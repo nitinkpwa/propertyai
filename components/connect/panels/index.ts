@@ -1,0 +1,12 @@
+export { default as LeadDetailPanel } from "./LeadDetailPanel";
+export { default as ConnectDashboardPanel } from "./DashboardPanel";
+export { default as AssignedPropertiesPanel } from "./AssignedPropertiesPanel";
+export { default as PropertyLeadsPanel } from "./PropertyLeadsPanel";
+export { default as PipelinePanel } from "./PipelinePanel";
+export { default as SiteVisitsPanel } from "./SiteVisitsPanel";
+export { default as AnalyticsPanel } from "./AnalyticsPanel";
+export { default as ActivitiesPanel } from "./ActivitiesPanel";
+export { default as DocumentsPanel } from "./DocumentsPanel";
+export { default as NotificationsPanel } from "./NotificationsPanel";
+export { default as SettingsPanel } from "./SettingsPanel";
+export { default as SupportPanel } from "./SupportPanel";

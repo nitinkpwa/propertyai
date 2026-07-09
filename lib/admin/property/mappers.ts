@@ -1,0 +1,343 @@
+import type { PropertyDetail, AISummary } from "@/app/property/[id]/data";
+import type { AdminPropertyRow } from "@/lib/admin/types";
+import { runPropertyIntelligencePipeline } from "@/lib/admin/property/intelligence/pipeline";
+import {
+  buildNearbyPlacesPayload,
+  extractNearbyPlacesList,
+  extractPropertyMeta,
+  type PropertyStructuredMeta,
+} from "@/lib/properties/nearbyPlacesMeta";
+import {
+  createEmptyAdminPropertyForm,
+  type AdminPropertyFormSource,
+  type AdminPropertyFormState,
+} from "./types";
+
+function numStr(value: unknown): string {
+  if (value == null || value === "") return "";
+  return String(value);
+}
+
+function buildFactualMetaFromForm(
+  form: AdminPropertyFormState,
+  existingAi: PropertyStructuredMeta["ai"] = null,
+): PropertyStructuredMeta {
+  return {
+    v: 2,
+    basic: form.basic,
+    location: form.locationMeta,
+    pricing: form.pricing,
+    specs: form.specs,
+    media: form.media,
+    documents: form.documents,
+    seo: form.seo,
+    publishing: form.publishing,
+    ai: existingAi,
+  };
+}
+
+export function buildFactualDescription(form: AdminPropertyFormState): string {
+  const config = form.basic.configuration || (form.bedrooms ? `${form.bedrooms} BHK` : "");
+  const location = form.location || form.locationMeta.locality || form.sector || form.city;
+  const segments = [form.title, config, location].filter(Boolean);
+  return segments.join(" — ") || form.title || "";
+}
+
+function mergeMetaIntoForm(
+  form: AdminPropertyFormState,
+  meta: PropertyStructuredMeta | null,
+): AdminPropertyFormState {
+  if (!meta) return form;
+  return {
+    ...form,
+    basic: { ...form.basic, ...meta.basic },
+    locationMeta: { ...form.locationMeta, ...meta.location },
+    pricing: { ...form.pricing, ...meta.pricing },
+    specs: { ...form.specs, ...meta.specs },
+    media: { ...form.media, ...meta.media },
+    documents: { ...form.documents, ...meta.documents },
+    seo: { ...form.seo, ...meta.seo },
+    publishing: { ...form.publishing, ...meta.publishing },
+    aiIntelligence: meta.ai ?? form.aiIntelligence,
+  };
+}
+
+export function adminRowToForm(row: AdminPropertyFormSource): AdminPropertyFormState {
+  const form = createEmptyAdminPropertyForm();
+  const meta = extractPropertyMeta(row.nearby_places);
+  const places = extractNearbyPlacesList(row.nearby_places);
+
+  const merged: AdminPropertyFormState = {
+    ...form,
+    title: row.title || "",
+    type: row.type || "buy",
+    sub_type: row.sub_type || "flat",
+    price: numStr(row.price),
+    area_sqft: numStr(row.area_sqft),
+    bedrooms: numStr(row.bedrooms),
+    bathrooms: numStr(row.bathrooms),
+    city: row.city || "Mohali",
+    sector: row.sector || "",
+    location: row.location || "",
+    lat: numStr(row.lat),
+    lng: numStr(row.lng),
+    contact_name: row.contact_name || "",
+    contact_phone: row.contact_phone || "",
+    amenities: Array.isArray(row.amenities) ? row.amenities : [],
+    photos: Array.isArray(row.photos) ? row.photos : [],
+    status: row.status || "draft",
+    is_featured: Boolean(row.is_featured),
+    builder_name: row.builder_name || "",
+    furnishing: row.furnishing || "",
+    parking: row.parking || "",
+    facing: row.facing || "",
+    rera_number: row.rera_number || "",
+    possession: row.possession || "",
+    featured_image: row.featured_image || "",
+    connect_partner_id: row.connect_partner_id || "",
+    nearbyPlaces: places.map((p) => ({
+      name: p.name,
+      distance: p.distance,
+      type: p.type || "mall",
+    })),
+    basic: {
+      ...form.basic,
+      builder: row.builder_name || "",
+      seller: row.contact_name || "",
+    },
+  };
+
+  return mergeMetaIntoForm(merged, meta);
+}
+
+export function formToDbPayload(
+  form: AdminPropertyFormState,
+  sellerId: string,
+  options?: { preserveStatus?: boolean; existingNearbyPlaces?: unknown },
+): Record<string, unknown> {
+  const existingMeta = extractPropertyMeta(options?.existingNearbyPlaces ?? null);
+  const meta = buildFactualMetaFromForm(form, existingMeta?.ai ?? null);
+  const places = form.nearbyPlaces.length ? form.nearbyPlaces : buildPlacesFromLocation(form);
+
+  const price = parseFloat(form.price) || parseFloat(form.pricing.currentPrice) || 0;
+  const workflowStatus = form.publishing.workflowStatus;
+  const dbStatus =
+    options?.preserveStatus && form.status
+      ? form.status
+      : workflowStatus === "active"
+        ? "active"
+        : workflowStatus === "archived"
+          ? "paused"
+          : workflowStatus === "approved"
+            ? "active"
+            : "draft";
+
+  return {
+    title: form.title,
+    type: form.type,
+    sub_type: form.sub_type,
+    price,
+    area_sqft: parseFloat(form.area_sqft) || parseFloat(form.specs.carpetArea) || null,
+    bedrooms: parseInt(form.bedrooms, 10) || null,
+    bathrooms: parseInt(form.bathrooms, 10) || null,
+    city: form.city,
+    sector: form.sector,
+    location: form.location,
+    lat: parseFloat(form.lat) || null,
+    lng: parseFloat(form.lng) || null,
+    description: buildFactualDescription(form),
+    contact_name: form.contact_name || form.basic.seller,
+    contact_phone: form.contact_phone,
+    amenities: form.amenities,
+    photos: form.photos,
+    status: dbStatus,
+    is_featured: form.publishing.featured || form.is_featured,
+    builder_name: form.builder_name || form.basic.builder,
+    furnishing: form.furnishing,
+    parking: form.parking || form.pricing.parking,
+    facing: form.facing,
+    rera_number: form.rera_number,
+    possession: form.possession || form.basic.propertyStatus,
+    featured_image: form.featured_image || form.photos[0] || null,
+    nearby_places: buildNearbyPlacesPayload(places, meta),
+    seller_id: sellerId,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+/** Post-publish workflow: writes AI intelligence into nearby_places meta only. */
+export function formToIntelligencePayload(
+  form: AdminPropertyFormState,
+  existingNearbyPlaces?: unknown,
+): Record<string, unknown> {
+  const aiIntelligence = runPropertyIntelligencePipeline(form);
+  const places = form.nearbyPlaces.length ? form.nearbyPlaces : buildPlacesFromLocation(form);
+  const meta = buildFactualMetaFromForm(form, aiIntelligence);
+  const compiled = aiIntelligence.compiled;
+
+  return {
+    description: compiled.propertySummary || buildFactualDescription(form),
+    nearby_places: buildNearbyPlacesPayload(places, meta),
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function buildPlacesFromLocation(form: AdminPropertyFormState) {
+  const items: Array<{ name: string; distance: string; type: string }> = [];
+  const push = (label: string, value: string, type: string) => {
+    if (value.trim()) items.push({ name: label, distance: value.trim(), type });
+  };
+  push("Airport", form.locationMeta.airportDistance, "airport");
+  push("School", form.locationMeta.schoolDistance, "school");
+  push("Hospital", form.locationMeta.hospitalDistance, "hospital");
+  push("Mall", form.locationMeta.mallDistance, "mall");
+  push("Metro", form.locationMeta.upcomingMetro, "metro");
+  push("IT Park", form.locationMeta.itParkDistance, "it");
+  return items;
+}
+
+function getCompiled(form: AdminPropertyFormState): Record<string, string> {
+  if (form.aiIntelligence?.compiled && Object.keys(form.aiIntelligence.compiled).length > 0) {
+    return form.aiIntelligence.compiled;
+  }
+  return runPropertyIntelligencePipeline(form).compiled;
+}
+
+export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview"): PropertyDetail {
+  const price = parseFloat(form.price) || parseFloat(form.pricing.currentPrice) || 0;
+  const area = parseFloat(form.area_sqft) || parseFloat(form.specs.carpetArea) || 0;
+  const bedrooms = parseInt(form.bedrooms, 10) || 0;
+  const compiled = getCompiled(form);
+
+  const aiSummary: AISummary = {
+    summary: compiled.buyerSummary || compiled.propertySummary || form.title,
+    pros: (compiled.pros || "")
+      .split("\n")
+      .map((s) => s.replace(/^[-•]\s*/, "").trim())
+      .filter(Boolean),
+    cons: (compiled.cons || "")
+      .split("\n")
+      .map((s) => s.replace(/^[-•]\s*/, "").trim())
+      .filter(Boolean),
+    investmentScore: parseFloat(compiled.investmentScore) || null,
+    riskLevel:
+      parseFloat(compiled.riskAnalysis ? "50" : "35") >= 70
+        ? "High"
+        : parseFloat(compiled.investmentScore || "50") < 55
+          ? "Moderate"
+          : "Low",
+  };
+
+  const gradients = [
+    "from-emerald-600/80 via-emerald-500/60 to-teal-400/50",
+    "from-neutral-700/80 via-neutral-600/60 to-neutral-400/50",
+    "from-stone-600/80 via-stone-500/60 to-amber-400/40",
+  ];
+
+  const images =
+    form.photos.length > 0
+      ? form.photos.map((url, i) => ({
+          id: `img-${i}`,
+          label: form.title || "Property",
+          gradient: gradients[i % gradients.length],
+          url,
+        }))
+      : [
+          {
+            id: "placeholder",
+            label: form.title || "Property",
+            gradient: gradients[0],
+            url: form.featured_image || null,
+          },
+        ];
+
+  return {
+    id,
+    name: form.title || "Untitled Property",
+    project: form.basic.project || form.title,
+    builder: {
+      name: form.builder_name || form.basic.builder || "Builder",
+      logoInitials: (form.builder_name || form.basic.builder || "B").slice(0, 2).toUpperCase(),
+      yearsExperience: null,
+      projectsDelivered: null,
+    },
+    location: form.location || form.locationMeta.locality || form.sector,
+    city: form.city,
+    price,
+    pricePerSqFt: area > 0 ? Math.round(price / area) : parseFloat(form.pricing.pricePerSqft) || 0,
+    propertyType: form.sub_type.replace("_", " "),
+    bhk: (bedrooms || 1) as PropertyDetail["bhk"],
+    area,
+    status: form.basic.propertyStatus || form.publishing.workflowStatus,
+    possession: form.possession || "—",
+    configuration: form.basic.configuration || (bedrooms ? `${bedrooms} BHK` : "—"),
+    totalFloors: parseInt(form.specs.totalFloors, 10) || null,
+    parking: form.parking || form.pricing.parking || "—",
+    facing: form.facing || "—",
+    furnishing: form.furnishing || "—",
+    description: compiled.propertySummary || form.title,
+    aiVerified: (form.aiIntelligence?.confidence ?? 0) >= 70,
+    reraVerified: Boolean(form.rera_number),
+    images,
+    amenities: form.amenities,
+    aiSummary,
+    floorPlans: [
+      {
+        bhk: (bedrooms || 1) as PropertyDetail["bhk"],
+        area,
+        price,
+        label: form.basic.configuration || `${bedrooms || 1} BHK`,
+      },
+    ],
+    nearbyPlaces: (form.nearbyPlaces.length ? form.nearbyPlaces : buildPlacesFromLocation(form)).map(
+      (p) => ({
+        name: p.name,
+        distance: p.distance,
+        type: (p.type as "airport" | "school" | "hospital" | "mall" | "metro" | "it") || "mall",
+      }),
+    ),
+    similarProperties: [],
+    contactPhone: form.contact_phone,
+    whatsapp: form.contact_phone,
+  };
+}
+
+export function slugifyTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export function syncLegacyFormFields(form: AdminPropertyFormState): AdminPropertyFormState {
+  const defaults = createEmptyAdminPropertyForm();
+  const next: AdminPropertyFormState = {
+    ...defaults,
+    ...form,
+    basic: { ...defaults.basic, ...form.basic },
+    locationMeta: { ...defaults.locationMeta, ...form.locationMeta },
+    pricing: { ...defaults.pricing, ...form.pricing },
+    specs: { ...defaults.specs, ...form.specs },
+    media: { ...defaults.media, ...form.media, videos: form.media?.videos ?? defaults.media.videos },
+    documents: {
+      ...defaults.documents,
+      ...form.documents,
+      floorPlans: form.documents?.floorPlans ?? defaults.documents.floorPlans,
+    },
+    seo: { ...defaults.seo, ...form.seo },
+    publishing: { ...defaults.publishing, ...form.publishing },
+    amenities: Array.isArray(form.amenities) ? form.amenities : defaults.amenities,
+    photos: Array.isArray(form.photos) ? form.photos : defaults.photos,
+    nearbyPlaces: Array.isArray(form.nearbyPlaces) ? form.nearbyPlaces : defaults.nearbyPlaces,
+  };
+  if (!next.seo.slug && next.title) next.seo.slug = slugifyTitle(next.title);
+  if (!next.pricing.currentPrice && next.price) next.pricing.currentPrice = next.price;
+  if (!next.price && next.pricing.currentPrice) next.price = next.pricing.currentPrice;
+  if (!next.basic.builder && next.builder_name) next.basic.builder = next.builder_name;
+  if (!next.builder_name && next.basic.builder) next.builder_name = next.basic.builder;
+  return next;
+}
+
+export function loadLegacyAdminForm(row: AdminPropertyRow): AdminPropertyFormState {
+  return adminRowToForm(row as AdminPropertyFormSource);
+}

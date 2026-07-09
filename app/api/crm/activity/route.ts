@@ -9,6 +9,7 @@ const ALLOWED_TYPES: ActivityType[] = [
   "property_viewed",
   "property_saved",
   "property_unsaved",
+  "property_compared",
   "contact_requested",
 ];
 

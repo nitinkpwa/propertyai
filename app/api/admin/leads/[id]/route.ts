@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { assignBuyerToPartner } from "@/lib/connect/partners/service";
 import { requireAdminApiAccess } from "@/lib/admin/auth";
 import { loadAdminLeadProfile } from "@/lib/admin/leads/loadLeadProfile";
+import { LEAD_STATUS_ORDER } from "@/lib/crm/constants";
+import { recordLeadActivity } from "@/lib/crm/service";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import type { LeadStatus } from "@/lib/crm/types";
 
@@ -41,6 +44,7 @@ export async function PATCH(
   const body = (await req.json()) as {
     status?: LeadStatus;
     assignedConnectId?: string | null;
+    connectPartnerId?: string | null;
     buyerNotes?: string;
   };
 
@@ -53,12 +57,55 @@ export async function PATCH(
     const supabase = createSupabaseServiceClient();
     const patch: Record<string, unknown> = {};
 
-    if (body.status) patch.status = body.status;
-    if (body.assignedConnectId !== undefined) patch.assigned_connect_id = body.assignedConnectId;
+    if (body.status !== undefined) {
+      if (!LEAD_STATUS_ORDER.includes(body.status)) {
+        return NextResponse.json({ error: "Invalid lead status" }, { status: 400 });
+      }
+      patch.status = body.status;
+    }
+
+    if (body.connectPartnerId !== undefined) {
+      const ok = await assignBuyerToPartner(
+        supabase,
+        lead.buyerId,
+        body.connectPartnerId,
+        access.userId,
+      );
+      if (!ok) {
+        return NextResponse.json({ error: "Partner assignment failed" }, { status: 500 });
+      }
+    } else if (body.assignedConnectId !== undefined) {
+      const { data: partner } = body.assignedConnectId
+        ? await supabase
+            .from("connect_partners")
+            .select("id")
+            .eq("profile_id", body.assignedConnectId)
+            .maybeSingle()
+        : { data: null };
+
+      // Lead-scoped manual routing only: buyers are never owned by a partner
+      // at the profile level (ownership is Property → Partner → Lead).
+      patch.assigned_connect_id = body.assignedConnectId;
+      patch.connect_partner_id = (partner?.id as string) ?? null;
+      patch.connect_assignment_source = body.assignedConnectId ? "manual" : "auto";
+    }
 
     if (Object.keys(patch).length > 0) {
       const { error } = await supabase.from("crm_leads").update(patch).eq("id", lead.crmLeadId);
       if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+      // Log admin status changes to the lead timeline so history is preserved.
+      if (patch.status !== undefined && lead.buyerId) {
+        await recordLeadActivity(supabase, {
+          buyerId: lead.buyerId,
+          activityType: "status_changed",
+          title: "Status updated by admin",
+          description: `Lead status set to "${String(patch.status)}"`,
+          metadata: { new_status: patch.status, changed_by: access.userId },
+          skipStatusAdvance: true,
+          skipNotifications: true,
+        });
+      }
     }
 
     if (body.buyerNotes !== undefined) {

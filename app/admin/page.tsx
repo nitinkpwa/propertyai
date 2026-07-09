@@ -7,6 +7,9 @@ import AuthInput from "@/components/auth/AuthInput";
 import AuthButton from "@/components/auth/AuthButton";
 import AdminEmptyState from "./components/AdminEmptyState";
 import AdminShell, { type AdminNavItem } from "./components/AdminShell";
+import AdminConnectPanel from "@/components/admin/connect/AdminConnectPanel";
+import ConnectPartnerAssignSelect from "@/components/admin/connect/ConnectPartnerAssignSelect";
+import PropertyWizard from "@/components/admin/property/PropertyWizard";
 import AdminCrmPanel from "@/components/crm/AdminCrmPanel";
 import AdminProfileCard, {
   AdminProfileInline,
@@ -20,15 +23,11 @@ import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { fetchProfile } from "@/lib/auth/profile";
 import {
   ADMIN_CITIES,
-  ADMIN_SUB_TYPES,
-  ADMIN_TYPES,
   BULK_TEMPLATE,
   EMERALD,
   formatDate,
   formatDateTime,
   formatPrice,
-  inp,
-  lbl,
 } from "@/lib/admin/constants";
 import {
   approveProperty,
@@ -39,6 +38,9 @@ import {
   rejectProperty,
   updatePropertyStatus,
 } from "@/lib/admin/queries";
+import { adminRowToForm } from "@/lib/admin/property/mappers";
+import { createEmptyAdminPropertyForm } from "@/lib/admin/property/types";
+import type { AdminPropertyFormState } from "@/lib/admin/property/types";
 import {
   buildProfileLookup,
   profileMatchesSearch,
@@ -57,23 +59,6 @@ type AdminAccessState = "loading" | "signed_out" | "ready";
 
 const ADMIN_SETUP_HINT =
   "No admin account is configured yet. Create a user in Supabase Dashboard → Authentication → Users, add a matching row in Table Editor → profiles (same id), and set role to admin.";
-
-const emptyForm = {
-  title: "",
-  type: "buy",
-  sub_type: "flat",
-  price: "",
-  area_sqft: "",
-  bedrooms: "",
-  bathrooms: "",
-  city: "Mohali",
-  location: "",
-  sector: "",
-  contact_name: "",
-  contact_phone: "",
-  description: "",
-  amenities: "",
-};
 
 function statusBadgeClass(status: string): string {
   if (status === "active" || status === "approved") return "bg-emerald-50 text-emerald-700";
@@ -130,10 +115,8 @@ export default function AdminPage() {
   const [tab, setTab] = useState<AdminTab>("dashboard");
   const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(false);
-  const [saveMsg, setSaveMsg] = useState("");
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
-  const [form, setForm] = useState({ ...emptyForm });
-  const [saving, setSaving] = useState(false);
+  const [wizardForm, setWizardForm] = useState<AdminPropertyFormState>(() => createEmptyAdminPropertyForm());
   const [editId, setEditId] = useState<string | null>(null);
   const [bulkCsv, setBulkCsv] = useState("");
   const [bulkResult, setBulkResult] = useState<string[]>([]);
@@ -268,13 +251,13 @@ export default function AdminPage() {
     { key: "properties", label: "Properties", icon: "🏠", count: properties.length },
     { key: "pending", label: "Pending Approval", icon: "⏳", count: pendingProperties.length },
     { key: "users", label: "Users", icon: "👤", count: profileCount },
-    { key: "builders", label: "AreaIQ Connect", icon: "🏗️", count: builders.length },
+    { key: "builders", label: "AreaIQ Connect", icon: "🤝", count: builders.length },
     { key: "leads", label: "Leads", icon: "📩", count: leads.length },
     { key: "crm", label: "CRM", icon: "🔗" },
     { key: "visits", label: "Site Visits", icon: "📅", count: siteVisits.length },
     { key: "chats", label: "AI Chats", icon: "🤖", count: conversations.length },
     { key: "analytics", label: "Analytics", icon: "📈" },
-    { key: "add", label: editId ? "Edit Property" : "Add Property", icon: "➕" },
+    { key: "add", label: editId ? "Edit Property" : "Property Studio", icon: "✨" },
     { key: "bulk", label: "Bulk Import", icon: "📋" },
     { key: "settings", label: "Settings", icon: "⚙️" },
   ];
@@ -301,74 +284,15 @@ export default function AdminPage() {
     return matchesSearch && matchesRole;
   });
 
-  const handleSave = async () => {
-    if (!form.title || !form.price || !form.location) {
-      setSaveMsg("Fill title, price and location");
-      return;
-    }
-    if (!adminUserId) {
-      setSaveMsg("Please sign in to Supabase first to add listings");
-      return;
-    }
-    setSaving(true);
-    setSaveMsg("");
-    const payload = {
-      title: form.title,
-      type: form.type,
-      sub_type: form.sub_type,
-      price: parseFloat(form.price),
-      area_sqft: parseFloat(form.area_sqft) || null,
-      bedrooms: parseInt(form.bedrooms, 10) || null,
-      bathrooms: parseInt(form.bathrooms, 10) || null,
-      city: form.city,
-      location: form.location,
-      sector: form.sector,
-      contact_name: form.contact_name,
-      contact_phone: form.contact_phone,
-      description: form.description,
-      amenities: form.amenities
-        ? form.amenities.split(",").map((a) => a.trim()).filter(Boolean)
-        : [],
-      photos: [],
-      status: "active",
-      seller_id: adminUserId,
-      updated_at: new Date().toISOString(),
-    };
-
-    const { error } = editId
-      ? await supabase.from("properties").update(payload).eq("id", editId)
-      : await supabase.from("properties").insert(payload);
-
-    if (error) setSaveMsg(`Error: ${error.message}`);
-    else {
-      setSaveMsg(editId ? "✅ Updated!" : "✅ Published!");
-      setForm({ ...emptyForm });
-      setEditId(null);
-      await loadAll();
-      setTab("properties");
-    }
-    setSaving(false);
-  };
-
   const startEdit = (p: AdminPropertyRow) => {
     setEditId(p.id);
-    setForm({
-      title: p.title || "",
-      type: p.type || "buy",
-      sub_type: p.sub_type || "flat",
-      price: p.price?.toString() || "",
-      area_sqft: p.area_sqft?.toString() || "",
-      bedrooms: p.bedrooms?.toString() || "",
-      bathrooms: p.bathrooms?.toString() || "",
-      city: p.city || "Mohali",
-      location: p.location || "",
-      sector: p.sector || "",
-      contact_name: p.contact_name || "",
-      contact_phone: p.contact_phone || "",
-      description: p.description || "",
-      amenities: (p.amenities || []).join(", "),
-    });
+    setWizardForm(adminRowToForm(p));
     setTab("add");
+  };
+
+  const resetWizard = () => {
+    setEditId(null);
+    setWizardForm(createEmptyAdminPropertyForm());
   };
 
   const handleBulkImport = async () => {
@@ -576,12 +500,11 @@ export default function AdminPage() {
       {tab === "properties" ? (
         <div>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <h1 className="text-2xl font-bold text-neutral-900">Properties Management</h1>
+            <h1 className="text-2xl font-bold text-neutral-900">Property Command Center</h1>
             <button
               type="button"
               onClick={() => {
-                setEditId(null);
-                setForm({ ...emptyForm });
+                resetWizard();
                 setTab("add");
               }}
               className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
@@ -609,7 +532,7 @@ export default function AdminPage() {
               <table className="min-w-full text-sm">
                 <thead className="border-b border-neutral-200 bg-neutral-50">
                   <tr>
-                    {["Property", "Type", "Price", "City", "Seller", "Status", "Date", "Actions"].map((h) => (
+                    {["Property", "Type", "Price", "City", "Seller", "Connect Partner", "Status", "Date", "Actions"].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">
                         {h}
                       </th>
@@ -630,6 +553,20 @@ export default function AdminPage() {
                         <AdminPropertySellerInline property={prop} lookup={profileLookup} />
                       </td>
                       <td className="px-4 py-3">
+                        <div className="space-y-1">
+                          {prop.connect_partner?.company_name ? (
+                            <p className="text-xs font-medium text-emerald-700">
+                              {prop.connect_partner.company_name}
+                            </p>
+                          ) : null}
+                          <ConnectPartnerAssignSelect
+                            propertyId={prop.id}
+                            currentPartnerId={prop.connect_partner_id}
+                            onAssigned={loadAll}
+                          />
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
                         <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${statusBadgeClass(prop.status)}`}>
                           {prop.status}
                         </span>
@@ -637,6 +574,7 @@ export default function AdminPage() {
                       <td className="px-4 py-3 text-xs text-neutral-500">{formatDate(prop.created_at)}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
+                          <Link href={`/admin/properties/${prop.id}`} className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100">CMS</Link>
                           <button type="button" onClick={() => startEdit(prop)} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium hover:bg-neutral-50">Edit</button>
                           <button type="button" onClick={async () => { await updatePropertyStatus(prop.id, prop.status === "active" ? "paused" : "active"); await loadAll(); }} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium hover:bg-neutral-50">{prop.status === "active" ? "Pause" : "Activate"}</button>
                           <button type="button" onClick={async () => { if (confirm("Delete this property?")) { await deleteProperty(prop.id); await loadAll(); } }} className="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600">Delete</button>
@@ -672,6 +610,11 @@ export default function AdminPage() {
                     <p className="font-semibold text-neutral-900">{prop.title}</p>
                     <p className="mt-1 text-sm text-neutral-500">
                       {prop.city} · {formatPrice(prop.price)}
+                      {prop.connect_partner?.company_name ? (
+                        <span className="ml-2 text-emerald-700">
+                          · {prop.connect_partner.company_name}
+                        </span>
+                      ) : null}
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-4 px-5 py-4">
@@ -756,43 +699,7 @@ export default function AdminPage() {
         </div>
       ) : null}
 
-      {tab === "builders" ? (
-        <div>
-          <h1 className="mb-6 text-2xl font-bold text-neutral-900">AreaIQ Connect — Builders</h1>
-          {builders.length === 0 ? (
-            <AdminEmptyState icon="🏗️" title="No registered builders" description="Builders who register via AreaIQ Connect will appear here." />
-          ) : (
-            <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-              <table className="min-w-full text-sm">
-                <thead className="border-b border-neutral-200 bg-neutral-50">
-                  <tr>
-                    {["Company", "Projects", "Listings", "Phone", "Manager", "Status"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {builders.map((b) => {
-                    const resolved = resolveProfileDisplay(b);
-                    return (
-                    <tr key={b.id} className="border-b border-neutral-100">
-                      <td className="px-4 py-3">
-                        <AdminProfileInline profile={b} />
-                      </td>
-                      <td className="px-4 py-3 text-neutral-600">{b.project_count}</td>
-                      <td className="px-4 py-3 text-neutral-600">{b.listing_count}</td>
-                      <td className="px-4 py-3 text-neutral-600">{resolved.phone || "—"}</td>
-                      <td className="px-4 py-3 text-neutral-600">{b.full_name?.trim() || resolved.email || "—"}</td>
-                      <td className="px-4 py-3"><span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Registered</span></td>
-                    </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      ) : null}
+      {tab === "builders" ? <AdminConnectPanel /> : null}
 
       {tab === "crm" ? <AdminCrmPanel profileLookup={profileLookup} /> : null}
 
@@ -973,35 +880,22 @@ export default function AdminPage() {
         </div>
       ) : null}
 
-      {tab === "add" ? (
-        <div>
-          <h1 className="mb-6 text-2xl font-bold text-neutral-900">{editId ? "Edit Property" : "Add Property"}</h1>
-          <div className="max-w-3xl rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-            {saveMsg ? (
-              <div className={`mb-4 rounded-xl px-4 py-3 text-sm ${saveMsg.includes("✅") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{saveMsg}</div>
-            ) : null}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2"><label style={lbl}>Property Title *</label><input style={inp} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
-              <div><label style={lbl}>Listing Type</label><select style={inp} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>{ADMIN_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
-              <div><label style={lbl}>Sub Type</label><select style={inp} value={form.sub_type} onChange={(e) => setForm({ ...form, sub_type: e.target.value })}>{ADMIN_SUB_TYPES.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}</select></div>
-              <div><label style={lbl}>Price (₹) *</label><input style={inp} type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} /></div>
-              <div><label style={lbl}>Area (sqft)</label><input style={inp} type="number" value={form.area_sqft} onChange={(e) => setForm({ ...form, area_sqft: e.target.value })} /></div>
-              <div><label style={lbl}>Bedrooms</label><input style={inp} type="number" value={form.bedrooms} onChange={(e) => setForm({ ...form, bedrooms: e.target.value })} /></div>
-              <div><label style={lbl}>Bathrooms</label><input style={inp} type="number" value={form.bathrooms} onChange={(e) => setForm({ ...form, bathrooms: e.target.value })} /></div>
-              <div><label style={lbl}>City</label><select style={inp} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}>{ADMIN_CITIES.map((c) => <option key={c}>{c}</option>)}</select></div>
-              <div><label style={lbl}>Sector</label><input style={inp} value={form.sector} onChange={(e) => setForm({ ...form, sector: e.target.value })} /></div>
-              <div className="sm:col-span-2"><label style={lbl}>Location *</label><input style={inp} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} /></div>
-              <div className="sm:col-span-2"><label style={lbl}>Description</label><textarea style={{ ...inp, height: 80, resize: "vertical" }} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-              <div><label style={lbl}>Contact Name</label><input style={inp} value={form.contact_name} onChange={(e) => setForm({ ...form, contact_name: e.target.value })} /></div>
-              <div><label style={lbl}>Contact Phone</label><input style={inp} value={form.contact_phone} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} /></div>
-              <div className="sm:col-span-2"><label style={lbl}>Amenities</label><input style={inp} value={form.amenities} onChange={(e) => setForm({ ...form, amenities: e.target.value })} /></div>
-            </div>
-            <div className="mt-6 flex gap-3">
-              <button type="button" disabled={saving} onClick={handleSave} className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60" style={{ backgroundColor: EMERALD }}>{saving ? "Saving..." : editId ? "Save Changes" : "Publish Property"}</button>
-              <button type="button" onClick={() => { setEditId(null); setForm({ ...emptyForm }); setTab("properties"); }} className="rounded-xl border border-neutral-200 px-5 py-2.5 text-sm font-medium text-neutral-700">Cancel</button>
-            </div>
-          </div>
-        </div>
+      {tab === "add" && adminUserId ? (
+        <PropertyWizard
+          key={editId ?? "new"}
+          adminUserId={adminUserId}
+          editId={editId}
+          initialForm={wizardForm}
+          onSaved={async () => {
+            resetWizard();
+            await loadAll();
+            setTab("properties");
+          }}
+          onCancel={() => {
+            resetWizard();
+            setTab("properties");
+          }}
+        />
       ) : null}
 
       {tab === "bulk" ? (

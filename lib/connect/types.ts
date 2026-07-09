@@ -1,14 +1,18 @@
 export type ConnectTab =
   | "home"
-  | "projects"
-  | "inventory"
+  | "properties"
   | "leads"
-  | "partners"
+  | "pipeline"
   | "visits"
-  | "analytics"
+  | "activities"
   | "documents"
-  | "profile"
-  | "notifications";
+  | "analytics"
+  | "notifications"
+  | "settings"
+  | "support";
+
+/** @deprecated Use "leads" — kept for migration */
+export type LegacyConnectTab = ConnectTab | "buyers" | "projects";
 
 export interface ConnectLandingStats {
   propertiesListed: number;
@@ -28,3 +32,17 @@ export interface ConnectDashboardStats {
   propertiesListed: number;
   totalLeads: number;
 }
+
+export const CONNECT_NAV: Array<{ key: ConnectTab; label: string; icon: string }> = [
+  { key: "home", label: "Dashboard", icon: "📊" },
+  { key: "properties", label: "Assigned Properties", icon: "🏠" },
+  { key: "leads", label: "Property Leads", icon: "👤" },
+  { key: "pipeline", label: "Pipeline", icon: "📋" },
+  { key: "visits", label: "Site Visits", icon: "📅" },
+  { key: "activities", label: "Activities", icon: "⚡" },
+  { key: "documents", label: "Documents", icon: "📄" },
+  { key: "analytics", label: "Analytics", icon: "📈" },
+  { key: "notifications", label: "Notifications", icon: "🔔" },
+  { key: "settings", label: "Settings", icon: "⚙️" },
+  { key: "support", label: "Support", icon: "💬" },
+];

@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   const { data: property, error: propError } = await supabase
     .from("properties")
-    .select("id, title, seller_id")
+    .select("id, title, seller_id, connect_partner_id, assigned_connect_id")
     .eq("id", propertyId)
     .maybeSingle();
 
@@ -28,6 +28,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Property not found" }, { status: 404 });
   }
 
+  // The property's Connect partner is stamped on the transaction itself; a DB
+  // trigger enforces the same from properties.connect_partner_id.
   const { data: inquiry, error: inqError } = await supabase
     .from("inquiries")
     .insert({
@@ -36,6 +38,7 @@ export async function POST(req: NextRequest) {
       seller_id: property.seller_id,
       message,
       status: "new",
+      connect_partner_id: property.connect_partner_id ?? null,
     })
     .select("id")
     .single();

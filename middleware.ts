@@ -1,5 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getDashboardPath, getUnauthorizedRedirect } from "@/lib/auth/routes";
+import {
+  getDashboardPath,
+  getUnauthorizedRedirect,
+  sanitizeRedirectPath,
+} from "@/lib/auth/routes";
 import { updateSession } from "@/lib/supabase/middleware";
 
 const PROTECTED_PREFIXES = [
@@ -10,7 +14,7 @@ const PROTECTED_PREFIXES = [
   "/connect/dashboard",
 ];
 const AUTH_PAGES = ["/login", "/register", "/forgot-password", "/reset-password"];
-const CONNECT_AUTH_PAGES = ["/connect/login", "/connect/register"];
+const CONNECT_AUTH_PAGES = ["/connect/login"];
 
 function isProtectedPath(pathname: string) {
   return PROTECTED_PREFIXES.some(
@@ -37,6 +41,12 @@ function isAdminPath(pathname: string) {
 export async function middleware(request: NextRequest) {
   const { supabaseResponse, user, profileRole } = await updateSession(request);
   const { pathname } = request.nextUrl;
+
+  if (pathname === "/connect/register" || pathname.startsWith("/connect/register/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/connect";
+    return NextResponse.redirect(url);
+  }
 
   if (isProtectedPath(pathname) && !user) {
     const url = request.nextUrl.clone();
@@ -66,16 +76,18 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isConnectAuthPage(pathname) && user) {
-    const redirectTo =
-      request.nextUrl.searchParams.get("redirect") ??
-      getDashboardPath(profileRole);
+    const redirectTo = sanitizeRedirectPath(
+      request.nextUrl.searchParams.get("redirect"),
+      getDashboardPath(profileRole),
+    );
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 
   if (isAuthPage(pathname) && user) {
-    const redirectTo =
-      request.nextUrl.searchParams.get("redirect") ??
-      getDashboardPath(profileRole);
+    const redirectTo = sanitizeRedirectPath(
+      request.nextUrl.searchParams.get("redirect"),
+      getDashboardPath(profileRole),
+    );
     return NextResponse.redirect(new URL(redirectTo, request.url));
   }
 

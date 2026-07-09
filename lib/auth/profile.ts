@@ -44,7 +44,6 @@ export async function upsertProfile(input: {
     id: input.user.id,
     email: input.user.email ?? (normalizedPhone ? mobileToAuthEmail(normalizedPhone) : ""),
     full_name: input.fullName.trim(),
-    username: normalizedUsername || null,
     phone: normalizedPhone,
     role: input.role ?? (input.user.user_metadata?.role as Profile["role"]) ?? "buyer",
   };

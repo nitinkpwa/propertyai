@@ -5,7 +5,6 @@ import type { AccountType } from "@/lib/auth/mobile";
 const OPTIONS: { value: AccountType; label: string; description: string }[] = [
   { value: "buyer", label: "Buyer", description: "Search & invest" },
   { value: "seller", label: "Seller", description: "List properties" },
-  { value: "builder", label: "Builder", description: "Manage projects" },
 ];
 
 interface AccountTypeSelectorProps {
@@ -22,7 +21,7 @@ export default function AccountTypeSelector({
   return (
     <div className="mb-4">
       <p className="mb-2 block text-sm font-medium text-neutral-700">Account Type</p>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {OPTIONS.map((option) => {
           const selected = value === option.value;
           return (

@@ -2,7 +2,7 @@ import type { Profile } from "@/lib/supabase";
 
 export const AUTH_EMAIL_DOMAIN = "areaiq.app";
 
-export type AccountType = Extract<Profile["role"], "buyer" | "seller" | "builder">;
+export type AccountType = Extract<Profile["role"], "buyer" | "seller">;
 
 /** Strip to digits; normalize Indian numbers to 10-digit local form. */
 export function normalizeMobileNumber(mobile: string): string {

@@ -4,6 +4,8 @@ export interface PropertyForSiteVisit {
   id: string;
   title: string;
   seller_id: string;
+  connect_partner_id?: string | null;
+  assigned_connect_id?: string | null;
   type?: string | null;
   sub_type?: string | null;
   builder_name?: string | null;
@@ -27,7 +29,7 @@ export async function lookupPropertyForSiteVisit(
   supabase: SupabaseClient,
   propertyId: string,
 ): Promise<LookupResult> {
-  const primarySelect = `id, title, seller_id, type, sub_type, contact_name, builder_name, rera_number, parking, ${SELLER_EMBED}`;
+  const primarySelect = `id, title, seller_id, connect_partner_id, assigned_connect_id, type, sub_type, contact_name, builder_name, rera_number, parking, ${SELLER_EMBED}`;
 
   const { data, error } = await supabase
     .from("properties")

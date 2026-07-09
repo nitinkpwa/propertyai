@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getRateLimitKey, rateLimit } from "@/lib/api/rateLimit";
 import {
   areaIntelligenceService,
   generateOpenAIInsights,
@@ -6,9 +7,19 @@ import {
 import { fetchPropertyIntelligenceInput } from "@/lib/intelligence/data/marketContext";
 
 export async function GET(
-  _req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  // Public property-page feature (unauthenticated by design) but the OpenAI
+  // call is cost-sensitive, so cap it per IP.
+  const limited = rateLimit(getRateLimitKey(req), 15, 60_000);
+  if (!limited.ok) {
+    return NextResponse.json(
+      { outlook: null, error: "Too many requests" },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfterSeconds) } },
+    );
+  }
+
   const { id } = await params;
 
   const [report, property] = await Promise.all([

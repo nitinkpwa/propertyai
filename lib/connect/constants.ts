@@ -48,8 +48,8 @@ export const CONNECT_WHY = [
 ] as const;
 
 export const CONNECT_STEPS = [
-  { step: 1, title: "Register", description: "Create your builder account on AreaIQ Connect." },
-  { step: 2, title: "Verify Builder", description: "Submit company and RERA details for verification." },
+  { step: 1, title: "Book a Demo", description: "Speak with our team about AreaIQ Connect partner access." },
+  { step: 2, title: "Partner Onboarding", description: "We create your verified Connect partner account." },
   { step: 3, title: "Upload Projects", description: "Add projects, towers, and inventory units." },
   { step: 4, title: "Receive Buyer Leads", description: "Get matched with qualified AreaIQ buyers." },
   { step: 5, title: "Manage Sales", description: "Track visits, partners, and conversions." },
@@ -96,8 +96,8 @@ export const CONNECT_PRICING = [
 
 export const CONNECT_FAQ = [
   {
-    q: "Who can register on AreaIQ Connect?",
-    a: "Registered builders, developers, and real estate companies with valid business credentials can create an account.",
+    q: "Who can access AreaIQ Connect?",
+    a: "AreaIQ Connect is available to verified real estate partners onboarded by the AreaIQ team. Public self-registration is not available.",
   },
   {
     q: "How do I receive buyer leads?",

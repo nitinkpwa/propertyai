@@ -10,6 +10,7 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import { signInWithEmailPassword, signInWithIdentifier } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { fetchProfile, getDashboardPath, upsertProfile } from "@/lib/auth/profile";
+import { sanitizeRedirectPath } from "@/lib/auth/routes";
 import { validateLogin } from "@/lib/auth/validation";
 
 function LoginForm() {
@@ -52,10 +53,10 @@ function LoginForm() {
           phone: user.user_metadata?.phone as string | undefined,
         }));
 
-      const destination =
-        redirectTo && redirectTo.startsWith("/")
-          ? redirectTo
-          : getDashboardPath(resolvedProfile?.role);
+      const destination = sanitizeRedirectPath(
+        redirectTo,
+        getDashboardPath(resolvedProfile?.role),
+      );
 
       router.push(destination);
       router.refresh();

@@ -5,6 +5,9 @@ import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Logo from "@/components/common/Logo";
+import NotificationBell from "@/components/buyer/NotificationBell";
+import MobileBottomNav from "@/components/buyer/MobileBottomNav";
+import BuyerTopBar from "@/components/buyer/BuyerTopBar";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { getDashboardPath } from "@/lib/auth/profile";
 import { isBuyerRole } from "@/lib/buyer/types";
@@ -19,10 +22,6 @@ export default function BuyerDashboardLayout({
   const pathname = usePathname();
   const { user, profile, loading, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
 
   useEffect(() => {
     if (loading) return;
@@ -45,14 +44,14 @@ export default function BuyerDashboardLayout({
 
   if (loading || !user || (profile && !isBuyerRole(profile.role))) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-50 pt-16">
+      <div className="flex min-h-screen items-center justify-center bg-neutral-50">
         <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 pt-16">
+    <div className="min-h-screen bg-neutral-50">
       <div className="lg:flex">
         <BuyerSidebar
           fullName={profile?.full_name}
@@ -71,7 +70,9 @@ export default function BuyerDashboardLayout({
         ) : null}
 
         <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
-          <div className="sticky top-16 z-30 flex items-center gap-3 border-b border-neutral-200/80 bg-white/95 px-4 py-3 backdrop-blur-xl lg:hidden">
+          <BuyerTopBar subtitle={profile?.full_name ?? undefined} />
+
+          <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-neutral-200/80 bg-white/95 px-4 py-3 backdrop-blur-xl lg:hidden">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
@@ -83,21 +84,25 @@ export default function BuyerDashboardLayout({
               </svg>
             </button>
             <Logo size="dashboard" href="/buyer" iconOnly />
-            <div>
-              <p className="text-sm font-semibold text-neutral-900">Buyer Dashboard</p>
-              <p className="text-xs text-neutral-500">{profile?.full_name ?? "AreaIQ"}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-neutral-900">
+                {profile?.full_name ?? "Buyer Portal"}
+              </p>
             </div>
+            <NotificationBell />
             <Link
               href="/properties"
-              className="ml-auto text-xs font-semibold text-emerald-600"
+              className="text-xs font-semibold text-emerald-600"
             >
               Browse
             </Link>
           </div>
 
-          <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+          <main className="flex-1 px-4 py-6 pb-24 sm:px-6 sm:py-8 lg:px-8 lg:py-10 lg:pb-10">
             {children}
           </main>
+
+          <MobileBottomNav />
         </div>
       </div>
     </div>

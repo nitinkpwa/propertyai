@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { Profile } from "@/lib/supabase";
+import { PROFILE_EMBED_SELECT } from "@/lib/profiles/schema";
 import {
   ADMIN_CRM_LEAD_SELECT,
   CRM_LEAD_WITH_BUYER_SELECT,
@@ -22,7 +23,7 @@ import type {
 import type { AdminLeadSummary } from "./leads/types";
 
 const PROPERTY_SELECT =
-  "*, seller:profiles!properties_seller_id_fkey(id, full_name, email, phone, role, company, created_at)";
+  `*, seller:profiles!properties_seller_id_fkey(${PROFILE_EMBED_SELECT}), connect_partner:connect_partners!properties_connect_partner_id_fkey(id, company_name, manager_name, email, phone, status)`;
 
 const PROPERTY_SELECT_FALLBACK = "*";
 
@@ -34,7 +35,7 @@ async function attachSellersToProperties(
 
   const { data: sellers } = await supabase
     .from("profiles")
-    .select("id, full_name, email, phone, role, company, created_at")
+    .select(PROFILE_EMBED_SELECT)
     .in("id", sellerIds);
 
   const sellerMap = new Map((sellers ?? []).map((s) => [s.id, s]));
@@ -307,7 +308,7 @@ export async function fetchAdminConversations(): Promise<AdminConversationRow[]>
   const { data, error } = await supabase
     .from("conversations")
     .select(
-      "*, user:profiles(id, full_name, email, phone, role, company, created_at)",
+      `*, user:profiles(${PROFILE_EMBED_SELECT})`,
     )
     .order("created_at", { ascending: false });
 
@@ -496,7 +497,7 @@ export function buildBuilderRows(
     .filter((p) => p.role === "builder")
     .map((p) => ({
       ...p,
-      company: (p as Profile & { company?: string }).company ?? null,
+      company: null,
       listing_count: listingCounts[p.id] ?? 0,
       project_count: 0,
     }));

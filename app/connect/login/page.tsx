@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import AuthAlert from "@/components/auth/AuthAlert";
@@ -9,6 +8,7 @@ import AuthInput from "@/components/auth/AuthInput";
 import Logo from "@/components/common/Logo";
 import { signInWithIdentifier } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
+import { sanitizeRedirectPath } from "@/lib/auth/routes";
 import { validateLogin } from "@/lib/auth/validation";
 import { supabase } from "@/lib/supabase";
 
@@ -41,10 +41,10 @@ function ConnectLoginForm() {
 
       if (profile?.role && profile.role !== "builder") {
         await supabase.auth.signOut();
-        throw new Error("This login is for builder accounts only. Please use the main AreaIQ login.");
+        throw new Error("This login is for Connect partner accounts only. Please use the main AreaIQ login.");
       }
 
-      router.push(redirectTo.startsWith("/") ? redirectTo : "/connect/dashboard");
+      router.push(sanitizeRedirectPath(redirectTo, "/connect/dashboard"));
       router.refresh();
     } catch (err) {
       setError(getAuthErrorMessage(err));
@@ -61,10 +61,10 @@ function ConnectLoginForm() {
             <Logo size="dashboard" suffix="Connect" href="/connect" />
           </div>
           <h1 className="mt-6 text-2xl font-bold tracking-tight text-neutral-900">
-            Builder Login
+            Connect Partner Login
           </h1>
           <p className="mt-2 text-sm text-neutral-500">
-            Sign in to manage projects, inventory, and leads.
+            Sign in to manage your buyers, properties, and leads.
           </p>
         </div>
 
@@ -99,13 +99,13 @@ function ConnectLoginForm() {
         </div>
 
         <p className="mt-6 text-center text-sm text-neutral-500">
-          New builder?{" "}
-          <Link
-            href="/connect/register"
+          Need access?{" "}
+          <a
+            href="mailto:connect@areaiq.app?subject=Partner%20Access%20Request"
             className="font-semibold text-emerald-600 hover:text-emerald-700"
           >
-            Register as Builder
-          </Link>
+            Contact us for partner onboarding
+          </a>
         </p>
       </div>
     </div>

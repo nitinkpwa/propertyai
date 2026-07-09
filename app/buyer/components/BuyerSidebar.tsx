@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 import Logo from "@/components/common/Logo";
 import ProfileCompletionRing from "@/components/premium/ProfileCompletionRing";
 import { useProgressiveProfileOptional } from "@/components/buyer/ProgressiveProfileProvider";
+import { useBuyerNotifications } from "@/lib/buyer/notifications";
 import { EMERALD } from "@/lib/auth/constants";
 import { getInitials } from "@/lib/auth/profile";
 import { BUYER_NAV, isBuyerNavActive } from "@/lib/buyer/constants";
+import { useAuth } from "@/lib/auth/AuthProvider";
 
 interface BuyerSidebarProps {
   fullName?: string | null;
@@ -63,6 +65,13 @@ function NavIcon({ icon }: { icon: (typeof BUYER_NAV)[number]["icon"] }) {
           <circle cx="12" cy="12" r="3" />
         </svg>
       );
+    case "bell":
+      return (
+        <svg {...props}>
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+      );
     case "user":
       return (
         <svg {...props}>
@@ -85,15 +94,17 @@ export default function BuyerSidebar({
   const initials = getInitials(fullName);
   const profileCtx = useProgressiveProfileOptional();
   const completeness = profileCtx?.completeness.percent ?? 0;
+  const { user } = useAuth();
+  const { unreadCount } = useBuyerNotifications(user?.id);
 
   return (
     <aside
-      className={`fixed bottom-0 left-0 top-16 z-50 flex w-64 flex-col border-r border-neutral-200/80 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.04)] transition-transform duration-300 lg:translate-x-0 ${
+      className={`fixed bottom-0 left-0 top-0 z-50 flex w-64 flex-col border-r border-neutral-200/80 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.04)] transition-transform duration-300 lg:translate-x-0 ${
         mobileOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
       <div className="border-b border-neutral-100 p-5">
-        <Logo size="dashboard" href="/" className="mb-4" />
+        <Logo size="dashboard" href="/buyer" className="mb-4" />
         <div className="flex items-center gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)]"
@@ -105,14 +116,15 @@ export default function BuyerSidebar({
             <p className="truncate text-sm font-semibold text-neutral-900">
               {fullName ?? "Buyer"}
             </p>
-            <p className="text-xs text-neutral-500">Buyer Account</p>
+            <p className="text-xs text-neutral-500">Buyer Portal</p>
           </div>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Buyer dashboard">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3" aria-label="Buyer dashboard">
         {BUYER_NAV.map((item) => {
           const active = isBuyerNavActive(item.href, pathname);
+          const showBadge = item.icon === "bell" && unreadCount > 0;
           return (
             <Link
               key={item.href}
@@ -127,7 +139,12 @@ export default function BuyerSidebar({
               <span className={active ? "text-emerald-600" : "text-neutral-400"}>
                 <NavIcon icon={item.icon} />
               </span>
-              {item.label}
+              <span className="flex-1">{item.label}</span>
+              {showBadge ? (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              ) : null}
             </Link>
           );
         })}

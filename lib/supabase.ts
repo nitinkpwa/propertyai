@@ -1,9 +1,72 @@
 export { createClient, supabase } from "@/lib/supabase/client";
 
+export type ConnectPartnerStatus = "pending" | "active" | "suspended" | "archived";
+
+export type ConnectPartnerActivityType =
+  | "partner_created"
+  | "buyer_assigned"
+  | "buyer_removed"
+  | "property_assigned"
+  | "property_updated"
+  | "property_approved"
+  | "property_rejected"
+  | "site_visit"
+  | "login"
+  | "logout"
+  | "notes_added"
+  | "lead_updated";
+
+export type ConnectPartner = {
+  id: string;
+  profile_id: string | null;
+  company_name: string;
+  manager_name: string;
+  email: string;
+  phone: string;
+  address: string | null;
+  city: string | null;
+  gst: string | null;
+  rera: string | null;
+  logo: string | null;
+  status: ConnectPartnerStatus;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ConnectPartnerActivity = {
+  id: string;
+  type: ConnectPartnerActivityType;
+  actor_id: string | null;
+  partner_id: string | null;
+  buyer_id: string | null;
+  property_id: string | null;
+  description: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  actor?: {
+    id: string;
+    full_name: string | null;
+    role: string | null;
+  } | null;
+  buyer?: {
+    id: string;
+    full_name: string | null;
+    phone: string | null;
+  } | null;
+  property?: {
+    id: string;
+    title: string | null;
+    city: string | null;
+  } | null;
+};
+
 export type Profile = {
   id: string;
   email: string;
   full_name: string;
+  /** Auth metadata only — not stored on production profiles table */
   username?: string | null;
   phone: string;
   role: "buyer" | "seller" | "builder" | "admin";
@@ -20,11 +83,7 @@ export type Profile = {
   family_size?: number | null;
   buyer_notes?: string | null;
   contact_email?: string | null;
-  company?: string | null;
-  rera_number?: string | null;
-  gst?: string | null;
-  address?: string | null;
-  logo_url?: string | null;
+  connect_partner_id?: string | null;
   created_at: string;
 };
 
@@ -59,6 +118,8 @@ export type Property = {
   contact_name: string;
   contact_phone: string;
   created_at: string;
+  connect_partner_id?: string | null;
+  assigned_connect_id?: string | null;
 };
 
 export type SavedProperty = {

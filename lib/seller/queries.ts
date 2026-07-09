@@ -1,4 +1,5 @@
 import { fetchSiteVisitsWithBuyers } from "@/lib/crm/buyerProfile";
+import { pickWritableProfileFields } from "@/lib/profiles/schema";
 import { supabase } from "@/lib/supabase";
 import { PROPERTIES_BASE_SELECT } from "./propertySchema";
 import type {
@@ -473,7 +474,10 @@ export async function updateSellerProfile(
   userId: string,
   profile: Partial<SellerProfile>,
 ): Promise<boolean> {
-  const { error } = await supabase.from("profiles").update(profile).eq("id", userId);
+  const safePatch = pickWritableProfileFields(profile as Record<string, unknown>);
+  if (Object.keys(safePatch).length === 0) return true;
+
+  const { error } = await supabase.from("profiles").update(safePatch).eq("id", userId);
   if (error) {
     console.error("updateSellerProfile:", error.message);
     return false;

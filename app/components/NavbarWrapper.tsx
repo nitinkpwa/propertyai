@@ -14,7 +14,8 @@ function NavbarWrapperInner() {
     isAuthRoute(pathname) ||
     pathname.startsWith("/seller") ||
     pathname.startsWith("/connect/dashboard") ||
-    pathname.startsWith("/admin")
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/buyer")
   ) {
     return null;
   }

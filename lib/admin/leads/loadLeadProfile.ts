@@ -142,10 +142,13 @@ export async function resolveLeadIdentity(leadId: string) {
 
   if (profileById?.id) {
     const buyerId = profileById.id as string;
+    // Buyers can hold several partner-scoped leads; use the most recent.
     const { data: crmByBuyer } = await supabase
       .from("crm_leads")
       .select(ADMIN_CRM_LEAD_SELECT)
       .eq("buyer_id", buyerId)
+      .order("updated_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     return {
@@ -170,6 +173,8 @@ export async function resolveLeadIdentity(leadId: string) {
     .from("crm_leads")
     .select(ADMIN_CRM_LEAD_SELECT)
     .eq("buyer_id", buyerId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   return {
@@ -201,7 +206,7 @@ export async function loadAdminLeadProfile(leadId: string): Promise<AdminLeadPro
     supabase.from("profiles").select("*").eq("id", buyerId).maybeSingle(),
     supabase
       .from("inquiries")
-      .select("*, property:properties(title, city, price, sub_type, type), seller:profiles!inquiries_seller_id_fkey(id, full_name, company)")
+      .select("*, property:properties(title, city, price, sub_type, type), seller:profiles!inquiries_seller_id_fkey(id, full_name)")
       .eq("from_user_id", buyerId)
       .order("created_at", { ascending: false }),
     supabase
@@ -233,12 +238,19 @@ export async function loadAdminLeadProfile(leadId: string): Promise<AdminLeadPro
     loadBuyerCounts(supabase, buyerId),
   ]);
 
+  // Master sees the COMPLETE buyer journey: activities across the buyer's
+  // general lead and every partner-scoped lead (one per Connect partner).
   let activities: CrmLeadActivity[] = [];
-  if (crmLeadId) {
+  const { data: buyerLeads } = await supabase
+    .from("crm_leads")
+    .select("id")
+    .eq("buyer_id", buyerId);
+  const buyerLeadIds = (buyerLeads ?? []).map((l) => l.id as string);
+  if (buyerLeadIds.length > 0) {
     const { data: actData } = await supabase
       .from("crm_lead_activities")
       .select("*, property:properties(title, city, location)")
-      .eq("lead_id", crmLeadId)
+      .in("lead_id", buyerLeadIds)
       .order("created_at", { ascending: true })
       .limit(100);
     activities = (actData as CrmLeadActivity[]) ?? [];
@@ -379,7 +391,7 @@ export async function loadAdminLeadProfile(leadId: string): Promise<AdminLeadPro
     savedProperties: savedPropertyEmbeds,
     enquiries: (inquiriesRes.data ?? []) as Array<{
       property?: { title?: string } | null;
-      seller?: { full_name?: string | null; company?: string | null } | null;
+      seller?: { full_name?: string | null } | null;
     }>,
     siteVisits,
     crmStatus,
@@ -447,6 +459,9 @@ export async function loadAdminLeadSummaries(): Promise<AdminLeadSummary[]> {
 
   for (const lead of crmRows ?? []) {
     const buyerId = lead.buyer_id as string;
+    // Leads are partner-scoped; the admin list is buyer-centric, so keep one
+    // row per buyer (rows arrive ordered by updated_at DESC → most recent wins).
+    if (seenBuyers.has(buyerId)) continue;
     seenBuyers.add(buyerId);
     const counts = await loadBuyerCounts(supabase, buyerId);
 
@@ -472,7 +487,7 @@ export async function loadAdminLeadSummaries(): Promise<AdminLeadSummary[]> {
       visitCount: counts.siteVisits,
     });
 
-    const connect = lead.connect as { full_name?: string | null; company?: string | null } | null;
+    const connect = lead.connect as { full_name?: string | null } | null;
     const hasVisit = activities.some((a) => a.activity_type.includes("visit"));
     const leadSource = hasVisit ? "Site Visit" : "CRM";
 

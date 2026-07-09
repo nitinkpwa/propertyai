@@ -7,6 +7,7 @@ import {
   labelForTimeline,
 } from "@/lib/buyer/profileFields";
 import { calculateLeadScore } from "@/lib/crm/leadScore";
+import { PROFILE_EMBED_SELECT } from "@/lib/profiles/schema";
 import { supabase } from "@/lib/supabase";
 
 /** Columns fetched for every CRM buyer embed / batch load */
@@ -23,13 +24,13 @@ export const CRM_LEAD_WITH_BUYER_SELECT =
   "*, buyer:profiles!crm_leads_buyer_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at)";
 
 export const CRM_LEAD_WITH_BUYER_AND_CONNECT_SELECT =
-  "*, buyer:profiles!crm_leads_buyer_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at), connect:profiles!crm_leads_assigned_connect_id_fkey(id, full_name, email, phone, role, company, created_at)";
+  `*, buyer:profiles!crm_leads_buyer_id_fkey(${BUYER_PROFILE_COLUMNS}), connect:profiles!crm_leads_assigned_connect_id_fkey(${PROFILE_EMBED_SELECT})`;
 
 export const INQUIRY_WITH_BUYER_SELECT =
-  "*, property:properties(title, city), buyer:profiles!inquiries_from_user_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at), seller:profiles!inquiries_seller_id_fkey(id, full_name, email, phone, role, company, created_at)";
+  `*, property:properties(title, city), buyer:profiles!inquiries_from_user_id_fkey(${BUYER_PROFILE_COLUMNS}), seller:profiles!inquiries_seller_id_fkey(${PROFILE_EMBED_SELECT})`;
 
 export const ADMIN_CRM_LEAD_SELECT =
-  "*, buyer:profiles!crm_leads_buyer_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at), connect:profiles!crm_leads_assigned_connect_id_fkey(id, full_name, email, phone, role, company, created_at), property:properties!crm_leads_primary_property_id_fkey(title, city, seller_id, seller:profiles!properties_seller_id_fkey(id, full_name, email, phone, role, company, created_at))";
+  `*, buyer:profiles!crm_leads_buyer_id_fkey(${BUYER_PROFILE_COLUMNS}), connect:profiles!crm_leads_assigned_connect_id_fkey(${PROFILE_EMBED_SELECT}), property:properties!crm_leads_primary_property_id_fkey(title, city, seller_id, seller:profiles!properties_seller_id_fkey(${PROFILE_EMBED_SELECT}))`;
 
 export const SITE_VISIT_WITH_BUYER_SELECT =
   "*, property:properties(title, location, city), buyer:profiles!site_visits_user_id_fkey(id, full_name, email, phone, avatar_url, city, buying_purpose, buying_timeline, budget_min, budget_max, loan_status, occupation, family_size, preferred_locations, preferred_property_types, buyer_notes, contact_email, created_at)";
@@ -214,6 +215,8 @@ export const SITE_VISIT_ADMIN_SELECT = "*, property:properties(title, city)";
 export type SiteVisitQueryFilter = {
   propertyIds?: string[];
   userIds?: string[];
+  /** Property-based ownership: visits stamped with this Connect partner id. */
+  connectPartnerId?: string;
 };
 
 /**
@@ -235,6 +238,9 @@ export async function fetchSiteVisitsWithBuyers<T = Record<string, unknown>>(
   }
   if (options.filter?.userIds?.length) {
     query = query.in("user_id", options.filter.userIds);
+  }
+  if (options.filter?.connectPartnerId) {
+    query = query.eq("connect_partner_id", options.filter.connectPartnerId);
   }
 
   const order = options.order ?? { column: "visit_date", ascending: false };

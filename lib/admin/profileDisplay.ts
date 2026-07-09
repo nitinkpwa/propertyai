@@ -11,7 +11,6 @@ export type ProfileLike = {
   email?: string | null;
   phone?: string | null;
   role?: Profile["role"] | string | null;
-  company?: string | null;
   contact_email?: string | null;
   created_at?: string | null;
   avatar_url?: string | null;
@@ -48,15 +47,12 @@ function pickPhone(profile: ProfileLike | null | undefined): string | null {
   return phone || null;
 }
 
-/** Display priority: full_name → company → email → phone → Unknown User */
+/** Display priority: full_name → email → phone → Unknown User */
 export function resolveDisplayName(profile: ProfileLike | null | undefined): string {
   if (!profile) return UNKNOWN_USER;
 
   const fullName = profile.full_name?.trim();
   if (fullName) return fullName;
-
-  const company = profile.company?.trim();
-  if (company) return company;
 
   const email = pickEmail(profile);
   if (email) return email;

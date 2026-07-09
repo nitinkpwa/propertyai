@@ -34,11 +34,12 @@ export async function GET(
     conversationsRes,
   ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", buyerId).maybeSingle(),
+    // Leads are partner-scoped; admin journey view keys off all of them.
     supabase
       .from("crm_leads")
       .select("*")
       .eq("buyer_id", buyerId)
-      .maybeSingle(),
+      .order("updated_at", { ascending: false }),
     supabase
       .from("inquiries")
       .select("*, property:properties(title, city)")
@@ -64,13 +65,15 @@ export async function GET(
       .limit(10),
   ]);
 
-  const lead = leadRes.data;
+  const leads = leadRes.data ?? [];
+  const lead = leads[0] ?? null;
   let activities: CrmLeadActivity[] = [];
-  if (lead) {
+  if (leads.length > 0) {
+    // Master sees the complete journey across every partner-scoped lead.
     const { data: actData } = await supabase
       .from("crm_lead_activities")
       .select("*, property:properties(title, city, location)")
-      .eq("lead_id", lead.id)
+      .in("lead_id", leads.map((l) => l.id as string))
       .order("created_at", { ascending: true })
       .limit(50);
     activities = (actData as CrmLeadActivity[]) ?? [];

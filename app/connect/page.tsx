@@ -60,16 +60,10 @@ export default function ConnectLandingPage() {
               >
                 Login
               </Link>
-              <Link
-                href="/connect/register"
-                className="inline-flex rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all hover:shadow-md"
-                style={{ backgroundColor: EMERALD }}
-              >
-                Register as Builder
-              </Link>
               <a
                 href="mailto:connect@areaiq.app?subject=Book%20a%20Demo"
-                className="inline-flex rounded-xl border border-emerald-200 bg-emerald-50 px-6 py-3 text-sm font-semibold text-emerald-700 transition-all hover:bg-emerald-100"
+                className="inline-flex rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all hover:shadow-md"
+                style={{ backgroundColor: EMERALD }}
               >
                 Book Demo
               </a>
@@ -288,8 +282,7 @@ export default function ConnectLandingPage() {
                 <p className="mb-3 font-semibold text-white">Product</p>
                 <ul className="space-y-2">
                   <li><Link href="/connect/login" className="hover:text-white">Login</Link></li>
-                  <li><Link href="/connect/register" className="hover:text-white">Register</Link></li>
-                  <li><a href="mailto:connect@areaiq.app" className="hover:text-white">Book Demo</a></li>
+                  <li><a href="mailto:connect@areaiq.app?subject=Book%20a%20Demo" className="hover:text-white">Book Demo</a></li>
                 </ul>
               </div>
               <div>

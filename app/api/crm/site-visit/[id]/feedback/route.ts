@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { recordLeadActivity } from "@/lib/crm/service";
+import { recordLeadActivity, createNotification } from "@/lib/crm/service";
 import type { VisitFeedbackPayload } from "@/lib/crm/visitWorkflow";
 import { createSupabaseServerClient, getAuthenticatedUser } from "@/lib/supabase/server";
 
@@ -70,7 +70,7 @@ export async function POST(
       : null,
   ].filter(Boolean);
 
-  await recordLeadActivity(supabase, {
+  const activityResult = await recordLeadActivity(supabase, {
     buyerId: user.id,
     activityType: "visit_feedback_submitted",
     title: "Visit feedback submitted",
@@ -83,6 +83,25 @@ export async function POST(
     siteVisitId: id,
     metadata: feedback,
   });
+
+  if (activityResult) {
+    const { data: lead } = await supabase
+      .from("crm_leads")
+      .select("assigned_connect_id")
+      .eq("id", activityResult.leadId)
+      .maybeSingle();
+
+    if (lead?.assigned_connect_id) {
+      await createNotification(supabase, {
+        userId: lead.assigned_connect_id as string,
+        type: "visit_feedback_submitted",
+        title: "Visit feedback received",
+        message: `${summaryParts.join(" · ") || "Buyer submitted post-visit feedback"}`,
+        leadId: activityResult.leadId,
+        propertyId: visit.property_id,
+      });
+    }
+  }
 
   return NextResponse.json({ success: true });
 }

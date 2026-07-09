@@ -204,6 +204,14 @@ export async function completeSiteVisit(
     siteVisitId: visitId,
   });
 
+  await createNotification(supabase, {
+    userId: visit.user_id,
+    type: "site_visit_completed",
+    title: "Site visit marked complete",
+    message: `Your visit to ${(visit.property as { title?: string } | null)?.title ?? "the property"} is complete. Share your feedback to help AI refine recommendations.`,
+    propertyId: visit.property_id,
+  });
+
   return { ok: true };
 }
 
@@ -229,7 +237,7 @@ export async function canManageVisit(
 
   const { data: visit } = await supabase
     .from("site_visits")
-    .select("user_id, property_id, property:properties(seller_id)")
+    .select("user_id, property_id, connect_partner_id, property:properties(seller_id)")
     .eq("id", visitId)
     .maybeSingle();
 
@@ -240,13 +248,17 @@ export async function canManageVisit(
 
   if (role === "builder") {
     if (sellerId === userId) return true;
-    const { data: lead } = await supabase
-      .from("crm_leads")
+    // Property-based ownership: a Connect partner manages a visit only when
+    // the visit is stamped with THEIR partner id (i.e. it is on a property
+    // assigned to them) — never via buyer-level assignment.
+    const visitPartnerId = (visit.connect_partner_id as string | null) ?? null;
+    if (!visitPartnerId) return false;
+    const { data: partner } = await supabase
+      .from("connect_partners")
       .select("id")
-      .eq("buyer_id", visit.user_id)
-      .eq("assigned_connect_id", userId)
+      .eq("profile_id", userId)
       .maybeSingle();
-    return Boolean(lead);
+    return (partner?.id as string | undefined) === visitPartnerId;
   }
 
   return false;

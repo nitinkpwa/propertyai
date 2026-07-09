@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getRateLimitKey, rateLimit } from "@/lib/api/rateLimit";
 import { processAskMessage, type PropertyContext } from "@/lib/ask/engine";
 import { logAsk } from "@/lib/ask/engine/logger";
 import type { ConversationMessage } from "@/lib/ask/openai-client";
 import { buildBuyerProfileContext } from "@/lib/buyer/aiContext";
 import { createSupabaseServerClient, getAuthenticatedUser } from "@/lib/supabase/server";
+
+const MAX_MESSAGE_LENGTH = 2000;
 
 function sanitizeHistory(raw: unknown): ConversationMessage[] {
   if (!Array.isArray(raw)) return [];
@@ -55,6 +58,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
     }
 
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      return NextResponse.json({ error: "Message too long" }, { status: 400 });
+    }
+
+    let buyerProfileContext = "";
+    const user = await getAuthenticatedUser();
+
+    // Guest chat is a product feature, so anonymous access is allowed, but every
+    // caller is rate limited (per user when known, per IP otherwise) to cap
+    // OpenAI cost/abuse. Anonymous callers get a tighter budget.
+    const limited = rateLimit(
+      getRateLimitKey(req, user?.id),
+      user ? 30 : 10,
+      60_000,
+    );
+    if (!limited.ok) {
+      return NextResponse.json(
+        { error: "Too many requests. Please slow down." },
+        { status: 429, headers: { "Retry-After": String(limited.retryAfterSeconds) } },
+      );
+    }
+
     logAsk({
       event: "api_ask_query_received",
       userMessage: message,
@@ -62,8 +87,6 @@ export async function POST(req: NextRequest) {
       hasPropertyContext: Boolean(propertyContext),
     });
 
-    let buyerProfileContext = "";
-    const user = await getAuthenticatedUser();
     if (user) {
       const supabase = await createSupabaseServerClient();
       const { data: profile } = await supabase

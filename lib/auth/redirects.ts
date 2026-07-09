@@ -1,5 +1,7 @@
 import { getSiteUrl } from "@/lib/supabase";
 
+export { sanitizeRedirectPath } from "@/lib/auth/routes";
+
 /**
  * Add these exact URLs in Supabase Dashboard → Authentication → URL Configuration → Redirect URLs:
  *

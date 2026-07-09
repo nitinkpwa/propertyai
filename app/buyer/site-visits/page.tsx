@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
@@ -15,15 +16,21 @@ import { SITE_VISIT_BOOKED_EVENT } from "@/lib/crm/events";
 import { formatVisitStatusLabel } from "@/lib/crm/visitWorkflow";
 import type { SiteVisitRow } from "@/lib/buyer/types";
 import StepProgress from "@/components/premium/StepProgress";
+import SiteVisitAssistant from "@/components/buyer/SiteVisitAssistant";
+import PageHeader from "@/components/ui/PageHeader";
+import Badge from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/Button";
+import { PageSkeleton } from "@/components/ui/Skeleton";
 import EmptyState from "../components/EmptyState";
 
-const STATUS_STYLES: Record<string, string> = {
-  pending_approval: "bg-amber-50 text-amber-700 ring-amber-200/80",
-  accepted: "bg-blue-50 text-blue-700 ring-blue-200/80",
-  scheduled: "bg-emerald-50 text-emerald-700 ring-emerald-200/80",
-  completed: "bg-neutral-100 text-neutral-700 ring-neutral-200/80",
-  rejected: "bg-rose-50 text-rose-700 ring-rose-200/80",
-  cancelled: "bg-rose-50 text-rose-700 ring-rose-200/80",
+const STATUS_VARIANT: Record<string, "warning" | "info" | "success" | "error" | "neutral"> = {
+  pending_approval: "warning",
+  accepted: "info",
+  scheduled: "success",
+  completed: "neutral",
+  rejected: "error",
+  cancelled: "error",
 };
 
 interface ContactInfo {
@@ -37,8 +44,31 @@ interface ContactInfo {
   message?: string;
 }
 
+function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
+  return (
+    <div>
+      <p className="text-xs font-medium text-neutral-600">{label}</p>
+      <div className="mt-1 flex gap-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <button
+            key={star}
+            type="button"
+            onClick={() => onChange(star)}
+            className={`text-lg transition ${star <= value ? "text-amber-400" : "text-neutral-200"}`}
+            aria-label={`${star} stars`}
+          >
+            ★
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function VisitFeedbackForm({ visitId, onDone }: { visitId: string; onDone: () => void }) {
   const [notes, setNotes] = useState("");
+  const [pros, setPros] = useState("");
+  const [cons, setCons] = useState("");
   const [wouldBuy, setWouldBuy] = useState<boolean | null>(null);
   const [constructionRating, setConstructionRating] = useState(3);
   const [parkingRating, setParkingRating] = useState(3);
@@ -50,7 +80,7 @@ function VisitFeedbackForm({ visitId, onDone }: { visitId: string; onDone: () =>
     e.preventDefault();
     setSubmitting(true);
     const ok = await submitVisitFeedback(visitId, {
-      notes,
+      notes: [notes, pros ? `Pros: ${pros}` : "", cons ? `Cons: ${cons}` : ""].filter(Boolean).join("\n"),
       wouldBuy,
       constructionRating,
       parkingRating,
@@ -62,52 +92,52 @@ function VisitFeedbackForm({ visitId, onDone }: { visitId: string; onDone: () =>
   };
 
   return (
-    <form onSubmit={handleSubmit} className="mt-4 space-y-3 border-t border-neutral-100 pt-4">
-      <p className="text-sm font-semibold text-neutral-800">Post-visit feedback</p>
+    <form onSubmit={handleSubmit} className="space-y-4 border-t border-neutral-100 pt-5">
+      <div>
+        <p className="text-sm font-semibold text-neutral-800">Post-Visit Feedback</p>
+        <p className="text-xs text-neutral-500">Your feedback helps AI refine recommendations</p>
+      </div>
       <textarea
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        placeholder="Your notes from the visit"
-        className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm"
+        placeholder="Overall notes from the visit"
+        className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm focus:border-emerald-400 focus:ring-2 focus:ring-emerald-500/10"
         rows={3}
       />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <label className="text-xs text-neutral-600">
-          Construction (1–5)
-          <input type="number" min={1} max={5} value={constructionRating} onChange={(e) => setConstructionRating(Number(e.target.value))} className="mt-1 w-full rounded-lg border px-2 py-1 text-sm" />
-        </label>
-        <label className="text-xs text-neutral-600">
-          Parking (1–5)
-          <input type="number" min={1} max={5} value={parkingRating} onChange={(e) => setParkingRating(Number(e.target.value))} className="mt-1 w-full rounded-lg border px-2 py-1 text-sm" />
-        </label>
-        <label className="text-xs text-neutral-600">
-          Builder behaviour (1–5)
-          <input type="number" min={1} max={5} value={builderBehaviour} onChange={(e) => setBuilderBehaviour(Number(e.target.value))} className="mt-1 w-full rounded-lg border px-2 py-1 text-sm" />
-        </label>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <textarea value={pros} onChange={(e) => setPros(e.target.value)} placeholder="Pros (what you liked)" className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm" rows={2} />
+        <textarea value={cons} onChange={(e) => setCons(e.target.value)} placeholder="Cons (concerns)" className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm" rows={2} />
       </div>
-      <div className="flex gap-3 text-sm">
-        <label className="flex items-center gap-2">
-          <input type="radio" checked={wouldBuy === true} onChange={() => setWouldBuy(true)} />
-          Would buy
-        </label>
-        <label className="flex items-center gap-2">
-          <input type="radio" checked={wouldBuy === false} onChange={() => setWouldBuy(false)} />
-          Would not buy
-        </label>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StarRating value={constructionRating} onChange={setConstructionRating} label="Construction Quality" />
+        <StarRating value={parkingRating} onChange={setParkingRating} label="Parking & Access" />
+        <StarRating value={builderBehaviour} onChange={setBuilderBehaviour} label="Builder Behaviour" />
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={() => setWouldBuy(true)}
+          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${wouldBuy === true ? "bg-emerald-600 text-white" : "bg-neutral-100 text-neutral-600"}`}
+        >
+          👍 Would Buy
+        </button>
+        <button
+          type="button"
+          onClick={() => setWouldBuy(false)}
+          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${wouldBuy === false ? "bg-rose-600 text-white" : "bg-neutral-100 text-neutral-600"}`}
+        >
+          👎 Would Not Buy
+        </button>
       </div>
       <input
         value={comments}
         onChange={(e) => setComments(e.target.value)}
-        placeholder="Additional comments"
+        placeholder="Negotiation notes or additional comments"
         className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm"
       />
-      <button
-        type="submit"
-        disabled={submitting}
-        className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-      >
-        {submitting ? "Saving..." : "Submit feedback"}
-      </button>
+      <Button type="submit" loading={submitting} loadingText="Saving feedback...">
+        Submit Feedback
+      </Button>
     </form>
   );
 }
@@ -115,6 +145,7 @@ function VisitFeedbackForm({ visitId, onDone }: { visitId: string; onDone: () =>
 function VisitCard({ visit }: { visit: SiteVisitRow }) {
   const [contact, setContact] = useState<ContactInfo | null>(null);
   const [feedbackDone, setFeedbackDone] = useState(false);
+  const [expanded, setExpanded] = useState(visit.status !== "completed");
 
   useEffect(() => {
     if (["scheduled", "accepted", "completed"].includes(visit.status)) {
@@ -123,6 +154,7 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
   }, [visit.id, visit.status]);
 
   const checklist = Array.isArray(visit.checklist) ? visit.checklist : [];
+  const isUpcoming = ["pending_approval", "accepted", "scheduled"].includes(visit.status);
 
   const steps = [
     { label: "Requested", done: true, active: visit.status === "pending_approval" },
@@ -139,13 +171,17 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
     { label: "Completed", done: visit.status === "completed", active: false },
   ];
 
+  const mapsQuery = encodeURIComponent(
+    `${visit.property?.location ?? ""}${visit.property?.city ? `, ${visit.property.city}` : ""}`,
+  );
+
   return (
-    <article className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-sm">
+    <article className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-sm transition hover:shadow-md">
       <div className="bg-gradient-to-r from-emerald-600 to-teal-700 px-5 py-4 text-white sm:px-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-emerald-100">
-              Site Visit Tracking
+              {isUpcoming ? "Upcoming Visit" : "Site Visit"}
             </p>
             <h2 className="mt-1 text-lg font-bold">{visit.property?.title ?? "Property"}</h2>
             <p className="mt-1 text-sm text-emerald-50/90">
@@ -153,82 +189,128 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
               {visit.property?.city ? `, ${visit.property.city}` : ""}
             </p>
           </div>
-          <span
-            className={`inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${STATUS_STYLES[visit.status] ?? "bg-white/20 text-white"}`}
-          >
+          <Badge variant={STATUS_VARIANT[visit.status] ?? "neutral"} className="!bg-white/20 !text-white !ring-white/30">
             {formatVisitStatusLabel(visit.status)}
-          </span>
+          </Badge>
         </div>
       </div>
 
       <div className="space-y-5 p-5 sm:p-6">
         <StepProgress steps={steps} />
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-xl bg-neutral-50 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Visit Date</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Date</p>
             <p className="mt-1 text-sm font-semibold text-neutral-900">{formatVisitDate(visit.visit_date)}</p>
           </div>
           <div className="rounded-xl bg-neutral-50 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Visit Time</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Time</p>
             <p className="mt-1 text-sm font-semibold text-neutral-900">{formatVisitTime(visit.visit_time)}</p>
           </div>
+          {visit.builder_name ? (
+            <div className="col-span-2 rounded-xl bg-neutral-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Builder</p>
+              <p className="mt-1 text-sm font-semibold text-neutral-900">{visit.builder_name}</p>
+            </div>
+          ) : null}
         </div>
+
+        {isUpcoming ? (
+          <>
+            <SiteVisitAssistant visit={visit} />
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50"
+              >
+                🗺️ Route Map
+              </a>
+              <a
+                href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Site Visit: ${visit.property?.title ?? "Property"}`)}&dates=${visit.visit_date.replace(/-/g, "")}/${visit.visit_date.replace(/-/g, "")}&details=${encodeURIComponent(`Visit at ${visit.property?.location ?? ""}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50"
+              >
+                📆 Add to Calendar
+              </a>
+            </div>
+          </>
+        ) : null}
 
         {visit.status === "pending_approval" ? (
           <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Seller approval pending — contact details unlock once your visit is confirmed.
+            ⏳ Seller approval pending — contact details unlock once your visit is confirmed.
           </p>
         ) : null}
 
-      {contact?.ownerContact?.phone || contact?.ownerContact?.email ? (
-        <div className="mt-4 rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
-          <p className="font-semibold">Seller contact (unlocked)</p>
-          {contact.ownerContact.name ? <p>{contact.ownerContact.name}</p> : null}
-          {contact.ownerContact.phone ? (
-            <p>
-              📞{" "}
-              <a href={`tel:${contact.ownerContact.phone}`} className="font-medium underline">
-                {contact.ownerContact.phone}
-              </a>
-            </p>
-          ) : null}
-          {contact.ownerContact.whatsapp ? (
-            <p>
-              <a
-                href={`https://wa.me/${contact.ownerContact.whatsapp}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium underline"
-              >
-                WhatsApp
-              </a>
-            </p>
-          ) : null}
-          {contact.visitLocation ? (
-            <p className="mt-1 text-xs">📍 {contact.visitLocation}</p>
-          ) : null}
-        </div>
-      ) : contact?.message ? (
-        <p className="mt-4 text-sm text-neutral-500">{contact.message}</p>
-      ) : null}
+        {contact?.ownerContact?.phone || contact?.ownerContact?.email ? (
+          <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+            <p className="font-semibold">Seller Contact (Unlocked)</p>
+            {contact.ownerContact.name ? <p>{contact.ownerContact.name}</p> : null}
+            {contact.ownerContact.phone ? (
+              <p>
+                📞{" "}
+                <a href={`tel:${contact.ownerContact.phone}`} className="font-medium underline">
+                  {contact.ownerContact.phone}
+                </a>
+              </p>
+            ) : null}
+            {contact.ownerContact.whatsapp ? (
+              <p>
+                <a
+                  href={`https://wa.me/${contact.ownerContact.whatsapp}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium underline"
+                >
+                  WhatsApp
+                </a>
+              </p>
+            ) : null}
+            {contact.visitLocation ? (
+              <p className="mt-1 text-xs">📍 {contact.visitLocation}</p>
+            ) : null}
+          </div>
+        ) : contact?.message ? (
+          <p className="text-sm text-neutral-500">{contact.message}</p>
+        ) : null}
 
-      {checklist.length > 0 ? (
-        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
-          <p className="text-sm font-semibold text-emerald-900">🤖 AI Visit Assistant — Checklist</p>
-          <ul className="mt-2 space-y-1">
-            {checklist.map((item) => (
-              <li key={item} className="flex items-center gap-2 text-sm text-neutral-600">
-                <span className="text-emerald-500">☐</span> {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+        {checklist.length > 0 ? (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+            <p className="text-sm font-semibold text-emerald-900">🤖 AI Visit Checklist</p>
+            <ul className="mt-2 space-y-1.5">
+              {checklist.map((item) => (
+                <li key={item} className="flex items-center gap-2 text-sm text-neutral-600">
+                  <span className="text-emerald-500">☐</span> {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
-      {["scheduled", "accepted", "completed"].includes(visit.status) && !feedbackDone ? (
-        <VisitFeedbackForm visitId={visit.id} onDone={() => setFeedbackDone(true)} />
-      ) : null}
+        {["scheduled", "accepted", "completed"].includes(visit.status) && !feedbackDone ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+            >
+              {expanded ? "Hide feedback form" : "Share visit feedback →"}
+            </button>
+            {expanded ? <VisitFeedbackForm visitId={visit.id} onDone={() => setFeedbackDone(true)} /> : null}
+          </>
+        ) : null}
+
+        {visit.property_id ? (
+          <Link
+            href={`/property/${visit.property_id}`}
+            className="inline-block text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+          >
+            View property details →
+          </Link>
+        ) : null}
       </div>
     </article>
   );
@@ -256,37 +338,58 @@ export default function SiteVisitsPage() {
     return () => window.removeEventListener(SITE_VISIT_BOOKED_EVENT, onBooked);
   }, [user]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center py-16">
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
-      </div>
-    );
-  }
+  const upcoming = visits.filter((v) => ["pending_approval", "accepted", "scheduled"].includes(v.status));
+  const past = visits.filter((v) => !["pending_approval", "accepted", "scheduled"].includes(v.status));
+
+  if (loading) return <PageSkeleton rows={3} />;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-          Site Visits
-        </h1>
-        <p className="mt-2 text-sm text-neutral-500">
-          Track approval status, checklist, and seller contact after acceptance
-        </p>
-      </div>
+    <div className="mx-auto max-w-4xl space-y-8">
+      <PageHeader
+        eyebrow="Signature Feature"
+        title="Site Visits"
+        description="Track approval, prepare with AI checklists, and share feedback after your visit"
+        action={
+          <ButtonLink href="/properties" variant="secondary">
+            Book New Visit
+          </ButtonLink>
+        }
+      />
 
       {visits.length === 0 ? (
         <EmptyState
           icon="📅"
           title="No site visits booked"
-          description="Book a site visit from any property page. Contact details unlock after approval."
+          description="Book a site visit from any property page. Contact details unlock after seller approval."
+          tips={[
+            "Choose a convenient date and time on the property page",
+            "Get an AI-generated checklist before your visit",
+            "Share feedback after visiting to improve recommendations",
+          ]}
         />
       ) : (
-        <div className="space-y-4">
-          {visits.map((visit) => (
-            <VisitCard key={visit.id} visit={visit} />
-          ))}
-        </div>
+        <>
+          {upcoming.length > 0 ? (
+            <section>
+              <h2 className="mb-4 text-lg font-bold text-neutral-900">Upcoming ({upcoming.length})</h2>
+              <div className="space-y-4">
+                {upcoming.map((visit) => (
+                  <VisitCard key={visit.id} visit={visit} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+          {past.length > 0 ? (
+            <section>
+              <h2 className="mb-4 text-lg font-bold text-neutral-900">Past Visits ({past.length})</h2>
+              <div className="space-y-4">
+                {past.map((visit) => (
+                  <VisitCard key={visit.id} visit={visit} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+        </>
       )}
     </div>
   );

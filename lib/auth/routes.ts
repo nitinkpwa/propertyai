@@ -1,6 +1,20 @@
 import { isAdminRole } from "@/lib/auth/admin";
 import type { Profile } from "@/lib/supabase";
 
+/**
+ * Returns a safe, same-origin relative path for redirects.
+ * Rejects absolute URLs, protocol-relative (`//host`) and backslash tricks that
+ * enable open-redirect attacks. Falls back to `fallback` when unsafe.
+ */
+export function sanitizeRedirectPath(
+  value: string | null | undefined,
+  fallback = "/",
+): string {
+  if (!value) return fallback;
+  if (!/^\/(?![/\\])/.test(value)) return fallback;
+  return value;
+}
+
 export function getDashboardPath(role?: Profile["role"] | string | null): string {
   if (isAdminRole(role)) return "/admin";
   switch (role) {

@@ -5,3 +5,6 @@ export * from "./routing";
 export * from "./queries";
 export * from "./visitWorkflow";
 export * from "./visitService";
+export * from "./leadIntelligence";
+export * from "./workflowOrchestrator";
+export * from "./visitAssistant";

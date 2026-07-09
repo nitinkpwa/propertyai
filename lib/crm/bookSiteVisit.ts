@@ -161,7 +161,8 @@ async function insertSiteVisit(
   if (
     errMsg.includes("checklist") ||
     errMsg.includes("pending_approval") ||
-    errMsg.includes("purpose")
+    errMsg.includes("purpose") ||
+    errMsg.includes("connect_partner_id")
   ) {
     const legacyPayload: Record<string, unknown> = {
       user_id: payload.user_id,
@@ -173,6 +174,7 @@ async function insertSiteVisit(
     };
     if (payload.lead_id) legacyPayload.lead_id = payload.lead_id;
     if (payload.inquiry_id) legacyPayload.inquiry_id = payload.inquiry_id;
+    if (payload.connect_partner_id) legacyPayload.connect_partner_id = payload.connect_partner_id;
 
     devLogSiteVisit("Retrying legacy site visit insert", legacyPayload);
 
@@ -355,7 +357,13 @@ export async function bookSiteVisit(
     };
   }
 
-  const lead = await ensureLead(supabase, input.buyerId);
+  // Ownership follows the property: the visit and its lead belong to the
+  // Connect partner assigned to this property (if any), independent of any
+  // other enquiry the buyer has made.
+  const lead = await ensureLead(supabase, input.buyerId, "new", {
+    connectPartnerId: property.connect_partner_id ?? null,
+    primaryPropertyId: propertyId,
+  });
   if (!lead) {
     return {
       ok: false,
@@ -411,6 +419,7 @@ export async function bookSiteVisit(
     checklist,
     lead_id: lead.id,
     inquiry_id: inquiryId,
+    connect_partner_id: property.connect_partner_id ?? null,
   });
 
   if (!("visitId" in visitInsert)) return visitInsert;

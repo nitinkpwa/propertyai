@@ -6,6 +6,7 @@ interface ConnectEmptyModuleProps {
   description: string;
   actionLabel?: string;
   onAction?: () => void;
+  tips?: string[];
 }
 
 export default function ConnectEmptyModule({
@@ -14,6 +15,7 @@ export default function ConnectEmptyModule({
   description,
   actionLabel,
   onAction,
+  tips,
 }: ConnectEmptyModuleProps) {
   return (
     <div className="rounded-2xl border border-dashed border-neutral-200 bg-white px-6 py-16 text-center shadow-sm">
@@ -22,6 +24,13 @@ export default function ConnectEmptyModule({
       </div>
       <h3 className="text-lg font-semibold text-neutral-900">{title}</h3>
       <p className="mx-auto mt-2 max-w-md text-sm text-neutral-500">{description}</p>
+      {tips && tips.length > 0 ? (
+        <ul className="mx-auto mt-4 max-w-sm space-y-1 text-left text-xs text-neutral-600">
+          {tips.map((tip) => (
+            <li key={tip}>✓ {tip}</li>
+          ))}
+        </ul>
+      ) : null}
       {actionLabel && onAction ? (
         <button
           type="button"

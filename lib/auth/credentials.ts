@@ -107,6 +107,10 @@ export async function registerAccount(input: {
   role: AccountType;
   contactEmail?: string;
 }): Promise<{ user: User; session: Session; profile: Profile | null }> {
+  if (input.role !== "buyer" && input.role !== "seller") {
+    // Builder/connect and admin accounts are provisioned server-side only.
+    throw new Error("This account type cannot be created from the public website.");
+  }
   const normalizedPhone = normalizeMobileNumber(input.phone);
   const normalizedUsername =
     input.role === "buyer"

@@ -9,7 +9,12 @@
     "lint": "eslint",
     "type-check": "tsc --noEmit",
     "db:apply-site-visit": "node scripts/apply-site-visit-schema.mjs",
-    "db:check-site-visit": "node scripts/check-site-visit-schema.mjs"
+    "db:check-site-visit": "node scripts/check-site-visit-schema.mjs",
+    "db:apply-connect-partners": "node scripts/apply-connect-partners-schema.mjs",
+    "db:apply-property-ownership": "node scripts/apply-property-ownership-schema.mjs",
+    "db:check-property-ownership": "node scripts/check-property-ownership.mjs",
+    "db:check-connect-partners": "node scripts/check-connect-partners-schema.mjs",
+    "db:inspect-production": "node scripts/inspect-production-schema.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

@@ -22,6 +22,7 @@ export type ActivityType =
   | "property_viewed"
   | "property_saved"
   | "property_unsaved"
+  | "property_compared"
   | "contact_requested"
   | "inquiry_sent"
   | "visit_requested"
@@ -33,24 +34,44 @@ export type ActivityType =
   | "site_visit_cancelled"
   | "visit_checklist_generated"
   | "visit_feedback_submitted"
+  | "visit_notes_saved"
   | "negotiation_started"
   | "deal_booked"
   | "deal_closed"
   | "deal_lost"
   | "lead_assigned"
   | "lead_reassigned"
-  | "status_changed";
+  | "status_changed"
+  | "partner_call"
+  | "partner_whatsapp"
+  | "partner_email"
+  | "follow_up_scheduled"
+  | "follow_up_completed"
+  | "document_uploaded"
+  | "reminder_sent";
 
 export type NotificationType =
   | "new_inquiry"
   | "property_saved"
+  | "property_compared"
   | "site_visit_booked"
   | "site_visit_accepted"
   | "site_visit_rejected"
+  | "site_visit_completed"
+  | "visit_feedback_submitted"
   | "lead_assigned"
   | "lead_reassigned"
   | "new_lead"
-  | "general";
+  | "general"
+  | "status_changed"
+  | "follow_up_due"
+  | "negotiation_started"
+  | "booking_completed"
+  | "property_updated"
+  | "reminder";
+
+export type FollowUpPriority = "low" | "normal" | "high" | "urgent";
+export type FollowUpStatus = "pending" | "completed" | "overdue" | "cancelled";
 
 export type VisitStatus =
   | "pending_approval"
@@ -67,11 +88,56 @@ export interface CrmLead {
   buyer_id: string;
   status: LeadStatus;
   assigned_connect_id: string | null;
+  connect_partner_id: string | null;
   primary_property_id: string | null;
   first_login_at: string | null;
+  lead_score?: number;
+  lead_temperature?: "cold" | "warm" | "hot";
+  engagement_score?: number;
+  visit_score?: number;
+  interest_score?: number;
+  budget_match_score?: number;
+  conversion_probability?: number;
+  follow_up_date?: string | null;
+  follow_up_priority?: FollowUpPriority;
+  next_action?: string | null;
+  last_call_at?: string | null;
+  last_whatsapp_at?: string | null;
+  last_email_at?: string | null;
+  notes?: string | null;
   created_at: string;
   updated_at: string;
   buyer?: BuyerProfileForCRM | null;
+}
+
+export interface CrmFollowUp {
+  id: string;
+  lead_id: string;
+  partner_id: string | null;
+  assigned_to: string | null;
+  due_at: string;
+  priority: FollowUpPriority;
+  action: string;
+  notes: string | null;
+  status: FollowUpStatus;
+  completed_at: string | null;
+  created_at: string;
+}
+
+export interface LeadDetailView {
+  lead: CrmLead;
+  activities: CrmLeadActivity[];
+  followUps: CrmFollowUp[];
+  intelligence: {
+    lead_score: number;
+    lead_temperature: "cold" | "warm" | "hot";
+    engagement_score: number;
+    visit_score: number;
+    interest_score: number;
+    budget_match_score: number;
+    conversion_probability: number;
+    next_action: string | null;
+  };
 }
 
 export interface CrmLeadActivity {

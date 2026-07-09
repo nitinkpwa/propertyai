@@ -203,7 +203,7 @@ export function deriveFollowUps(input: {
 }
 
 export function resolveManagerName(
-  connect?: { full_name?: string | null; company?: string | null } | null,
+  connect?: { full_name?: string | null } | null,
   lookupName?: string | null,
 ): string | null {
   if (connect) return resolveDisplayName(connect);
@@ -295,7 +295,7 @@ export function buildAiInsights(input: {
   buyer: BuyerProfileForCRM | null;
   leadScore: LeadScoreResult;
   savedProperties: AdminPropertyEmbed[];
-  enquiries: Array<{ property?: { title?: string } | null; seller?: { full_name?: string | null; company?: string | null } | null }>;
+  enquiries: Array<{ property?: { title?: string } | null; seller?: { full_name?: string | null } | null }>;
   siteVisits: Array<{ status: string; visit_date: string }>;
   crmStatus: LeadStatus | null;
   upcomingVisitDate: string | null;
@@ -330,7 +330,7 @@ export function buildAiInsights(input: {
 
   const builders = new Set<string>();
   for (const enquiry of input.enquiries) {
-    const name = enquiry.seller?.company ?? enquiry.seller?.full_name;
+    const name = enquiry.seller?.full_name;
     if (name?.trim()) builders.add(name.trim());
   }
   insights.matchingBuilders = [...builders].slice(0, 5);

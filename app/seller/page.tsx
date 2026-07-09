@@ -385,14 +385,6 @@ export default function SellerDashboard() {
               if (ok) await refresh();
               return ok;
             }}
-            onUploadLogo={async (file) => {
-              const url = await uploadSellerAsset(user.id, file, "logo");
-              if (url) {
-                await updateSellerProfile(user.id, { logo_url: url });
-                await refresh();
-              }
-              return url;
-            }}
             onUploadAvatar={async (file) => {
               const url = await uploadSellerAsset(user.id, file, "avatar");
               if (url) {

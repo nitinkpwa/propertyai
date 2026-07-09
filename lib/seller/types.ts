@@ -34,13 +34,7 @@ export type VisitStatus =
   | "rejected"
   | "cancelled";
 
-export interface SellerProfile extends Profile {
-  company?: string | null;
-  rera_number?: string | null;
-  gst?: string | null;
-  address?: string | null;
-  logo_url?: string | null;
-}
+export interface SellerProfile extends Profile {}
 
 export interface SellerDashboardStats {
   totalProperties: number;
