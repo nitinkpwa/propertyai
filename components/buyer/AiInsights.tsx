@@ -20,8 +20,8 @@ export default function AiInsights({ insights }: AiInsightsProps) {
       <div className="mb-4 flex items-center gap-2">
         <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100 text-sm">🤖</span>
         <div>
-          <h2 className="text-lg font-bold text-neutral-900">AI Suggestions</h2>
-          <p className="text-xs text-neutral-500">Personalized for your search</p>
+          <h2 className="text-lg font-bold text-heading-primary">AI Suggestions</h2>
+          <p className="text-xs text-muted">Personalized for your search</p>
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -33,8 +33,8 @@ export default function AiInsights({ insights }: AiInsightsProps) {
             <div className="flex items-start gap-3">
               <span className="text-xl">{insight.icon}</span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-neutral-900">{insight.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-neutral-600">{insight.description}</p>
+                <p className="text-sm font-semibold text-heading-primary">{insight.title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-body">{insight.description}</p>
                 {insight.actionHref ? (
                   <a
                     href={insight.actionHref}

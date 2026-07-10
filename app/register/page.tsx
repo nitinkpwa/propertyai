@@ -79,7 +79,7 @@ export default function RegisterPage() {
           : "Join AreaIQ and start listing smarter"
       }
       footer={
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted">
           Already have an account?{" "}
           <Link
             href="/login"
@@ -154,7 +154,7 @@ export default function RegisterPage() {
         />
 
         {isBuyer ? (
-          <p className="pb-2 text-xs leading-relaxed text-neutral-500">
+          <p className="pb-2 text-xs leading-relaxed text-muted">
             Budget, preferences, and timeline are collected later as you explore — keeping signup fast.
           </p>
         ) : null}

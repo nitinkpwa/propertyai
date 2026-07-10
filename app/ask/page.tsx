@@ -100,14 +100,14 @@ function AskPageContent() {
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
-            className="rounded-lg p-2 text-neutral-600 hover:bg-neutral-100"
+            className="rounded-lg p-2 text-body hover:bg-neutral-100"
             aria-label="Open conversations"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="truncate text-sm font-semibold text-neutral-900">
+          <span className="truncate text-sm font-semibold text-heading-primary">
             {activeConversation?.title ?? "AreaIQ Intelligence"}
           </span>
         </header>

@@ -51,7 +51,7 @@ export default function SearchableMultiSelect({
 
   return (
     <div ref={rootRef} className="relative">
-      <label className="mb-2 block text-base font-medium text-neutral-800">{label}</label>
+      <label className="mb-2 block text-base font-medium text-heading-secondary">{label}</label>
 
       {value.length > 0 ? (
         <div className="mb-3 flex flex-wrap gap-2">
@@ -75,7 +75,7 @@ export default function SearchableMultiSelect({
       ) : null}
 
       <div className="relative">
-        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-neutral-400">
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted">
           🔍
         </span>
         <input
@@ -87,14 +87,14 @@ export default function SearchableMultiSelect({
             setQuery(event.target.value);
             setOpen(true);
           }}
-          className="w-full rounded-xl border border-neutral-200 bg-white py-3.5 pl-11 pr-4 text-base text-neutral-900 shadow-sm outline-none transition-all placeholder:text-neutral-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
+          className="w-full rounded-xl border border-neutral-200 bg-white py-3.5 pl-11 pr-4 text-base text-heading-primary shadow-sm outline-none transition-all placeholder:text-placeholder focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10"
         />
       </div>
 
       {open ? (
         <ul className="absolute z-50 mt-2 max-h-52 w-full overflow-auto rounded-xl border border-neutral-200 bg-white p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.1)]">
           {filtered.length === 0 ? (
-            <li className="px-4 py-3 text-sm text-neutral-400">No locations found</li>
+            <li className="px-4 py-3 text-sm text-muted">No locations found</li>
           ) : (
             filtered.map((option) => (
               <li key={option}>
@@ -105,7 +105,7 @@ export default function SearchableMultiSelect({
                     toggle(option);
                     setOpen(false);
                   }}
-                  className="flex w-full rounded-lg px-4 py-2.5 text-left text-base text-neutral-700 transition-colors hover:bg-emerald-50 hover:text-emerald-800"
+                  className="flex w-full rounded-lg px-4 py-2.5 text-left text-base text-body transition-colors hover:bg-emerald-50 hover:text-emerald-800"
                 >
                   {option}
                 </button>

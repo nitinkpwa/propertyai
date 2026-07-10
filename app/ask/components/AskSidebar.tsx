@@ -42,7 +42,7 @@ function ConversationList({
               className={`w-full rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
                 active
                   ? "bg-emerald-50 text-emerald-900"
-                  : "text-neutral-700 hover:bg-neutral-100"
+                  : "text-body hover:bg-neutral-100"
               }`}
             >
               <span className="line-clamp-2 font-medium">{conversation.title}</span>
@@ -54,7 +54,7 @@ function ConversationList({
                 e.stopPropagation();
                 onDelete(conversation.id);
               }}
-              className="absolute right-2 top-2 hidden rounded p-1 text-neutral-400 hover:bg-neutral-200 hover:text-neutral-700 group-hover:block"
+              className="absolute right-2 top-2 hidden rounded p-1 text-muted hover:bg-neutral-200 hover:text-body group-hover:block"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -89,7 +89,7 @@ export function AskSidebar({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-200 lg:hidden"
+            className="rounded-lg p-2 text-muted hover:bg-neutral-200 lg:hidden"
             aria-label="Close sidebar"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -103,7 +103,7 @@ export function AskSidebar({
         <button
           type="button"
           onClick={onNewChat}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-800 shadow-sm transition-colors hover:bg-neutral-50"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-heading-secondary shadow-sm transition-colors hover:bg-neutral-50"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -114,7 +114,7 @@ export function AskSidebar({
 
       <div className="flex-1 overflow-y-auto px-3 pb-4">
         {conversations.length === 0 ? (
-          <p className="px-3 py-6 text-center text-sm text-neutral-500">
+          <p className="px-3 py-6 text-center text-sm text-muted">
             {isLoggedIn
               ? "Your conversations are saved to your account."
               : "Chats saved in this browser only."}
@@ -122,7 +122,7 @@ export function AskSidebar({
         ) : (
           groupKeys.map((key) => (
             <div key={key} className="mb-4">
-              <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">
+              <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-label">
                 {TIME_GROUP_LABELS[key]}
               </p>
               <ConversationList
@@ -137,7 +137,7 @@ export function AskSidebar({
       </div>
 
       {!isLoggedIn ? (
-        <div className="border-t border-neutral-200 px-4 py-3 text-xs text-neutral-500">
+        <div className="border-t border-neutral-200 px-4 py-3 text-xs text-muted">
           Guest mode — chats stored in this browser.{" "}
           <a href="/login" className="font-medium text-emerald-600 hover:underline">
             Sign in

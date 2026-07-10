@@ -21,7 +21,7 @@ export default function PropertyLivePreview({ form, propertyId }: Props) {
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-200 bg-white/90 px-4 py-2 backdrop-blur">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Live Buyer Preview</p>
-          <p className="text-[11px] text-neutral-500">Updates as you edit structured fields</p>
+          <p className="text-[11px] text-muted">Updates as you edit structured fields</p>
         </div>
         <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold uppercase text-white">Live</span>
       </div>

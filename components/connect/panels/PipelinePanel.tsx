@@ -77,9 +77,9 @@ export default function PipelinePanel({ leads, onRefresh }: Props) {
                   onDragStart={() => setDragging(lead.id)}
                   className={`${connectTokens.card} cursor-grab p-3 active:cursor-grabbing`}
                 >
-                  <p className="text-sm font-semibold text-neutral-900">{lead.full_name ?? "Buyer"}</p>
-                  <p className="mt-0.5 truncate text-xs text-neutral-500">{lead.property_title}</p>
-                  <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${lead.lead_temperature === "hot" ? "bg-rose-100 text-rose-700" : "bg-neutral-100 text-neutral-600"}`}>
+                  <p className="text-sm font-semibold text-heading-primary">{lead.full_name ?? "Buyer"}</p>
+                  <p className="mt-0.5 truncate text-xs text-muted">{lead.property_title}</p>
+                  <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${lead.lead_temperature === "hot" ? "bg-rose-100 text-rose-700" : "bg-neutral-100 text-body"}`}>
                     {lead.lead_temperature}
                   </span>
                 </div>

@@ -28,7 +28,7 @@ export default function SectionHeader({
         </p>
         <h2
           className={`text-2xl font-bold tracking-tight sm:text-3xl ${
-            isDark ? "text-white" : "text-neutral-900"
+            isDark ? "text-white" : "text-heading-primary"
           }`}
         >
           {title}
@@ -36,7 +36,7 @@ export default function SectionHeader({
         {description ? (
           <p
             className={`mt-2 text-sm leading-relaxed sm:text-base ${
-              isDark ? "text-white/60" : "text-neutral-500"
+              isDark ? "text-white/60" : "text-muted"
             }`}
           >
             {description}

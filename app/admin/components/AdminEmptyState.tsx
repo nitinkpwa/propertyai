@@ -10,8 +10,8 @@ export default function AdminEmptyState({ icon, title, description }: AdminEmpty
       <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-50 text-3xl">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-neutral-900">{title}</h3>
-      <p className="mx-auto mt-2 max-w-md text-sm text-neutral-500">{description}</p>
+      <h3 className="text-lg font-semibold text-heading-primary">{title}</h3>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted">{description}</p>
     </div>
   );
 }

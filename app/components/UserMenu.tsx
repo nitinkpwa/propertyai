@@ -91,7 +91,7 @@ export default function UserMenu() {
             {initials}
           </span>
         )}
-        <span className="max-w-[120px] truncate text-sm font-medium text-neutral-800">
+        <span className="max-w-[120px] truncate text-sm font-medium text-heading-secondary">
           {displayName}
         </span>
         <svg
@@ -99,7 +99,7 @@ export default function UserMenu() {
           height="14"
           viewBox="0 0 24 24"
           fill="none"
-          className={`text-neutral-400 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`text-muted transition-transform ${open ? "rotate-180" : ""}`}
           aria-hidden
         >
           <path
@@ -118,10 +118,10 @@ export default function UserMenu() {
           className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-56 overflow-hidden rounded-2xl border border-neutral-200 bg-white py-2 shadow-[0_12px_40px_rgba(0,0,0,0.12)]"
         >
           <div className="border-b border-neutral-100 px-4 py-3">
-            <p className="truncate text-sm font-semibold text-neutral-900">
+            <p className="truncate text-sm font-semibold text-heading-primary">
               {displayName}
             </p>
-            <p className="truncate text-xs text-neutral-500">{subtitle}</p>
+            <p className="truncate text-xs text-muted">{subtitle}</p>
           </div>
 
           {[
@@ -133,7 +133,7 @@ export default function UserMenu() {
               href={item.href}
               role="menuitem"
               onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 hover:text-neutral-900"
+              className="block px-4 py-2.5 text-sm font-medium text-label transition-colors hover:bg-neutral-50 hover:text-heading-primary"
             >
               {item.label}
             </Link>

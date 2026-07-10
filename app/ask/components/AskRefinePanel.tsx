@@ -25,30 +25,30 @@ export default function AskRefinePanel({
 }: AskRefinePanelProps) {
   return (
     <section className="mt-10 rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
-      <h3 className="text-base font-bold text-neutral-900 sm:text-lg">
+      <h3 className="text-base font-bold text-heading-primary sm:text-lg">
         Need better recommendations?
       </h3>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-muted">
         Narrow results by budget, area, builder, or amenities.
       </p>
 
       <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-label">
             Budget
           </p>
           <BudgetGroup compact filters={filters} onChange={onChange} />
         </div>
 
         <div className="rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-label">
             Area
           </p>
           <AreaGroup compact filters={filters} onChange={onChange} />
         </div>
 
         <div className="rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-label">
             Builder
           </p>
           <BuilderGroup
@@ -60,7 +60,7 @@ export default function AskRefinePanel({
         </div>
 
         <div className="rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-label">
             Amenities
           </p>
           <AmenitiesGroup compact filters={filters} onChange={onChange} />

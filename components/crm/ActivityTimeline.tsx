@@ -40,7 +40,7 @@ export default function ActivityTimeline({
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/50 px-6 py-10 text-center">
-        <p className="text-sm text-neutral-500">{emptyMessage}</p>
+        <p className="text-sm text-muted">{emptyMessage}</p>
       </div>
     );
   }
@@ -67,13 +67,13 @@ export default function ActivityTimeline({
             </span>
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="text-sm font-semibold text-neutral-900">{activity.title}</p>
-                <time className="text-xs text-neutral-400" dateTime={activity.created_at}>
+                <p className="text-sm font-semibold text-heading-primary">{activity.title}</p>
+                <time className="text-xs text-muted" dateTime={activity.created_at}>
                   {formatWhen(activity.created_at)}
                 </time>
               </div>
               {activity.description ? (
-                <p className="mt-1 text-sm text-neutral-600">{activity.description}</p>
+                <p className="mt-1 text-sm text-body">{activity.description}</p>
               ) : null}
               {activity.property?.title ? (
                 <p className="mt-1 text-xs text-emerald-600">

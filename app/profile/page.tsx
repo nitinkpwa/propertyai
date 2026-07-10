@@ -137,10 +137,10 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-neutral-50 pt-24 pb-16">
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-neutral-200/80 bg-white p-8 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+          <h1 className="text-2xl font-bold tracking-tight text-heading-primary">
             Profile
           </h1>
-          <p className="mt-2 text-sm text-neutral-500">
+          <p className="mt-2 text-sm text-muted">
             Manage your account details and security settings.
           </p>
 
@@ -169,15 +169,15 @@ export default function ProfilePage() {
                 placeholder="9876543210"
               />
 
-              <div className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-neutral-600">
+              <div className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-body">
                 Role:{" "}
-                <span className="font-semibold capitalize text-neutral-900">
+                <span className="font-semibold capitalize text-heading-primary">
                   {profile?.role ?? "buyer"}
                 </span>
               </div>
 
               {profile?.phone ? (
-                <p className="px-1 text-xs text-neutral-500">
+                <p className="px-1 text-xs text-muted">
                   Login with {profile.username ? `@${profile.username}` : "username"} or{" "}
                   {formatMobileDisplay(profile.phone)}.
                 </p>
@@ -191,8 +191,8 @@ export default function ProfilePage() {
             </form>
 
             <div className="border-t border-neutral-100 pt-8">
-              <h2 className="text-lg font-semibold text-neutral-900">Change Password</h2>
-              <p className="mt-1 text-sm text-neutral-500">
+              <h2 className="text-lg font-semibold text-heading-primary">Change Password</h2>
+              <p className="mt-1 text-sm text-muted">
                 Verify your current password before setting a new one.
               </p>
 

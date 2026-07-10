@@ -64,23 +64,23 @@ export default function AssignedPropertiesPanel({ properties, onRefresh }: Props
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={p.photos[0]} alt="" className="h-full w-full object-cover" />
                 ) : (
-                  <div className="flex h-full items-center justify-center text-4xl text-neutral-300">🏠</div>
+                  <div className="flex h-full items-center justify-center text-4xl text-muted">🏠</div>
                 )}
               </div>
               <div className="p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-bold text-neutral-900">{p.title}</h3>
-                    <p className="text-sm text-neutral-500">{p.location ?? p.city}</p>
+                    <h3 className="font-bold text-heading-primary">{p.title}</h3>
+                    <p className="text-sm text-muted">{p.location ?? p.city}</p>
                   </div>
-                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-neutral-600">{p.status}</span>
+                  <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-body">{p.status}</span>
                 </div>
                 <p className="mt-2 text-lg font-bold text-emerald-700">{formatPrice(p.price)}</p>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-lg bg-neutral-50 p-2"><p className="text-neutral-400">Enquiries</p><p className="font-bold text-neutral-800">{p.enquiry_count}</p></div>
-                  <div className="rounded-lg bg-neutral-50 p-2"><p className="text-neutral-400">Visits</p><p className="font-bold text-neutral-800">{p.visit_count}</p></div>
-                  <div className="rounded-lg bg-neutral-50 p-2"><p className="text-neutral-400">Hot Leads</p><p className="font-bold text-rose-600">{p.hot_leads}</p></div>
-                  <div className="rounded-lg bg-neutral-50 p-2"><p className="text-neutral-400">Conversion</p><p className="font-bold text-neutral-800">{conversion}%</p></div>
+                  <div className="rounded-lg bg-neutral-50 p-2"><p className="text-muted">Enquiries</p><p className="font-bold text-heading-secondary">{p.enquiry_count}</p></div>
+                  <div className="rounded-lg bg-neutral-50 p-2"><p className="text-muted">Visits</p><p className="font-bold text-heading-secondary">{p.visit_count}</p></div>
+                  <div className="rounded-lg bg-neutral-50 p-2"><p className="text-muted">Hot Leads</p><p className="font-bold text-rose-600">{p.hot_leads}</p></div>
+                  <div className="rounded-lg bg-neutral-50 p-2"><p className="text-muted">Conversion</p><p className="font-bold text-heading-secondary">{conversion}%</p></div>
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <Link href={`/property/${p.id}`} className={connectTokens.btnSecondary + " text-center text-xs"}>View</Link>
@@ -95,8 +95,8 @@ export default function AssignedPropertiesPanel({ properties, onRefresh }: Props
       {editing ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-neutral-900/40 p-4 sm:items-center">
           <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-            <h3 className="font-bold text-neutral-900">Edit {editing.title}</h3>
-            <p className="mt-1 text-xs text-neutral-500">Changes may require AreaIQ moderation before publishing.</p>
+            <h3 className="font-bold text-heading-primary">Edit {editing.title}</h3>
+            <p className="mt-1 text-xs text-muted">Changes may require AreaIQ moderation before publishing.</p>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}

@@ -24,8 +24,8 @@ export default function AdminLeadsChrome({
             <Logo size="dashboard" suffix="Admin" href="/admin" />
             <span className="hidden h-6 w-px bg-neutral-200 sm:block" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-neutral-900">{title}</p>
-              {subtitle ? <p className="truncate text-xs text-neutral-500">{subtitle}</p> : null}
+              <p className="truncate text-sm font-semibold text-heading-primary">{title}</p>
+              {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -34,7 +34,7 @@ export default function AdminLeadsChrome({
             </Link>
             <Link
               href="/admin"
-              className="rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-neutral-600 hover:bg-neutral-50"
+              className="rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-body hover:bg-neutral-50"
             >
               Control Panel
             </Link>

@@ -2,21 +2,29 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111111;
+  /* Semantic text tokens — light backgrounds */
+  --text-heading-primary: #111111;
+  --text-heading-secondary: #222222;
+  --text-body: #374151;
+  --text-muted: #6b7280;
+  --text-label: #4b5563;
+  --text-input: #111111;
+  --text-placeholder: #9ca3af;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-heading-primary: var(--text-heading-primary);
+  --color-heading-secondary: var(--text-heading-secondary);
+  --color-body: var(--text-body);
+  --color-muted: var(--text-muted);
+  --color-label: var(--text-label);
+  --color-input: var(--text-input);
+  --color-placeholder: var(--text-placeholder);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {

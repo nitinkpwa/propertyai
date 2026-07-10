@@ -22,10 +22,10 @@ export default function ConnectEmptyModule({
       <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-50 text-3xl">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-neutral-900">{title}</h3>
-      <p className="mx-auto mt-2 max-w-md text-sm text-neutral-500">{description}</p>
+      <h3 className="text-lg font-semibold text-heading-primary">{title}</h3>
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted">{description}</p>
       {tips && tips.length > 0 ? (
-        <ul className="mx-auto mt-4 max-w-sm space-y-1 text-left text-xs text-neutral-600">
+        <ul className="mx-auto mt-4 max-w-sm space-y-1 text-left text-xs text-body">
           {tips.map((tip) => (
             <li key={tip}>✓ {tip}</li>
           ))}

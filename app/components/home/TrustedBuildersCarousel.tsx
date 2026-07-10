@@ -41,19 +41,19 @@ export default function TrustedBuildersCarousel() {
                 >
                   {builder.initials}
                 </div>
-                <p className="mt-4 text-lg font-bold text-neutral-900">{builder.name}</p>
+                <p className="mt-4 text-lg font-bold text-heading-primary">{builder.name}</p>
                 <div className="mt-4 grid grid-cols-2 gap-2 text-center">
                   <div className="rounded-xl bg-[#F7F9FB] px-2 py-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-label">
                       Projects
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-neutral-500">Explore</p>
+                    <p className="mt-1 text-sm font-semibold text-muted">Explore</p>
                   </div>
                   <div className="rounded-xl bg-[#F7F9FB] px-2 py-3">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-label">
                       Delivery
                     </p>
-                    <p className="mt-1 text-sm font-semibold text-neutral-500">—</p>
+                    <p className="mt-1 text-sm font-semibold text-muted">—</p>
                   </div>
                 </div>
                 <div className="mt-3 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50 px-3 py-2.5 text-center">

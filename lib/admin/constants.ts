@@ -44,7 +44,7 @@ export const inp: CSSProperties = {
   borderRadius: "12px",
   border: "1px solid #E5E7EB",
   fontSize: "14px",
-  color: "#111827",
+  color: "#111111",
   background: "#FFFFFF",
   fontFamily: "Inter, sans-serif",
   boxSizing: "border-box",
@@ -55,7 +55,7 @@ export const lbl: CSSProperties = {
   display: "block",
   fontSize: "13px",
   fontWeight: 500,
-  color: "#374151",
+  color: "#4B5563",
   marginBottom: "6px",
 };
 

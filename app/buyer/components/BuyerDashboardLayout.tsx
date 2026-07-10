@@ -76,7 +76,7 @@ export default function BuyerDashboardLayout({
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-700 shadow-sm"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-body shadow-sm"
               aria-label="Open menu"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
@@ -85,7 +85,7 @@ export default function BuyerDashboardLayout({
             </button>
             <Logo size="dashboard" href="/buyer" iconOnly />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-neutral-900">
+              <p className="truncate text-sm font-semibold text-heading-primary">
                 {profile?.full_name ?? "Buyer Portal"}
               </p>
             </div>

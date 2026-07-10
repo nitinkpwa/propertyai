@@ -45,20 +45,20 @@ export default function SellerLeadCard({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-lg font-bold text-neutral-900">
+              <h3 className="text-lg font-bold text-heading-primary">
                 {buyer?.full_name ?? buyer?.email ?? "Buyer"}
               </h3>
               <LeadTemperatureBadge temperature={score.temperature} score={score.score} />
               <LeadStatusBadge status={lead.status} />
             </div>
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 text-sm text-muted">
               {phone ? `📞 ${phone}` : ""}
               {buyer?.email ? ` · ✉ ${buyer.email}` : ""}
             </p>
             <p className="mt-2 text-sm font-medium text-emerald-700">
               {lead.propertyTitle ?? "Property interest pending"}
             </p>
-            <span className="mt-1 inline-block rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-semibold text-neutral-600">
+            <span className="mt-1 inline-block rounded-full bg-neutral-100 px-2.5 py-0.5 text-[11px] font-semibold text-body">
               Source: {lead.leadSource ?? "CRM"}
             </span>
           </div>
@@ -66,13 +66,13 @@ export default function SellerLeadCard({
 
         <BuyerProfileGrid buyer={buyer} className="mt-5" />
 
-        <div className="mt-4 flex flex-wrap gap-4 text-xs text-neutral-500">
+        <div className="mt-4 flex flex-wrap gap-4 text-xs text-muted">
           <span>❤️ {engagement.saved} saved</span>
           <span>👀 {engagement.viewed} viewed</span>
           <span>🤖 {engagement.chats} AI chats</span>
           <span>📅 {engagement.visits} visits</span>
           {lead.recentActivity ? (
-            <span className="text-neutral-400">
+            <span className="text-muted">
               Last: {lead.recentActivity.title}
             </span>
           ) : null}
@@ -102,14 +102,14 @@ export default function SellerLeadCard({
           <button
             type="button"
             onClick={onToggle}
-            className="rounded-xl border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+            className="rounded-xl border border-neutral-200 px-4 py-2 text-sm font-semibold text-body hover:bg-neutral-50"
           >
             {expanded ? "Hide Journey" : "Expand CRM Journey"}
           </button>
           {lead.siteVisitId ? (
             <Link
               href="/seller"
-              className="rounded-xl border border-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
+              className="rounded-xl border border-neutral-200 px-4 py-2 text-sm font-semibold text-body hover:bg-neutral-50"
             >
               Manage Visit
             </Link>
@@ -119,7 +119,7 @@ export default function SellerLeadCard({
 
       {expanded ? (
         <div className="border-t border-neutral-100 bg-neutral-50/50 px-5 py-5 sm:px-6">
-          <h4 className="mb-3 text-sm font-semibold text-neutral-800">Buyer Journey</h4>
+          <h4 className="mb-3 text-sm font-semibold text-heading-secondary">Buyer Journey</h4>
           <ActivityTimeline activities={activities} maxItems={12} />
         </div>
       ) : null}

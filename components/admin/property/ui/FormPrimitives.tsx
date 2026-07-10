@@ -117,7 +117,7 @@ export function ToggleChip({
       className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
         selected
           ? "border-emerald-500 bg-emerald-500 text-white shadow-sm shadow-emerald-200"
-          : "border-neutral-200 bg-white text-neutral-600 hover:border-emerald-300 hover:bg-emerald-50"
+          : "border-neutral-200 bg-white text-body hover:border-emerald-300 hover:bg-emerald-50"
       }`}
     >
       {label}
@@ -142,7 +142,7 @@ export function FlagToggle({
         onChange={(e) => onChange(e.target.checked)}
         className="h-4 w-4 rounded border-neutral-300 text-emerald-600 focus:ring-emerald-500"
       />
-      <span className="text-sm font-medium text-neutral-800">{label}</span>
+      <span className="text-sm font-medium text-heading-secondary">{label}</span>
     </label>
   );
 }

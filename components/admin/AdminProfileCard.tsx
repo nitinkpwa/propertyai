@@ -26,8 +26,8 @@ interface AdminProfileCardProps {
 function FieldRow({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div className="min-w-0">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">{label}</p>
-      <p className="mt-0.5 truncate text-sm font-medium text-neutral-800">{value?.trim() || "—"}</p>
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-label">{label}</p>
+      <p className="mt-0.5 truncate text-sm font-medium text-heading-secondary">{value?.trim() || "—"}</p>
     </div>
   );
 }
@@ -79,14 +79,14 @@ export default function AdminProfileCard({
         {avatar}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate font-medium text-neutral-900">{resolved.displayName}</p>
+            <p className="truncate font-medium text-heading-primary">{resolved.displayName}</p>
             {roleBadge}
             {statusBadge}
           </div>
-          <p className="truncate text-xs text-neutral-500">
+          <p className="truncate text-xs text-muted">
             {[resolved.phone, resolved.email].filter(Boolean).join(" · ") || "—"}
           </p>
-          {subtitle ? <p className="truncate text-xs text-neutral-400">{subtitle}</p> : null}
+          {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}
         </div>
       </div>
     );
@@ -98,11 +98,11 @@ export default function AdminProfileCard({
         {avatar}
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-base font-semibold text-neutral-900">{resolved.displayName}</h3>
+            <h3 className="text-base font-semibold text-heading-primary">{resolved.displayName}</h3>
             {roleBadge}
             {statusBadge}
           </div>
-          {subtitle ? <p className="mt-1 text-sm text-neutral-500">{subtitle}</p> : null}
+          {subtitle ? <p className="mt-1 text-sm text-muted">{subtitle}</p> : null}
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
             <FieldRow label="Phone" value={resolved.phone} />
             <FieldRow label="Email" value={resolved.email} />
@@ -127,8 +127,8 @@ export function AdminResolvedProfileInline({ resolved }: { resolved: ReturnType<
         {resolved.initials}
       </span>
       <div className="min-w-0">
-        <p className="truncate text-sm font-medium text-neutral-900">{resolved.displayName}</p>
-        <p className="truncate text-xs text-neutral-500">
+        <p className="truncate text-sm font-medium text-heading-primary">{resolved.displayName}</p>
+        <p className="truncate text-xs text-muted">
           {[resolved.phone, resolved.email].filter(Boolean).join(" · ") || "—"}
         </p>
       </div>

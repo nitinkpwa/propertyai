@@ -18,7 +18,7 @@ export default function AmenitiesSection({ amenities }: AmenitiesSectionProps) {
             <span className="text-2xl transition-transform duration-200 group-hover:scale-110 sm:text-3xl">
               {getAmenityIcon(amenity)}
             </span>
-            <span className="mt-2.5 text-xs font-semibold text-neutral-700 sm:text-sm">{amenity}</span>
+            <span className="mt-2.5 text-xs font-semibold text-body sm:text-sm">{amenity}</span>
           </div>
         ))}
       </div>

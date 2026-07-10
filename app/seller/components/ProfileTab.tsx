@@ -30,8 +30,8 @@ export default function ProfileTab({ profile, onSave, onUploadAvatar }: Props) {
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
-      <h2 className="text-xl font-bold text-neutral-900">Seller Profile</h2>
-      <p className="mt-1 text-sm text-neutral-500">Manage your account details.</p>
+      <h2 className="text-xl font-bold text-heading-primary">Seller Profile</h2>
+      <p className="mt-1 text-sm text-muted">Manage your account details.</p>
 
       {msg ? (
         <div className={`mt-4 rounded-xl px-4 py-3 text-sm ${msg.includes("✅") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
@@ -47,7 +47,7 @@ export default function ProfileTab({ profile, onSave, onUploadAvatar }: Props) {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={profile.avatar_url} alt="" className="h-full w-full object-cover" />
             ) : (
-              <div className="flex h-full items-center justify-center text-2xl text-neutral-300">👤</div>
+              <div className="flex h-full items-center justify-center text-2xl text-muted">👤</div>
             )}
           </div>
           <input ref={avatarRef} type="file" accept="image/*" hidden onChange={async (e) => {

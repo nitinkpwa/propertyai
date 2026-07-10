@@ -41,16 +41,16 @@ export default function InsightsSection() {
                         : "from-amber-50 to-white"
                   } p-6`}
                 >
-                  <span className="inline-block rounded-full bg-white/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-neutral-600 shadow-sm">
+                  <span className="inline-block rounded-full bg-white/80 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-body shadow-sm">
                     {article.category}
                   </span>
                 </div>
                 <div className="flex flex-1 flex-col p-6">
-                  <p className="text-xs text-neutral-400">{article.readTime} read</p>
-                  <h3 className="mt-2 text-lg font-bold leading-snug text-neutral-900 group-hover:text-neutral-800">
+                  <p className="text-xs text-muted">{article.readTime} read</p>
+                  <h3 className="mt-2 text-lg font-bold leading-snug text-heading-primary group-hover:text-heading-secondary">
                     {article.title}
                   </h3>
-                  <p className="mt-3 flex-1 text-sm leading-relaxed text-neutral-500">
+                  <p className="mt-3 flex-1 text-sm leading-relaxed text-muted">
                     {article.excerpt}
                   </p>
                   <span className="mt-4 text-sm font-semibold" style={{ color: IQ_GREEN }}>

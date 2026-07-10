@@ -58,10 +58,10 @@ export default function BuyerProfileGrid({
         if (variant === "compact" && !value) return null;
         return (
           <div key={field.key} className="rounded-xl bg-neutral-50 px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-label">
               {field.label}
             </p>
-            <p className="mt-0.5 text-sm font-medium leading-snug text-neutral-800">
+            <p className="mt-0.5 text-sm font-medium leading-snug text-heading-secondary">
               {value || "—"}
             </p>
           </div>
@@ -80,9 +80,9 @@ export function BuyerContactLine({
   if (!buyer) return null;
   const displayName = resolveDisplayName(buyer);
   return (
-    <div className="space-y-0.5 text-xs text-neutral-600">
+    <div className="space-y-0.5 text-xs text-body">
       {displayName ? (
-        <p className="text-sm font-semibold text-neutral-900">{displayName}</p>
+        <p className="text-sm font-semibold text-heading-primary">{displayName}</p>
       ) : null}
       {buyer.phone ? <p>📞 {buyer.phone}</p> : null}
       {buyer.email ? <p>✉ {buyer.email}</p> : null}

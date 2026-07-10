@@ -69,7 +69,7 @@ export default function SellerShell({
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 ${
               active
                 ? "bg-emerald-50 text-emerald-800 shadow-sm ring-1 ring-emerald-200/60"
-                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+                : "text-body hover:bg-neutral-50 hover:text-heading-primary"
             }`}
           >
             <span className="text-base" aria-hidden>
@@ -95,7 +95,7 @@ export default function SellerShell({
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 text-neutral-700"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 text-body"
               aria-label="Open menu"
             >
               ☰
@@ -105,18 +105,18 @@ export default function SellerShell({
 
           <Logo size="dashboard" href="/" className="hidden lg:flex" />
 
-          <h1 className="absolute left-1/2 hidden -translate-x-1/2 text-sm font-semibold text-neutral-900 sm:block lg:text-base">
+          <h1 className="absolute left-1/2 hidden -translate-x-1/2 text-sm font-semibold text-heading-primary sm:block lg:text-base">
             Seller Dashboard
           </h1>
 
           <div className="flex items-center gap-2 sm:gap-3">
             {refreshing ? (
-              <span className="hidden text-xs text-neutral-400 sm:inline">Refreshing...</span>
+              <span className="hidden text-xs text-muted sm:inline">Refreshing...</span>
             ) : null}
             <button
               type="button"
               onClick={() => onTabChange("notifications")}
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-600 transition-colors hover:bg-neutral-50"
+              className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-body transition-colors hover:bg-neutral-50"
               aria-label="Notifications"
             >
               🔔
@@ -142,7 +142,7 @@ export default function SellerShell({
             <button
               type="button"
               onClick={onLogout}
-              className="hidden rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-50 sm:inline-flex"
+              className="hidden rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-body transition-colors hover:bg-neutral-50 sm:inline-flex"
             >
               Logout
             </button>
@@ -154,10 +154,10 @@ export default function SellerShell({
         <aside className="fixed bottom-0 left-0 top-16 hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
           <div className="border-b border-neutral-100 px-4 py-4">
             <Logo size="dashboard" href="/" className="mb-3" />
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted">
               Seller Portal
             </p>
-            <p className="mt-1 truncate text-sm font-semibold text-neutral-900">
+            <p className="mt-1 truncate text-sm font-semibold text-heading-primary">
               {userName ?? "Seller"}
             </p>
           </div>
@@ -173,8 +173,8 @@ export default function SellerShell({
             />
             <aside className="fixed bottom-0 left-0 top-0 z-50 flex w-[min(280px,88vw)] flex-col bg-white shadow-xl lg:hidden">
               <div className="flex h-16 items-center justify-between border-b border-neutral-100 px-4">
-                <span className="font-semibold text-neutral-900">Menu</span>
-                <button type="button" onClick={() => setMobileOpen(false)} className="text-neutral-500">
+                <span className="font-semibold text-heading-primary">Menu</span>
+                <button type="button" onClick={() => setMobileOpen(false)} className="text-muted">
                   ✕
                 </button>
               </div>

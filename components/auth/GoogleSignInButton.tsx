@@ -41,7 +41,7 @@ export default function GoogleSignInButton() {
         loading={loading}
         loadingText="Redirecting..."
         onClick={handleGoogleSignIn}
-        className="border border-neutral-200 bg-white text-neutral-800 shadow-sm hover:brightness-100"
+        className="border border-neutral-200 bg-white text-heading-secondary shadow-sm hover:brightness-100"
         style={{ backgroundColor: "#ffffff", color: "#171717" }}
       >
         <span className="inline-flex items-center gap-2">

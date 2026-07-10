@@ -13,10 +13,10 @@ export default function AiDemoSection() {
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#16C784]">
             AI That Actually Helps
           </p>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
             Real estate advice in your language
           </h2>
-          <p className="mt-4 leading-relaxed text-neutral-500">
+          <p className="mt-4 leading-relaxed text-muted">
             Hindi, English, or Hinglish — AreaIQ understands how Tricity buyers actually search
             and invest.
           </p>
@@ -27,7 +27,7 @@ export default function AiDemoSection() {
               "Infrastructure impact on prices",
               "Budget-wise picks from verified listings",
             ].map((item) => (
-              <li key={item} className="flex gap-3 text-sm text-neutral-700">
+              <li key={item} className="flex gap-3 text-sm text-body">
                 <span
                   className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
                   style={{ backgroundColor: IQ_GREEN }}
@@ -59,7 +59,7 @@ export default function AiDemoSection() {
                 <div key={c} className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />
               ))}
             </div>
-            <span className="text-sm text-neutral-500">AreaIQ AI Assistant</span>
+            <span className="text-sm text-muted">AreaIQ AI Assistant</span>
           </div>
           <div className="space-y-4 p-5">
             <div className="flex justify-end">
@@ -74,7 +74,7 @@ export default function AiDemoSection() {
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-sm">
                 ✦
               </div>
-              <div className="rounded-2xl rounded-bl-md bg-[#F7F9FB] px-4 py-3 text-sm leading-relaxed text-neutral-800">
+              <div className="rounded-2xl rounded-bl-md bg-[#F7F9FB] px-4 py-3 text-sm leading-relaxed text-heading-secondary">
                 ₹60L ke liye Phase 8B Mohali, New Chandigarh plots, ya SCO Kharar bypass —
                 teen strong options with different risk profiles.
               </div>

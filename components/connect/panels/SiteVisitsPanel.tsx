@@ -31,13 +31,13 @@ export default function SiteVisitsPanel({ visits, onRefresh }: Props) {
     <li key={v.id} className="rounded-xl border border-neutral-100 bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="font-semibold text-neutral-900">{v.property?.title ?? "Property visit"}</p>
-          <p className="text-sm text-neutral-500">{v.visit_date} · {String(v.visit_time).slice(0, 5)}</p>
-          <p className="mt-1 text-xs text-neutral-600">{v.buyer?.full_name ?? "Buyer"} · {v.buyer?.phone ?? "—"}</p>
+          <p className="font-semibold text-heading-primary">{v.property?.title ?? "Property visit"}</p>
+          <p className="text-sm text-muted">{v.visit_date} · {String(v.visit_time).slice(0, 5)}</p>
+          <p className="mt-1 text-xs text-body">{v.buyer?.full_name ?? "Buyer"} · {v.buyer?.phone ?? "—"}</p>
         </div>
         <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-semibold">{formatVisitStatusLabel(v.status)}</span>
       </div>
-      {v.purpose ? <p className="mt-2 text-xs text-neutral-500">Purpose: {v.purpose}</p> : null}
+      {v.purpose ? <p className="mt-2 text-xs text-muted">Purpose: {v.purpose}</p> : null}
       {showActions ? (
         <div className="mt-3 flex gap-2">
           <button type="button" disabled={acting === v.id} onClick={() => handleAction(v.id, "accept")} className={connectTokens.btnPrimary + " text-xs"}>{acting === v.id ? "..." : "Approve"}</button>
@@ -82,7 +82,7 @@ export default function SiteVisitsPanel({ visits, onRefresh }: Props) {
       ) : null}
       {completed.length > 0 ? (
         <section>
-          <h3 className="mb-3 font-semibold text-neutral-700">Completed ({completed.length})</h3>
+          <h3 className="mb-3 font-semibold text-body">Completed ({completed.length})</h3>
           <ul className="space-y-3">{completed.map((v) => renderVisit(v))}</ul>
         </section>
       ) : null}

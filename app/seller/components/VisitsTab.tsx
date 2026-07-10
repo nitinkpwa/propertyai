@@ -43,20 +43,20 @@ function VisitCard({
     <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="font-semibold text-neutral-900">{visit.property?.title ?? "Property"}</p>
+          <p className="font-semibold text-heading-primary">{visit.property?.title ?? "Property"}</p>
           <div className="mt-2">
             <BuyerContactLine buyer={visit.buyer} />
           </div>
           {visit.purpose ? (
-            <p className="mt-1 text-xs text-neutral-600">Visit purpose: {visit.purpose}</p>
+            <p className="mt-1 text-xs text-body">Visit purpose: {visit.purpose}</p>
           ) : null}
         </div>
-        <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] font-semibold text-neutral-700">
+        <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] font-semibold text-body">
           {formatVisitStatusLabel(visit.status)}
         </span>
       </div>
 
-      <p className="mt-3 text-xs text-neutral-500">
+      <p className="mt-3 text-xs text-muted">
         Visit: {visit.visit_date} at {visit.visit_time?.slice(0, 5)}
       </p>
 
@@ -69,7 +69,7 @@ function VisitCard({
       ) : null}
 
       {visit.visit_location && contactVisible ? (
-        <p className="mt-2 text-xs text-neutral-600">📍 Meeting: {visit.visit_location}</p>
+        <p className="mt-2 text-xs text-body">📍 Meeting: {visit.visit_location}</p>
       ) : null}
 
       {showActions ? (
@@ -165,8 +165,8 @@ export default function VisitsTab({
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-50 text-3xl">
           📅
         </div>
-        <h3 className="text-lg font-semibold text-neutral-900">No site visit requests yet</h3>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-neutral-500">
+        <h3 className="text-lg font-semibold text-heading-primary">No site visit requests yet</h3>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
           Buyer visit requests will appear here for you to approve or reschedule.
         </p>
       </div>
@@ -176,9 +176,9 @@ export default function VisitsTab({
   return (
     <div className="space-y-8">
       <section>
-        <h3 className="mb-3 text-sm font-semibold text-neutral-900">New Visit Requests</h3>
+        <h3 className="mb-3 text-sm font-semibold text-heading-primary">New Visit Requests</h3>
         {pending.length === 0 ? (
-          <p className="text-sm text-neutral-500">None pending</p>
+          <p className="text-sm text-muted">None pending</p>
         ) : (
           <div className="space-y-3">
             {pending.map((v) => (
@@ -197,9 +197,9 @@ export default function VisitsTab({
       </section>
 
       <section>
-        <h3 className="mb-3 text-sm font-semibold text-neutral-900">Approved / Scheduled</h3>
+        <h3 className="mb-3 text-sm font-semibold text-heading-primary">Approved / Scheduled</h3>
         {scheduled.length === 0 ? (
-          <p className="text-sm text-neutral-500">None</p>
+          <p className="text-sm text-muted">None</p>
         ) : (
           <div className="space-y-3">
             {scheduled.map((v) => (
@@ -217,9 +217,9 @@ export default function VisitsTab({
       </section>
 
       <section>
-        <h3 className="mb-3 text-sm font-semibold text-neutral-900">Completed</h3>
+        <h3 className="mb-3 text-sm font-semibold text-heading-primary">Completed</h3>
         {completed.length === 0 ? (
-          <p className="text-sm text-neutral-500">None</p>
+          <p className="text-sm text-muted">None</p>
         ) : (
           <div className="space-y-3">
             {completed.map((v) => (
@@ -238,7 +238,7 @@ export default function VisitsTab({
 
       {rejected.length > 0 ? (
         <section>
-          <h3 className="mb-3 text-sm font-semibold text-neutral-900">Rejected / Cancelled</h3>
+          <h3 className="mb-3 text-sm font-semibold text-heading-primary">Rejected / Cancelled</h3>
           <div className="space-y-3">
             {rejected.map((v) => (
               <VisitCard

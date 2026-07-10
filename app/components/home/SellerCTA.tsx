@@ -15,10 +15,10 @@ export default function SellerCTA() {
         >
           <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-100/50 blur-3xl" />
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+            <h2 className="text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
               List with intelligence, not guesswork
             </h2>
-            <p className="mt-3 max-w-lg text-neutral-500">
+            <p className="mt-3 max-w-lg text-muted">
               Reach verified buyers. Get inquiries on WhatsApp. AreaIQ surfaces your listings to
               the right audience.
             </p>
@@ -33,7 +33,7 @@ export default function SellerCTA() {
             </Link>
             <Link
               href="/ask?q=How+to+get+best+price+for+my+property+Tricity"
-              className="inline-flex items-center justify-center rounded-xl border border-neutral-200 px-8 py-3.5 text-sm font-semibold text-neutral-700 transition-colors hover:bg-[#F7F9FB]"
+              className="inline-flex items-center justify-center rounded-xl border border-neutral-200 px-8 py-3.5 text-sm font-semibold text-body transition-colors hover:bg-[#F7F9FB]"
             >
               Get AI Price Estimate
             </Link>

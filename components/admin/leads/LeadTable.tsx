@@ -35,7 +35,7 @@ export default function LeadTable({ leads }: { leads: AdminLeadSummary[] }) {
       <div className="overflow-x-auto">
         <table className="min-w-[1100px] w-full text-left text-sm">
           <thead>
-            <tr className="border-b border-neutral-200 bg-neutral-50/80 text-[11px] font-semibold uppercase tracking-wider text-neutral-500">
+            <tr className="border-b border-neutral-200 bg-neutral-50/80 text-[11px] font-semibold uppercase tracking-wider text-muted">
               <th className="px-4 py-3">Avatar</th>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Phone</th>
@@ -63,30 +63,30 @@ export default function LeadTable({ leads }: { leads: AdminLeadSummary[] }) {
                 <td className="px-4 py-3">
                   <Link
                     href={`/admin/leads/${lead.buyerId}`}
-                    className="font-semibold text-neutral-900 hover:text-emerald-700"
+                    className="font-semibold text-heading-primary hover:text-emerald-700"
                   >
                     {lead.displayName}
                   </Link>
                 </td>
-                <td className="px-4 py-3 text-neutral-700">{displayValue(lead.phone)}</td>
-                <td className="max-w-[180px] truncate px-4 py-3 text-neutral-700">
+                <td className="px-4 py-3 text-body">{displayValue(lead.phone)}</td>
+                <td className="max-w-[180px] truncate px-4 py-3 text-body">
                   {displayValue(lead.email)}
                 </td>
-                <td className="px-4 py-3 text-neutral-700">{displayValue(lead.budget === "—" ? null : lead.budget)}</td>
-                <td className="max-w-[160px] truncate px-4 py-3 text-neutral-700">
+                <td className="px-4 py-3 text-body">{displayValue(lead.budget === "—" ? null : lead.budget)}</td>
+                <td className="max-w-[160px] truncate px-4 py-3 text-body">
                   {displayValue(lead.interestedLocation === "—" ? null : lead.interestedLocation)}
                 </td>
-                <td className="px-4 py-3 text-neutral-700">
+                <td className="px-4 py-3 text-body">
                   {displayValue(lead.propertyType === "—" ? null : lead.propertyType)}
                 </td>
-                <td className="px-4 py-3 text-neutral-700">
+                <td className="px-4 py-3 text-body">
                   {lead.lastActivityAt
                     ? formatDateTime(lead.lastActivityAt)
                     : displayValue(lead.lastActivity)}
                 </td>
-                <td className="px-4 py-3 text-neutral-700">{formatDate(lead.createdAt)}</td>
+                <td className="px-4 py-3 text-body">{formatDate(lead.createdAt)}</td>
                 <td className="px-4 py-3">
-                  <span className="inline-flex rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] font-semibold text-neutral-700">
+                  <span className="inline-flex rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] font-semibold text-body">
                     {lead.stage}
                   </span>
                 </td>

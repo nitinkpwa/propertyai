@@ -54,9 +54,9 @@ export default function MobileFilterDrawer({
       >
         <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
           <div>
-            <h2 className="text-base font-semibold text-neutral-900">Filters</h2>
+            <h2 className="text-base font-semibold text-heading-primary">Filters</h2>
             {activeCount > 0 && (
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-muted">
                 {activeCount} active filter{activeCount === 1 ? "" : "s"}
               </p>
             )}
@@ -64,7 +64,7 @@ export default function MobileFilterDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-neutral-100"
             aria-label="Close filters"
           >
             ×

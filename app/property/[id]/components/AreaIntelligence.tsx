@@ -31,16 +31,16 @@ function MetricCard({
     >
       <div className="flex items-center gap-2">
         <span className="text-lg">{icon}</span>
-        <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+        <span className="text-xs font-semibold uppercase tracking-wider text-label">
           {label}
         </span>
       </div>
 
       <div className="mt-2">
-        <p className={`text-2xl font-bold tabular-nums ${metric.available ? tone.text : "text-neutral-400"}`}>
+        <p className={`text-2xl font-bold tabular-nums ${metric.available ? tone.text : "text-muted"}`}>
           {metric.displayValue}
           {metric.available && unit ? (
-            <span className="ml-1 text-xs font-medium text-neutral-400">{unit}</span>
+            <span className="ml-1 text-xs font-medium text-muted">{unit}</span>
           ) : null}
         </p>
       </div>
@@ -51,15 +51,15 @@ function MetricCard({
 
       <div className="mt-3 space-y-1">
         {metric.source ? (
-          <p className="text-[11px] font-medium text-neutral-500">
-            Source: <span className="text-neutral-700">{metric.source}</span>
+          <p className="text-[11px] font-medium text-muted">
+            Source: <span className="text-body">{metric.source}</span>
           </p>
         ) : null}
         {!metric.available && metric.explanation ? (
-          <p className="text-xs leading-relaxed text-neutral-500">{metric.explanation}</p>
+          <p className="text-xs leading-relaxed text-muted">{metric.explanation}</p>
         ) : null}
         {metric.factors?.slice(0, 2).map((factor) => (
-          <p key={factor} className="text-[11px] text-neutral-500">
+          <p key={factor} className="text-[11px] text-muted">
             • {factor}
           </p>
         ))}
@@ -107,7 +107,7 @@ export default function AreaIntelligence({ propertyId }: AreaIntelligenceProps) 
           title="AreaIQ Intelligence Engine"
           subtitle="Calculating real metrics from AreaIQ database…"
         />
-        <div className="flex items-center gap-3 text-sm text-neutral-500">
+        <div className="flex items-center gap-3 text-sm text-muted">
           <span className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
           Analyzing market data
         </div>
@@ -119,7 +119,7 @@ export default function AreaIntelligence({ propertyId }: AreaIntelligenceProps) 
     return (
       <SectionCard>
         <SectionTitle title="AreaIQ Intelligence Engine" />
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted">
           Intelligence report unavailable for this property.
         </p>
       </SectionCard>
@@ -158,12 +158,12 @@ export default function AreaIntelligence({ propertyId }: AreaIntelligenceProps) 
               <div className="flex items-center gap-3">
                 <span className="text-xl">{item.icon}</span>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-label">
                     {item.label}
                   </p>
-                  <p className="text-sm font-semibold text-neutral-900">{item.metric.displayValue}</p>
+                  <p className="text-sm font-semibold text-heading-primary">{item.metric.displayValue}</p>
                   {item.metric.source ? (
-                    <p className="mt-1 text-[11px] text-neutral-500">Source: {item.metric.source}</p>
+                    <p className="mt-1 text-[11px] text-muted">Source: {item.metric.source}</p>
                   ) : null}
                 </div>
               </div>
@@ -179,10 +179,10 @@ export default function AreaIntelligence({ propertyId }: AreaIntelligenceProps) 
             </span>
           </h3>
           {outlookLoading ? (
-            <p className="mt-3 text-sm text-neutral-500">Generating qualitative outlook…</p>
+            <p className="mt-3 text-sm text-muted">Generating qualitative outlook…</p>
           ) : outlook ? (
             <div
-              className="mt-3 space-y-2 text-sm leading-relaxed text-neutral-700"
+              className="mt-3 space-y-2 text-sm leading-relaxed text-body"
               dangerouslySetInnerHTML={{
                 __html: outlook
                   .replace(/^-\s+/gm, "• ")
@@ -191,12 +191,12 @@ export default function AreaIntelligence({ propertyId }: AreaIntelligenceProps) 
               }}
             />
           ) : (
-            <p className="mt-3 text-sm text-neutral-500">
+            <p className="mt-3 text-sm text-muted">
               Qualitative outlook unavailable. AreaIQ will generate this when OpenAI is configured
               and sufficient market data exists.
             </p>
           )}
-          <p className="mt-3 text-[11px] text-neutral-500">
+          <p className="mt-3 text-[11px] text-muted">
             OpenAI provides explanations only — all scores above are calculated from AreaIQ database
             facts.
           </p>

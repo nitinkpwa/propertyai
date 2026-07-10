@@ -103,7 +103,7 @@ export default function PropertyLeadsPanel({ leads, onRefresh }: Props) {
         </div>
         <div className="flex gap-2">
           {(["all", "hot", "warm", "cold"] as const).map((f) => (
-            <button key={f} type="button" onClick={() => setFilter(f)} className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize ${filter === f ? "bg-emerald-600 text-white" : "bg-neutral-100 text-neutral-600"}`}>{f}</button>
+            <button key={f} type="button" onClick={() => setFilter(f)} className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize ${filter === f ? "bg-emerald-600 text-white" : "bg-neutral-100 text-body"}`}>{f}</button>
           ))}
         </div>
       </div>
@@ -113,22 +113,22 @@ export default function PropertyLeadsPanel({ leads, onRefresh }: Props) {
           <article key={`${lead.id}-${lead.property_id}`} className={`${connectTokens.card} p-5 cursor-pointer hover:ring-2 hover:ring-emerald-200 transition`} onClick={() => openLeadDetail(lead)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && openLeadDetail(lead)}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="font-bold text-neutral-900">{lead.full_name ?? "Buyer"}</h3>
+                <h3 className="font-bold text-heading-primary">{lead.full_name ?? "Buyer"}</h3>
                 <p className="text-sm text-emerald-700">{lead.property_title ?? "Assigned property"}</p>
-                <p className="text-xs text-neutral-400">{lead.property_city ?? ""}</p>
+                <p className="text-xs text-muted">{lead.property_city ?? ""}</p>
               </div>
               <LeadTemperatureBadge temperature={lead.lead_temperature} score={lead.lead_score} />
             </div>
 
             <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
-              <div><dt className="text-neutral-400">Phone</dt><dd className="font-medium">{lead.phone ?? "—"}</dd></div>
-              <div><dt className="text-neutral-400">Email</dt><dd className="font-medium truncate">{lead.email ?? "—"}</dd></div>
-              <div><dt className="text-neutral-400">Budget</dt><dd className="font-medium text-emerald-700">{formatBudget(lead.budget_min, lead.budget_max)}</dd></div>
-              <div><dt className="text-neutral-400">Purpose</dt><dd className="capitalize">{lead.buying_purpose ?? "—"}</dd></div>
-              <div><dt className="text-neutral-400">Timeline</dt><dd className="capitalize">{lead.buying_timeline ?? "—"}</dd></div>
-              <div><dt className="text-neutral-400">Source</dt><dd className="capitalize">{lead.lead_source?.replace(/_/g, " ") ?? "Enquiry"}</dd></div>
-              <div><dt className="text-neutral-400">Status</dt><dd className="capitalize">{lead.lead_status ?? "new"}</dd></div>
-              <div><dt className="text-neutral-400">Visit</dt><dd className="capitalize">{lead.visit_status?.replace(/_/g, " ") ?? "—"}</dd></div>
+              <div><dt className="text-muted">Phone</dt><dd className="font-medium">{lead.phone ?? "—"}</dd></div>
+              <div><dt className="text-muted">Email</dt><dd className="font-medium truncate">{lead.email ?? "—"}</dd></div>
+              <div><dt className="text-muted">Budget</dt><dd className="font-medium text-emerald-700">{formatBudget(lead.budget_min, lead.budget_max)}</dd></div>
+              <div><dt className="text-muted">Purpose</dt><dd className="capitalize">{lead.buying_purpose ?? "—"}</dd></div>
+              <div><dt className="text-muted">Timeline</dt><dd className="capitalize">{lead.buying_timeline ?? "—"}</dd></div>
+              <div><dt className="text-muted">Source</dt><dd className="capitalize">{lead.lead_source?.replace(/_/g, " ") ?? "Enquiry"}</dd></div>
+              <div><dt className="text-muted">Status</dt><dd className="capitalize">{lead.lead_status ?? "new"}</dd></div>
+              <div><dt className="text-muted">Visit</dt><dd className="capitalize">{lead.visit_status?.replace(/_/g, " ") ?? "—"}</dd></div>
             </dl>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -144,7 +144,7 @@ export default function PropertyLeadsPanel({ leads, onRefresh }: Props) {
             </div>
 
             <div className="mt-3">
-              <label className="text-xs text-neutral-500">Change status</label>
+              <label className="text-xs text-muted">Change status</label>
               <select
                 value={lead.lead_status ?? "new"}
                 onChange={(e) => handleStatusChange(lead.lead_id, e.target.value as LeadStatus)}

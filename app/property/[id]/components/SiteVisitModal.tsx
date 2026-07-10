@@ -195,17 +195,17 @@ export default function SiteVisitModal({
           role="dialog"
           aria-labelledby="site-visit-title"
         >
-          <h3 id="site-visit-title" className="text-lg font-bold text-gray-900">
+          <h3 id="site-visit-title" className="text-lg font-bold text-input">
             Book Site Visit
           </h3>
-          <p className="mt-1 text-sm font-medium text-gray-700">{propertyName}</p>
-          <p className="mt-2 text-xs text-gray-500">
+          <p className="mt-1 text-sm font-medium text-body">{propertyName}</p>
+          <p className="mt-2 text-xs text-muted">
             Seller contact details are shared only after your request is approved.
           </p>
 
           <form onSubmit={handleSubmit} className="mt-5 space-y-4">
             <div>
-              <label htmlFor="visit-date" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="visit-date" className="block text-sm font-medium text-body">
                 Visit Date <span className="text-red-500">*</span>
               </label>
               <input
@@ -216,12 +216,12 @@ export default function SiteVisitModal({
                 onChange={(e) => setVisitDate(e.target.value)}
                 required
                 disabled={submitting}
-                className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3.5 py-3 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60"
+                className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3.5 py-3 text-sm text-input outline-none transition-colors placeholder:text-placeholder focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60"
               />
             </div>
 
             <div>
-              <label htmlFor="visit-time" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="visit-time" className="block text-sm font-medium text-body">
                 Visit Time <span className="text-red-500">*</span>
               </label>
               <select
@@ -230,7 +230,7 @@ export default function SiteVisitModal({
                 onChange={(e) => setVisitTime(e.target.value)}
                 required
                 disabled={submitting}
-                className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3.5 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60"
+                className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3.5 py-3 text-sm text-input outline-none transition-colors focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60"
               >
                 {VISIT_TIMES.map((t) => (
                   <option key={t} value={t}>
@@ -241,8 +241,8 @@ export default function SiteVisitModal({
             </div>
 
             <div>
-              <label htmlFor="visit-purpose" className="block text-sm font-medium text-gray-700">
-                Purpose <span className="text-gray-400">(optional)</span>
+              <label htmlFor="visit-purpose" className="block text-sm font-medium text-body">
+                Purpose <span className="text-placeholder">(optional)</span>
               </label>
               <input
                 id="visit-purpose"
@@ -251,7 +251,7 @@ export default function SiteVisitModal({
                 onChange={(e) => setPurpose(e.target.value)}
                 placeholder="e.g. Investment, self-use, comparison"
                 disabled={submitting}
-                className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3.5 py-3 text-sm text-gray-900 outline-none transition-colors placeholder:text-gray-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60"
+                className="mt-1.5 w-full rounded-xl border border-gray-300 bg-white px-3.5 py-3 text-sm text-input outline-none transition-colors placeholder:text-placeholder focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-60"
               />
             </div>
 
@@ -266,7 +266,7 @@ export default function SiteVisitModal({
                 type="button"
                 onClick={onClose}
                 disabled={submitting}
-                className="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-800 transition-colors hover:bg-gray-50 disabled:opacity-60"
+                className="flex flex-1 items-center justify-center rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-heading-secondary transition-colors hover:bg-gray-50 disabled:opacity-60"
               >
                 Cancel
               </button>

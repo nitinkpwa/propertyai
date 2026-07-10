@@ -11,10 +11,10 @@ export default function PropertyNotFound() {
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">
             Property Not Found
           </p>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+          <h1 className="mt-3 text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
             This listing is unavailable
           </h1>
-          <p className="mt-3 text-sm leading-6 text-neutral-500 sm:text-base">
+          <p className="mt-3 text-sm leading-6 text-muted sm:text-base">
             The property you are looking for may have been removed, sold, or the
             link may be incorrect.
           </p>
@@ -28,7 +28,7 @@ export default function PropertyNotFound() {
             </Link>
             <Link
               href="/"
-              className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
+              className="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-body transition-colors hover:bg-neutral-50"
             >
               Back to Home
             </Link>

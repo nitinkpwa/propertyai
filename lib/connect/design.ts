@@ -1,16 +1,18 @@
+import { text } from "@/lib/design/text";
+
 /** Design tokens for Connect Partner Portal */
 export const connectTokens = {
   page: "mx-auto max-w-7xl space-y-6",
   card: "rounded-2xl border border-neutral-200/80 bg-white shadow-sm transition-all duration-200",
   cardHover: "hover:shadow-md hover:-translate-y-0.5",
-  heading: "text-2xl font-bold tracking-tight text-neutral-900",
-  subheading: "text-sm text-neutral-500",
-  label: "text-xs font-semibold uppercase tracking-wider text-neutral-400",
+  heading: `text-2xl font-bold tracking-tight ${text.headingPrimary}`,
+  subheading: `text-sm ${text.muted}`,
+  label: `text-xs font-semibold uppercase tracking-wider ${text.label}`,
   hero: "relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 p-6 text-white shadow-xl sm:p-8",
   btnPrimary:
     "inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 active:scale-[0.98] disabled:opacity-60",
   btnSecondary:
-    "inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-50 active:scale-[0.98] disabled:opacity-60",
+    `inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold ${text.body} transition-all hover:bg-neutral-50 active:scale-[0.98] disabled:opacity-60`,
 } as const;
 
 export const PIPELINE_STAGES = [

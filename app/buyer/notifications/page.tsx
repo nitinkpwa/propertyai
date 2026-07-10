@@ -78,7 +78,7 @@ export default function NotificationsPage() {
         <div className="space-y-6">
           {groups.map((group) => (
             <div key={group.label}>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-label">
                 {group.label}
               </p>
               <div className="space-y-2">
@@ -100,13 +100,13 @@ export default function NotificationsPage() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="font-semibold text-neutral-900">{n.title}</p>
+                        <p className="font-semibold text-heading-primary">{n.title}</p>
                         {!n.read_at ? (
                           <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
                         ) : null}
                       </div>
-                      <p className="mt-1 text-sm text-neutral-600">{n.message}</p>
-                      <p className="mt-2 text-xs text-neutral-400">
+                      <p className="mt-1 text-sm text-body">{n.message}</p>
+                      <p className="mt-2 text-xs text-muted">
                         {new Date(n.created_at).toLocaleString("en-IN", {
                           hour: "2-digit",
                           minute: "2-digit",

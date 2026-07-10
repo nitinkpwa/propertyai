@@ -70,13 +70,13 @@ export default function RangeFilter({
 
   return (
     <div>
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-500">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-label">
         {label}
       </p>
 
       <div className="mb-4 grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1.5 block text-[11px] font-medium text-neutral-500">
+          <label className="mb-1.5 block text-[11px] font-medium text-muted">
             Min {unit ?? ""}
           </label>
           <input
@@ -88,7 +88,7 @@ export default function RangeFilter({
           />
         </div>
         <div>
-          <label className="mb-1.5 block text-[11px] font-medium text-neutral-500">
+          <label className="mb-1.5 block text-[11px] font-medium text-muted">
             Max {unit ?? ""}
           </label>
           <input
@@ -122,7 +122,7 @@ export default function RangeFilter({
         />
       </div>
 
-      <p className="mt-3 text-xs font-medium text-neutral-500">
+      <p className="mt-3 text-xs font-medium text-label">
         {formatValue(displayMin)} – {formatValue(displayMax)}
       </p>
     </div>

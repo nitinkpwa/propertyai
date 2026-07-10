@@ -46,7 +46,7 @@ function StarInput({ value, onChange }: { value: number; onChange: (v: number) =
           key={s}
           type="button"
           onClick={() => onChange(s)}
-          className={`text-sm ${s <= value ? "text-amber-400" : "text-neutral-200"}`}
+          className={`text-sm ${s <= value ? "text-amber-400" : "text-placeholder"}`}
         >
           ★
         </button>
@@ -129,7 +129,7 @@ export default function SiteVisitAssistant({ visit, onContextSaved }: Props) {
             className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
               phase === p.key
                 ? "bg-emerald-600 text-white"
-                : "bg-white text-neutral-600 ring-1 ring-neutral-200"
+                : "bg-white text-body ring-1 ring-neutral-200"
             }`}
           >
             {p.label}
@@ -190,7 +190,7 @@ export default function SiteVisitAssistant({ visit, onContextSaved }: Props) {
       {phase === "during" && (
         <div className="space-y-4">
           <section className="rounded-xl border border-neutral-200 bg-white p-4">
-            <h4 className="text-sm font-semibold text-neutral-900">Interactive Checklist</h4>
+            <h4 className="text-sm font-semibold text-heading-primary">Interactive Checklist</h4>
             <ul className="mt-2 space-y-2">
               {before.checklist.map((item) => (
                 <li key={item}>
@@ -201,7 +201,7 @@ export default function SiteVisitAssistant({ visit, onContextSaved }: Props) {
                       onChange={() => toggleChecklist(item)}
                       className="rounded border-neutral-300 text-emerald-600"
                     />
-                    <span className={during.checklistProgress[item] ? "text-neutral-400 line-through" : ""}>
+                    <span className={during.checklistProgress[item] ? "text-muted line-through" : ""}>
                       {item}
                     </span>
                   </label>
@@ -211,11 +211,11 @@ export default function SiteVisitAssistant({ visit, onContextSaved }: Props) {
           </section>
 
           <section className="rounded-xl border border-neutral-200 bg-white p-4">
-            <h4 className="text-sm font-semibold text-neutral-900">Ratings</h4>
+            <h4 className="text-sm font-semibold text-heading-primary">Ratings</h4>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {DURING_VISIT_RATING_LABELS.map(({ key, label }) => (
                 <div key={key} className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-neutral-600">{label}</span>
+                  <span className="text-xs text-body">{label}</span>
                   <StarInput
                     value={during.ratings[key]}
                     onChange={(v) =>
@@ -257,7 +257,7 @@ export default function SiteVisitAssistant({ visit, onContextSaved }: Props) {
                 <div
                   key={o.key}
                   className={`rounded-xl border p-3 text-center text-xs ${
-                    active ? "border-emerald-300 bg-emerald-50 text-emerald-800" : "border-neutral-100 bg-neutral-50 text-neutral-500"
+                    active ? "border-emerald-300 bg-emerald-50 text-emerald-800" : "border-neutral-100 bg-neutral-50 text-muted"
                   }`}
                 >
                   <span className="text-lg">{o.icon}</span>
@@ -266,7 +266,7 @@ export default function SiteVisitAssistant({ visit, onContextSaved }: Props) {
               );
             })}
           </div>
-          <p className="text-sm text-neutral-600">{after.summary}</p>
+          <p className="text-sm text-body">{after.summary}</p>
           {!after.feedbackSubmitted ? (
             <p className="text-xs text-amber-700">
               Submit the feedback form below to sync your visit outcome with the CRM timeline.

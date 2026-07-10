@@ -1,41 +1,53 @@
 "use client";
 
-import AiDemoSection from "./AiDemoSection";
-import AreaComparisonCards from "./AreaComparisonCards";
-import ExploreTricityMap from "./ExploreTricityMap";
+import CapabilitiesSection from "./sections/CapabilitiesSection";
+import MarketIntelligenceSection from "./sections/MarketIntelligenceSection";
+import RecommendationsCarousel from "./RecommendationsCarousel";
+import PropertyComparisonSection from "./sections/PropertyComparisonSection";
+import BuilderIntelligenceSection from "./sections/BuilderIntelligenceSection";
+import ExploreAreasSection from "./sections/ExploreAreasSection";
+import InvestmentHeatmapSection from "./sections/InvestmentHeatmapSection";
+import AIAssistantShowcase from "./sections/AIAssistantShowcase";
+import BuyerJourneySection from "./sections/BuyerJourneySection";
+import SellerBuilderJourneySection from "./sections/SellerBuilderJourneySection";
+import ConnectSection from "./sections/ConnectSection";
+import TestimonialsSection from "./sections/TestimonialsSection";
+import NewsIntelligenceSection from "./sections/NewsIntelligenceSection";
+import EcosystemSection from "./sections/EcosystemSection";
+import FloatingAIButton from "./FloatingAIButton";
+import StickyAskBar from "./StickyAskBar";
 import FinalCTA from "./FinalCTA";
 import HomeFooter from "./HomeFooter";
 import HomeHero from "./HomeHero";
 import HomeNavbar from "./HomeNavbar";
-import InsightsSection from "./InsightsSection";
-import InvestmentCalculators from "./InvestmentCalculators";
 import MarketTicker from "./MarketTicker";
-import PopularSearches from "./PopularSearches";
-import RecommendationsCarousel from "./RecommendationsCarousel";
-import SellerCTA from "./SellerCTA";
-import TricityToday from "./TricityToday";
-import TrustedBuildersCarousel from "./TrustedBuildersCarousel";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-white font-sans text-neutral-900">
+    <div className="min-h-screen bg-white font-sans text-body">
       <MarketTicker />
       <HomeNavbar />
       <main>
         <HomeHero />
-        <TricityToday />
+        <CapabilitiesSection />
+        <MarketIntelligenceSection />
         <RecommendationsCarousel />
-        <TrustedBuildersCarousel />
-        <ExploreTricityMap />
-        <AreaComparisonCards />
-        <InvestmentCalculators />
-        <AiDemoSection />
-        <InsightsSection />
-        <PopularSearches />
-        <SellerCTA />
+        <PropertyComparisonSection />
+        <BuilderIntelligenceSection />
+        <ExploreAreasSection />
+        <InvestmentHeatmapSection />
+        <AIAssistantShowcase />
+        <BuyerJourneySection />
+        <SellerBuilderJourneySection />
+        <ConnectSection />
+        <TestimonialsSection />
+        <NewsIntelligenceSection />
+        <EcosystemSection />
         <FinalCTA />
       </main>
       <HomeFooter />
+      <FloatingAIButton />
+      <StickyAskBar />
     </div>
   );
 }

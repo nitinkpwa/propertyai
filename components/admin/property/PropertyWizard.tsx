@@ -152,22 +152,22 @@ export default function PropertyWizard({
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">Property Command Center</p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-neutral-900">
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-heading-primary">
             {editId ? "Edit Property" : "Create Property"}
           </h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-muted">
             Step {stepIndex + 1} of {WIZARD_STEPS.length} · {step.title}
             {lastSaved ? ` · Autosaved ${lastSaved}` : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={undo} className="rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-neutral-600 hover:bg-neutral-50">
+          <button type="button" onClick={undo} className="rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-body hover:bg-neutral-50">
             Undo ⌘Z
           </button>
-          <button type="button" onClick={() => void handleSave(true)} disabled={saving} className="rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-50">
+          <button type="button" onClick={() => void handleSave(true)} disabled={saving} className="rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-body hover:bg-neutral-50">
             Save Draft
           </button>
-          <button type="button" onClick={onCancel} className="rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-neutral-600">
+          <button type="button" onClick={onCancel} className="rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-body">
             Cancel
           </button>
         </div>
@@ -196,8 +196,8 @@ export default function PropertyWizard({
             >
               <span className="text-base">{s.icon}</span>
               <span>
-                <span className="block text-xs font-bold text-neutral-900">{s.title}</span>
-                <span className="block text-[10px] text-neutral-500">{s.subtitle}</span>
+                <span className="block text-xs font-bold text-heading-primary">{s.title}</span>
+                <span className="block text-[10px] text-muted">{s.subtitle}</span>
               </span>
             </button>
           ))}

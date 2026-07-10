@@ -14,8 +14,8 @@ import type { AskTurn } from "@/lib/ask/types";
 function formatInline(text: string) {
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/^###\s+(.+)$/gm, '<h4 class="mt-3 mb-1 text-sm font-semibold text-neutral-900">$1</h4>')
-    .replace(/^##\s+(.+)$/gm, '<h3 class="mt-4 mb-2 text-base font-semibold text-neutral-900">$1</h3>')
+    .replace(/^###\s+(.+)$/gm, '<h4 class="mt-3 mb-1 text-sm font-semibold text-heading-primary">$1</h4>')
+    .replace(/^##\s+(.+)$/gm, '<h3 class="mt-4 mb-2 text-base font-semibold text-heading-primary">$1</h3>')
     .replace(/^-\s+(.+)$/gm, '<li class="ml-4 list-disc">$1</li>')
     .replace(/\n/g, "<br />");
 }
@@ -59,10 +59,10 @@ export function AskChatMessages({
     return (
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-12 text-center">
         <Logo size="hero" showTagline href={null} />
-        <h1 className="mt-6 text-2xl font-bold text-neutral-900 sm:text-3xl">
+        <h1 className="mt-6 text-2xl font-bold text-heading-primary sm:text-3xl">
           AreaIQ Intelligence
         </h1>
-        <p className="mt-3 max-w-lg text-neutral-500">
+        <p className="mt-3 max-w-lg text-muted">
           Your personal real estate advisor for Chandigarh Tricity. I remember our
           conversation — ask about properties, areas, investments, or compare projects.
         </p>
@@ -83,7 +83,7 @@ export function AskChatMessages({
               key={suggestion}
               type="button"
               onClick={() => onFollowUp(suggestion)}
-              className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-left text-sm text-neutral-700 transition-colors hover:border-emerald-200 hover:bg-emerald-50"
+              className="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-left text-sm text-body transition-colors hover:border-emerald-200 hover:bg-emerald-50"
             >
               {suggestion}
             </button>
@@ -132,7 +132,7 @@ export function AskChatMessages({
                         key={followUp}
                         type="button"
                         onClick={() => onFollowUp(followUp)}
-                        className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
+                        className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-body transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
                       >
                         {followUp}
                       </button>
@@ -146,7 +146,7 @@ export function AskChatMessages({
 
         {loading ? (
           <div className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 shadow-sm">
-            <div className="flex items-center gap-3 text-sm text-neutral-600">
+            <div className="flex items-center gap-3 text-sm text-body">
               <span className="inline-flex gap-1" aria-hidden>
                 {[0, 1, 2].map((dot) => (
                   <span

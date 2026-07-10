@@ -26,10 +26,10 @@ export default function AuthLayout({
         <div className="w-full max-w-md">
           <div className="rounded-3xl border border-neutral-200/80 bg-white p-8 shadow-[0_8px_32px_rgba(0,0,0,0.06)] transition-all sm:p-10">
             <div className="mb-8 text-center">
-              <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+              <h1 className="text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
                 {title}
               </h1>
-              <p className="mt-2 text-sm text-neutral-500 sm:text-base">
+              <p className="mt-2 text-sm text-muted sm:text-base">
                 {subtitle}
               </p>
             </div>

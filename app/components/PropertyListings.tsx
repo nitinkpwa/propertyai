@@ -31,10 +31,10 @@ function EmptyCatalogState() {
       <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-2xl">
         🏡
       </div>
-      <p className="text-lg font-semibold text-neutral-900">
+      <p className="text-lg font-semibold text-heading-primary">
         No properties available yet
       </p>
-      <p className="mx-auto mt-2 max-w-md text-sm text-neutral-500">
+      <p className="mx-auto mt-2 max-w-md text-sm text-muted">
         New listings are added regularly. Check back soon or explore our AI
         assistant for market insights in the meantime.
       </p>
@@ -48,7 +48,7 @@ function EmptyCatalogState() {
         </Link>
         <Link
           href="/"
-          className="inline-flex rounded-full border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-700 transition-colors hover:bg-neutral-50"
+          className="inline-flex rounded-full border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-body transition-colors hover:bg-neutral-50"
         >
           Back to Home
         </Link>
@@ -111,10 +111,10 @@ export default function PropertyListings() {
 
       {filteredProperties.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-neutral-200 bg-white px-6 py-16 text-center shadow-sm">
-          <p className="text-lg font-semibold text-neutral-900">
+          <p className="text-lg font-semibold text-heading-primary">
             No properties found
           </p>
-          <p className="mt-2 text-sm text-neutral-500">
+          <p className="mt-2 text-sm text-muted">
             No listings match your current filters. Try adjusting your criteria
             or clear filters to browse all properties.
           </p>

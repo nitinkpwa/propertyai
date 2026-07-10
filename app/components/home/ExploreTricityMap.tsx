@@ -50,7 +50,7 @@ export default function ExploreTricityMap() {
                   className={`absolute flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[11px] font-bold transition-all sm:h-12 sm:w-12 ${
                     active === area.name
                       ? "z-10 scale-110 text-white shadow-[0_0_0_4px_rgba(22,199,132,0.25)]"
-                      : "border-2 border-white bg-white/90 text-neutral-700 shadow-md hover:scale-105"
+                      : "border-2 border-white bg-white/90 text-body shadow-md hover:scale-105"
                   }`}
                   style={{
                     left: pos.left,
@@ -62,16 +62,16 @@ export default function ExploreTricityMap() {
                 </button>
               );
             })}
-            <div className="absolute bottom-4 left-4 rounded-xl border border-neutral-200/80 bg-white/90 px-3 py-2 text-xs text-neutral-500 backdrop-blur-sm">
+            <div className="absolute bottom-4 left-4 rounded-xl border border-neutral-200/80 bg-white/90 px-3 py-2 text-xs text-muted backdrop-blur-sm">
               Demand score · tap to explore
             </div>
           </motion.div>
 
           <FadeIn delay={0.1}>
             <div className="rounded-2xl border border-neutral-200/80 bg-[#F7F9FB] p-6 sm:p-8">
-              <p className="text-sm font-medium text-neutral-500">Selected area</p>
-              <h3 className="mt-1 text-3xl font-bold text-neutral-900">{selected?.name}</h3>
-              <p className="mt-2 text-sm text-neutral-600">
+              <p className="text-sm font-medium text-muted">Selected area</p>
+              <h3 className="mt-1 text-3xl font-bold text-heading-primary">{selected?.name}</h3>
+              <p className="mt-2 text-sm text-body">
                 AreaIQ demand score:{" "}
                 <strong style={{ color: IQ_GREEN }}>{selected?.score}/100</strong>
               </p>
@@ -84,7 +84,7 @@ export default function ExploreTricityMap() {
                     className={`rounded-full px-4 py-2 text-sm font-medium transition-all ${
                       active === area.name
                         ? "text-white shadow-md"
-                        : "bg-white text-neutral-600 hover:bg-white/80"
+                        : "bg-white text-body hover:bg-white/80"
                     }`}
                     style={
                       active === area.name ? { backgroundColor: IQ_GREEN } : undefined

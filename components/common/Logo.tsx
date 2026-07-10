@@ -81,13 +81,13 @@ export default function Logo({
         <div className="flex min-w-0 flex-col">
           <span
             className={`font-semibold tracking-tight ${WORD_CLASSES[size]} ${
-              isLight || isDark ? "text-white" : "text-neutral-900"
+              isLight || isDark ? "text-white" : "text-heading-primary"
             }`}
             style={isLight ? { textShadow: "0 2px 10px rgba(0,0,0,0.3)" } : undefined}
           >
             Area<span style={{ color: iqColor }}>IQ</span>
             {suffix ? (
-              <span className={isLight || isDark ? "text-white/90" : "text-neutral-700"}>
+              <span className={isLight || isDark ? "text-white/90" : "text-heading-secondary"}>
                 {" "}
                 {suffix}
               </span>
@@ -98,9 +98,7 @@ export default function Logo({
               className={`font-medium leading-snug ${TAGLINE_CLASSES[size]} ${
                 isLight
                   ? "text-white/75"
-                  : isDark
-                    ? "text-neutral-400"
-                    : "text-neutral-500"
+                  : "text-muted"
               } ${size === "navbar" ? "hidden sm:block" : ""}`}
               style={isLight ? { textShadow: "0 1px 8px rgba(0,0,0,0.25)" } : undefined}
             >

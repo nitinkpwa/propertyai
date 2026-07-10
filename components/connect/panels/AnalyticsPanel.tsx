@@ -24,11 +24,11 @@ function FunnelChart({ leads }: { leads: ConnectPartnerBuyerRow[] }) {
     <div className="space-y-3">
       {stages.map((s) => (
         <div key={s.label} className="flex items-center gap-3">
-          <span className="w-24 text-xs font-medium text-neutral-600">{s.label}</span>
+          <span className="w-24 text-xs font-medium text-body">{s.label}</span>
           <div className="flex-1 rounded-full bg-neutral-100 h-3 overflow-hidden">
             <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${(s.count / max) * 100}%` }} />
           </div>
-          <span className="w-8 text-right text-xs font-bold text-neutral-800">{s.count}</span>
+          <span className="w-8 text-right text-xs font-bold text-heading-secondary">{s.count}</span>
         </div>
       ))}
     </div>
@@ -47,10 +47,10 @@ function SourceChart({ leads }: { leads: ConnectPartnerBuyerRow[] }) {
 
   return (
     <div className="space-y-2">
-      {entries.length === 0 ? <p className="text-sm text-neutral-500">No lead source data yet</p> : null}
+      {entries.length === 0 ? <p className="text-sm text-muted">No lead source data yet</p> : null}
       {entries.map(([src, count], i) => (
         <div key={src} className="flex items-center gap-2">
-          <span className="w-28 truncate text-xs text-neutral-600 capitalize">{src}</span>
+          <span className="w-28 truncate text-xs text-body capitalize">{src}</span>
           <div className="flex-1 h-2 rounded-full bg-neutral-100 overflow-hidden">
             <div className={`h-full ${colors[i % colors.length]}`} style={{ width: `${(count / max) * 100}%` }} />
           </div>
@@ -74,28 +74,28 @@ export default function AnalyticsPanel({ analytics, leads, properties }: Props) 
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className={`${connectTokens.card} p-6`}>
-          <h3 className="mb-4 font-bold text-neutral-900">Lead Funnel</h3>
+          <h3 className="mb-4 font-bold text-heading-primary">Lead Funnel</h3>
           <FunnelChart leads={leads} />
         </section>
         <section className={`${connectTokens.card} p-6`}>
-          <h3 className="mb-4 font-bold text-neutral-900">Lead Sources</h3>
+          <h3 className="mb-4 font-bold text-heading-primary">Lead Sources</h3>
           <SourceChart leads={leads} />
         </section>
       </div>
 
       <section className={`${connectTokens.card} p-6`}>
-        <h3 className="mb-4 font-bold text-neutral-900">Monthly Activity</h3>
+        <h3 className="mb-4 font-bold text-heading-primary">Monthly Activity</h3>
         {analytics.monthlyActivity.length === 0 ? (
-          <p className="text-sm text-neutral-500">No activity data yet.</p>
+          <p className="text-sm text-muted">No activity data yet.</p>
         ) : (
           <div className="flex h-48 items-end gap-2">
             {analytics.monthlyActivity.map((m) => {
               const max = Math.max(...analytics.monthlyActivity.map((x) => x.count), 1);
               return (
                 <div key={m.month} className="flex flex-1 flex-col items-center gap-2">
-                  <span className="text-[10px] font-bold text-neutral-700">{m.count}</span>
+                  <span className="text-[10px] font-bold text-body">{m.count}</span>
                   <div className="w-full rounded-t-lg bg-gradient-to-t from-emerald-600 to-emerald-400" style={{ height: `${Math.max(8, (m.count / max) * 100)}%` }} />
-                  <span className="text-[10px] text-neutral-500">{m.month.slice(5)}</span>
+                  <span className="text-[10px] text-muted">{m.month.slice(5)}</span>
                 </div>
               );
             })}
@@ -115,19 +115,19 @@ export default function AnalyticsPanel({ analytics, leads, properties }: Props) 
           { label: "Best Property", value: bestProperty?.title?.slice(0, 20) ?? "—" },
         ].map((s) => (
           <div key={s.label} className={`${connectTokens.card} p-4`}>
-            <p className="text-xs text-neutral-500">{s.label}</p>
-            <p className="mt-1 text-xl font-bold text-neutral-900">{s.value}</p>
+            <p className="text-xs text-muted">{s.label}</p>
+            <p className="mt-1 text-xl font-bold text-heading-primary">{s.value}</p>
           </div>
         ))}
       </div>
 
       {properties.length > 0 ? (
         <section className={`${connectTokens.card} p-6`}>
-          <h3 className="mb-4 font-bold text-neutral-900">Property Performance</h3>
+          <h3 className="mb-4 font-bold text-heading-primary">Property Performance</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm">
               <thead>
-                <tr className="border-b text-xs text-neutral-500">
+                <tr className="border-b text-xs text-muted">
                   <th className="pb-2 pr-4">Property</th>
                   <th className="pb-2 pr-4">Enquiries</th>
                   <th className="pb-2 pr-4">Visits</th>

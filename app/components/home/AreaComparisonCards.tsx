@@ -36,7 +36,7 @@ export default function AreaComparisonCards() {
                   className="group block rounded-2xl border border-neutral-200/80 bg-white p-6 shadow-[0_4px_24px_rgba(0,0,0,0.04)] no-underline transition-shadow hover:shadow-lg sm:p-8"
                 >
                   <div className="flex items-center justify-between gap-4">
-                    <h3 className="text-xl font-bold text-neutral-900">{item.title}</h3>
+                    <h3 className="text-xl font-bold text-heading-primary">{item.title}</h3>
                     <span
                       className="text-sm font-semibold opacity-0 transition-opacity group-hover:opacity-100"
                       style={{ color: IQ_GREEN }}
@@ -45,7 +45,7 @@ export default function AreaComparisonCards() {
                     </span>
                   </div>
                   <div className="mt-6 overflow-hidden rounded-xl border border-neutral-100">
-                    <div className="grid grid-cols-3 bg-[#F7F9FB] px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                    <div className="grid grid-cols-3 bg-[#F7F9FB] px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-muted">
                       <span>Metric</span>
                       <span className="text-center">{areaA}</span>
                       <span className="text-center">{areaB}</span>
@@ -55,9 +55,9 @@ export default function AreaComparisonCards() {
                         key={m.label}
                         className="grid grid-cols-3 border-t border-neutral-100 px-4 py-3 text-sm"
                       >
-                        <span className="font-medium text-neutral-500">{m.label}</span>
-                        <span className="text-center font-semibold text-neutral-800">{m.a}</span>
-                        <span className="text-center font-semibold text-neutral-800">{m.b}</span>
+                        <span className="font-medium text-muted">{m.label}</span>
+                        <span className="text-center font-semibold text-heading-secondary">{m.a}</span>
+                        <span className="text-center font-semibold text-heading-secondary">{m.b}</span>
                       </div>
                     ))}
                   </div>

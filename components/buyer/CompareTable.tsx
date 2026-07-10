@@ -43,18 +43,18 @@ export default function CompareTable({ items }: CompareTableProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm">
       <div className="border-b border-neutral-100 bg-neutral-50/80 px-4 py-3 sm:px-6">
-        <p className="text-sm font-bold text-neutral-900">Professional Comparison</p>
-        <p className="text-xs text-neutral-500">Best values highlighted in green</p>
+        <p className="text-sm font-bold text-heading-primary">Professional Comparison</p>
+        <p className="text-xs text-muted">Best values highlighted in green</p>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full text-left text-sm">
           <thead>
             <tr className="border-b border-neutral-100">
-              <th className="sticky left-0 bg-white px-4 py-3 font-semibold text-neutral-500 sm:px-6">
+              <th className="sticky left-0 bg-white px-4 py-3 font-semibold text-muted sm:px-6">
                 Attribute
               </th>
               {items.map((item) => (
-                <th key={item.id} className="min-w-[140px] px-4 py-3 font-semibold text-neutral-900">
+                <th key={item.id} className="min-w-[140px] px-4 py-3 font-semibold text-heading-primary">
                   <span className="line-clamp-2">{item.name}</span>
                 </th>
               ))}
@@ -63,7 +63,7 @@ export default function CompareTable({ items }: CompareTableProps) {
           <tbody>
             {rows.map((row) => (
               <tr key={row.label} className="border-b border-neutral-50 last:border-0">
-                <td className="sticky left-0 bg-white px-4 py-3 font-medium text-neutral-500 sm:px-6">
+                <td className="sticky left-0 bg-white px-4 py-3 font-medium text-muted sm:px-6">
                   {row.label}
                 </td>
                 {items.map((item, idx) => {
@@ -71,7 +71,7 @@ export default function CompareTable({ items }: CompareTableProps) {
                   return (
                     <td
                       key={`${row.label}-${item.id}`}
-                      className={`px-4 py-3 ${isBest ? "bg-emerald-50 font-semibold text-emerald-800" : "text-neutral-800"}`}
+                      className={`px-4 py-3 ${isBest ? "bg-emerald-50 font-semibold text-emerald-800" : "text-heading-secondary"}`}
                     >
                       <span className="flex items-center gap-1.5">
                         {row.render(item)}

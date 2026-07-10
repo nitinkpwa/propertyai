@@ -231,7 +231,7 @@ export default function WizardStepContent({
             <ToggleChip key={amenity} label={amenity} selected={form.amenities.includes(amenity)} onToggle={() => toggleAmenity(amenity)} />
           ))}
         </div>
-        <p className="mt-4 text-xs text-neutral-500">{form.amenities.length} selected</p>
+        <p className="mt-4 text-xs text-muted">{form.amenities.length} selected</p>
       </>
     );
   }
@@ -250,7 +250,7 @@ export default function WizardStepContent({
                   <button type="button" onClick={() => setRoot("photos", form.photos.filter((_, idx) => idx !== i))} className="absolute right-1 top-1 rounded-full bg-black/60 px-1.5 text-xs text-white">×</button>
                 </div>
               ))}
-              <label className="flex h-24 w-32 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 text-xs text-neutral-500 hover:border-emerald-300">
+              <label className="flex h-24 w-32 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 text-xs text-muted hover:border-emerald-300">
                 {uploadingPhotos ? "Uploading..." : "+ Upload"}
                 <input type="file" accept="image/*" multiple hidden onChange={(e) => e.target.files && onUploadPhotos?.(e.target.files)} />
               </label>

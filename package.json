@@ -14,7 +14,8 @@
     "db:apply-property-ownership": "node scripts/apply-property-ownership-schema.mjs",
     "db:check-property-ownership": "node scripts/check-property-ownership.mjs",
     "db:check-connect-partners": "node scripts/check-connect-partners-schema.mjs",
-    "db:inspect-production": "node scripts/inspect-production-schema.mjs"
+    "db:inspect-production": "node scripts/inspect-production-schema.mjs",
+    "icons:generate": "node scripts/generate-favicons.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -35,6 +36,7 @@
     "eslint-config-next": "16.2.6",
     "pg": "^8.22.0",
     "tailwindcss": "^4",
+    "to-ico": "^1.1.5",
     "typescript": "^5"
   }
 }

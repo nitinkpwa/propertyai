@@ -147,14 +147,14 @@ export default function BuyerCrmPage() {
         <Card>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Current Stage</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-label">Current Stage</p>
               <div className="mt-2">
                 <LeadStatusBadge status={summary.lead.status} />
               </div>
             </div>
             <div className="text-right">
-              <p className="text-xs text-neutral-400">Lead since</p>
-              <p className="text-sm font-medium text-neutral-700">
+              <p className="text-xs text-muted">Lead since</p>
+              <p className="text-sm font-medium text-label">
                 {new Date(summary.lead.created_at).toLocaleDateString("en-IN", {
                   day: "numeric",
                   month: "short",
@@ -171,8 +171,8 @@ export default function BuyerCrmPage() {
 
       <Card className="border-emerald-100 bg-gradient-to-br from-emerald-50/80 to-white">
         <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">Next Recommended Action</p>
-        <p className="mt-2 text-lg font-bold text-neutral-900">{nextAction.title}</p>
-        <p className="mt-1 text-sm text-neutral-600">{nextAction.desc}</p>
+        <p className="mt-2 text-lg font-bold text-heading-primary">{nextAction.title}</p>
+        <p className="mt-1 text-sm text-body">{nextAction.desc}</p>
         <ButtonLink href={nextAction.href} className="mt-4">
           Take action →
         </ButtonLink>
@@ -207,8 +207,8 @@ export default function BuyerCrmPage() {
             className={`rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${stat.href ? "" : "pointer-events-none"}`}
           >
             <span className="text-xl">{stat.icon}</span>
-            <p className="mt-2 text-2xl font-bold text-neutral-900">{stat.value}</p>
-            <p className="text-sm text-neutral-500">{stat.label}</p>
+            <p className="mt-2 text-2xl font-bold text-heading-primary">{stat.value}</p>
+            <p className="text-sm text-muted">{stat.label}</p>
           </Link>
         ))}
       </div>
@@ -240,11 +240,11 @@ export default function BuyerCrmPage() {
             {enquiries.map((inq) => (
               <Card key={inq.id} padding="sm" hover>
                 <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-neutral-900">{inq.property?.title ?? "Inquiry"}</p>
+                  <p className="font-semibold text-heading-primary">{inq.property?.title ?? "Inquiry"}</p>
                   <Badge variant={inq.status === "pending" ? "warning" : "success"}>{inq.status}</Badge>
                 </div>
-                <p className="mt-2 text-sm text-neutral-600 line-clamp-2">{inq.message}</p>
-                <p className="mt-2 text-xs text-neutral-400">
+                <p className="mt-2 text-sm text-body line-clamp-2">{inq.message}</p>
+                <p className="mt-2 text-xs text-muted">
                   {new Date(inq.created_at).toLocaleString("en-IN")}
                 </p>
               </Card>

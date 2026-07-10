@@ -97,7 +97,7 @@ export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
   if (leads.length === 0) {
     return (
       <div className="rounded-3xl border border-dashed border-neutral-200 bg-white py-16 text-center">
-        <p className="text-sm text-neutral-500">No CRM leads yet.</p>
+        <p className="text-sm text-muted">No CRM leads yet.</p>
       </div>
     );
   }
@@ -150,10 +150,10 @@ export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
 
         <div className="grid gap-6 lg:grid-cols-2">
           <section className="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
-            <h3 className="font-semibold text-neutral-900">Site Visits</h3>
+            <h3 className="font-semibold text-heading-primary">Site Visits</h3>
             <ul className="mt-3 space-y-2 text-sm">
               {(journey?.siteVisits ?? []).length === 0 ? (
-                <li className="text-neutral-500">No visits</li>
+                <li className="text-muted">No visits</li>
               ) : (
                 journey?.siteVisits?.map((v: SiteVisitDetail) => (
                   <li key={String(v.id)} className="rounded-xl bg-neutral-50 px-3 py-2">
@@ -166,10 +166,10 @@ export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
           </section>
 
           <section className="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
-            <h3 className="font-semibold text-neutral-900">AI Conversations</h3>
+            <h3 className="font-semibold text-heading-primary">AI Conversations</h3>
             <ul className="mt-3 space-y-2 text-sm">
               {(journey?.conversations ?? []).length === 0 ? (
-                <li className="text-neutral-500">No chats</li>
+                <li className="text-muted">No chats</li>
               ) : (
                 journey?.conversations?.map((c: { id: string; title: string; messageCount: number }) => (
                   <li key={c.id} className="rounded-xl bg-neutral-50 px-3 py-2">
@@ -181,12 +181,12 @@ export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
           </section>
 
           <section className="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm lg:col-span-2">
-            <h3 className="mb-4 font-semibold text-neutral-900">Buyer Journey Timeline</h3>
+            <h3 className="mb-4 font-semibold text-heading-primary">Buyer Journey Timeline</h3>
             <ActivityTimeline activities={activities} maxItems={15} />
           </section>
 
           <section className="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm lg:col-span-2">
-            <h3 className="mb-3 font-semibold text-neutral-900">Assign Connect Partner</h3>
+            <h3 className="mb-3 font-semibold text-heading-primary">Assign Connect Partner</h3>
             <select
               className="w-full max-w-xs rounded-xl border border-neutral-200 px-3 py-2.5 text-sm"
               defaultValue={selected.assigned_connect_id ?? ""}
@@ -214,8 +214,8 @@ export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-bold text-neutral-900">CRM — Buyers</h2>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h2 className="text-xl font-bold text-heading-primary">CRM — Buyers</h2>
+        <p className="mt-1 text-sm text-muted">
           Assign connect partners and review buyer CRM records
         </p>
       </div>

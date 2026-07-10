@@ -23,14 +23,14 @@ export function AskChatInput({ onSubmit, loading, recentSearches }: AskChatInput
       <div className="mx-auto max-w-3xl">
         {recentSearches.length > 0 ? (
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-neutral-400">Recent:</span>
+            <span className="text-xs font-medium text-muted">Recent:</span>
             {recentSearches.slice(0, 5).map((search) => (
               <button
                 key={search}
                 type="button"
                 onClick={() => onSubmit(search)}
                 disabled={loading}
-                className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-neutral-600 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-50"
+                className="rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-xs font-medium text-body transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 disabled:opacity-50"
               >
                 {search.length > 28 ? `${search.slice(0, 27)}…` : search}
               </button>
@@ -57,7 +57,7 @@ export function AskChatInput({ onSubmit, loading, recentSearches }: AskChatInput
             placeholder="Ask about properties, areas, investment, compare projects..."
             disabled={loading}
             rows={1}
-            className="max-h-32 min-h-[44px] flex-1 resize-none bg-transparent py-2.5 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 disabled:opacity-60"
+            className="max-h-32 min-h-[44px] flex-1 resize-none bg-transparent py-2.5 text-sm text-heading-primary outline-none placeholder:text-placeholder disabled:opacity-60"
           />
           <button
             type="submit"
@@ -75,7 +75,7 @@ export function AskChatInput({ onSubmit, loading, recentSearches }: AskChatInput
             </svg>
           </button>
         </form>
-        <p className="mt-2 text-center text-xs text-neutral-400">
+        <p className="mt-2 text-center text-xs text-muted">
           AreaIQ uses live Supabase listings — never fabricated property data.
         </p>
       </div>

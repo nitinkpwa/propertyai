@@ -52,7 +52,7 @@ function ForgotPasswordForm() {
       title="Forgot password?"
       subtitle="We will email you a reset link"
       footer={
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted">
           Remember your password?{" "}
           <Link href="/login" className="font-semibold text-emerald-600 hover:text-emerald-700">
             Sign in
@@ -88,7 +88,7 @@ function ForgotPasswordForm() {
       ) : null}
 
       {typeof window !== "undefined" && process.env.NODE_ENV === "development" ? (
-        <p className="mt-4 text-xs leading-relaxed text-neutral-400">
+        <p className="mt-4 text-xs leading-relaxed text-muted">
           Dev: Supabase Redirect URLs must include{" "}
           {getRequiredSupabaseRedirectUrls(window.location.origin).join(" and ")}.
         </p>

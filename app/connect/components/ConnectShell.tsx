@@ -48,7 +48,7 @@ export default function ConnectShell({
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all ${
               active
                 ? "bg-emerald-50 text-emerald-800 shadow-sm ring-1 ring-emerald-200/60"
-                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+                : "text-body hover:bg-neutral-50 hover:text-heading-primary"
             }`}
           >
             <span aria-hidden>{item.icon}</span>
@@ -73,7 +73,7 @@ export default function ConnectShell({
             <Logo size="dashboard" suffix="Connect" href="/connect" />
           </div>
           <Logo size="dashboard" suffix="Connect" href="/connect" className="hidden lg:flex" />
-          <p className="hidden truncate text-sm font-semibold text-neutral-700 sm:block">
+          <p className="hidden truncate text-sm font-semibold text-body sm:block">
             {companyName ?? "Connect Partner CRM"}
           </p>
           <div className="flex items-center gap-2">
@@ -86,7 +86,7 @@ export default function ConnectShell({
                 <span className="text-xs font-bold text-white">{getInitials(userName, companyName)}</span>
               )}
             </button>
-            <button type="button" onClick={onLogout} className="hidden rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-neutral-600 hover:bg-neutral-50 sm:inline-flex">Logout</button>
+            <button type="button" onClick={onLogout} className="hidden rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-body hover:bg-neutral-50 sm:inline-flex">Logout</button>
           </div>
         </div>
       </header>
@@ -94,8 +94,8 @@ export default function ConnectShell({
       <div className="flex">
         <aside className="fixed bottom-0 left-0 top-16 hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
           <div className="border-b border-neutral-100 px-4 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Channel Partner</p>
-            <p className="mt-1 truncate text-sm font-bold text-neutral-900">{companyName ?? userName ?? "Partner"}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-label">Channel Partner</p>
+            <p className="mt-1 truncate text-sm font-bold text-heading-primary">{companyName ?? userName ?? "Partner"}</p>
             <p className="text-xs text-emerald-600">Property-based CRM</p>
           </div>
           {sidebar}
@@ -132,7 +132,7 @@ export default function ConnectShell({
                 key={key}
                 type="button"
                 onClick={() => onTabChange(key)}
-                className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium ${active ? "text-emerald-600" : "text-neutral-500"}`}
+                className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-medium ${active ? "text-emerald-600" : "text-muted"}`}
               >
                 <span>{item.icon}</span>
                 {item.label.split(" ")[0]}

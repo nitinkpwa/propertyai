@@ -44,13 +44,13 @@ export default function AdminShell({
             className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-all ${
               active
                 ? "bg-emerald-50 text-emerald-800 shadow-sm ring-1 ring-emerald-200/60"
-                : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+                : "text-body hover:bg-neutral-50 hover:text-heading-primary"
             }`}
           >
             <span aria-hidden>{item.icon}</span>
             <span className="flex-1">{item.label}</span>
             {item.count !== undefined ? (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-neutral-100 px-1.5 text-[10px] font-bold text-neutral-600">
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-neutral-100 px-1.5 text-[10px] font-bold text-body">
                 {item.count}
               </span>
             ) : null}
@@ -87,14 +87,14 @@ export default function AdminShell({
             <Link
               href="/"
               target="_blank"
-              className="hidden text-xs font-medium text-neutral-500 hover:text-neutral-800 sm:inline"
+              className="hidden text-xs font-medium text-label hover:text-heading-secondary sm:inline"
             >
               View Website ↗
             </Link>
             <button
               type="button"
               onClick={onLogout}
-              className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-neutral-600 hover:bg-neutral-50"
+              className="rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-body hover:bg-neutral-50"
             >
               Logout
             </button>
@@ -106,10 +106,10 @@ export default function AdminShell({
         <aside className="fixed bottom-0 left-0 top-16 hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
           <div className="border-b border-neutral-100 px-4 py-4">
             <Logo size="dashboard" suffix="Admin" href="/admin" className="mb-3" />
-            <p className="text-xs font-medium uppercase tracking-wider text-neutral-400">
+            <p className="text-xs font-medium uppercase tracking-wider text-muted">
               Administration
             </p>
-            <p className="mt-1 text-sm font-semibold text-neutral-900">AreaIQ Control Panel</p>
+            <p className="mt-1 text-sm font-semibold text-heading-primary">AreaIQ Control Panel</p>
           </div>
           {sidebar}
         </aside>
@@ -123,8 +123,8 @@ export default function AdminShell({
             />
             <aside className="fixed bottom-0 left-0 top-0 z-50 flex w-[min(280px,88vw)] flex-col bg-white shadow-xl lg:hidden">
               <div className="flex h-16 items-center justify-between border-b border-neutral-100 px-4">
-                <span className="font-semibold text-neutral-900">Menu</span>
-                <button type="button" onClick={() => setMobileOpen(false)} className="text-neutral-500">
+                <span className="font-semibold text-heading-primary">Menu</span>
+                <button type="button" onClick={() => setMobileOpen(false)} className="text-muted">
                   ✕
                 </button>
               </div>

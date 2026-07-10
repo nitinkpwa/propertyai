@@ -5,6 +5,10 @@ export const IQ_GREEN = "#16C784";
 export const IQ_BG = "#FFFFFF";
 export const IQ_BG_SECONDARY = "#F7F9FB";
 
+/** Premium glass card — light sections */
+export const GLASS_CARD_CLASS =
+  "rounded-2xl border border-neutral-200/80 bg-white/80 text-body shadow-[0_4px_24px_rgba(0,0,0,0.04)] backdrop-blur-md transition-all hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)]";
+
 /** Premium hero glass panel — Apple / Linear / Arc style */
 export const HERO_GLASS_STYLE: CSSProperties = {
   background: "rgba(255,255,255,0.12)",

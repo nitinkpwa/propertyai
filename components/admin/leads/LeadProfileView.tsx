@@ -23,7 +23,7 @@ function Section({
   return (
     <section className="rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-500">{title}</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wider text-muted">{title}</h2>
         {action}
       </div>
       <div className="p-5">{children}</div>
@@ -36,8 +36,8 @@ function FieldGrid({ items }: { items: Array<{ label: string; value: string | nu
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
       {items.map((item) => (
         <div key={item.label}>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">{item.label}</p>
-          <p className="mt-1 text-sm font-medium text-neutral-900">{item.value?.trim() || EMPTY}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-label">{item.label}</p>
+          <p className="mt-1 text-sm font-medium text-heading-primary">{item.value?.trim() || EMPTY}</p>
         </div>
       ))}
     </div>
@@ -45,7 +45,7 @@ function FieldGrid({ items }: { items: Array<{ label: string; value: string | nu
 }
 
 function EmptyBlock() {
-  return <p className="rounded-xl bg-neutral-50 px-4 py-8 text-center text-sm text-neutral-500">{EMPTY}</p>;
+  return <p className="rounded-xl bg-neutral-50 px-4 py-8 text-center text-sm text-muted">{EMPTY}</p>;
 }
 
 function purposeFlags(buyer: AdminLeadProfile["buyer"]) {
@@ -234,7 +234,7 @@ export default function LeadProfileView({
         <Section title="AI Conversation Summary">
           {lead.aiSummary ? (
             <div className="space-y-3">
-              <p className="whitespace-pre-line text-sm leading-relaxed text-neutral-700">{lead.aiSummary}</p>
+              <p className="whitespace-pre-line text-sm leading-relaxed text-body">{lead.aiSummary}</p>
               {lead.aiSummaryConfidence != null ? (
                 <p className="text-xs font-semibold text-emerald-700">
                   Confidence {lead.aiSummaryConfidence}%.
@@ -259,12 +259,12 @@ export default function LeadProfileView({
             <div className="max-h-[32rem] space-y-3 overflow-y-auto">
               {filteredChronological.map((msg) => (
                 <div key={msg.id} className="rounded-xl border border-neutral-100 bg-neutral-50/80 p-3">
-                  <div className="mb-2 flex items-center justify-between gap-2 text-xs text-neutral-500">
+                  <div className="mb-2 flex items-center justify-between gap-2 text-xs text-muted">
                     <span>{msg.chatTitle}</span>
                     <span>{formatDateTime(msg.at)}</span>
                   </div>
                   <div
-                    className={`rounded-xl px-3 py-2 text-sm ${msg.role === "user" ? "ml-8 bg-emerald-500 text-white" : "mr-8 bg-white text-neutral-900"}`}
+                    className={`rounded-xl px-3 py-2 text-sm ${msg.role === "user" ? "ml-8 bg-emerald-500 text-white" : "mr-8 bg-white text-heading-primary"}`}
                   >
                     {msg.content}
                   </div>
@@ -286,11 +286,11 @@ export default function LeadProfileView({
                   </div>
                   <div className="min-w-0 flex-1 border-b border-neutral-100 pb-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <p className="font-semibold text-neutral-900">{event.title}</p>
-                      <p className="text-xs text-neutral-500">{formatDateTime(event.at)}</p>
+                      <p className="font-semibold text-heading-primary">{event.title}</p>
+                      <p className="text-xs text-muted">{formatDateTime(event.at)}</p>
                     </div>
                     {event.description ? (
-                      <p className="mt-1 text-sm text-neutral-600">{event.description}</p>
+                      <p className="mt-1 text-sm text-body">{event.description}</p>
                     ) : null}
                   </div>
                 </li>
@@ -312,7 +312,7 @@ export default function LeadProfileView({
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="border-b border-neutral-200 text-left text-xs uppercase tracking-wider text-neutral-500">
+                  <tr className="border-b border-neutral-200 text-left text-xs uppercase tracking-wider text-muted">
                     {["Project", "Date", "Status", "Feedback"].map((h) => (
                       <th key={h} className="px-3 py-2">
                         {h}
@@ -346,7 +346,7 @@ export default function LeadProfileView({
             className="w-full rounded-xl border border-neutral-200 px-3 py-2.5 text-sm"
           />
           <div className="mt-3 flex items-center justify-between">
-            <p className="text-xs text-neutral-500">Stored in buyer profile notes</p>
+            <p className="text-xs text-muted">Stored in buyer profile notes</p>
             <button
               type="button"
               disabled={saving}
@@ -401,12 +401,12 @@ export default function LeadProfileView({
 
       <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
         <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-neutral-500">Actions</h2>
+          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted">Actions</h2>
           <div className="space-y-2">
             {callHref ? (
               <a
                 href={callHref}
-                className="flex w-full items-center justify-center rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
+                className="flex w-full items-center justify-center rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-heading-secondary hover:bg-neutral-50"
               >
                 Call
               </a>
@@ -414,7 +414,7 @@ export default function LeadProfileView({
               <button
                 type="button"
                 disabled
-                className="flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-400"
+                className="flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-neutral-100 px-4 py-2.5 text-sm font-semibold text-muted"
               >
                 Call
               </button>
@@ -432,7 +432,7 @@ export default function LeadProfileView({
               <button
                 type="button"
                 disabled
-                className="flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-400"
+                className="flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-neutral-100 px-4 py-2.5 text-sm font-semibold text-muted"
               >
                 WhatsApp
               </button>
@@ -440,7 +440,7 @@ export default function LeadProfileView({
             {emailHref ? (
               <a
                 href={emailHref}
-                className="flex w-full items-center justify-center rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
+                className="flex w-full items-center justify-center rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-heading-secondary hover:bg-neutral-50"
               >
                 Email
               </a>
@@ -448,20 +448,20 @@ export default function LeadProfileView({
               <button
                 type="button"
                 disabled
-                className="flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-neutral-100 px-4 py-2.5 text-sm font-semibold text-neutral-400"
+                className="flex w-full cursor-not-allowed items-center justify-center rounded-xl border border-neutral-100 px-4 py-2.5 text-sm font-semibold text-muted"
               >
                 Email
               </button>
             )}
             <Link
               href="/admin?tab=crm"
-              className="flex w-full items-center justify-center rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
+              className="flex w-full items-center justify-center rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-heading-secondary hover:bg-neutral-50"
             >
               Assign Builder
             </Link>
             <Link
               href="/admin?tab=visits"
-              className="flex w-full items-center justify-center rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
+              className="flex w-full items-center justify-center rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-heading-secondary hover:bg-neutral-50"
             >
               Schedule Visit
             </Link>
@@ -469,20 +469,20 @@ export default function LeadProfileView({
               type="button"
               onClick={saveNote}
               disabled={saving}
-              className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50 disabled:opacity-60"
+              className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-heading-secondary hover:bg-neutral-50 disabled:opacity-60"
             >
               Add Note
             </button>
             <Link
               href="/admin?tab=properties"
-              className="flex w-full items-center justify-center rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
+              className="flex w-full items-center justify-center rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-heading-secondary hover:bg-neutral-50"
             >
               Share Property
             </Link>
             <button
               type="button"
               onClick={exportProfile}
-              className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-neutral-800 hover:bg-neutral-50"
+              className="w-full rounded-xl border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-heading-secondary hover:bg-neutral-50"
             >
               Export PDF
             </button>
@@ -490,22 +490,22 @@ export default function LeadProfileView({
         </div>
 
         <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-neutral-500">Engagement</h2>
+          <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted">Engagement</h2>
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="rounded-xl bg-neutral-50 px-3 py-2">
-              <p className="text-xs text-neutral-500">Saved</p>
+              <p className="text-xs text-muted">Saved</p>
               <p className="font-bold">{lead.counts.savedProperties}</p>
             </div>
             <div className="rounded-xl bg-neutral-50 px-3 py-2">
-              <p className="text-xs text-neutral-500">Visits</p>
+              <p className="text-xs text-muted">Visits</p>
               <p className="font-bold">{lead.counts.siteVisits}</p>
             </div>
             <div className="rounded-xl bg-neutral-50 px-3 py-2">
-              <p className="text-xs text-neutral-500">Chats</p>
+              <p className="text-xs text-muted">Chats</p>
               <p className="font-bold">{lead.counts.conversations}</p>
             </div>
             <div className="rounded-xl bg-neutral-50 px-3 py-2">
-              <p className="text-xs text-neutral-500">Views</p>
+              <p className="text-xs text-muted">Views</p>
               <p className="font-bold">{lead.counts.propertyViews}</p>
             </div>
           </div>

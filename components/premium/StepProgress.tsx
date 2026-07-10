@@ -16,14 +16,14 @@ export default function StepProgress({ steps }: StepProgressProps) {
                   ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
                   : step.active
                     ? "bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400"
-                    : "bg-neutral-100 text-neutral-400"
+                    : "bg-neutral-100 text-muted"
               }`}
             >
               {step.done ? "✓" : i + 1}
             </div>
             <span
               className={`max-w-[4.5rem] text-center text-[10px] font-medium leading-tight ${
-                step.done || step.active ? "text-neutral-800" : "text-neutral-400"
+                step.done || step.active ? "text-heading-secondary" : "text-muted"
               }`}
             >
               {step.label}

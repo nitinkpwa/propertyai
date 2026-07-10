@@ -35,14 +35,14 @@ export default function TricityToday() {
                 className="group flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.04)] no-underline transition-shadow hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)]"
               >
                 <div className={`relative h-32 bg-gradient-to-br ${item.gradient} p-5`}>
-                  <p className="text-lg font-bold text-neutral-900">{item.area}</p>
+                  <p className="text-lg font-bold text-heading-primary">{item.area}</p>
                   <p className="mt-1 text-2xl font-extrabold" style={{ color: IQ_GREEN }}>
                     {item.metric}
                   </p>
-                  <p className="text-xs font-medium text-neutral-500">{item.metricLabel}</p>
+                  <p className="text-xs font-medium text-label">{item.metricLabel}</p>
                 </div>
                 <div className="flex flex-1 flex-col p-5">
-                  <p className="flex-1 text-sm leading-relaxed text-neutral-600">
+                  <p className="flex-1 text-sm leading-relaxed text-body">
                     {item.summary}
                   </p>
                   <span

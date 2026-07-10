@@ -119,7 +119,7 @@ export default function SavedPropertiesPage() {
                 className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                   collection === col.id
                     ? "bg-emerald-600 text-white shadow-sm"
-                    : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                    : "bg-neutral-100 text-body hover:bg-neutral-200"
                 }`}
               >
                 {col.icon} {col.label}
@@ -129,7 +129,7 @@ export default function SavedPropertiesPage() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortOption)}
-            className="ml-auto rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700"
+            className="ml-auto rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-body"
             aria-label="Sort saved properties"
           >
             <option value="newest">Newest first</option>
@@ -175,7 +175,7 @@ export default function SavedPropertiesPage() {
                   <select
                     value={currentCol === "all" ? "favorites" : currentCol}
                     onChange={(e) => handleCollectionChange(property.id, e.target.value as CollectionId)}
-                    className="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-xs font-medium text-neutral-700"
+                    className="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-xs font-medium text-body"
                     aria-label="Assign collection"
                   >
                     {COLLECTION_PRESETS.filter((c) => c.id !== "all").map((c) => (
@@ -199,7 +199,7 @@ export default function SavedPropertiesPage() {
                       </div>
                     </div>
                   ) : note ? (
-                    <p className="mt-2 text-xs text-neutral-600">
+                    <p className="mt-2 text-xs text-body">
                       📝 {note}{" "}
                       <button type="button" onClick={() => { setEditingNote(property.id); setNoteDraft(note); }} className="text-emerald-600 hover:underline">
                         Edit

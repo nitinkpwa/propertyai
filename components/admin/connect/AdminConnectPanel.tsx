@@ -98,8 +98,8 @@ function CreatePartnerModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/40 p-4 backdrop-blur-sm">
       <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl">
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-neutral-900">Create Connect Partner</h2>
-          <button type="button" onClick={onClose} className="text-neutral-400 hover:text-neutral-700">
+          <h2 className="text-xl font-bold text-heading-primary">Create Connect Partner</h2>
+          <button type="button" onClick={onClose} className="text-muted hover:text-body">
             ✕
           </button>
         </div>
@@ -118,7 +118,7 @@ function CreatePartnerModal({
           <AuthInput label="Password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
           <AuthInput label="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
           <div className="mb-4">
-            <label className="mb-1.5 block text-sm font-medium text-neutral-700">City</label>
+            <label className="mb-1.5 block text-sm font-medium text-label">City</label>
             <select className={selectClass} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}>
               <option value="">Select city</option>
               {CONNECT_CITIES.map((c) => (
@@ -130,7 +130,7 @@ function CreatePartnerModal({
           <AuthInput label="RERA" value={form.rera} onChange={(e) => setForm({ ...form, rera: e.target.value })} />
           <AuthInput label="Logo URL" value={form.logo} onChange={(e) => setForm({ ...form, logo: e.target.value })} />
           <div className="mb-4">
-            <label className="mb-1.5 block text-sm font-medium text-neutral-700">Status</label>
+            <label className="mb-1.5 block text-sm font-medium text-label">Status</label>
             <select className={selectClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as ConnectPartnerStatus })}>
               <option value="pending">Pending</option>
               <option value="active">Active</option>
@@ -200,9 +200,9 @@ function PartnerProfileView({
               <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-emerald-50 text-2xl">🏢</div>
             )}
             <div>
-              <h2 className="text-2xl font-bold text-neutral-900">{partner.company_name}</h2>
-              <p className="mt-1 text-sm text-neutral-500">{partner.manager_name} · {partner.email}</p>
-              <p className="text-sm text-neutral-500">{partner.phone} · {partner.city ?? "—"}</p>
+              <h2 className="text-2xl font-bold text-heading-primary">{partner.company_name}</h2>
+              <p className="mt-1 text-sm text-muted">{partner.manager_name} · {partner.email}</p>
+              <p className="text-sm text-muted">{partner.phone} · {partner.city ?? "—"}</p>
             </div>
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -229,8 +229,8 @@ function PartnerProfileView({
             ["Created", formatDate(partner.created_at)],
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl bg-neutral-50 px-4 py-3">
-              <dt className="text-xs font-medium uppercase tracking-wider text-neutral-400">{label}</dt>
-              <dd className="mt-1 text-sm font-medium text-neutral-900">{value}</dd>
+              <dt className="text-xs font-medium uppercase tracking-wider text-muted">{label}</dt>
+              <dd className="mt-1 text-sm font-medium text-heading-primary">{value}</dd>
             </div>
           ))}
         </dl>
@@ -248,27 +248,27 @@ function PartnerProfileView({
           { label: "Visits Scheduled", value: analytics.visitsScheduled },
         ].map((card) => (
           <div key={card.label} className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-            <p className="text-3xl font-bold text-neutral-900">{card.value}</p>
-            <p className="mt-1 text-sm text-neutral-500">{card.label}</p>
+            <p className="text-3xl font-bold text-heading-primary">{card.value}</p>
+            <p className="mt-1 text-sm text-muted">{card.label}</p>
           </div>
         ))}
       </div>
 
       <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-        <h3 className="mb-4 font-semibold text-neutral-900">Assigned Buyers ({buyers.length})</h3>
+        <h3 className="mb-4 font-semibold text-heading-primary">Assigned Buyers ({buyers.length})</h3>
         {buyers.length === 0 ? (
-          <p className="text-sm text-neutral-500">No buyers assigned yet.</p>
+          <p className="text-sm text-muted">No buyers assigned yet.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
             {buyers.map((b) => (
               <div key={b.id} className="rounded-xl border border-neutral-100 bg-neutral-50 p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-neutral-900">{b.full_name ?? "Buyer"}</p>
+                  <p className="font-semibold text-heading-primary">{b.full_name ?? "Buyer"}</p>
                   <LeadTemperatureBadge temperature={b.lead_temperature} score={b.lead_score} />
                 </div>
-                <p className="mt-1 text-xs text-neutral-500">{b.phone ?? "—"}</p>
+                <p className="mt-1 text-xs text-muted">{b.phone ?? "—"}</p>
                 <p className="mt-2 text-xs text-emerald-700">{formatBudget(b.budget_min, b.budget_max)}</p>
-                <p className="mt-1 text-xs capitalize text-neutral-500">Status: {b.lead_status}</p>
+                <p className="mt-1 text-xs capitalize text-muted">Status: {b.lead_status}</p>
               </div>
             ))}
           </div>
@@ -276,15 +276,15 @@ function PartnerProfileView({
       </section>
 
       <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-        <h3 className="mb-4 font-semibold text-neutral-900">Assigned Properties ({properties.length})</h3>
+        <h3 className="mb-4 font-semibold text-heading-primary">Assigned Properties ({properties.length})</h3>
         {properties.length === 0 ? (
-          <p className="text-sm text-neutral-500">No properties assigned yet.</p>
+          <p className="text-sm text-muted">No properties assigned yet.</p>
         ) : (
           <ul className="space-y-2">
             {properties.map((p) => (
               <li key={p.id} className="flex items-center justify-between rounded-xl bg-neutral-50 px-4 py-3 text-sm">
-                <span className="font-medium text-neutral-900">{p.title}</span>
-                <span className="text-neutral-500">{p.city} · {p.status}</span>
+                <span className="font-medium text-heading-primary">{p.title}</span>
+                <span className="text-muted">{p.city} · {p.status}</span>
               </li>
             ))}
           </ul>
@@ -292,7 +292,7 @@ function PartnerProfileView({
       </section>
 
       <section className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-        <h3 className="mb-4 font-semibold text-neutral-900">Activity Timeline</h3>
+        <h3 className="mb-4 font-semibold text-heading-primary">Activity Timeline</h3>
         <ConnectPartnerActivityTimeline activities={activities} />
       </section>
     </div>
@@ -399,8 +399,8 @@ export default function AdminConnectPanel() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900">AreaIQ Connect</h1>
-          <p className="mt-1 text-sm text-neutral-500">Partner CRM — manage Connect partners, assignments, and activity</p>
+          <h1 className="text-2xl font-bold text-heading-primary">AreaIQ Connect</h1>
+          <p className="mt-1 text-sm text-muted">Partner CRM — manage Connect partners, assignments, and activity</p>
         </div>
         <button
           type="button"
@@ -421,7 +421,7 @@ export default function AdminConnectPanel() {
             className={`rounded-xl px-4 py-2 text-sm font-medium transition-all ${
               subTab === tab.key
                 ? "bg-emerald-50 text-emerald-800 ring-1 ring-emerald-200"
-                : "bg-white text-neutral-600 ring-1 ring-neutral-200 hover:bg-neutral-50"
+                : "bg-white text-body ring-1 ring-neutral-200 hover:bg-neutral-50"
             }`}
           >
             {tab.icon} {tab.label}
@@ -463,7 +463,7 @@ export default function AdminConnectPanel() {
                 <thead className="border-b border-neutral-200 bg-neutral-50">
                   <tr>
                     {["Company", "Manager", "Email", "Phone", "Status", "Projects", "Listings", "Buyers", "Created", "Last Activity"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">{h}</th>
+                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label">{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -474,23 +474,23 @@ export default function AdminConnectPanel() {
                       className="cursor-pointer border-b border-neutral-100 hover:bg-neutral-50/80"
                       onClick={() => setSelectedPartnerId(p.id)}
                     >
-                      <td className="px-4 py-3 font-medium text-neutral-900">{p.company_name}</td>
-                      <td className="px-4 py-3 text-neutral-600">{p.manager_name}</td>
-                      <td className="px-4 py-3 text-neutral-600">{p.email}</td>
-                      <td className="px-4 py-3 text-neutral-600">{p.phone}</td>
+                      <td className="px-4 py-3 font-medium text-heading-primary">{p.company_name}</td>
+                      <td className="px-4 py-3 text-body">{p.manager_name}</td>
+                      <td className="px-4 py-3 text-body">{p.email}</td>
+                      <td className="px-4 py-3 text-body">{p.phone}</td>
                       <td className="px-4 py-3"><PartnerStatusBadge status={p.status} /></td>
-                      <td className="px-4 py-3 text-neutral-600">{p.project_count}</td>
-                      <td className="px-4 py-3 text-neutral-600">{p.listing_count}</td>
-                      <td className="px-4 py-3 text-neutral-600">{p.assigned_buyers}</td>
-                      <td className="px-4 py-3 text-neutral-500">{formatDate(p.created_at)}</td>
-                      <td className="px-4 py-3 text-neutral-500">{formatDate(p.last_activity_at)}</td>
+                      <td className="px-4 py-3 text-body">{p.project_count}</td>
+                      <td className="px-4 py-3 text-body">{p.listing_count}</td>
+                      <td className="px-4 py-3 text-body">{p.assigned_buyers}</td>
+                      <td className="px-4 py-3 text-muted">{formatDate(p.created_at)}</td>
+                      <td className="px-4 py-3 text-muted">{formatDate(p.last_activity_at)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
             {filteredPartners.length === 0 ? (
-              <p className="py-12 text-center text-sm text-neutral-500">No partners found. Create your first Connect partner.</p>
+              <p className="py-12 text-center text-sm text-muted">No partners found. Create your first Connect partner.</p>
             ) : null}
           </div>
         </>
@@ -505,17 +505,17 @@ export default function AdminConnectPanel() {
             { label: "Partner Listings", value: analytics.totals.listings },
           ].map((card) => (
             <div key={card.label} className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-              <p className="text-3xl font-bold text-neutral-900">{card.value}</p>
-              <p className="mt-1 text-sm text-neutral-500">{card.label}</p>
+              <p className="text-3xl font-bold text-heading-primary">{card.value}</p>
+              <p className="mt-1 text-sm text-muted">{card.label}</p>
             </div>
           ))}
           <div className="col-span-full rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-            <h3 className="mb-4 font-semibold text-neutral-900">Partners by Status</h3>
+            <h3 className="mb-4 font-semibold text-heading-primary">Partners by Status</h3>
             <div className="grid gap-3 sm:grid-cols-4">
               {analytics.byStatus.map((s) => (
                 <div key={s.status} className="rounded-xl bg-neutral-50 px-4 py-3 text-center">
-                  <p className="text-2xl font-bold text-neutral-900">{s.count}</p>
-                  <p className="mt-1 text-xs capitalize text-neutral-500">{s.status}</p>
+                  <p className="text-2xl font-bold text-heading-primary">{s.count}</p>
+                  <p className="mt-1 text-xs capitalize text-muted">{s.status}</p>
                 </div>
               ))}
             </div>
@@ -579,7 +579,7 @@ function AdminConnectBuyersTab({ partners }: { partners: ConnectPartnerListRow[]
   }
 
   if (buyers.length === 0) {
-    return <p className="py-12 text-center text-sm text-neutral-500">No assigned buyers across partners.</p>;
+    return <p className="py-12 text-center text-sm text-muted">No assigned buyers across partners.</p>;
   }
 
   return (
@@ -587,12 +587,12 @@ function AdminConnectBuyersTab({ partners }: { partners: ConnectPartnerListRow[]
       {buyers.map((b) => (
         <div key={b.id} className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
           <div className="flex items-start justify-between gap-2">
-            <p className="font-semibold text-neutral-900">{b.full_name ?? "Buyer"}</p>
+            <p className="font-semibold text-heading-primary">{b.full_name ?? "Buyer"}</p>
             <LeadTemperatureBadge temperature={b.lead_temperature} />
           </div>
-          <p className="mt-1 text-xs text-neutral-500">{b.phone}</p>
+          <p className="mt-1 text-xs text-muted">{b.phone}</p>
           <p className="mt-2 text-xs text-emerald-700">{formatBudget(b.budget_min, b.budget_max)}</p>
-          <p className="mt-2 text-xs text-neutral-500">Partner: {b.partner_name ?? "—"}</p>
+          <p className="mt-2 text-xs text-muted">Partner: {b.partner_name ?? "—"}</p>
         </div>
       ))}
     </div>
@@ -629,7 +629,7 @@ function AdminConnectPropertiesTab({ partners }: { partners: ConnectPartnerListR
   }
 
   if (properties.length === 0) {
-    return <p className="py-12 text-center text-sm text-neutral-500">No assigned properties across partners.</p>;
+    return <p className="py-12 text-center text-sm text-muted">No assigned properties across partners.</p>;
   }
 
   return (
@@ -638,17 +638,17 @@ function AdminConnectPropertiesTab({ partners }: { partners: ConnectPartnerListR
         <thead className="border-b border-neutral-200 bg-neutral-50">
           <tr>
             {["Property", "City", "Status", "Partner"].map((h) => (
-              <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">{h}</th>
+              <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {properties.map((p) => (
             <tr key={p.id} className="border-b border-neutral-100">
-              <td className="px-4 py-3 font-medium text-neutral-900">{p.title}</td>
-              <td className="px-4 py-3 text-neutral-600">{p.city}</td>
-              <td className="px-4 py-3 capitalize text-neutral-600">{p.status}</td>
-              <td className="px-4 py-3 text-neutral-600">{p.partner_name ?? "—"}</td>
+              <td className="px-4 py-3 font-medium text-heading-primary">{p.title}</td>
+              <td className="px-4 py-3 text-body">{p.city}</td>
+              <td className="px-4 py-3 capitalize text-body">{p.status}</td>
+              <td className="px-4 py-3 text-body">{p.partner_name ?? "—"}</td>
             </tr>
           ))}
         </tbody>

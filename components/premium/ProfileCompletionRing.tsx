@@ -56,7 +56,7 @@ export default function ProfileCompletionRing({
         </span>
       </div>
       {showLabel ? (
-        <span className="text-[11px] font-medium text-neutral-500">Profile</span>
+        <span className="text-[11px] font-medium text-muted">Profile</span>
       ) : null}
     </div>
   );

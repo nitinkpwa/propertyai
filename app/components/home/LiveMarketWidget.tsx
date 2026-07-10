@@ -38,7 +38,7 @@ export default function LiveMarketWidget({
     >
       <div className="mb-4 flex items-center justify-between">
         <p
-          className={`text-sm font-semibold ${isHero ? "text-white" : "text-neutral-900"}`}
+          className={`text-sm font-semibold ${isHero ? "text-white" : "text-heading-primary"}`}
           style={isHero ? { textShadow: HERO_TEXT_SHADOW } : undefined}
         >
           Live Market Activity
@@ -76,7 +76,7 @@ export default function LiveMarketWidget({
                 className={`text-sm ${
                   isHero
                     ? "text-white/80 group-hover:text-white"
-                    : "text-neutral-600 group-hover:text-neutral-900"
+                    : "text-body group-hover:text-heading-primary"
                 }`}
                 style={isHero ? { textShadow: "0 1px 6px rgba(0,0,0,0.3)" } : undefined}
               >
@@ -84,7 +84,7 @@ export default function LiveMarketWidget({
               </span>
               <span
                 className={`text-lg font-bold tabular-nums ${
-                  isHero ? "text-white" : "text-neutral-900"
+                  isHero ? "text-white" : "text-heading-primary"
                 }`}
                 style={isHero ? { textShadow: HERO_TEXT_SHADOW } : undefined}
               >

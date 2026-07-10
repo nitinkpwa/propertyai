@@ -64,7 +64,7 @@ function statusBadgeClass(status: string): string {
   if (status === "active" || status === "approved") return "bg-emerald-50 text-emerald-700";
   if (status === "draft" || status === "pending") return "bg-amber-50 text-amber-700";
   if (status === "paused" || status === "rejected") return "bg-red-50 text-red-700";
-  return "bg-neutral-100 text-neutral-600";
+  return "bg-neutral-100 text-body";
 }
 
 function getChatSummary(msgs: Array<{ role: string; content: string }> | undefined): string {
@@ -103,8 +103,8 @@ function StatCard({
       <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-50 text-lg group-hover:bg-emerald-50">
         {icon}
       </div>
-      <p className="text-3xl font-bold tracking-tight text-neutral-900">{value}</p>
-      <p className="mt-1 text-sm font-medium text-neutral-600">{label}</p>
+      <p className="text-3xl font-bold tracking-tight text-heading-primary">{value}</p>
+      <p className="mt-1 text-sm font-medium text-body">{label}</p>
     </div>
   );
 }
@@ -353,7 +353,7 @@ export default function AdminPage() {
         <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
           <div className="mb-6 flex flex-col items-center text-center">
             <Logo size="dashboard" suffix="Admin" href={null} />
-            <p className="mt-4 text-sm text-neutral-500">
+            <p className="mt-4 text-sm text-muted">
               Sign in with your Supabase admin account
             </p>
           </div>
@@ -386,13 +386,13 @@ export default function AdminPage() {
             </div>
           </form>
 
-          <p className="mt-4 text-center text-xs leading-relaxed text-neutral-500">
+          <p className="mt-4 text-center text-xs leading-relaxed text-muted">
             {ADMIN_SETUP_HINT}
           </p>
 
           <a
             href="/"
-            className="mt-4 block text-center text-sm text-neutral-500 no-underline hover:text-neutral-800"
+            className="mt-4 block text-center text-sm text-muted no-underline hover:text-heading-secondary"
           >
             ← Back to website
           </a>
@@ -411,7 +411,7 @@ export default function AdminPage() {
       placeholder="Search..."
       value={searchQ}
       onChange={(e) => setSearchQ(e.target.value)}
-      className="w-full max-w-xs rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+      className="w-full max-w-xs rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-heading-primary outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
     />
   );
 
@@ -444,7 +444,7 @@ export default function AdminPage() {
 
       {tab === "dashboard" && stats ? (
         <div>
-          <h1 className="mb-6 text-2xl font-bold tracking-tight text-neutral-900">Dashboard Overview</h1>
+          <h1 className="mb-6 text-2xl font-bold tracking-tight text-heading-primary">Dashboard Overview</h1>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <StatCard icon="🏠" label="Total Properties" value={stats.totalProperties} />
             <StatCard icon="⏳" label="Pending Properties" value={stats.pendingProperties} />
@@ -459,7 +459,7 @@ export default function AdminPage() {
 
           <div className="mt-8 grid gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-4 font-semibold text-neutral-900">Latest Leads</h2>
+              <h2 className="mb-4 font-semibold text-heading-primary">Latest Leads</h2>
               {leads.slice(0, 5).map((l) => (
                 <Link
                   key={l.id}
@@ -472,25 +472,25 @@ export default function AdminPage() {
                     lookup={profileLookup}
                   />
                   <div className="ml-3 min-w-0 flex-1">
-                    <p className="truncate text-xs text-neutral-500">{l.property?.title ?? "—"}</p>
+                    <p className="truncate text-xs text-muted">{l.property?.title ?? "—"}</p>
                   </div>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(l.status)}`}>
                     {l.status}
                   </span>
                 </Link>
               ))}
-              {leads.length === 0 ? <p className="text-sm text-neutral-500">No leads yet</p> : null}
+              {leads.length === 0 ? <p className="text-sm text-muted">No leads yet</p> : null}
             </div>
             <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-4 font-semibold text-neutral-900">Recent AI Chats</h2>
+              <h2 className="mb-4 font-semibold text-heading-primary">Recent AI Chats</h2>
               {conversations.slice(0, 5).map((c) => (
                 <div key={c.id} className="border-b border-neutral-100 py-3 last:border-0">
                   <AdminProfileInline profile={c.user} profileId={c.user_id} lookup={profileLookup} />
-                  <p className="mt-1 line-clamp-2 text-xs text-neutral-500">{getChatSummary(c.messages)}</p>
+                  <p className="mt-1 line-clamp-2 text-xs text-muted">{getChatSummary(c.messages)}</p>
                 </div>
               ))}
               {conversations.length === 0 ? (
-                <p className="text-sm text-neutral-500">No AI conversations yet</p>
+                <p className="text-sm text-muted">No AI conversations yet</p>
               ) : null}
             </div>
           </div>
@@ -500,7 +500,7 @@ export default function AdminPage() {
       {tab === "properties" ? (
         <div>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <h1 className="text-2xl font-bold text-neutral-900">Property Command Center</h1>
+            <h1 className="text-2xl font-bold text-heading-primary">Property Command Center</h1>
             <button
               type="button"
               onClick={() => {
@@ -533,7 +533,7 @@ export default function AdminPage() {
                 <thead className="border-b border-neutral-200 bg-neutral-50">
                   <tr>
                     {["Property", "Type", "Price", "City", "Seller", "Connect Partner", "Status", "Date", "Actions"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label">
                         {h}
                       </th>
                     ))}
@@ -543,12 +543,12 @@ export default function AdminPage() {
                   {filteredProperties.map((prop) => (
                     <tr key={prop.id} className="border-b border-neutral-100 hover:bg-neutral-50/50">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-neutral-900">{prop.title}</p>
-                        <p className="text-xs text-neutral-500">{prop.sub_type}</p>
+                        <p className="font-medium text-heading-primary">{prop.title}</p>
+                        <p className="text-xs text-muted">{prop.sub_type}</p>
                       </td>
-                      <td className="px-4 py-3 capitalize text-neutral-600">{prop.type}</td>
+                      <td className="px-4 py-3 capitalize text-body">{prop.type}</td>
                       <td className="px-4 py-3 font-semibold text-emerald-700">{formatPrice(prop.price)}</td>
-                      <td className="px-4 py-3 text-neutral-600">{prop.city}</td>
+                      <td className="px-4 py-3 text-body">{prop.city}</td>
                       <td className="px-4 py-3">
                         <AdminPropertySellerInline property={prop} lookup={profileLookup} />
                       </td>
@@ -571,7 +571,7 @@ export default function AdminPage() {
                           {prop.status}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-xs text-neutral-500">{formatDate(prop.created_at)}</td>
+                      <td className="px-4 py-3 text-xs text-muted">{formatDate(prop.created_at)}</td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap gap-1">
                           <Link href={`/admin/properties/${prop.id}`} className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100">CMS</Link>
@@ -586,7 +586,7 @@ export default function AdminPage() {
               </table>
             </div>
             {filteredProperties.length === 0 ? (
-              <p className="py-12 text-center text-sm text-neutral-500">No properties found</p>
+              <p className="py-12 text-center text-sm text-muted">No properties found</p>
             ) : null}
           </div>
         </div>
@@ -594,7 +594,7 @@ export default function AdminPage() {
 
       {tab === "pending" ? (
         <div>
-          <h1 className="mb-2 text-2xl font-bold text-neutral-900">Pending Approval</h1>
+          <h1 className="mb-2 text-2xl font-bold text-heading-primary">Pending Approval</h1>
           {!usesApprovalStatus ? (
             <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               The <code className="font-mono">approval_status</code> column is not in your database. Showing properties with status <strong>draft</strong> as pending. Approve sets status to <strong>active</strong>; reject sets <strong>paused</strong>.
@@ -607,8 +607,8 @@ export default function AdminPage() {
               {pendingProperties.map((prop) => (
                 <article key={prop.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
                   <div className="border-b border-neutral-100 px-5 py-4">
-                    <p className="font-semibold text-neutral-900">{prop.title}</p>
-                    <p className="mt-1 text-sm text-neutral-500">
+                    <p className="font-semibold text-heading-primary">{prop.title}</p>
+                    <p className="mt-1 text-sm text-muted">
                       {prop.city} · {formatPrice(prop.price)}
                       {prop.connect_partner?.company_name ? (
                         <span className="ml-2 text-emerald-700">
@@ -638,7 +638,7 @@ export default function AdminPage() {
                     <div className="flex gap-2">
                       <button type="button" onClick={async () => { await approveProperty(prop.id); await loadAll(); }} className="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-semibold text-white">Approve</button>
                       <button type="button" onClick={async () => { await rejectProperty(prop.id); await loadAll(); }} className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600">Reject</button>
-                      <button type="button" onClick={() => startEdit(prop)} className="rounded-xl border border-neutral-200 px-4 py-2 text-xs font-semibold text-neutral-700">Edit</button>
+                      <button type="button" onClick={() => startEdit(prop)} className="rounded-xl border border-neutral-200 px-4 py-2 text-xs font-semibold text-body">Edit</button>
                     </div>
                   </div>
                 </article>
@@ -651,7 +651,7 @@ export default function AdminPage() {
       {tab === "users" ? (
         <div>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <h1 className="text-2xl font-bold text-neutral-900">Users</h1>
+            <h1 className="text-2xl font-bold text-heading-primary">Users</h1>
             <div className="flex flex-wrap gap-3">
               {searchInput}
               <select value={userRoleFilter} onChange={(e) => setUserRoleFilter(e.target.value)} className="rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm">
@@ -668,7 +668,7 @@ export default function AdminPage() {
               <thead className="border-b border-neutral-200 bg-neutral-50">
                 <tr>
                   {["User", "Phone", "Email", "Role", "Joined", "Status"].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-neutral-500">{h}</th>
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -680,21 +680,21 @@ export default function AdminPage() {
                     <td className="px-4 py-3">
                       <AdminProfileInline profile={p} />
                     </td>
-                    <td className="px-4 py-3 text-neutral-600">{resolved.phone || "—"}</td>
-                    <td className="px-4 py-3 text-neutral-600">{resolved.email || "—"}</td>
+                    <td className="px-4 py-3 text-body">{resolved.phone || "—"}</td>
+                    <td className="px-4 py-3 text-body">{resolved.email || "—"}</td>
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${roleBadgeClass(p.role)}`}>
                         {resolved.roleLabel}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-neutral-500">{formatDate(p.created_at)}</td>
+                    <td className="px-4 py-3 text-muted">{formatDate(p.created_at)}</td>
                     <td className="px-4 py-3"><span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Active</span></td>
                   </tr>
                   );
                 })}
               </tbody>
             </table>
-            {filteredUsers.length === 0 ? <p className="py-12 text-center text-sm text-neutral-500">No users found</p> : null}
+            {filteredUsers.length === 0 ? <p className="py-12 text-center text-sm text-muted">No users found</p> : null}
           </div>
         </div>
       ) : null}
@@ -705,7 +705,7 @@ export default function AdminPage() {
 
       {tab === "visits" ? (
         <div>
-          <h1 className="mb-6 text-2xl font-bold text-neutral-900">Site Visits</h1>
+          <h1 className="mb-6 text-2xl font-bold text-heading-primary">Site Visits</h1>
           {!data?.hasSiteVisitsTable ? (
             <AdminEmptyState icon="📅" title="Site visits table not available" description="The site_visits table is not present in your Supabase schema. Visits will appear here once the table is created." />
           ) : siteVisits.length === 0 ? (
@@ -715,8 +715,8 @@ export default function AdminPage() {
               {siteVisits.map((v) => (
                 <article key={v.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
                   <div className="border-b border-neutral-100 px-5 py-4">
-                    <p className="font-semibold text-neutral-900">{v.property?.title ?? "—"}</p>
-                    <p className="mt-1 text-sm text-neutral-500">
+                    <p className="font-semibold text-heading-primary">{v.property?.title ?? "—"}</p>
+                    <p className="mt-1 text-sm text-muted">
                       {v.visit_date} at {v.visit_time?.slice?.(0, 5) ?? v.visit_time}
                     </p>
                   </div>
@@ -740,7 +740,7 @@ export default function AdminPage() {
 
       {tab === "chats" ? (
         <div>
-          <h1 className="mb-6 text-2xl font-bold text-neutral-900">AI Chats</h1>
+          <h1 className="mb-6 text-2xl font-bold text-heading-primary">AI Chats</h1>
           {!data?.hasConversationsTable ? (
             <AdminEmptyState icon="🤖" title="Conversations table not available" description="The conversations table is not accessible. AI chat history will appear here when available." />
           ) : conversations.length === 0 ? (
@@ -768,11 +768,11 @@ export default function AdminPage() {
                       profileId={c.user_id}
                       lookup={profileLookup}
                       status={getInterest(c.messages)}
-                      statusClassName="bg-neutral-100 text-neutral-600"
+                      statusClassName="bg-neutral-100 text-body"
                       subtitle={`${formatDateTime(c.created_at)} · ${c.messages?.length ?? 0} messages`}
                       className="border-0 bg-transparent p-0"
                     />
-                    <p className="mt-2 line-clamp-2 text-sm text-neutral-600">{getChatSummary(c.messages)}</p>
+                    <p className="mt-2 line-clamp-2 text-sm text-body">{getChatSummary(c.messages)}</p>
                   </button>
                 ))}
               </div>
@@ -785,7 +785,7 @@ export default function AdminPage() {
                       profileId={selectedChat.user_id}
                       lookup={profileLookup}
                       status={getInterest(selectedChat.messages)}
-                      statusClassName="bg-neutral-100 text-neutral-600"
+                      statusClassName="bg-neutral-100 text-body"
                       subtitle={`Started ${formatDateTime(selectedChat.created_at)}`}
                       className="border-0 bg-transparent p-0"
                     />
@@ -793,7 +793,7 @@ export default function AdminPage() {
                   <div className="max-h-[60vh] space-y-3 overflow-y-auto p-4">
                     {(selectedChat.messages ?? []).map((msg, i) => (
                       <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                        <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${msg.role === "user" ? "bg-emerald-500 text-white" : "bg-neutral-100 text-neutral-900"}`}>
+                        <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${msg.role === "user" ? "bg-emerald-500 text-white" : "bg-neutral-100 text-heading-primary"}`}>
                           {msg.content}
                         </div>
                       </div>
@@ -808,45 +808,45 @@ export default function AdminPage() {
 
       {tab === "analytics" && analytics ? (
         <div>
-          <h1 className="mb-6 text-2xl font-bold text-neutral-900">Analytics</h1>
+          <h1 className="mb-6 text-2xl font-bold text-heading-primary">Analytics</h1>
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-4 font-semibold text-neutral-900">Properties by Status</h2>
+              <h2 className="mb-4 font-semibold text-heading-primary">Properties by Status</h2>
               {analytics.propertiesByStatus.map((row) => (
                 <div key={row.status} className="mb-2 flex items-center gap-3">
-                  <span className="w-24 capitalize text-sm text-neutral-600">{row.status}</span>
+                  <span className="w-24 capitalize text-sm text-body">{row.status}</span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-neutral-100">
                     <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, (row.count / Math.max(stats?.totalProperties ?? 1, 1)) * 100)}%` }} />
                   </div>
-                  <span className="w-8 text-right text-sm font-semibold text-neutral-900">{row.count}</span>
+                  <span className="w-8 text-right text-sm font-semibold text-heading-primary">{row.count}</span>
                 </div>
               ))}
             </div>
             <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-4 font-semibold text-neutral-900">Leads by Status</h2>
-              {analytics.leadsByStatus.length === 0 ? <p className="text-sm text-neutral-500">No lead data</p> : null}
+              <h2 className="mb-4 font-semibold text-heading-primary">Leads by Status</h2>
+              {analytics.leadsByStatus.length === 0 ? <p className="text-sm text-muted">No lead data</p> : null}
               {analytics.leadsByStatus.map((row) => (
                 <div key={row.status} className="mb-2 flex justify-between border-b border-neutral-100 py-2 text-sm">
-                  <span className="capitalize text-neutral-600">{row.status}</span>
-                  <span className="font-semibold text-neutral-900">{row.count}</span>
+                  <span className="capitalize text-body">{row.status}</span>
+                  <span className="font-semibold text-heading-primary">{row.count}</span>
                 </div>
               ))}
             </div>
             <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-4 font-semibold text-neutral-900">Users by Role</h2>
+              <h2 className="mb-4 font-semibold text-heading-primary">Users by Role</h2>
               {analytics.usersByRole.map((row) => (
                 <div key={row.role} className="mb-2 flex justify-between border-b border-neutral-100 py-2 text-sm">
-                  <span className="capitalize text-neutral-600">{row.role}</span>
-                  <span className="font-semibold text-neutral-900">{row.count}</span>
+                  <span className="capitalize text-body">{row.role}</span>
+                  <span className="font-semibold text-heading-primary">{row.count}</span>
                 </div>
               ))}
             </div>
             <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-4 font-semibold text-neutral-900">Properties by City</h2>
+              <h2 className="mb-4 font-semibold text-heading-primary">Properties by City</h2>
               {analytics.propertiesByCity.map((row) => (
                 <div key={row.city} className="mb-2 flex justify-between border-b border-neutral-100 py-2 text-sm">
-                  <span className="text-neutral-600">{row.city}</span>
-                  <span className="font-semibold text-neutral-900">{row.count}</span>
+                  <span className="text-body">{row.city}</span>
+                  <span className="font-semibold text-heading-primary">{row.count}</span>
                 </div>
               ))}
             </div>
@@ -856,21 +856,21 @@ export default function AdminPage() {
 
       {tab === "settings" ? (
         <div>
-          <h1 className="mb-6 text-2xl font-bold text-neutral-900">Settings</h1>
+          <h1 className="mb-6 text-2xl font-bold text-heading-primary">Settings</h1>
           <div className="space-y-4">
             <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-              <h2 className="font-semibold text-neutral-900">Admin Access</h2>
-              <p className="mt-2 text-sm text-neutral-500">MVP session gate. Sign out to require admin credentials again.</p>
-              <button type="button" onClick={logoutAdmin} className="mt-4 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50">Sign Out</button>
+              <h2 className="font-semibold text-heading-primary">Admin Access</h2>
+              <p className="mt-2 text-sm text-muted">MVP session gate. Sign out to require admin credentials again.</p>
+              <button type="button" onClick={logoutAdmin} className="mt-4 rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium text-label hover:bg-neutral-50">Sign Out</button>
             </div>
             <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-              <h2 className="font-semibold text-neutral-900">Supabase Connection</h2>
-              <p className="mt-2 text-sm text-neutral-500">Property CRUD, users, leads, and chats load from your live Supabase project.</p>
-              <p className="mt-2 text-xs text-neutral-400">Admin user ID: {adminUserId ?? "Not signed in to Supabase"}</p>
+              <h2 className="font-semibold text-heading-primary">Supabase Connection</h2>
+              <p className="mt-2 text-sm text-muted">Property CRUD, users, leads, and chats load from your live Supabase project.</p>
+              <p className="mt-2 text-xs text-muted">Admin user ID: {adminUserId ?? "Not signed in to Supabase"}</p>
             </div>
             <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
-              <h2 className="font-semibold text-neutral-900">Schema Notes</h2>
-              <ul className="mt-3 space-y-2 text-sm text-neutral-600">
+              <h2 className="font-semibold text-heading-primary">Schema Notes</h2>
+              <ul className="mt-3 space-y-2 text-sm text-body">
                 <li>• Approval workflow: {usesApprovalStatus ? "using approval_status column" : "using status field fallback (draft → pending)"}</li>
                 <li>• Site visits: {data?.hasSiteVisitsTable ? "connected" : "table not found"}</li>
                 <li>• AI chats: {data?.hasConversationsTable ? "connected" : "table not accessible"}</li>
@@ -900,8 +900,8 @@ export default function AdminPage() {
 
       {tab === "bulk" ? (
         <div>
-          <h1 className="mb-2 text-2xl font-bold text-neutral-900">Bulk Import</h1>
-          <p className="mb-6 text-sm text-neutral-500">Import multiple properties using CSV format.</p>
+          <h1 className="mb-2 text-2xl font-bold text-heading-primary">Bulk Import</h1>
+          <p className="mb-6 text-sm text-muted">Import multiple properties using CSV format.</p>
           <div className="max-w-3xl rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
             <div className="mb-4 flex flex-wrap gap-2">
               <button type="button" onClick={() => fileRef.current?.click()} className="rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium">Upload CSV</button>

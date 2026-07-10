@@ -17,8 +17,8 @@ export default function NotificationsTab({ notifications }: { notifications: Sel
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-50 text-3xl">
           🔔
         </div>
-        <h3 className="text-lg font-semibold text-neutral-900">No notifications yet</h3>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-neutral-500">
+        <h3 className="text-lg font-semibold text-heading-primary">No notifications yet</h3>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
           Leads, saves, and visit updates will appear here.
         </p>
       </div>
@@ -34,9 +34,9 @@ export default function NotificationsTab({ notifications }: { notifications: Sel
         >
           <span className="text-xl">{ICONS[n.type]}</span>
           <div>
-            <p className="text-sm font-semibold text-neutral-900">{n.title}</p>
-            <p className="mt-0.5 text-sm text-neutral-600">{n.message}</p>
-            <p className="mt-1 text-xs text-neutral-400">{formatDateTime(n.created_at)}</p>
+            <p className="text-sm font-semibold text-heading-primary">{n.title}</p>
+            <p className="mt-0.5 text-sm text-body">{n.message}</p>
+            <p className="mt-1 text-xs text-muted">{formatDateTime(n.created_at)}</p>
           </div>
         </div>
       ))}

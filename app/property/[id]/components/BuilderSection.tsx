@@ -19,7 +19,7 @@ export default function BuilderSection({ builder }: BuilderSectionProps) {
         </div>
 
         <div className="flex-1">
-          <h3 className="text-xl font-bold text-neutral-900 sm:text-2xl">{builder.name}</h3>
+          <h3 className="text-xl font-bold text-heading-primary sm:text-2xl">{builder.name}</h3>
           <div className="mt-4 grid grid-cols-2 gap-4 sm:gap-8">
             <Stat
               label="Years Experience"
@@ -34,7 +34,7 @@ export default function BuilderSection({ builder }: BuilderSectionProps) {
 
         <button
           type="button"
-          className="w-full shrink-0 rounded-xl border border-neutral-200 px-6 py-3 text-sm font-semibold text-neutral-800 transition-all hover:border-neutral-300 hover:bg-neutral-50 active:scale-[0.98] sm:w-auto"
+          className="w-full shrink-0 rounded-xl border border-neutral-200 px-6 py-3 text-sm font-semibold text-heading-secondary transition-all hover:border-neutral-300 hover:bg-neutral-50 active:scale-[0.98] sm:w-auto"
         >
           View Builder Profile
         </button>
@@ -46,8 +46,8 @@ export default function BuilderSection({ builder }: BuilderSectionProps) {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-2xl font-bold tabular-nums text-neutral-900">{value}</p>
-      <p className="mt-0.5 text-xs font-medium text-neutral-500">{label}</p>
+      <p className="text-2xl font-bold tabular-nums text-heading-primary">{value}</p>
+      <p className="mt-0.5 text-xs font-medium text-label">{label}</p>
     </div>
   );
 }

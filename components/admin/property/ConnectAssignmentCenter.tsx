@@ -153,7 +153,7 @@ export default function ConnectAssignmentCenter({ form, setForm, compact }: Prop
 
       {showCreate ? (
         <div className="rounded-2xl border border-neutral-200 bg-neutral-50/50 p-4">
-          <p className="mb-3 text-sm font-semibold text-neutral-900">Quick Create Partner</p>
+          <p className="mb-3 text-sm font-semibold text-heading-primary">Quick Create Partner</p>
           <FieldGrid cols={2}>
             <Field label="Company Name"><TextInput value={createForm.companyName} onChange={(v) => setCreateForm({ ...createForm, companyName: v })} /></Field>
             <Field label="Manager Name"><TextInput value={createForm.managerName} onChange={(v) => setCreateForm({ ...createForm, managerName: v })} /></Field>
@@ -175,15 +175,15 @@ export default function ConnectAssignmentCenter({ form, setForm, compact }: Prop
 
       {selectedPartner ? (
         <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Partner Profile</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-label">Partner Profile</p>
           <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-lg font-bold text-neutral-900">{selectedPartner.company_name}</p>
-              <p className="text-sm text-neutral-600">{selectedPartner.manager_name}</p>
-              <p className="mt-1 text-xs text-neutral-500">{selectedPartner.email} · {selectedPartner.phone}</p>
-              {selectedPartner.city ? <p className="text-xs text-neutral-500">{selectedPartner.city}</p> : null}
+              <p className="text-lg font-bold text-heading-primary">{selectedPartner.company_name}</p>
+              <p className="text-sm text-body">{selectedPartner.manager_name}</p>
+              <p className="mt-1 text-xs text-muted">{selectedPartner.email} · {selectedPartner.phone}</p>
+              {selectedPartner.city ? <p className="text-xs text-muted">{selectedPartner.city}</p> : null}
             </div>
-            <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-semibold capitalize text-neutral-700">
+            <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-semibold capitalize text-body">
               {selectedPartner.status}
             </span>
           </div>
@@ -191,7 +191,7 @@ export default function ConnectAssignmentCenter({ form, setForm, compact }: Prop
       ) : null}
 
       {detailLoading ? (
-        <p className="text-sm text-neutral-500">Loading partner statistics…</p>
+        <p className="text-sm text-muted">Loading partner statistics…</p>
       ) : analytics ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {[
@@ -203,23 +203,23 @@ export default function ConnectAssignmentCenter({ form, setForm, compact }: Prop
             ["Revenue", "—"],
           ].map(([label, value]) => (
             <div key={label} className="rounded-xl border border-neutral-100 bg-neutral-50 p-3 text-center">
-              <p className="text-lg font-bold text-neutral-900">{value}</p>
-              <p className="text-[11px] text-neutral-500">{label}</p>
+              <p className="text-lg font-bold text-heading-primary">{value}</p>
+              <p className="text-[11px] text-muted">{label}</p>
             </div>
           ))}
         </div>
       ) : form.connect_partner_id ? (
-        <p className="text-sm text-neutral-500">Partner statistics unavailable.</p>
+        <p className="text-sm text-muted">Partner statistics unavailable.</p>
       ) : null}
 
       {recentActivity.length > 0 ? (
         <div className="rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Recent Activity</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-label">Recent Activity</p>
           <ul className="mt-3 space-y-2">
             {recentActivity.map((item) => (
               <li key={item.id} className="flex items-start justify-between gap-3 border-b border-neutral-50 pb-2 text-sm last:border-0">
-                <span className="text-neutral-700">{item.description}</span>
-                <span className="shrink-0 text-[11px] text-neutral-400">
+                <span className="text-body">{item.description}</span>
+                <span className="shrink-0 text-[11px] text-muted">
                   {new Date(item.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                 </span>
               </li>

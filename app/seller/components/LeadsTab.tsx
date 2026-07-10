@@ -89,8 +89,8 @@ export default function LeadsTab({ sellerId }: Props) {
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-3xl">
           📩
         </div>
-        <h3 className="text-lg font-semibold text-neutral-900">No leads yet</h3>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-neutral-500">
+        <h3 className="text-lg font-semibold text-heading-primary">No leads yet</h3>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
           When buyers book site visits or send inquiries, qualified lead cards appear here automatically.
         </p>
       </div>
@@ -100,8 +100,8 @@ export default function LeadsTab({ sellerId }: Props) {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-neutral-900">Buyer Leads</h2>
-        <p className="mt-1 text-sm text-neutral-500">
+        <h2 className="text-xl font-bold text-heading-primary">Buyer Leads</h2>
+        <p className="mt-1 text-sm text-muted">
           {leads.length} active {leads.length === 1 ? "lead" : "leads"} — scored and ranked by engagement
         </p>
       </div>

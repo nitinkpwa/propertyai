@@ -16,8 +16,8 @@ export default function BuyerTopBar({ title, subtitle }: BuyerTopBarProps) {
       <div className="min-w-0">
         {title ? (
           <>
-            <p className="text-sm font-semibold text-neutral-900">{title}</p>
-            {subtitle ? <p className="text-xs text-neutral-500">{subtitle}</p> : null}
+            <p className="text-sm font-semibold text-heading-primary">{title}</p>
+            {subtitle ? <p className="text-xs text-muted">{subtitle}</p> : null}
           </>
         ) : (
           <Logo size="dashboard" href="/buyer" />
@@ -27,7 +27,7 @@ export default function BuyerTopBar({ title, subtitle }: BuyerTopBarProps) {
       <div className="flex items-center gap-2">
         <Link
           href="/ask"
-          className="hidden items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-600 transition hover:bg-white sm:flex"
+          className="hidden items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-body transition hover:bg-white sm:flex"
         >
           <span aria-hidden>🤖</span>
           <span className="font-medium">Ask AI</span>

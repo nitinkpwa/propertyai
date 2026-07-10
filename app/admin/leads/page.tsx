@@ -53,8 +53,8 @@ export default function AdminLeadsPage() {
     >
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900">Buyers</h1>
-          <p className="mt-1 text-sm text-neutral-500">
+          <h1 className="text-2xl font-bold tracking-tight text-heading-primary">Buyers</h1>
+          <p className="mt-1 text-sm text-muted">
             Click any buyer to open their complete profile.
           </p>
         </div>
@@ -73,7 +73,7 @@ export default function AdminLeadsPage() {
       ) : error ? (
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p>
       ) : filtered.length === 0 ? (
-        <p className="py-20 text-center text-sm text-neutral-500">
+        <p className="py-20 text-center text-sm text-muted">
           {leads.length === 0 ? "No buyers yet." : "No buyers match your search."}
         </p>
       ) : (

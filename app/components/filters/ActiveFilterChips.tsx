@@ -32,7 +32,7 @@ export default function ActiveFilterChips({
       <button
         type="button"
         onClick={onClearAll}
-        className="rounded-full px-3 py-1.5 text-xs font-semibold text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-800"
+        className="rounded-full px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:bg-neutral-100 hover:text-heading-secondary"
       >
         Clear All
       </button>

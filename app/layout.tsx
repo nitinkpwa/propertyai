@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -18,8 +18,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AreaIQ",
-  description: "AI-Powered Real Estate Intelligence",
+  title: {
+    default: "AreaIQ",
+    template: "%s | AreaIQ",
+  },
+  description: "AI Powered Real Estate Intelligence Platform",
+  applicationName: "AreaIQ",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "AreaIQ",
+    statusBarStyle: "default",
+  },
+  other: {
+    "msapplication-TileColor": "#22C55E",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#22C55E",
 };
 
 export default function RootLayout({

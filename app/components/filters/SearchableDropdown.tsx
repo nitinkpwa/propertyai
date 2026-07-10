@@ -46,7 +46,7 @@ export default function SearchableDropdown({
 
   return (
     <div ref={rootRef} className="relative">
-      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-neutral-500">
+      <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-label">
         {label}
       </label>
       <div className="relative">
@@ -75,7 +75,7 @@ export default function SearchableDropdown({
             setOpen(true);
             if (!event.target.value.trim()) onChange(null);
           }}
-          className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900 shadow-sm outline-none transition-all duration-200 placeholder:text-neutral-400 focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+          className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-heading-primary shadow-sm outline-none transition-all duration-200 placeholder:text-placeholder focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
         />
         {value && (
           <button
@@ -84,7 +84,7 @@ export default function SearchableDropdown({
               onChange(null);
               setQuery("");
             }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 transition-colors hover:text-neutral-700"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted transition-colors hover:text-body"
             aria-label={`Clear ${label}`}
           >
             ×
@@ -95,7 +95,7 @@ export default function SearchableDropdown({
       {open && (
         <ul className="absolute z-50 mt-2 max-h-52 w-full overflow-auto rounded-xl border border-neutral-200 bg-white p-1.5 shadow-[0_8px_30px_rgba(0,0,0,0.08)]">
           {filtered.length === 0 ? (
-            <li className="px-3 py-2 text-sm text-neutral-400">No matches</li>
+            <li className="px-3 py-2 text-sm text-muted">No matches</li>
           ) : (
             filtered.map((option) => (
               <li key={option}>
@@ -111,7 +111,7 @@ export default function SearchableDropdown({
                     "flex w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-neutral-50",
                     value === option
                       ? "bg-emerald-50 font-medium text-emerald-800"
-                      : "text-neutral-700",
+                      : "text-body",
                   )}
                 >
                   {option}

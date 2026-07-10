@@ -28,8 +28,8 @@ export default function RecentlyViewedPanel({ properties }: RecentlyViewedPanelP
     <section aria-label="Recently viewed">
       <div className="mb-4 flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-bold text-neutral-900">Recently Viewed</h2>
-          <p className="text-xs text-neutral-500">Continue where you left off</p>
+          <h2 className="text-lg font-bold text-heading-primary">Recently Viewed</h2>
+          <p className="text-xs text-muted">Continue where you left off</p>
         </div>
         <Link href="/properties" className="text-sm font-semibold text-emerald-600 hover:text-emerald-700">
           Browse more →
@@ -39,7 +39,7 @@ export default function RecentlyViewedPanel({ properties }: RecentlyViewedPanelP
         {properties.map((property) => (
           <div key={property.id}>
             <PropertyCard {...property} />
-            <p className="mt-2 text-xs text-neutral-400">
+            <p className="mt-2 text-xs text-muted">
               Viewed {formatRelativeTime(property.viewedAt)}
             </p>
           </div>

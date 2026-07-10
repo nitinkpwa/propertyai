@@ -106,7 +106,7 @@ export function statusBadgeClass(status: PropertyListingStatus | string): string
     case "paused":
       return "bg-red-50 text-red-700 ring-1 ring-red-200/60";
     default:
-      return "bg-neutral-100 text-neutral-600 ring-1 ring-neutral-200/60";
+      return "bg-neutral-100 text-body ring-1 ring-neutral-200/60";
   }
 }
 

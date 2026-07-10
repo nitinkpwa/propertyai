@@ -10,7 +10,7 @@ export default function PopularSearches() {
     <section className="bg-white py-16 sm:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeIn>
-          <h2 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+          <h2 className="text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
             Popular searches in Tricity
           </h2>
         </FadeIn>
@@ -26,7 +26,7 @@ export default function PopularSearches() {
             >
               <Link
                 href={s.href}
-                className="flex items-center gap-3 rounded-2xl border border-neutral-200/80 bg-[#F7F9FB] px-4 py-3.5 text-sm font-medium text-neutral-700 no-underline transition-all hover:border-emerald-200 hover:bg-white hover:shadow-sm"
+                className="flex items-center gap-3 rounded-2xl border border-neutral-200/80 bg-[#F7F9FB] px-4 py-3.5 text-sm font-medium text-label no-underline transition-all hover:border-emerald-200 hover:bg-white hover:shadow-sm"
               >
                 <span className="font-bold text-[#16C784]">→</span>
                 {s.label}

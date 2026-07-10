@@ -44,10 +44,10 @@ export default function BookingCard({ property }: BookingCardProps) {
     <aside className="lg:sticky lg:top-24 lg:self-start">
       <div className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:rounded-3xl">
         <div className="border-b border-neutral-100 p-5 sm:p-6">
-          <p className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+          <p className="text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
             {formatPrice(property.price)}
           </p>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-muted">
             ₹{property.pricePerSqFt.toLocaleString("en-IN")} / sq ft
           </p>
 
@@ -77,7 +77,7 @@ export default function BookingCard({ property }: BookingCardProps) {
             <Row label="Status" value={property.status} highlight />
           </div>
 
-          <p className="text-xs leading-relaxed text-neutral-500">
+          <p className="text-xs leading-relaxed text-muted">
             Book a site visit to connect with the seller. Contact details are shared only after your
             request is approved.
           </p>
@@ -96,7 +96,7 @@ export default function BookingCard({ property }: BookingCardProps) {
               <button
                 type="button"
                 onClick={handleShare}
-                className="flex items-center justify-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-2.5 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-50 active:scale-[0.98]"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-neutral-200 px-3 py-2.5 text-sm font-semibold text-body transition-all hover:bg-neutral-50 active:scale-[0.98]"
               >
                 <ShareIcon />
                 {shared ? "Copied!" : "Share"}
@@ -109,7 +109,7 @@ export default function BookingCard({ property }: BookingCardProps) {
                 className={`flex items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-60 ${
                   saved
                     ? "border-rose-200 bg-rose-50 text-rose-600"
-                    : "border-neutral-200 text-neutral-700 hover:bg-neutral-50"
+                    : "border-neutral-200 text-body hover:bg-neutral-50"
                 }`}
               >
                 <HeartIcon filled={saved} />
@@ -144,10 +144,10 @@ function Row({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-neutral-500">{label}</span>
+      <span className="text-muted">{label}</span>
       <span
         className={`flex items-center gap-1 text-right font-medium ${
-          highlight ? "text-emerald-600" : "text-neutral-900"
+          highlight ? "text-emerald-600" : "text-heading-primary"
         }`}
       >
         {icon}

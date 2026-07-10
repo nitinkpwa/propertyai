@@ -47,10 +47,10 @@ export default function PropertyFormTab({
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm sm:p-8">
-      <h2 className="text-xl font-bold text-neutral-900">
+      <h2 className="text-xl font-bold text-heading-primary">
         {editId ? "Edit Property" : "Add New Property"}
       </h2>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-muted">
         {editId ? "Update your listing details below." : "Fill in the details to publish a new listing."}
       </p>
 
@@ -84,7 +84,7 @@ export default function PropertyFormTab({
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex h-20 w-[100px] items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 text-xs text-neutral-500 transition-colors hover:border-emerald-300 hover:bg-emerald-50"
+              className="flex h-20 w-[100px] items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 text-xs text-muted transition-colors hover:border-emerald-300 hover:bg-emerald-50"
             >
               📷 Add
             </button>

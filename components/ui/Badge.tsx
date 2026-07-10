@@ -6,7 +6,7 @@ const VARIANTS: Record<BadgeVariant, string> = {
   warning: "bg-amber-50 text-amber-700 ring-amber-200/80",
   error: "bg-rose-50 text-rose-700 ring-rose-200/80",
   info: "bg-blue-50 text-blue-700 ring-blue-200/80",
-  neutral: "bg-neutral-100 text-neutral-700 ring-neutral-200/80",
+  neutral: "bg-neutral-100 text-body ring-neutral-200/80",
 };
 
 interface BadgeProps {

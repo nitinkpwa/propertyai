@@ -67,10 +67,10 @@ function NavLink({
         active
           ? light
             ? "text-white"
-            : "text-neutral-900"
+            : "text-heading-primary"
           : light
             ? "text-white/70 hover:text-white"
-            : "text-neutral-600 hover:text-neutral-900"
+            : "text-body hover:text-heading-primary"
       }`}
     >
       {label}
@@ -160,7 +160,7 @@ function NavbarInner() {
               className={`hidden rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all duration-200 sm:inline-flex ${
                 isHomeHero
                   ? "border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
-                  : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md"
+                  : "border-neutral-200 bg-white text-body hover:border-neutral-300 hover:bg-neutral-50 hover:shadow-md"
               }`}
             >
               List Property
@@ -174,7 +174,7 @@ function NavbarInner() {
               className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border shadow-sm transition-colors lg:hidden ${
                 isHomeHero
                   ? "border-white/20 bg-white/10 text-white hover:bg-white/20"
-                  : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
+                  : "border-neutral-200 bg-white text-body hover:bg-neutral-50"
               }`}
               aria-expanded={mobileOpen}
               aria-controls="mobile-nav"
@@ -220,13 +220,13 @@ function NavbarInner() {
         aria-hidden={!mobileOpen}
       >
         <div className="flex h-16 items-center justify-between border-b border-neutral-100 px-5">
-          <span className="text-base font-semibold text-neutral-900">
+          <span className="text-base font-semibold text-heading-primary">
             Menu
           </span>
           <button
             type="button"
             onClick={closeMobile}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-800"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-neutral-100 hover:text-heading-secondary"
             aria-label="Close menu"
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
@@ -250,8 +250,8 @@ function NavbarInner() {
                 onClick={closeMobile}
                 className={`rounded-xl px-4 py-3 text-[15px] font-medium transition-colors ${
                   active
-                    ? "bg-emerald-50 text-neutral-900"
-                    : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+                    ? "bg-emerald-50 text-heading-primary"
+                    : "text-body hover:bg-neutral-50 hover:text-heading-primary"
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -280,10 +280,10 @@ function NavbarInner() {
                   {getInitials(profile?.full_name, profile?.username ?? profile?.phone)}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-neutral-900">
+                  <p className="truncate text-sm font-semibold text-heading-primary">
                     {getProfileDisplayName(profile, user)}
                   </p>
-                  <p className="truncate text-xs text-neutral-500">
+                  <p className="truncate text-xs text-muted">
                     {getProfileSubtitle(profile)}
                   </p>
                 </div>
@@ -291,14 +291,14 @@ function NavbarInner() {
               <Link
                 href={dashboardPath}
                 onClick={closeMobile}
-                className="flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-neutral-700 shadow-sm"
+                className="flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-label shadow-sm"
               >
                 Dashboard
               </Link>
               <Link
                 href="/profile"
                 onClick={closeMobile}
-                className="flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-neutral-700 shadow-sm"
+                className="flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-label shadow-sm"
               >
                 Profile
               </Link>
@@ -320,7 +320,7 @@ function NavbarInner() {
               <Link
                 href="/seller"
                 onClick={closeMobile}
-                className="flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-neutral-700 shadow-sm transition-all hover:border-neutral-300 hover:bg-neutral-50"
+                className="flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-label shadow-sm transition-all hover:border-neutral-300 hover:bg-neutral-50"
               >
                 List Property
               </Link>

@@ -28,7 +28,7 @@ export default function SmartChips({ className = "", variant = "default" }: Smar
             className={
               isHero
                 ? "inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-medium text-white/85 no-underline opacity-80 transition-all hover:opacity-100 sm:text-sm"
-                : "inline-flex items-center gap-2 rounded-full border border-neutral-200/80 bg-white/90 px-3.5 py-2 text-xs font-medium text-neutral-700 no-underline shadow-sm backdrop-blur-sm transition-shadow hover:border-emerald-200 hover:shadow-md sm:text-sm"
+                : "inline-flex items-center gap-2 rounded-full border border-neutral-200/80 bg-white/90 px-3.5 py-2 text-xs font-medium text-body no-underline shadow-sm backdrop-blur-sm transition-shadow hover:border-emerald-200 hover:shadow-md sm:text-sm"
             }
             style={
               isHero

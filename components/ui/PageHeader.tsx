@@ -14,10 +14,10 @@ export default function PageHeader({ eyebrow, title, description, action }: Page
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
           {title}
         </h1>
-        {description ? <p className="mt-2 text-sm text-neutral-500">{description}</p> : null}
+        {description ? <p className="mt-2 text-sm text-muted">{description}</p> : null}
       </div>
       {action}
     </div>

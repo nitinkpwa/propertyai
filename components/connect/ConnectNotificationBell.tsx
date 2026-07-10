@@ -47,7 +47,7 @@ export default function ConnectNotificationBell({ userId, onViewAll }: ConnectNo
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-600 transition hover:bg-neutral-50"
+        className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-body transition hover:bg-neutral-50"
         aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
       >
         🔔
@@ -60,7 +60,7 @@ export default function ConnectNotificationBell({ userId, onViewAll }: ConnectNo
       {open ? (
         <div className="absolute right-0 top-full z-50 mt-2 w-[min(100vw-2rem,380px)] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3">
-            <p className="text-sm font-bold text-neutral-900">Notifications</p>
+            <p className="text-sm font-bold text-heading-primary">Notifications</p>
             {unreadCount > 0 ? (
               <button type="button" onClick={() => markAllRead()} className="text-xs font-semibold text-emerald-600">
                 Mark all read
@@ -69,11 +69,11 @@ export default function ConnectNotificationBell({ userId, onViewAll }: ConnectNo
           </div>
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-neutral-500">No notifications yet</div>
+              <div className="px-4 py-8 text-center text-sm text-muted">No notifications yet</div>
             ) : (
               groups.map((group) => (
                 <div key={group.label}>
-                  <p className="bg-neutral-50 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                  <p className="bg-neutral-50 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-label">
                     {group.label}
                   </p>
                   {group.items.map((n) => (
@@ -85,8 +85,8 @@ export default function ConnectNotificationBell({ userId, onViewAll }: ConnectNo
                     >
                       <span>{getNotificationIcon(n.type)}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-neutral-900">{n.title}</p>
-                        <p className="line-clamp-2 text-xs text-neutral-500">{n.message}</p>
+                        <p className="text-sm font-semibold text-heading-primary">{n.title}</p>
+                        <p className="line-clamp-2 text-xs text-muted">{n.message}</p>
                       </div>
                     </button>
                   ))}

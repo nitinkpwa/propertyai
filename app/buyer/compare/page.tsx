@@ -102,7 +102,7 @@ export default function ComparePage() {
 
           {items.length === 1 ? (
             <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50 px-6 py-8 text-center">
-              <p className="text-sm font-medium text-neutral-700">Add one more property to compare</p>
+              <p className="text-sm font-medium text-label">Add one more property to compare</p>
               <ButtonLink href="/buyer/saved" className="mt-3" variant="secondary">
                 Go to Saved Properties
               </ButtonLink>

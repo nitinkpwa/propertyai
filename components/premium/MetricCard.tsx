@@ -30,8 +30,8 @@ export default function MetricCard({
       <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-xl shadow-sm ring-1 ring-black/5">
         {icon}
       </div>
-      <p className="text-3xl font-bold tracking-tight text-neutral-900">{value}</p>
-      <p className="mt-1 text-sm font-medium text-neutral-600">{label}</p>
+      <p className="text-3xl font-bold tracking-tight text-heading-primary">{value}</p>
+      <p className="mt-1 text-sm font-medium text-body">{label}</p>
     </>
   );
 

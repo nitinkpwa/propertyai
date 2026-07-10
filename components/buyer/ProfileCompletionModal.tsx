@@ -314,8 +314,8 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
   ];
 
   const inputClass =
-    "w-full rounded-xl border border-neutral-200 bg-white px-4 py-3.5 text-base text-neutral-900 shadow-sm outline-none transition-all placeholder:text-neutral-400 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10";
-  const labelClass = "mb-2 block text-base font-medium leading-snug text-neutral-800";
+    "w-full rounded-xl border border-neutral-200 bg-white px-4 py-3.5 text-base text-heading-primary shadow-sm outline-none transition-all placeholder:text-placeholder focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10";
+  const labelClass = "mb-2 block text-base font-medium leading-snug text-heading-secondary";
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
@@ -336,15 +336,15 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
             AreaIQ
           </p>
-          <h2 id="profile-wizard-title" className="mt-2 text-2xl font-bold tracking-tight text-neutral-900">
+          <h2 id="profile-wizard-title" className="mt-2 text-2xl font-bold tracking-tight text-heading-primary">
             Complete Your Buyer Profile
           </h2>
-          <p className="mt-2 max-w-xl text-base leading-relaxed text-neutral-500">
+          <p className="mt-2 max-w-xl text-base leading-relaxed text-muted">
             Help us recommend better properties and match you with the right opportunities.
           </p>
 
           <div className="mt-6">
-            <div className="mb-2 flex items-center justify-between text-sm font-medium text-neutral-600">
+            <div className="mb-2 flex items-center justify-between text-sm font-medium text-body">
               <span className="flex items-center gap-2">
                 <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
                 Step {step} of {TOTAL_STEPS}
@@ -360,7 +360,7 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
               />
             </div>
             {completeness.percent > 0 && completeness.percent < 100 ? (
-              <p className="mt-1.5 text-xs text-neutral-400">
+              <p className="mt-1.5 text-xs text-muted">
                 Profile saved: {completeness.percent}% complete overall
               </p>
             ) : null}
@@ -370,8 +370,8 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
         {/* Step content */}
         <div className="flex-1 overflow-y-auto px-8 py-7">
           <div className="mb-6">
-            <h3 className="text-xl font-semibold text-neutral-900">{STEPS[step - 1].title}</h3>
-            <p className="mt-1.5 text-base leading-relaxed text-neutral-500">
+            <h3 className="text-xl font-semibold text-heading-primary">{STEPS[step - 1].title}</h3>
+            <p className="mt-1.5 text-base leading-relaxed text-muted">
               {STEPS[step - 1].description}
             </p>
           </div>
@@ -399,7 +399,7 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
                           className={`flex items-center gap-3 rounded-2xl border px-5 py-4 text-left text-base font-medium transition-all ${
                             purpose === option.value
                               ? "border-emerald-500 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-200"
-                              : "border-neutral-200 text-neutral-700 hover:border-emerald-200 hover:bg-neutral-50"
+                              : "border-neutral-200 text-body hover:border-emerald-200 hover:bg-neutral-50"
                           }`}
                         >
                           <span className="text-xl">{option.icon}</span>
@@ -437,7 +437,7 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
                         Minimum Budget
                       </label>
                       <div className="relative">
-                        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base text-neutral-400">
+                        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base text-muted">
                           ₹
                         </span>
                         <input
@@ -456,7 +456,7 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
                         Maximum Budget
                       </label>
                       <div className="relative">
-                        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base text-neutral-400">
+                        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-base text-muted">
                           ₹
                         </span>
                         <input
@@ -482,7 +482,7 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
                           className={`flex flex-col items-center gap-2 rounded-2xl border px-4 py-5 text-base font-medium transition-all ${
                             loan === option.value
                               ? "border-emerald-500 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-200"
-                              : "border-neutral-200 text-neutral-700 hover:border-emerald-200 hover:bg-neutral-50"
+                              : "border-neutral-200 text-body hover:border-emerald-200 hover:bg-neutral-50"
                           }`}
                         >
                           <span className="text-2xl">{option.icon}</span>
@@ -586,7 +586,7 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
                     placeholder={`Need park facing property\nNeed possession within 6 months\nNear school\nNear airport`}
                     className={`${inputClass} resize-none leading-relaxed`}
                   />
-                  <p className="mt-2 text-sm text-neutral-400">
+                  <p className="mt-2 text-sm text-muted">
                     Optional — share any specific requirements or preferences.
                   </p>
                 </div>
@@ -600,7 +600,7 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
                       className="rounded-2xl border border-neutral-100 bg-neutral-50/80 p-5"
                     >
                       <div className="mb-3 flex items-center justify-between gap-3">
-                        <h4 className="text-base font-semibold text-neutral-900">{section.title}</h4>
+                        <h4 className="text-base font-semibold text-heading-primary">{section.title}</h4>
                         <button
                           type="button"
                           onClick={() => goToStep(section.step, -1)}
@@ -612,10 +612,10 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
                       <dl className="space-y-2.5">
                         {section.items.map((item) => (
                           <div key={item.label} className="flex flex-col gap-0.5 sm:flex-row sm:gap-4">
-                            <dt className="w-36 shrink-0 text-sm font-medium text-neutral-500">
+                            <dt className="w-36 shrink-0 text-sm font-medium text-muted">
                               {item.label}
                             </dt>
-                            <dd className="text-base text-neutral-800">{item.value}</dd>
+                            <dd className="text-base text-heading-secondary">{item.value}</dd>
                           </div>
                         ))}
                       </dl>
@@ -640,7 +640,7 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
                   type="button"
                   onClick={handlePrevious}
                   disabled={saving}
-                  className="inline-flex items-center gap-1.5 rounded-xl px-4 py-3 text-base font-semibold text-neutral-600 transition-colors hover:bg-neutral-100 hover:text-neutral-900 disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-xl px-4 py-3 text-base font-semibold text-body transition-colors hover:bg-neutral-100 hover:text-heading-primary disabled:opacity-50"
                 >
                   ← Previous
                 </button>
@@ -655,7 +655,7 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
                   type="button"
                   onClick={handleSkip}
                   disabled={saving}
-                  className="rounded-xl px-4 py-3 text-sm font-medium text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700 disabled:opacity-50"
+                  className="rounded-xl px-4 py-3 text-sm font-medium text-muted transition-colors hover:bg-neutral-100 hover:text-body disabled:opacity-50"
                 >
                   Skip this Step
                 </button>

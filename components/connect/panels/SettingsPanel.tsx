@@ -59,13 +59,13 @@ export default function SettingsPanel({ partner, onRefresh }: Props) {
       <form onSubmit={handleSave} className={`${connectTokens.card} space-y-4 p-6`}>
         {message ? <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{message}</p> : null}
         <div>
-          <label className="text-xs font-medium text-neutral-500">Company</label>
+          <label className="text-xs font-medium text-label">Company</label>
           <p className="mt-1 rounded-xl bg-neutral-50 px-3 py-2 text-sm font-medium">{partner.company_name}</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {fields.map(({ key, label }) => (
             <div key={key}>
-              <label className="text-xs font-medium text-neutral-500">{label}</label>
+              <label className="text-xs font-medium text-label">{label}</label>
               <input
                 value={form[key]}
                 onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
@@ -75,11 +75,11 @@ export default function SettingsPanel({ partner, onRefresh }: Props) {
           ))}
         </div>
         <div>
-          <label className="text-xs font-medium text-neutral-500">Address</label>
+          <label className="text-xs font-medium text-label">Address</label>
           <textarea value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" rows={2} />
         </div>
         <div>
-          <label className="text-xs font-medium text-neutral-500">Notes</label>
+          <label className="text-xs font-medium text-label">Notes</label>
           <textarea value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} className="mt-1 w-full rounded-xl border px-3 py-2 text-sm" rows={2} />
         </div>
         <button type="submit" disabled={saving} className={connectTokens.btnPrimary}>{saving ? "Saving..." : "Save Settings"}</button>

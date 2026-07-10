@@ -48,7 +48,7 @@ export default function DocumentsPanel() {
         {DOC_TYPES.map((dt) => (
           <button key={dt.id} type="button" onClick={() => handleUpload(dt.id)} className={`${connectTokens.card} p-5 text-left hover:shadow-md`}>
             <span className="text-2xl">{dt.icon}</span>
-            <p className="mt-2 font-semibold text-neutral-900">{dt.label}</p>
+            <p className="mt-2 font-semibold text-heading-primary">{dt.label}</p>
             <p className="text-xs text-emerald-600">+ Upload</p>
           </button>
         ))}
@@ -61,8 +61,8 @@ export default function DocumentsPanel() {
           {docs.map((d) => (
             <div key={d.id} className="flex items-center justify-between p-4">
               <div>
-                <p className="font-medium text-neutral-900">{d.name}</p>
-                <p className="text-xs capitalize text-neutral-500">{d.type.replace(/_/g, " ")} · {new Date(d.uploadedAt).toLocaleDateString("en-IN")}</p>
+                <p className="font-medium text-heading-primary">{d.name}</p>
+                <p className="text-xs capitalize text-muted">{d.type.replace(/_/g, " ")} · {new Date(d.uploadedAt).toLocaleDateString("en-IN")}</p>
               </div>
               <span className="rounded-lg bg-neutral-100 px-2 py-1 text-xs">PDF Preview</span>
             </div>

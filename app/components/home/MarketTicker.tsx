@@ -27,7 +27,7 @@ export default function MarketTicker() {
               style={{ backgroundColor: IQ_GREEN }}
             />
           </span>
-          <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-600">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-body">
             Live
           </span>
         </div>
@@ -37,11 +37,11 @@ export default function MarketTicker() {
               <Link
                 key={`${item.text}-${i}`}
                 href={item.href}
-                className="inline-flex items-center gap-2 px-6 text-xs font-medium text-neutral-600 no-underline transition-colors hover:text-neutral-900"
+                className="inline-flex items-center gap-2 px-6 text-xs font-medium text-body no-underline transition-colors hover:text-heading-primary"
               >
                 <span>{item.icon}</span>
                 <span>{item.text}</span>
-                <span className="text-neutral-300">·</span>
+                <span className="text-muted">·</span>
               </Link>
             ))}
           </div>

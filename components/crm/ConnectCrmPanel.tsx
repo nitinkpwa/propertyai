@@ -63,7 +63,7 @@ export default function ConnectCrmPanel({
 
     if (visits.length === 0) {
       return (
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted">
           No site visits for your assigned buyers yet.
         </p>
       );
@@ -75,17 +75,17 @@ export default function ConnectCrmPanel({
 
       return (
         <li key={v.id} className="px-5 py-4">
-          <p className="font-medium text-neutral-900">
+          <p className="font-medium text-heading-primary">
             {v.property?.title ?? "Property visit"}
           </p>
-          <p className="mt-1 text-sm text-neutral-600">
+          <p className="mt-1 text-sm text-body">
             {v.visit_date} · {String(v.visit_time).slice(0, 5)}
           </p>
           <div className="mt-2">
             <BuyerContactLine buyer={buyer} />
           </div>
           {v.purpose ? (
-            <p className="mt-1 text-xs text-neutral-500">Visit purpose: {v.purpose}</p>
+            <p className="mt-1 text-xs text-muted">Visit purpose: {v.purpose}</p>
           ) : null}
           <span className="mt-2 inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-xs">
             {formatVisitStatusLabel(v.status)}
@@ -125,7 +125,7 @@ export default function ConnectCrmPanel({
           <h4 className="mb-2 text-sm font-semibold">Pending Visits ({pending.length})</h4>
           <ul className="divide-y divide-neutral-100 rounded-2xl border border-neutral-200 bg-white">
             {pending.length === 0 ? (
-              <li className="px-5 py-4 text-sm text-neutral-500">None</li>
+              <li className="px-5 py-4 text-sm text-muted">None</li>
             ) : (
               pending.map((v) => renderVisit(v, true))
             )}
@@ -135,7 +135,7 @@ export default function ConnectCrmPanel({
           <h4 className="mb-2 text-sm font-semibold">Today&apos;s Visits ({todayVisits.length})</h4>
           <ul className="divide-y divide-neutral-100 rounded-2xl border border-neutral-200 bg-white">
             {todayVisits.length === 0 ? (
-              <li className="px-5 py-4 text-sm text-neutral-500">None today</li>
+              <li className="px-5 py-4 text-sm text-muted">None today</li>
             ) : (
               todayVisits.map((v) => renderVisit(v))
             )}
@@ -154,7 +154,7 @@ export default function ConnectCrmPanel({
   if (mode === "properties") {
     if (properties.length === 0) {
       return (
-        <p className="text-sm text-neutral-500">No assigned properties yet.</p>
+        <p className="text-sm text-muted">No assigned properties yet.</p>
       );
     }
     return (
@@ -162,10 +162,10 @@ export default function ConnectCrmPanel({
         {properties.map((p) => (
           <li key={p.id} className="flex items-center justify-between px-5 py-4">
             <div>
-              <p className="font-medium text-neutral-900">{p.title}</p>
-              <p className="text-sm text-neutral-500">{p.city}</p>
+              <p className="font-medium text-heading-primary">{p.title}</p>
+              <p className="text-sm text-muted">{p.city}</p>
             </div>
-            <span className="text-xs capitalize text-neutral-500">{p.status}</span>
+            <span className="text-xs capitalize text-muted">{p.status}</span>
           </li>
         ))}
       </ul>
@@ -174,7 +174,7 @@ export default function ConnectCrmPanel({
 
   if (leads.length === 0) {
     return (
-      <p className="text-sm text-neutral-500">
+      <p className="text-sm text-muted">
         No assigned buyers yet. Master will assign leads to you.
       </p>
     );
@@ -193,12 +193,12 @@ export default function ConnectCrmPanel({
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <p className="font-semibold text-neutral-900">
+                <p className="font-semibold text-heading-primary">
                   {lead.buyer?.full_name ?? "Buyer"}
                 </p>
                 <LeadStatusBadge status={lead.status} />
               </div>
-              <p className="mt-1 text-xs text-neutral-500">{lead.buyer?.phone ?? lead.buyer?.email}</p>
+              <p className="mt-1 text-xs text-muted">{lead.buyer?.phone ?? lead.buyer?.email}</p>
             </button>
           </li>
         ))}
@@ -210,7 +210,7 @@ export default function ConnectCrmPanel({
               buyer={leads.find((l) => l.id === selectedLeadId)?.buyer}
               className="mb-4"
             />
-            <h4 className="mb-3 text-sm font-semibold text-neutral-800">Activity Timeline</h4>
+            <h4 className="mb-3 text-sm font-semibold text-heading-secondary">Activity Timeline</h4>
             <ActivityTimeline activities={activities} maxItems={15} />
           </>
         ) : null}

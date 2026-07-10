@@ -20,7 +20,7 @@ export default function PropertiesPage() {
     <div className="flex min-h-screen flex-col bg-neutral-50">
       <main className="flex-1 pt-16">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
-          <h1 className="mb-8 text-2xl font-bold tracking-tight text-neutral-900 sm:mb-10 sm:text-3xl">
+          <h1 className="mb-8 text-2xl font-bold tracking-tight text-heading-primary sm:mb-10 sm:text-3xl">
             Featured Properties
           </h1>
           <Suspense fallback={<ListingsFallback />}>
@@ -29,7 +29,7 @@ export default function PropertiesPage() {
         </div>
       </main>
 
-      <footer className="border-t border-neutral-200 bg-neutral-900 text-neutral-400">
+      <footer className="border-t border-neutral-200 bg-neutral-900 text-muted">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6 lg:px-8">
           <Logo size="footer" variant="dark" href="/" />
           <p className="text-center text-xs sm:text-sm">

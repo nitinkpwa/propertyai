@@ -37,7 +37,7 @@ export default function ConnectPartnerActivityTimeline({
   const items = activities.slice(0, maxItems);
 
   if (items.length === 0) {
-    return <p className="text-sm text-neutral-500">No activities recorded yet.</p>;
+    return <p className="text-sm text-muted">No activities recorded yet.</p>;
   }
 
   return (
@@ -51,8 +51,8 @@ export default function ConnectPartnerActivityTimeline({
             {TYPE_ICONS[activity.type] ?? "•"}
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-neutral-900">{activity.description}</p>
-            <p className="mt-1 text-xs text-neutral-500">
+            <p className="text-sm font-medium text-heading-primary">{activity.description}</p>
+            <p className="mt-1 text-xs text-muted">
               {formatActivityTime(activity.created_at)}
               {activity.actor?.full_name ? ` · ${activity.actor.full_name}` : ""}
             </p>

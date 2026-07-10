@@ -47,14 +47,14 @@ export default function NotificationsPanel({ userId }: Props) {
         <div className="space-y-6">
           {groups.map((group) => (
             <div key={group.label}>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400">{group.label}</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-label">{group.label}</p>
               <div className="space-y-2">
                 {group.items.map((n) => (
                   <button key={n.id} type="button" onClick={() => { if (!n.read_at) markRead(n.id); }} className={`flex w-full gap-4 rounded-2xl border p-4 text-left ${!n.read_at ? "border-emerald-200 bg-emerald-50/40" : "border-neutral-200 bg-white"}`}>
                     <span className="text-xl">{getNotificationIcon(n.type)}</span>
                     <div>
-                      <p className="font-semibold text-neutral-900">{n.title}</p>
-                      <p className="text-sm text-neutral-600">{n.message}</p>
+                      <p className="font-semibold text-heading-primary">{n.title}</p>
+                      <p className="text-sm text-body">{n.message}</p>
                     </div>
                   </button>
                 ))}

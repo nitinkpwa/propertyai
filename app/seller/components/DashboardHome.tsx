@@ -22,8 +22,8 @@ export default function DashboardHome({ stats }: { stats: SellerDashboardStats }
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-xl font-bold tracking-tight text-neutral-900">Dashboard Overview</h2>
-        <p className="mt-1 text-sm text-neutral-500">Track your listings and buyer engagement at a glance.</p>
+        <h2 className="text-xl font-bold tracking-tight text-heading-primary">Dashboard Overview</h2>
+        <p className="mt-1 text-sm text-muted">Track your listings and buyer engagement at a glance.</p>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {STAT_CARDS.map((s) => (
@@ -34,9 +34,9 @@ export default function DashboardHome({ stats }: { stats: SellerDashboardStats }
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-50 text-lg transition-colors group-hover:bg-emerald-50">
               {s.icon}
             </div>
-            <p className="text-3xl font-bold tracking-tight text-neutral-900">{stats[s.key]}</p>
-            <p className="mt-1 text-sm font-semibold text-neutral-800">{s.label}</p>
-            <p className="mt-0.5 text-xs text-neutral-500">{s.description}</p>
+            <p className="text-3xl font-bold tracking-tight text-heading-primary">{stats[s.key]}</p>
+            <p className="mt-1 text-sm font-semibold text-heading-secondary">{s.label}</p>
+            <p className="mt-0.5 text-xs text-muted">{s.description}</p>
           </div>
         ))}
       </div>

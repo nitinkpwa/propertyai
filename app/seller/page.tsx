@@ -297,7 +297,7 @@ export default function SellerDashboard() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA] font-sans text-neutral-600">
+      <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA] font-sans text-body">
         <div className="text-center">
           <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
           Loading dashboard...
@@ -324,11 +324,11 @@ export default function SellerDashboard() {
     >
       {tab !== "home" ? (
         <div className="mb-6 transition-opacity duration-300">
-          <h2 className="text-2xl font-bold tracking-tight text-neutral-900">
+          <h2 className="text-2xl font-bold tracking-tight text-heading-primary">
             {TAB_TITLES[tab]}
           </h2>
           {tab === "listings" ? (
-            <p className="mt-1 text-sm text-neutral-500">
+            <p className="mt-1 text-sm text-muted">
               {stats.activeListings} active · {stats.totalProperties} total properties
             </p>
           ) : null}

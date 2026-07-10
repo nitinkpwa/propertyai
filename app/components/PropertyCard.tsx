@@ -53,10 +53,10 @@ function growthTone(score: number | null): {
   text: string;
   bg: string;
 } {
-  if (score === null) return { bar: "bg-neutral-300", text: "text-neutral-400", bg: "bg-neutral-50" };
+  if (score === null) return { bar: "bg-neutral-300", text: "text-muted", bg: "bg-neutral-50" };
   if (score >= 75) return { bar: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" };
   if (score >= 50) return { bar: "bg-amber-400", text: "text-amber-700", bg: "bg-amber-50" };
-  return { bar: "bg-neutral-400", text: "text-neutral-600", bg: "bg-neutral-50" };
+  return { bar: "bg-neutral-400", text: "text-body", bg: "bg-neutral-50" };
 }
 
 function HeartIcon({ filled }: { filled: boolean }) {
@@ -201,7 +201,7 @@ export default function PropertyCard({
         <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
           <div className="flex flex-wrap gap-1.5">
             {aiVerified && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-neutral-800 shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-heading-secondary shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
                 <span className="text-emerald-500">
                   <SparkIcon />
                 </span>
@@ -209,7 +209,7 @@ export default function PropertyCard({
               </span>
             )}
             {reraVerified && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-neutral-800 shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-heading-secondary shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
                 <span className="text-blue-600">
                   <ShieldIcon />
                 </span>
@@ -226,7 +226,7 @@ export default function PropertyCard({
             className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-white/95 shadow-[0_2px_8px_rgba(0,0,0,0.1)] backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 ${
               isFavorite
                 ? "border-rose-200 text-rose-500"
-                : "border-transparent text-neutral-600 hover:text-rose-500"
+                : "border-transparent text-body hover:text-rose-500"
             }`}
           >
             <HeartIcon filled={isFavorite} />
@@ -237,11 +237,11 @@ export default function PropertyCard({
       {/* Content */}
       <div className="flex flex-1 flex-col p-4 sm:p-5">
         <div className="mb-3 flex-1">
-          <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-neutral-900 sm:text-base">
+          <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-heading-primary sm:text-base">
             {name}
           </h3>
 
-          <p className="mt-1 flex items-center gap-1 text-sm text-neutral-500">
+          <p className="mt-1 flex items-center gap-1 text-sm text-muted">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="shrink-0" aria-hidden>
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
               <circle cx="12" cy="10" r="3" />
@@ -249,34 +249,34 @@ export default function PropertyCard({
             <span className="line-clamp-1">{locationLabel}</span>
           </p>
 
-          <p className="mt-2 text-xs font-medium uppercase tracking-wider text-neutral-400">
+          <p className="mt-2 text-xs font-medium uppercase tracking-wider text-muted">
             by {builderName}
           </p>
 
           <div className="mt-3 flex items-end justify-between gap-3">
-            <p className="text-lg font-bold tracking-tight text-neutral-900 sm:text-xl">
+            <p className="text-lg font-bold tracking-tight text-heading-primary sm:text-xl">
               {formatPrice(price)}
             </p>
-            <span className="shrink-0 rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-semibold text-neutral-700">
+            <span className="shrink-0 rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-semibold text-body">
               {bhk > 0 ? `${bhk} BHK` : "—"}
             </span>
           </div>
 
-          <p className="mt-1.5 text-sm text-neutral-500">{formatArea(area, areaUnit)}</p>
+          <p className="mt-1.5 text-sm text-muted">{formatArea(area, areaUnit)}</p>
         </div>
 
         {/* Intelligence metrics */}
         <div className="mb-4 grid grid-cols-2 gap-2.5">
           <div className={`rounded-xl px-3 py-2.5 ${growthScore !== null ? growth.bg : "bg-neutral-50"}`}>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-label">
               AreaIQ Growth
             </p>
             <div className="mt-1 flex items-baseline gap-1">
-              <span className={`text-lg font-bold tabular-nums ${growthScore !== null ? growth.text : "text-neutral-400"}`}>
+              <span className={`text-lg font-bold tabular-nums ${growthScore !== null ? growth.text : "text-muted"}`}>
                 {growthScore !== null ? clampedScore : "N/A"}
               </span>
               {growthScore !== null ? (
-                <span className="text-xs font-medium text-neutral-400">/ 100</span>
+                <span className="text-xs font-medium text-muted">/ 100</span>
               ) : null}
             </div>
             {growthScore !== null ? (
@@ -287,20 +287,20 @@ export default function PropertyCard({
                 />
               </div>
             ) : (
-              <p className="mt-2 text-[10px] text-neutral-400">Insufficient data</p>
+              <p className="mt-2 text-[10px] text-muted">Insufficient data</p>
             )}
           </div>
 
           <div className="rounded-xl bg-neutral-50 px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-label">
               Rental Yield
             </p>
-            <p className="mt-1 text-lg font-bold tabular-nums text-neutral-900">
+            <p className="mt-1 text-lg font-bold tabular-nums text-heading-primary">
               {rentalYield !== null
                 ? `${rentalYield % 1 === 0 ? rentalYield.toFixed(0) : rentalYield.toFixed(1)}%`
                 : "N/A"}
             </p>
-            <p className="mt-2 text-[11px] font-medium text-neutral-400">
+            <p className="mt-2 text-[11px] font-medium text-muted">
               {rentalYield !== null ? "AreaIQ calculated" : "Insufficient data"}
             </p>
           </div>
@@ -315,7 +315,7 @@ export default function PropertyCard({
             className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
               isCompared
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50"
+                : "border-neutral-200 bg-white text-body hover:border-neutral-300 hover:bg-neutral-50"
             }`}
           >
             <CompareIcon />

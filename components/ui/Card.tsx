@@ -41,8 +41,8 @@ export function CardHeader({
   return (
     <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 className="text-lg font-bold text-neutral-900">{title}</h2>
-        {description ? <p className="mt-0.5 text-sm text-neutral-500">{description}</p> : null}
+        <h2 className="text-lg font-bold text-heading-primary">{title}</h2>
+        {description ? <p className="mt-0.5 text-sm text-muted">{description}</p> : null}
       </div>
       {action}
     </div>

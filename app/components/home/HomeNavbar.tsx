@@ -45,7 +45,7 @@ export default function HomeNavbar() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-neutral-600 no-underline transition-all hover:bg-white/80 hover:text-neutral-900"
+                className="rounded-xl px-4 py-2 text-sm font-medium text-body no-underline transition-all hover:bg-white/80 hover:text-heading-primary"
               >
                 {link.label}
               </Link>
@@ -55,7 +55,7 @@ export default function HomeNavbar() {
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/seller"
-              className="hidden rounded-full border border-neutral-200/80 bg-white/80 px-4 py-2 text-sm font-medium text-neutral-700 no-underline shadow-sm transition-all hover:shadow-md sm:inline-flex"
+              className="hidden rounded-full border border-neutral-200/80 bg-white/80 px-4 py-2 text-sm font-medium text-label no-underline shadow-sm transition-all hover:shadow-md sm:inline-flex"
             >
               List Property
             </Link>
@@ -89,12 +89,12 @@ export default function HomeNavbar() {
               <Link
                 key={link.label}
                 href={link.href}
-                className="rounded-xl px-4 py-3 text-sm font-medium text-neutral-700 no-underline hover:bg-[#F7F9FB]"
+                className="rounded-xl px-4 py-3 text-sm font-medium text-label no-underline hover:bg-[#F7F9FB]"
               >
                 {link.label}
               </Link>
             ))}
-            <Link href="/seller" className="rounded-xl px-4 py-3 text-sm font-medium text-neutral-700 no-underline hover:bg-[#F7F9FB]">
+            <Link href="/seller" className="rounded-xl px-4 py-3 text-sm font-medium text-label no-underline hover:bg-[#F7F9FB]">
               List Property
             </Link>
             {!user ? (

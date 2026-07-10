@@ -16,8 +16,8 @@ export default function LocationSection({ property }: LocationSectionProps) {
       <div className="relative mb-6 aspect-[16/9] overflow-hidden rounded-2xl border border-neutral-200 bg-gradient-to-br from-emerald-100/50 via-neutral-100 to-neutral-200 sm:rounded-3xl">
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <span className="text-4xl">🗺️</span>
-          <p className="text-sm font-medium text-neutral-500">Google Map</p>
-          <p className="text-xs text-neutral-400">Interactive map placeholder</p>
+          <p className="text-sm font-medium text-muted">Google Map</p>
+          <p className="text-xs text-muted">Interactive map placeholder</p>
         </div>
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-full">
           <div className="flex flex-col items-center">
@@ -31,7 +31,7 @@ export default function LocationSection({ property }: LocationSectionProps) {
         </div>
       </div>
 
-      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-neutral-500">Nearby Places</h3>
+      <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">Nearby Places</h3>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {property.nearbyPlaces.map((place) => (
           <div
@@ -42,8 +42,8 @@ export default function LocationSection({ property }: LocationSectionProps) {
               {getPlaceIcon(place.type)}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-neutral-900">{place.name}</p>
-              <p className="text-xs text-neutral-500">{place.distance}</p>
+              <p className="truncate text-sm font-semibold text-heading-primary">{place.name}</p>
+              <p className="text-xs text-muted">{place.distance}</p>
             </div>
           </div>
         ))}

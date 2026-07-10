@@ -113,10 +113,10 @@ export default function BuyerSidebar({
             {initials || "B"}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-neutral-900">
+            <p className="truncate text-sm font-semibold text-heading-primary">
               {fullName ?? "Buyer"}
             </p>
-            <p className="text-xs text-neutral-500">Buyer Portal</p>
+            <p className="text-xs text-muted">Buyer Portal</p>
           </div>
         </div>
       </div>
@@ -133,10 +133,10 @@ export default function BuyerSidebar({
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                 active
                   ? "bg-emerald-50 text-emerald-800 shadow-[inset_0_0_0_1px_rgba(34,197,94,0.15)]"
-                  : "text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900"
+                  : "text-body hover:bg-neutral-50 hover:text-heading-primary"
               }`}
             >
-              <span className={active ? "text-emerald-600" : "text-neutral-400"}>
+              <span className={active ? "text-emerald-600" : "text-muted"}>
                 <NavIcon icon={item.icon} />
               </span>
               <span className="flex-1">{item.label}</span>
@@ -167,7 +167,7 @@ export default function BuyerSidebar({
         <Link
           href="/properties"
           onClick={onCloseMobile}
-          className="flex items-center justify-center rounded-xl border border-neutral-200 px-3 py-2.5 text-sm font-semibold text-neutral-700 transition-all hover:bg-neutral-50"
+          className="flex items-center justify-center rounded-xl border border-neutral-200 px-3 py-2.5 text-sm font-semibold text-body transition-all hover:bg-neutral-50"
         >
           Browse Properties
         </Link>

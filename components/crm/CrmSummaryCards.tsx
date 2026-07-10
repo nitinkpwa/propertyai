@@ -33,8 +33,8 @@ export default function CrmSummaryCards({
           <span className="text-lg" aria-hidden>
             {card.icon}
           </span>
-          <p className="mt-2 text-2xl font-bold text-neutral-900">{card.value}</p>
-          <p className="mt-0.5 text-xs font-medium text-neutral-500 group-hover:text-emerald-600">
+          <p className="mt-2 text-2xl font-bold text-heading-primary">{card.value}</p>
+          <p className="mt-0.5 text-xs font-medium text-label group-hover:text-emerald-600">
             {card.label}
           </p>
         </Link>

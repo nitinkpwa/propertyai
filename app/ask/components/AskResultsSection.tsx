@@ -16,7 +16,7 @@ export function AskSortBar({ sortKey, sortDirection, onSortChange }: AskSortBarP
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="text-sm font-medium text-neutral-500">Sort:</span>
+      <span className="text-sm font-medium text-muted">Sort:</span>
       {keys.map((key) => {
         const active = sortKey === key;
         return (
@@ -27,7 +27,7 @@ export function AskSortBar({ sortKey, sortDirection, onSortChange }: AskSortBarP
             className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
               active
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50"
+                : "border-neutral-200 bg-white text-body hover:bg-neutral-50"
             }`}
           >
             {sortLabel(key)}
@@ -47,8 +47,8 @@ export function AskResultsGrid({ listings }: AskResultsGridProps) {
   if (listings.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-neutral-200 bg-white px-6 py-14 text-center">
-        <p className="text-base font-semibold text-neutral-900">No properties match these filters</p>
-        <p className="mt-2 text-sm text-neutral-500">
+        <p className="text-base font-semibold text-heading-primary">No properties match these filters</p>
+        <p className="mt-2 text-sm text-muted">
           Try adjusting your refine options or search with a broader query.
         </p>
       </div>

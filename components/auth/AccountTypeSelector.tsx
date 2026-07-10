@@ -20,7 +20,7 @@ export default function AccountTypeSelector({
 }: AccountTypeSelectorProps) {
   return (
     <div className="mb-4">
-      <p className="mb-2 block text-sm font-medium text-neutral-700">Account Type</p>
+      <p className="mb-2 block text-sm font-medium text-label">Account Type</p>
       <div className="grid grid-cols-2 gap-2">
         {OPTIONS.map((option) => {
           const selected = value === option.value;
@@ -38,12 +38,12 @@ export default function AccountTypeSelector({
             >
               <span
                 className={`block text-sm font-semibold ${
-                  selected ? "text-emerald-700" : "text-neutral-800"
+                  selected ? "text-emerald-700" : "text-heading-secondary"
                 }`}
               >
                 {option.label}
               </span>
-              <span className="mt-0.5 block text-[10px] leading-tight text-neutral-500">
+              <span className="mt-0.5 block text-[10px] leading-tight text-muted">
                 {option.description}
               </span>
             </button>

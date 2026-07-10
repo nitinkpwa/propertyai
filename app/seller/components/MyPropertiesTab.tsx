@@ -44,7 +44,7 @@ function PropertyActionsMenu({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+        className="inline-flex items-center gap-1 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-body transition-colors hover:bg-neutral-50"
       >
         Actions ▾
       </button>
@@ -56,16 +56,16 @@ function PropertyActionsMenu({
               href={`/property/${prop.id}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-50"
+              className="block px-3 py-2 text-xs font-medium text-body hover:bg-neutral-50"
             >
               View
             </a>
-            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-neutral-700 hover:bg-neutral-50" onClick={() => { onEdit(prop); setOpen(false); }}>Edit</button>
-            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-neutral-700 hover:bg-neutral-50" onClick={() => { onTogglePause(prop.id, prop.status); setOpen(false); }}>
+            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onEdit(prop); setOpen(false); }}>Edit</button>
+            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onTogglePause(prop.id, prop.status); setOpen(false); }}>
               {prop.status === "active" ? "Pause" : "Activate"}
             </button>
-            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-neutral-700 hover:bg-neutral-50" onClick={() => { onMarkSold(prop.id); setOpen(false); }}>Mark Sold</button>
-            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-neutral-700 hover:bg-neutral-50" onClick={() => { onDuplicate(prop.id); setOpen(false); }}>Duplicate</button>
+            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onMarkSold(prop.id); setOpen(false); }}>Mark Sold</button>
+            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onDuplicate(prop.id); setOpen(false); }}>Duplicate</button>
             <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50" onClick={() => { onDelete(prop.id); setOpen(false); }}>Delete</button>
           </div>
         </>
@@ -122,8 +122,8 @@ export default function MyPropertiesTab({
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-neutral-50 text-3xl">
           🏠
         </div>
-        <h3 className="text-lg font-semibold text-neutral-900">No properties yet</h3>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-neutral-500">
+        <h3 className="text-lg font-semibold text-heading-primary">No properties yet</h3>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
           Create your first listing to start receiving leads and tracking performance.
         </p>
         {onCreateListing ? (
@@ -194,8 +194,8 @@ export default function MyPropertiesTab({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                  <h3 className="font-semibold text-neutral-900">{prop.title}</h3>
-                  <p className="mt-0.5 text-xs text-neutral-500">
+                  <h3 className="font-semibold text-heading-primary">{prop.title}</h3>
+                  <p className="mt-0.5 text-xs text-muted">
                     {prop.location}, {prop.city}
                   </p>
                 </div>
@@ -206,7 +206,7 @@ export default function MyPropertiesTab({
                 </span>
               </div>
               <p className="mt-2 text-base font-bold text-emerald-600">{formatPrice(prop.price)}</p>
-              <div className="mt-2 flex flex-wrap gap-3 text-xs text-neutral-500">
+              <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted">
                 <span>👁 {prop.view_count} views</span>
                 <span>📩 {prop.lead_count} leads</span>
                 <span>Updated {formatDate(prop.updated_at ?? prop.created_at)}</span>
@@ -227,7 +227,7 @@ export default function MyPropertiesTab({
       {filtered.length > PAGE_SIZE ? (
         <div className="mt-6 flex items-center justify-center gap-3">
           <button type="button" style={btnSecondary} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</button>
-          <span className="text-sm text-neutral-500">Page {page + 1} of {totalPages}</span>
+          <span className="text-sm text-muted">Page {page + 1} of {totalPages}</span>
           <button type="button" style={btnSecondary} disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>Next</button>
         </div>
       ) : null}

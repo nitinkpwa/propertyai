@@ -47,14 +47,14 @@ interface ContactInfo {
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   return (
     <div>
-      <p className="text-xs font-medium text-neutral-600">{label}</p>
+      <p className="text-xs font-medium text-body">{label}</p>
       <div className="mt-1 flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
             type="button"
             onClick={() => onChange(star)}
-            className={`text-lg transition ${star <= value ? "text-amber-400" : "text-neutral-200"}`}
+            className={`text-lg transition ${star <= value ? "text-amber-400" : "text-placeholder"}`}
             aria-label={`${star} stars`}
           >
             ★
@@ -94,8 +94,8 @@ function VisitFeedbackForm({ visitId, onDone }: { visitId: string; onDone: () =>
   return (
     <form onSubmit={handleSubmit} className="space-y-4 border-t border-neutral-100 pt-5">
       <div>
-        <p className="text-sm font-semibold text-neutral-800">Post-Visit Feedback</p>
-        <p className="text-xs text-neutral-500">Your feedback helps AI refine recommendations</p>
+        <p className="text-sm font-semibold text-heading-secondary">Post-Visit Feedback</p>
+        <p className="text-xs text-muted">Your feedback helps AI refine recommendations</p>
       </div>
       <textarea
         value={notes}
@@ -117,14 +117,14 @@ function VisitFeedbackForm({ visitId, onDone }: { visitId: string; onDone: () =>
         <button
           type="button"
           onClick={() => setWouldBuy(true)}
-          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${wouldBuy === true ? "bg-emerald-600 text-white" : "bg-neutral-100 text-neutral-600"}`}
+          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${wouldBuy === true ? "bg-emerald-600 text-white" : "bg-neutral-100 text-body"}`}
         >
           👍 Would Buy
         </button>
         <button
           type="button"
           onClick={() => setWouldBuy(false)}
-          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${wouldBuy === false ? "bg-rose-600 text-white" : "bg-neutral-100 text-neutral-600"}`}
+          className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${wouldBuy === false ? "bg-rose-600 text-white" : "bg-neutral-100 text-body"}`}
         >
           👎 Would Not Buy
         </button>
@@ -200,17 +200,17 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div className="rounded-xl bg-neutral-50 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Date</p>
-            <p className="mt-1 text-sm font-semibold text-neutral-900">{formatVisitDate(visit.visit_date)}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-label">Date</p>
+            <p className="mt-1 text-sm font-semibold text-heading-primary">{formatVisitDate(visit.visit_date)}</p>
           </div>
           <div className="rounded-xl bg-neutral-50 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Time</p>
-            <p className="mt-1 text-sm font-semibold text-neutral-900">{formatVisitTime(visit.visit_time)}</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-label">Time</p>
+            <p className="mt-1 text-sm font-semibold text-heading-primary">{formatVisitTime(visit.visit_time)}</p>
           </div>
           {visit.builder_name ? (
             <div className="col-span-2 rounded-xl bg-neutral-50 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Builder</p>
-              <p className="mt-1 text-sm font-semibold text-neutral-900">{visit.builder_name}</p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-label">Builder</p>
+              <p className="mt-1 text-sm font-semibold text-heading-primary">{visit.builder_name}</p>
             </div>
           ) : null}
         </div>
@@ -223,7 +223,7 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
                 href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-body transition hover:bg-neutral-50"
               >
                 🗺️ Route Map
               </a>
@@ -231,7 +231,7 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
                 href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Site Visit: ${visit.property?.title ?? "Property"}`)}&dates=${visit.visit_date.replace(/-/g, "")}/${visit.visit_date.replace(/-/g, "")}&details=${encodeURIComponent(`Visit at ${visit.property?.location ?? ""}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-neutral-700 transition hover:bg-neutral-50"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-body transition hover:bg-neutral-50"
               >
                 📆 Add to Calendar
               </a>
@@ -274,7 +274,7 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
             ) : null}
           </div>
         ) : contact?.message ? (
-          <p className="text-sm text-neutral-500">{contact.message}</p>
+          <p className="text-sm text-muted">{contact.message}</p>
         ) : null}
 
         {checklist.length > 0 ? (
@@ -282,7 +282,7 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
             <p className="text-sm font-semibold text-emerald-900">🤖 AI Visit Checklist</p>
             <ul className="mt-2 space-y-1.5">
               {checklist.map((item) => (
-                <li key={item} className="flex items-center gap-2 text-sm text-neutral-600">
+                <li key={item} className="flex items-center gap-2 text-sm text-body">
                   <span className="text-emerald-500">☐</span> {item}
                 </li>
               ))}
@@ -371,7 +371,7 @@ export default function SiteVisitsPage() {
         <>
           {upcoming.length > 0 ? (
             <section>
-              <h2 className="mb-4 text-lg font-bold text-neutral-900">Upcoming ({upcoming.length})</h2>
+              <h2 className="mb-4 text-lg font-bold text-heading-primary">Upcoming ({upcoming.length})</h2>
               <div className="space-y-4">
                 {upcoming.map((visit) => (
                   <VisitCard key={visit.id} visit={visit} />
@@ -381,7 +381,7 @@ export default function SiteVisitsPage() {
           ) : null}
           {past.length > 0 ? (
             <section>
-              <h2 className="mb-4 text-lg font-bold text-neutral-900">Past Visits ({past.length})</h2>
+              <h2 className="mb-4 text-lg font-bold text-heading-primary">Past Visits ({past.length})</h2>
               <div className="space-y-4">
                 {past.map((visit) => (
                   <VisitCard key={visit.id} visit={visit} />

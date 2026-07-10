@@ -13,7 +13,7 @@ const STATUS_COLORS: Record<LeadStatus, string> = {
   negotiation: "bg-yellow-50 text-yellow-800 ring-yellow-100",
   booked: "bg-emerald-50 text-emerald-700 ring-emerald-100",
   completed: "bg-green-50 text-green-800 ring-green-100",
-  lost: "bg-neutral-100 text-neutral-600 ring-neutral-200",
+  lost: "bg-neutral-100 text-body ring-neutral-200",
 };
 
 interface LeadStatusBadgeProps {

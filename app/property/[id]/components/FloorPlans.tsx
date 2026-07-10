@@ -30,7 +30,7 @@ export default function FloorPlans({ floorPlans }: FloorPlansProps) {
             className={`shrink-0 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 ${
               active === bhk
                 ? "bg-emerald-500 text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)]"
-                : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                : "bg-neutral-100 text-body hover:bg-neutral-200"
             }`}
           >
             {bhk} BHK
@@ -47,12 +47,12 @@ export default function FloorPlans({ floorPlans }: FloorPlansProps) {
                   <div key={i} className="aspect-square rounded-lg border-2 border-dashed border-neutral-300 bg-white/50" />
                 ))}
               </div>
-              <p className="text-sm font-medium text-neutral-500">{plan.label} — Floor Plan</p>
+              <p className="text-sm font-medium text-muted">{plan.label} — Floor Plan</p>
             </div>
           </div>
 
           <div className="flex flex-col justify-center space-y-4">
-            <h3 className="text-lg font-bold text-neutral-900">{plan.label}</h3>
+            <h3 className="text-lg font-bold text-heading-primary">{plan.label}</h3>
             <dl className="space-y-3">
               <SpecRow label="Configuration" value={`${plan.bhk} BHK`} />
               <SpecRow label="Super Area" value={`${plan.area.toLocaleString("en-IN")} sq ft`} />
@@ -74,8 +74,8 @@ export default function FloorPlans({ floorPlans }: FloorPlansProps) {
 function SpecRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-      <dt className="text-sm text-neutral-500">{label}</dt>
-      <dd className={`text-sm font-semibold ${highlight ? "text-emerald-600" : "text-neutral-900"}`}>{value}</dd>
+      <dt className="text-sm text-muted">{label}</dt>
+      <dd className={`text-sm font-semibold ${highlight ? "text-emerald-600" : "text-heading-primary"}`}>{value}</dd>
     </div>
   );
 }

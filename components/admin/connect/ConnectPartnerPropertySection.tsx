@@ -35,9 +35,9 @@ export default function ConnectPartnerPropertySection({
       </h3>
       <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-semibold text-neutral-900">{partner.company_name}</p>
-          <p className="mt-1 text-sm text-neutral-600">{partner.manager_name}</p>
-          <p className="text-sm text-neutral-500">{partner.email} · {partner.phone}</p>
+          <p className="font-semibold text-heading-primary">{partner.company_name}</p>
+          <p className="mt-1 text-sm text-body">{partner.manager_name}</p>
+          <p className="text-sm text-muted">{partner.email} · {partner.phone}</p>
         </div>
         <PartnerStatusBadge status={partner.status} />
       </div>

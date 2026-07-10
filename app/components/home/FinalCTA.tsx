@@ -13,7 +13,7 @@ export default function FinalCTA() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl md:text-5xl"
+          className="text-3xl font-bold tracking-tight text-heading-primary sm:text-4xl md:text-5xl"
         >
           Ready to Find Your Next Property?
         </motion.h2>
@@ -22,7 +22,7 @@ export default function FinalCTA() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.08 }}
-          className="mx-auto mt-4 max-w-lg text-neutral-500"
+          className="mx-auto mt-4 max-w-lg text-muted"
         >
           Start a conversation with AreaIQ — compare areas, evaluate builders, and discover
           listings tailored to your goals.

@@ -45,13 +45,13 @@ export default function UpcomingVisitsPanel({ visits }: UpcomingVisitsPanelProps
               <span className="text-[10px] font-bold uppercase text-emerald-600">
                 {new Date(`${visit.visit_date}T00:00:00`).toLocaleDateString("en-IN", { month: "short" })}
               </span>
-              <span className="text-lg font-bold leading-none text-neutral-900">
+              <span className="text-lg font-bold leading-none text-heading-primary">
                 {new Date(`${visit.visit_date}T00:00:00`).getDate()}
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold text-neutral-900">{visit.property?.title ?? "Property"}</p>
-              <p className="text-xs text-neutral-500">
+              <p className="truncate font-semibold text-heading-primary">{visit.property?.title ?? "Property"}</p>
+              <p className="text-xs text-muted">
                 {formatVisitTime(visit.visit_time)} · {visit.property?.location}
               </p>
             </div>

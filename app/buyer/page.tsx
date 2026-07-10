@@ -203,7 +203,7 @@ export default function BuyerDashboardPage() {
         <RecentlyViewedPanel properties={recent} />
       ) : (
         <section>
-          <h2 className="mb-4 text-lg font-bold text-neutral-900">Recently Viewed</h2>
+          <h2 className="mb-4 text-lg font-bold text-heading-primary">Recently Viewed</h2>
           <EmptyState
             icon="👀"
             title="No recently viewed properties"
@@ -215,8 +215,8 @@ export default function BuyerDashboardPage() {
 
       <section id="recommended">
         <div className="mb-4">
-          <h2 className="text-lg font-bold text-neutral-900">Recommended for You</h2>
-          <p className="mt-1 text-sm text-neutral-500">
+          <h2 className="text-lg font-bold text-heading-primary">Recommended for You</h2>
+          <p className="mt-1 text-sm text-muted">
             Personalized picks
             {profile?.preferred_locations?.length
               ? ` in ${profile.preferred_locations.join(", ")}`

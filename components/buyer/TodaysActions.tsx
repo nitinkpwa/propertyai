@@ -60,7 +60,7 @@ export default function TodaysActions({
 
   return (
     <section aria-label="Today's actions">
-      <h2 className="mb-4 text-lg font-bold text-neutral-900">Today&apos;s Actions</h2>
+      <h2 className="mb-4 text-lg font-bold text-heading-primary">Today&apos;s Actions</h2>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {actions.map((action) => {
           const inner = (
@@ -69,8 +69,8 @@ export default function TodaysActions({
                 <span className="text-2xl">{action.icon}</span>
                 {action.urgent ? <Badge variant="warning">Priority</Badge> : null}
               </div>
-              <p className="mt-3 text-sm font-semibold text-neutral-900">{action.title}</p>
-              <p className="mt-1 text-xs leading-relaxed text-neutral-500">{action.desc}</p>
+              <p className="mt-3 text-sm font-semibold text-heading-primary">{action.title}</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted">{action.desc}</p>
             </>
           );
 

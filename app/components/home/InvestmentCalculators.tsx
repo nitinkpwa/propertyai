@@ -103,8 +103,8 @@ export default function InvestmentCalculators() {
               }`}
             >
               <span className="text-2xl">{tool.icon}</span>
-              <p className="mt-3 font-bold text-neutral-900">{tool.title}</p>
-              <p className="mt-1 text-xs text-neutral-500">{tool.desc}</p>
+              <p className="mt-3 font-bold text-heading-primary">{tool.title}</p>
+              <p className="mt-1 text-xs text-muted">{tool.desc}</p>
             </motion.button>
           ))}
         </div>
@@ -143,8 +143,8 @@ export default function InvestmentCalculators() {
               ) : null}
             </div>
             <div className="flex flex-col justify-center rounded-2xl bg-white p-6 shadow-sm">
-              <p className="text-sm font-medium text-neutral-500">Result</p>
-              <p className="mt-2 text-4xl font-extrabold text-neutral-900">{resultLabel}</p>
+              <p className="text-sm font-medium text-muted">Result</p>
+              <p className="mt-2 text-4xl font-extrabold text-heading-primary">{resultLabel}</p>
               <Link
                 href={`/ask?q=${encodeURIComponent(`Validate my ${activeTool} calculation for Tricity property`)}`}
                 className="mt-6 inline-flex justify-center rounded-xl py-3 text-sm font-bold text-white"

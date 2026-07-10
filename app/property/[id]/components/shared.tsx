@@ -114,7 +114,7 @@ export function getPlaceIcon(type: string): string {
 export function scoreTone(score: number) {
   if (score >= 75) return { bar: "bg-emerald-500", text: "text-emerald-700", bg: "bg-emerald-50" };
   if (score >= 50) return { bar: "bg-amber-400", text: "text-amber-700", bg: "bg-amber-50" };
-  return { bar: "bg-neutral-400", text: "text-neutral-600", bg: "bg-neutral-50" };
+  return { bar: "bg-neutral-400", text: "text-body", bg: "bg-neutral-50" };
 }
 
 export function ProgressBar({ value, className = "" }: { value: number; className?: string }) {
@@ -146,8 +146,8 @@ export function SectionCard({
 export function SectionTitle({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-6 sm:mb-8">
-      <h2 className="text-xl font-bold tracking-tight text-neutral-900 sm:text-2xl">{title}</h2>
-      {subtitle && <p className="mt-1.5 text-sm text-neutral-500 sm:text-base">{subtitle}</p>}
+      <h2 className="text-xl font-bold tracking-tight text-heading-primary sm:text-2xl">{title}</h2>
+      {subtitle && <p className="mt-1.5 text-sm text-muted sm:text-base">{subtitle}</p>}
     </div>
   );
 }

@@ -56,7 +56,7 @@ export default function ConnectDashboardPanel({
         <div className="relative">
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-200">{getGreeting()}</p>
           <h1 className="mt-2 text-2xl font-bold sm:text-3xl">{firstName}, your sales command center</h1>
-          <p className="mt-2 max-w-xl text-sm text-slate-200">
+          <p className="mt-2 max-w-xl text-sm text-white/70">
             {properties.length} assigned properties · {analytics.totalBuyers} property leads · {conversionRate}% conversion
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -67,12 +67,12 @@ export default function ConnectDashboardPanel({
       </div>
 
       <section>
-        <h2 className="mb-4 text-lg font-bold text-neutral-900">Today&apos;s Tasks</h2>
+        <h2 className="mb-4 text-lg font-bold text-heading-primary">Today&apos;s Tasks</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {tasks.map((task) => (
             <button key={task.title} type="button" onClick={() => onNavigate(task.href)} className={`${connectTokens.card} p-4 text-left hover:shadow-md`}>
               <span className="text-2xl">{task.icon}</span>
-              <p className="mt-2 text-sm font-semibold text-neutral-900">{task.title}</p>
+              <p className="mt-2 text-sm font-semibold text-heading-primary">{task.title}</p>
             </button>
           ))}
         </div>
@@ -89,8 +89,8 @@ export default function ConnectDashboardPanel({
         ].map((stat) => (
           <div key={stat.label} className={`${connectTokens.card} p-4`}>
             <span className="text-lg">{stat.icon}</span>
-            <p className="mt-2 text-xl font-bold text-neutral-900">{stat.value}</p>
-            <p className="text-xs text-neutral-500">{stat.label}</p>
+            <p className="mt-2 text-xl font-bold text-heading-primary">{stat.value}</p>
+            <p className="text-xs text-muted">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -98,25 +98,25 @@ export default function ConnectDashboardPanel({
       <div className="grid gap-6 lg:grid-cols-2">
         <section className={`${connectTokens.card} p-5`}>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-bold text-neutral-900">Recent Enquiries</h2>
+            <h2 className="font-bold text-heading-primary">Recent Enquiries</h2>
             <button type="button" onClick={() => onNavigate("leads")} className="text-sm font-semibold text-emerald-600">View all →</button>
           </div>
           {leads.length === 0 ? (
-            <p className="text-sm text-neutral-500">Enquiries from your assigned properties appear here.</p>
+            <p className="text-sm text-muted">Enquiries from your assigned properties appear here.</p>
           ) : (
             <div className="space-y-3">
               {leads.slice(0, 5).map((lead) => (
                 <div key={lead.id} className="rounded-xl border border-neutral-100 bg-neutral-50/50 p-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-semibold text-neutral-900">{lead.full_name ?? "Buyer"}</p>
-                      <p className="text-xs text-neutral-500">{lead.property_title ?? "Property lead"}</p>
+                      <p className="font-semibold text-heading-primary">{lead.full_name ?? "Buyer"}</p>
+                      <p className="text-xs text-muted">{lead.property_title ?? "Property lead"}</p>
                     </div>
                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${lead.lead_temperature === "hot" ? "bg-rose-100 text-rose-700" : lead.lead_temperature === "warm" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
                       {lead.lead_temperature}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-neutral-600">{formatBudget(lead.budget_min, lead.budget_max)} · {lead.lead_status}</p>
+                  <p className="mt-1 text-xs text-body">{formatBudget(lead.budget_min, lead.budget_max)} · {lead.lead_status}</p>
                 </div>
               ))}
             </div>
@@ -125,17 +125,17 @@ export default function ConnectDashboardPanel({
 
         <section className={`${connectTokens.card} p-5`}>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-bold text-neutral-900">Upcoming Visits</h2>
+            <h2 className="font-bold text-heading-primary">Upcoming Visits</h2>
             <button type="button" onClick={() => onNavigate("visits")} className="text-sm font-semibold text-emerald-600">Manage →</button>
           </div>
           {siteVisits.filter((v) => ["pending_approval", "accepted", "scheduled"].includes(v.status)).length === 0 ? (
-            <p className="text-sm text-neutral-500">No upcoming visits scheduled.</p>
+            <p className="text-sm text-muted">No upcoming visits scheduled.</p>
           ) : (
             <div className="space-y-3">
               {siteVisits.filter((v) => ["pending_approval", "accepted", "scheduled"].includes(v.status)).slice(0, 4).map((v) => (
                 <div key={v.id} className="rounded-xl border border-neutral-100 p-3">
-                  <p className="font-semibold text-neutral-900">{v.property?.title ?? "Visit"}</p>
-                  <p className="text-xs text-neutral-500">{v.visit_date} · {String(v.visit_time).slice(0, 5)} · {v.status.replace("_", " ")}</p>
+                  <p className="font-semibold text-heading-primary">{v.property?.title ?? "Visit"}</p>
+                  <p className="text-xs text-muted">{v.visit_date} · {String(v.visit_time).slice(0, 5)} · {v.status.replace("_", " ")}</p>
                 </div>
               ))}
             </div>
@@ -144,7 +144,7 @@ export default function ConnectDashboardPanel({
       </div>
 
       <section className={`${connectTokens.card} p-5`}>
-        <h2 className="mb-4 font-bold text-neutral-900">🤖 AI Suggestions</h2>
+        <h2 className="mb-4 font-bold text-heading-primary">🤖 AI Suggestions</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           {hotLeads.length > 0 ? (
             <div className="rounded-xl border border-violet-100 bg-violet-50/50 p-4 text-sm">
@@ -168,15 +168,15 @@ export default function ConnectDashboardPanel({
       {activities.length > 0 ? (
         <section className={`${connectTokens.card} p-5`}>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-bold text-neutral-900">Recent Activity</h2>
+            <h2 className="font-bold text-heading-primary">Recent Activity</h2>
             <button type="button" onClick={() => onNavigate("activities")} className="text-sm font-semibold text-emerald-600">Full timeline →</button>
           </div>
           <div className="space-y-2">
             {activities.slice(0, 5).map((a) => (
-              <p key={a.id} className="text-sm text-neutral-600">
-                <span className="font-medium text-neutral-800">{a.type.replace(/_/g, " ")}</span>
+              <p key={a.id} className="text-sm text-body">
+                <span className="font-medium text-heading-secondary">{a.type.replace(/_/g, " ")}</span>
                 {a.description ? ` — ${a.description}` : ""}
-                <span className="ml-2 text-xs text-neutral-400">{new Date(a.created_at).toLocaleDateString("en-IN")}</span>
+                <span className="ml-2 text-xs text-muted">{new Date(a.created_at).toLocaleDateString("en-IN")}</span>
               </p>
             ))}
           </div>

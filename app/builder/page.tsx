@@ -33,10 +33,10 @@ export default function BuilderDashboardPage() {
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">
                 Builder Dashboard
               </p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-neutral-900">
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-heading-primary">
                 Welcome, {profile?.full_name ?? "Builder"}
               </h1>
-              <p className="mt-2 max-w-2xl text-sm text-neutral-500">
+              <p className="mt-2 max-w-2xl text-sm text-muted">
                 Manage your projects, monitor leads, and track performance across
                 your AreaIQ builder portfolio.
               </p>
@@ -60,10 +60,10 @@ export default function BuilderDashboardPage() {
                 key={item.label}
                 className="rounded-2xl border border-neutral-100 bg-neutral-50/80 px-5 py-4"
               >
-                <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                <p className="text-xs font-semibold uppercase tracking-wider text-label">
                   {item.label}
                 </p>
-                <p className="mt-2 text-2xl font-bold text-neutral-900">
+                <p className="mt-2 text-2xl font-bold text-heading-primary">
                   {item.value}
                 </p>
               </div>

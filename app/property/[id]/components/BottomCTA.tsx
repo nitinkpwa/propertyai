@@ -26,7 +26,7 @@ export default function BottomCTA({ property }: BottomCTAProps) {
           <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
             Ready to Visit?
           </h2>
-          <p className="mt-3 text-sm leading-relaxed text-neutral-400 sm:text-base">
+          <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">
             Book a site visit for {property.name}. Seller contact details unlock after approval.
           </p>
 

@@ -100,9 +100,9 @@ export default function RecommendationsCarousel() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionHeader
-            eyebrow="AI Curated"
-            title="AreaIQ Recommendations"
-            description="Curated picks by investment goal — each card links to a live listing or AI deep-dive."
+            eyebrow="Personalized"
+            title="Recommended For You"
+            description="Based on market signals and buyer interests — not just the latest uploads."
             action={{ label: "View all", href: "/properties?type=buy" }}
           />
         </FadeIn>
@@ -125,8 +125,8 @@ export default function RecommendationsCarousel() {
               >
                 <div className="mb-3 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-bold text-neutral-900">{pick.label}</p>
-                    <p className="text-xs text-neutral-500">{pick.desc}</p>
+                    <p className="text-sm font-bold text-heading-primary">{pick.label}</p>
+                    <p className="text-xs text-muted">{pick.desc}</p>
                   </div>
                   <Link
                     href={pick.askHref}
@@ -143,7 +143,7 @@ export default function RecommendationsCarousel() {
                     href={pick.askHref}
                     className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-200 bg-[#F7F9FB] p-6 text-center no-underline transition-colors hover:border-emerald-200"
                   >
-                    <p className="text-sm font-medium text-neutral-600">
+                    <p className="text-sm font-medium text-body">
                       No listing match yet
                     </p>
                     <p className="mt-2 text-sm font-semibold" style={{ color: IQ_GREEN }}>

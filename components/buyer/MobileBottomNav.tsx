@@ -99,10 +99,10 @@ export default function MobileBottomNav() {
               key={item.href}
               href={item.href}
               className={`relative flex min-w-0 flex-1 flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium transition ${
-                active ? "text-emerald-600" : "text-neutral-500"
+                active ? "text-emerald-600" : "text-muted"
               }`}
             >
-              <span className={active ? "text-emerald-600" : "text-neutral-400"}>
+              <span className={active ? "text-emerald-600" : "text-muted"}>
                 <NavIcon icon={item.icon} />
               </span>
               {item.label}

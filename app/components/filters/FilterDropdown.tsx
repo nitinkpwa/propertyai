@@ -41,7 +41,7 @@ export default function FilterDropdown({
           "inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all duration-200 hover:shadow-sm active:scale-[0.98]",
           open || activeCount > 0
             ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-            : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50",
+            : "border-neutral-200 bg-white text-body hover:border-neutral-300 hover:bg-neutral-50",
         )}
       >
         {label}

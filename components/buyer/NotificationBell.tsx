@@ -53,7 +53,7 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-600 shadow-sm transition-all hover:bg-neutral-50 hover:text-neutral-900"
+        className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-body shadow-sm transition-all hover:bg-neutral-50 hover:text-heading-primary"
         aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
@@ -70,7 +70,7 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
       {open ? (
         <div className="absolute right-0 top-full z-50 mt-2 w-[min(100vw-2rem,380px)] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3">
-            <p className="text-sm font-bold text-neutral-900">Notifications</p>
+            <p className="text-sm font-bold text-heading-primary">Notifications</p>
             {unreadCount > 0 ? (
               <button
                 type="button"
@@ -86,13 +86,13 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <p className="text-2xl">🔔</p>
-                <p className="mt-2 text-sm font-medium text-neutral-700">All caught up</p>
-                <p className="text-xs text-neutral-500">Visit updates and price alerts appear here</p>
+                <p className="mt-2 text-sm font-medium text-label">All caught up</p>
+                <p className="text-xs text-muted">Visit updates and price alerts appear here</p>
               </div>
             ) : (
               groups.map((group) => (
                 <div key={group.label}>
-                  <p className="bg-neutral-50 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutral-400">
+                  <p className="bg-neutral-50 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-label">
                     {group.label}
                   </p>
                   {group.items.map((n) => (
@@ -109,8 +109,8 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
                     >
                       <span className="text-lg">{getNotificationIcon(n.type)}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-neutral-900">{n.title}</p>
-                        <p className="mt-0.5 line-clamp-2 text-xs text-neutral-500">{n.message}</p>
+                        <p className="text-sm font-semibold text-heading-primary">{n.title}</p>
+                        <p className="mt-0.5 line-clamp-2 text-xs text-muted">{n.message}</p>
                       </div>
                       {!n.read_at ? (
                         <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />

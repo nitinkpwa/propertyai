@@ -9,9 +9,9 @@ import { AskResultsGrid } from "./AskResultsSection";
 function formatInline(text: string) {
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-    .replace(/^###\s+(.+)$/gm, '<h4 class="mt-4 mb-1 text-sm font-semibold text-neutral-900">$1</h4>')
-    .replace(/^##\s+(.+)$/gm, '<h3 class="mt-5 mb-2 text-base font-semibold text-neutral-900">$1</h3>')
-    .replace(/^#\s+(.+)$/gm, '<h2 class="mt-6 mb-2 text-lg font-bold text-neutral-900">$1</h2>')
+    .replace(/^###\s+(.+)$/gm, '<h4 class="mt-4 mb-1 text-sm font-semibold text-heading-primary">$1</h4>')
+    .replace(/^##\s+(.+)$/gm, '<h3 class="mt-5 mb-2 text-base font-semibold text-heading-primary">$1</h3>')
+    .replace(/^#\s+(.+)$/gm, '<h2 class="mt-6 mb-2 text-lg font-bold text-heading-primary">$1</h2>')
     .replace(/^\|\s*(.+?)\s*\|$/gm, (match) => {
       if (match.includes("---")) return "";
       const cells = match
@@ -59,10 +59,10 @@ export function AskHero({
       <div className="mb-6 flex justify-center">
         <Logo size="hero" showTagline href="/ask" priority />
       </div>
-      <h1 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl lg:text-5xl">
+      <h1 className="text-3xl font-bold tracking-tight text-heading-primary sm:text-4xl lg:text-5xl">
         AreaIQ Intelligence
       </h1>
-      <p className="mx-auto mt-3 max-w-2xl text-base text-neutral-500 sm:text-lg">
+      <p className="mx-auto mt-3 max-w-2xl text-base text-muted sm:text-lg">
         Your Senior Real Estate Intelligence Agent for Chandigarh, Mohali, Panchkula &amp;
         Zirakpur. Property search, area analysis, investment advice — backed by live database
         listings.
@@ -77,7 +77,7 @@ export function AskHero({
       >
         <div className="flex items-center gap-3 rounded-2xl border border-neutral-200 bg-white px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.06)] sm:px-5 sm:py-4">
           <svg
-            className="h-5 w-5 shrink-0 text-neutral-400"
+            className="h-5 w-5 shrink-0 text-muted"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -96,7 +96,7 @@ export function AskHero({
             onChange={(event) => onChange(event.target.value)}
             placeholder="3 BHK under ₹80 lakh in Mohali..."
             disabled={loading}
-            className="min-w-0 flex-1 bg-transparent py-2 text-base text-neutral-900 outline-none placeholder:text-neutral-400"
+            className="min-w-0 flex-1 bg-transparent py-2 text-base text-heading-primary outline-none placeholder:text-placeholder"
           />
           <button
             type="submit"
@@ -116,7 +116,7 @@ export function AskHero({
                 key={item}
                 type="button"
                 onClick={() => onSuggestionClick(item)}
-                className="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
+                className="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-label transition-colors hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800"
               >
                 {item}
               </button>
@@ -135,10 +135,10 @@ interface AskUserQueryCardProps {
 export function AskUserQueryCard({ query }: AskUserQueryCardProps) {
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 shadow-sm sm:px-6 sm:py-5">
-      <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
+      <p className="text-xs font-semibold uppercase tracking-wider text-label">
         User
       </p>
-      <p className="mt-2 text-base font-medium text-neutral-900 sm:text-lg">{query}</p>
+      <p className="mt-2 text-base font-medium text-heading-primary sm:text-lg">{query}</p>
     </div>
   );
 }
@@ -167,8 +167,8 @@ export function AskStatsGrid({ stats }: AskStatsGridProps) {
           key={item.label}
           className="rounded-xl border border-neutral-100 bg-neutral-50/80 px-4 py-3.5"
         >
-          <p className="text-xs font-medium text-neutral-500">{item.label}</p>
-          <p className="mt-1 text-lg font-bold text-neutral-900">{item.value}</p>
+          <p className="text-xs font-medium text-label">{item.label}</p>
+          <p className="mt-1 text-lg font-bold text-heading-primary">{item.value}</p>
         </div>
       ))}
     </div>
@@ -193,7 +193,7 @@ export function AskSectionsGrid({ sections }: AskSectionsGridProps) {
             {section.title}
           </p>
           <div
-            className="mt-2 text-sm leading-relaxed text-neutral-700"
+            className="mt-2 text-sm leading-relaxed text-body"
             dangerouslySetInnerHTML={{ __html: formatInline(section.content) }}
           />
         </div>
@@ -213,18 +213,18 @@ export function AskResponseCard({ turn }: AskResponseCardProps) {
       <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
         AreaIQ Intelligence Agent
       </p>
-      <h2 className="mt-2 text-lg font-semibold text-neutral-900 sm:text-xl">
+      <h2 className="mt-2 text-lg font-semibold text-heading-primary sm:text-xl">
         {turn.headline}
       </h2>
       {turn.subtext ? (
-        <p className="mt-1 text-sm text-neutral-500">{turn.subtext}</p>
+        <p className="mt-1 text-sm text-muted">{turn.subtext}</p>
       ) : null}
 
       {turn.stats ? <AskStatsGrid stats={turn.stats} /> : null}
 
       {turn.aiContent ? (
         <div
-          className="mt-5 text-sm leading-7 text-neutral-700"
+          className="mt-5 text-sm leading-7 text-body"
           dangerouslySetInnerHTML={{ __html: formatInline(turn.aiContent) }}
         />
       ) : null}
@@ -249,7 +249,7 @@ export function AskRecommendedProperties({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-base font-semibold text-neutral-900 sm:text-lg">{label}</h3>
+      <h3 className="text-base font-semibold text-heading-primary sm:text-lg">{label}</h3>
       <div className="space-y-6">
         {listings.map((listing) => (
           <div key={listing.id} className="space-y-2">
@@ -284,7 +284,7 @@ export function AskChipRow({
 
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-neutral-400">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-label">
         {title}
       </p>
       <div className="flex flex-wrap gap-2">
@@ -294,7 +294,7 @@ export function AskChipRow({
             type="button"
             disabled={disabled}
             onClick={() => onSelect(option)}
-            className="rounded-full border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm font-medium text-neutral-700 transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm font-medium text-label transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {option}
           </button>
@@ -312,7 +312,7 @@ export function AskLoadingCard({ status }: AskLoadingCardProps) {
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white px-5 py-5 shadow-sm">
       <Logo size="footer" iconOnly href={null} className="mb-3" />
-      <div className="mt-3 flex items-center gap-3 text-sm text-neutral-600">
+      <div className="mt-3 flex items-center gap-3 text-sm text-body">
         <span className="inline-flex gap-1" aria-hidden>
           {[0, 1, 2].map((dot) => (
             <span

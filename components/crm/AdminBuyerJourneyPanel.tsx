@@ -44,7 +44,7 @@ export default function AdminBuyerJourneyPanel({
   }
 
   if (!journey) {
-    return <p className="text-sm text-neutral-500">Could not load buyer journey.</p>;
+    return <p className="text-sm text-muted">Could not load buyer journey.</p>;
   }
 
   const profile = journey.profile as Record<string, unknown> | null;
@@ -52,7 +52,7 @@ export default function AdminBuyerJourneyPanel({
   return (
     <div className="mt-6 space-y-6 border-t border-neutral-200 pt-6">
       <div>
-        <h4 className="font-semibold text-neutral-900">
+        <h4 className="font-semibold text-heading-primary">
           Complete Buyer Record — {buyerName ?? (profile?.full_name as string) ?? "Buyer"}
         </h4>
         {journey.lead ? (
@@ -91,22 +91,22 @@ export default function AdminBuyerJourneyPanel({
           ] satisfies [string, string][]
         ).map(([label, value]) => (
           <div key={label} className="rounded-xl bg-neutral-50 px-4 py-3">
-            <dt className="text-xs font-medium uppercase tracking-wider text-neutral-400">{label}</dt>
-            <dd className="mt-1 text-sm font-medium text-neutral-900">{value}</dd>
+            <dt className="text-xs font-medium uppercase tracking-wider text-muted">{label}</dt>
+            <dd className="mt-1 text-sm font-medium text-heading-primary">{value}</dd>
           </div>
         ))}
       </dl>
 
       {journey.aiSummary ? (
         <div className="rounded-xl border border-neutral-200 bg-white p-4">
-          <p className="text-xs font-semibold uppercase tracking-wider text-neutral-400">AI Summary</p>
-          <p className="mt-2 text-sm text-neutral-700">{journey.aiSummary}</p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-label">AI Summary</p>
+          <p className="mt-2 text-sm text-body">{journey.aiSummary}</p>
         </div>
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
-          <h5 className="mb-2 text-sm font-semibold text-neutral-800">Enquiries ({journey.enquiries.length})</h5>
+          <h5 className="mb-2 text-sm font-semibold text-heading-secondary">Enquiries ({journey.enquiries.length})</h5>
           <ul className="max-h-40 space-y-2 overflow-y-auto text-sm">
             {journey.enquiries.map((inq) => (
               <li key={String(inq.id)} className="rounded-lg bg-neutral-50 px-3 py-2">
@@ -116,7 +116,7 @@ export default function AdminBuyerJourneyPanel({
           </ul>
         </div>
         <div>
-          <h5 className="mb-2 text-sm font-semibold text-neutral-800">Saved ({journey.savedProperties.length})</h5>
+          <h5 className="mb-2 text-sm font-semibold text-heading-secondary">Saved ({journey.savedProperties.length})</h5>
           <ul className="max-h-40 space-y-2 overflow-y-auto text-sm">
             {journey.savedProperties.map((s) => (
               <li key={String(s.id)} className="rounded-lg bg-neutral-50 px-3 py-2">
@@ -128,7 +128,7 @@ export default function AdminBuyerJourneyPanel({
       </div>
 
       <div>
-        <h5 className="mb-2 text-sm font-semibold text-neutral-800">Site Visits ({journey.siteVisits.length})</h5>
+        <h5 className="mb-2 text-sm font-semibold text-heading-secondary">Site Visits ({journey.siteVisits.length})</h5>
         <ul className="space-y-2 text-sm">
           {journey.siteVisits.map((v) => (
             <li key={v.id} className="rounded-lg bg-neutral-50 px-3 py-2">
@@ -139,7 +139,7 @@ export default function AdminBuyerJourneyPanel({
       </div>
 
       <div>
-        <h5 className="mb-3 text-sm font-semibold text-neutral-800">CRM Timeline</h5>
+        <h5 className="mb-3 text-sm font-semibold text-heading-secondary">CRM Timeline</h5>
         <ActivityTimeline activities={journey.activities} />
       </div>
     </div>

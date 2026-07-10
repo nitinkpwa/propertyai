@@ -4,7 +4,7 @@ const STATUS_STYLES: Record<ConnectPartnerStatus, string> = {
   pending: "bg-amber-50 text-amber-700 ring-amber-200",
   active: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   suspended: "bg-rose-50 text-rose-700 ring-rose-200",
-  archived: "bg-neutral-100 text-neutral-600 ring-neutral-200",
+  archived: "bg-neutral-100 text-body ring-neutral-200",
 };
 
 export default function PartnerStatusBadge({ status }: { status: ConnectPartnerStatus | string }) {

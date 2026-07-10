@@ -42,11 +42,11 @@ export default function PropertyFilters({
       <div className="sticky top-16 z-30 -mx-4 mb-6 border-b border-neutral-200/80 bg-white/95 px-4 py-4 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-semibold text-neutral-900">
+            <p className="text-sm font-semibold text-heading-primary">
               {resultCount} propert{resultCount === 1 ? "y" : "ies"} found
             </p>
             {activeCount > 0 && (
-              <p className="text-xs text-neutral-500">
+              <p className="text-xs text-muted">
                 {activeCount} active filter{activeCount === 1 ? "" : "s"}
               </p>
             )}
@@ -160,7 +160,7 @@ function MobileFilterTrigger({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-800 shadow-sm transition-all duration-200 hover:border-neutral-300 hover:shadow-md active:scale-[0.98] lg:hidden"
+        className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-heading-secondary shadow-sm transition-all duration-200 hover:border-neutral-300 hover:shadow-md active:scale-[0.98] lg:hidden"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
           <path

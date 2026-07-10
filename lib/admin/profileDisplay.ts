@@ -89,7 +89,7 @@ export function roleBadgeClass(role?: string | null): string {
     case "admin":
       return "bg-emerald-50 text-emerald-700";
     default:
-      return "bg-neutral-100 text-neutral-600";
+      return "bg-neutral-100 text-body";
   }
 }
 

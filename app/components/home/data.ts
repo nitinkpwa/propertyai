@@ -26,25 +26,232 @@ export const BUDGETS = [
 ];
 
 export const AI_EXAMPLE_PROMPTS = [
-  "3 BHK under ₹90L near Airport",
-  "Compare Aerocity vs IT City",
-  "Best investment in Mohali",
+  "I'm looking for a 3BHK under ₹90 lakh near IT City Mohali with good rental yield and reputed builder.",
   "Should I buy now or wait?",
+  "Best investment under ₹80 lakh",
+  "Future of PR7",
+  "Compare Sushma vs Omaxe",
+  "Highest rental yield",
+  "Safest builder",
+  "Which area has highest appreciation?",
+  "Should I buy plot or apartment?",
+  "Best commercial investment",
+  "Loan eligibility",
+  "Nearby schools",
+  "Flood risk",
+  "Traffic",
+  "Metro impact",
 ];
 
-export const SMART_CHIPS = [
-  { label: "Under ₹60L", href: "/properties?type=buy&max=6000000", icon: "💰" },
-  { label: "High ROI", href: "/ask?q=Best+high+ROI+investment+Tricity", icon: "📈" },
-  { label: "New Launches", href: "/ask?q=New+launch+projects+Tricity", icon: "🚀" },
-  { label: "Rental Yield", href: "/ask?q=Highest+rental+yield+areas+Tricity", icon: "🏠" },
-  { label: "Family Homes", href: "/properties?type=buy&city=Mohali", icon: "👨‍👩‍👧" },
-  { label: "Near Airport", href: "/properties?type=buy&city=Aerocity", icon: "✈️" },
-  { label: "Near Metro", href: "/ask?q=Properties+near+metro+Tricity", icon: "🚇" },
-  { label: "Commercial", href: "/properties?type=commercial", icon: "🏢" },
+export const SUGGESTION_CHIPS = [
+  { label: "Investment", href: "/ask?q=Best+investment+properties+Tricity", icon: "📈" },
+  { label: "Ready to Move", href: "/properties?type=buy", icon: "🏠" },
   { label: "Luxury", href: "/properties?type=buy&min=20000000", icon: "✨" },
-  { label: "Gated Society", href: "/ask?q=Gated+society+projects+Tricity", icon: "🏘️" },
-  { label: "Schools Nearby", href: "/ask?q=Areas+with+best+schools+Tricity", icon: "🎓" },
-  { label: "Hospitals Nearby", href: "/ask?q=Areas+with+good+hospitals+Tricity", icon: "🏥" },
+  { label: "Commercial", href: "/properties?type=commercial", icon: "🏢" },
+  { label: "Office", href: "/ask?q=Office+space+Tricity", icon: "💼" },
+  { label: "Retail", href: "/ask?q=Retail+investment+Tricity", icon: "🛍️" },
+  { label: "Villa", href: "/ask?q=Villa+projects+Tricity", icon: "🏡" },
+  { label: "Builder Floor", href: "/ask?q=Builder+floor+Tricity", icon: "🏗️" },
+  { label: "Plots", href: "/ask?q=Plot+investment+Tricity", icon: "📐" },
+  { label: "Rental Income", href: "/ask?q=Highest+rental+yield+Tricity", icon: "💰" },
+  { label: "NRI", href: "/ask?q=NRI+property+investment+Tricity", icon: "🌍" },
+  { label: "Family Home", href: "/ask?q=Family+friendly+3BHK+Tricity", icon: "👨‍👩‍👧" },
+  { label: "Senior Living", href: "/ask?q=Senior+living+Tricity", icon: "🧓" },
+  { label: "First Home", href: "/ask?q=First+home+buyer+guide+Tricity", icon: "🔑" },
+];
+
+export const SMART_CHIPS = SUGGESTION_CHIPS;
+
+export const HERO_CAPABILITIES = [
+  "find properties",
+  "compare projects",
+  "compare builders",
+  "suggest areas",
+  "calculate investment returns",
+  "explain legal risks",
+  "recommend site visits",
+];
+
+export const AI_CAPABILITIES = [
+  { title: "Find property using natural language", icon: "💬", href: "/ask" },
+  { title: "Compare builders", icon: "🏗️", href: "/ask?q=Compare+builders+Tricity" },
+  { title: "Compare projects", icon: "⚖️", href: "/ask?q=Compare+two+projects+Tricity" },
+  { title: "Predict appreciation", icon: "📈", href: "/ask?q=Areas+with+highest+appreciation+Tricity" },
+  { title: "Rental yield analysis", icon: "🏠", href: "/ask?q=Highest+rental+yield+Tricity" },
+  { title: "Fair price estimation", icon: "💰", href: "/ask?q=Is+this+property+fairly+priced" },
+  { title: "Detect overpriced listings", icon: "🔍", href: "/ask?q=Overpriced+listings+Tricity" },
+  { title: "Legal guidance", icon: "⚖️", href: "/ask?q=Legal+risks+buying+property+Tricity" },
+  { title: "RERA verification", icon: "✅", href: "/ask?q=RERA+verified+projects+Tricity" },
+  { title: "Loan calculation", icon: "🧮", href: "/ask?q=Home+loan+EMI+calculation" },
+  { title: "Negotiation recommendation", icon: "🤝", href: "/ask?q=How+to+negotiate+property+price" },
+  { title: "Area intelligence", icon: "📍", href: "/ask?q=Area+intelligence+Mohali" },
+  { title: "Future infrastructure impact", icon: "🚇", href: "/ask?q=Metro+impact+on+property+prices+Tricity" },
+  { title: "Investment score", icon: "✦", href: "/ask?q=Best+investment+score+areas+Tricity" },
+  { title: "Site visit recommendations", icon: "📅", href: "/buyer/site-visits" },
+  { title: "Construction quality analysis", icon: "🔬", href: "/ask?q=Construction+quality+builder+review" },
+];
+
+export const MARKET_INTELLIGENCE_CARDS = [
+  { label: "New Launches", value: "12", trend: "Today", icon: "🚀", href: "/ask?q=New+launch+projects+Tricity+today" },
+  { label: "Price Drops", value: "8", trend: "This week", icon: "📉", href: "/ask?q=Properties+with+price+drops+Tricity" },
+  { label: "Builder Offers", value: "5", trend: "Active", icon: "🎁", href: "/ask?q=Current+builder+offers+Tricity" },
+  { label: "Rental Yield", value: "6.8%", trend: "Aerocity avg", icon: "🏠", href: "/ask?q=Aerocity+rental+yield" },
+  { label: "Price Growth", value: "+2.3%", trend: "Mohali MoM", icon: "📈", href: "/ask?q=Mohali+price+trends+2025" },
+  { label: "Infrastructure", value: "4", trend: "Updates", icon: "🏗️", href: "/ask?q=Infrastructure+updates+Tricity" },
+  { label: "GMADA", value: "New", trend: "Sectors", icon: "🏛️", href: "/ask?q=GMADA+approved+projects" },
+  { label: "Metro", value: "Planned", trend: "Phase 2", icon: "🚇", href: "/ask?q=Metro+impact+Tricity+property" },
+  { label: "PR7", value: "Hot", trend: "Corridor", icon: "✈️", href: "/ask?q=PR7+Airport+Road+outlook" },
+  { label: "Airport", value: "↑18%", trend: "Demand", icon: "🛫", href: "/ask?q=Airport+road+property+investment" },
+  { label: "Ring Road", value: "Active", trend: "Development", icon: "🛣️", href: "/ask?q=Ring+road+impact+Tricity" },
+];
+
+export const BUILDER_INTELLIGENCE = [
+  { name: "Sushma", trustScore: 88, completed: 14, delayed: 1, quality: 85, satisfaction: 4.2, href: "/ask?q=Sushma+builder+review+Tricity" },
+  { name: "Omaxe", trustScore: 82, completed: 22, delayed: 3, quality: 80, satisfaction: 4.0, href: "/ask?q=Omaxe+builder+review+Tricity" },
+  { name: "DLF", trustScore: 94, completed: 8, delayed: 0, quality: 92, satisfaction: 4.6, href: "/ask?q=DLF+projects+Tricity" },
+  { name: "Hero Homes", trustScore: 86, completed: 11, delayed: 2, quality: 84, satisfaction: 4.1, href: "/ask?q=Hero+Homes+Tricity" },
+  { name: "SBP Group", trustScore: 79, completed: 9, delayed: 2, quality: 78, satisfaction: 3.9, href: "/ask?q=SBP+Group+Tricity" },
+  { name: "Aura", trustScore: 81, completed: 6, delayed: 1, quality: 83, satisfaction: 4.0, href: "/ask?q=Aura+developer+Tricity" },
+];
+
+export const EXPLORE_AREAS_EXTENDED = [
+  { name: "Mohali", score: 88, tag: "IT hub", href: "/ask?q=Mohali+area+intelligence" },
+  { name: "Aerocity", score: 92, tag: "Airport corridor", href: "/ask?q=Aerocity+area+intelligence" },
+  { name: "New Chandigarh", score: 87, tag: "Master planned", href: "/ask?q=New+Chandigarh+area+intelligence" },
+  { name: "Zirakpur", score: 85, tag: "Value segment", href: "/ask?q=Zirakpur+area+intelligence" },
+  { name: "Panchkula", score: 74, tag: "Established", href: "/ask?q=Panchkula+area+intelligence" },
+  { name: "PR7", score: 90, tag: "High growth", href: "/ask?q=PR7+area+intelligence" },
+  { name: "IT City", score: 89, tag: "Employment hub", href: "/ask?q=IT+City+Mohali+intelligence" },
+  { name: "Banur", score: 76, tag: "Emerging", href: "/ask?q=Banur+area+intelligence" },
+  { name: "Derabassi", score: 72, tag: "Industrial", href: "/ask?q=Derabassi+area+intelligence" },
+];
+
+export const HEATMAP_ZONES = [
+  { area: "Aerocity", status: "Hot" as const, reason: "Airport expansion + commercial demand", href: "/ask?q=Aerocity+investment+outlook" },
+  { area: "PR7 Corridor", status: "Hot" as const, reason: "Infrastructure pipeline driving appreciation", href: "/ask?q=PR7+investment+outlook" },
+  { area: "IT City Mohali", status: "Growing" as const, reason: "Employment hub with steady rental demand", href: "/ask?q=IT+City+Mohali+investment" },
+  { area: "New Chandigarh", status: "Growing" as const, reason: "Planned development with selective upside", href: "/ask?q=New+Chandigarh+investment" },
+  { area: "Panchkula", status: "Stable" as const, reason: "Mature market with predictable returns", href: "/ask?q=Panchkula+investment+outlook" },
+  { area: "Overbuilt corridors", status: "Avoid" as const, reason: "Supply exceeds demand in select pockets", href: "/ask?q=Areas+to+avoid+Tricity+investment" },
+];
+
+export const AI_CONVERSATION_EXAMPLES = [
+  { q: "Can I negotiate this price?", a: "Based on comparable sales, there's 4–6% room. Here's your strategy…" },
+  { q: "Is this overpriced?", a: "This listing is 8% above fair value for the micro-market. Alternatives inside budget…" },
+  { q: "Best schools nearby?", a: "Within 3 km: DPS, Gurukul Global, and Ryan International — ratings attached." },
+  { q: "Flood risk?", a: "This sector has low flood risk. Drainage upgrades planned for 2027." },
+  { q: "Future appreciation?", a: "Projected 12–15% over 3 years based on infra and demand signals." },
+  { q: "Builder trustworthy?", a: "Trust score 88/100 — 14 delivered, 1 delayed project, strong RERA record." },
+  { q: "Loan EMI?", a: "At ₹85L loan, 20 years, 8.5% — EMI ≈ ₹73,800/month. Eligibility checklist…" },
+  { q: "Water supply?", a: "Municipal + borewell backup. Summer supply stable per resident feedback." },
+  { q: "Traffic?", a: "Peak-hour 25 min to IT City. PR7 widening will reduce this by ~30%." },
+  { q: "Legal issues?", a: "RERA registered, clear title. Verify society NOC before token." },
+];
+
+export const BUYER_JOURNEY = [
+  { step: 1, title: "Requirements", desc: "Tell AreaIQ what you need in plain language", href: "/ask", icon: "💬" },
+  { step: 2, title: "Discover Areas", desc: "AI maps the best micro-markets for your goals", href: "/ask?q=Best+areas+for+my+budget+Tricity", icon: "📍" },
+  { step: 3, title: "AI Recommendations", desc: "Curated properties matched to your profile", href: "/properties?type=buy", icon: "✦" },
+  { step: 4, title: "Compare Properties", desc: "Side-by-side builder, price, and ROI analysis", href: "/ask?q=Compare+two+properties+Tricity", icon: "⚖️" },
+  { step: 5, title: "Financial Planning", desc: "EMI, affordability, and investment returns", href: "/ask?q=Home+loan+and+affordability+calculation", icon: "🧮" },
+  { step: 6, title: "Site Visits", desc: "Book verified visits with Connect Partners", href: "/buyer/site-visits", icon: "📅" },
+  { step: 7, title: "Legal Verification", desc: "RERA, title, and documentation checks", href: "/ask?q=Legal+verification+checklist+buying+property", icon: "⚖️" },
+  { step: 8, title: "Negotiation", desc: "AI-backed negotiation strategy", href: "/ask?q=How+to+negotiate+property+price+Tricity", icon: "🤝" },
+  { step: 9, title: "Loan Process", desc: "Bank comparison and eligibility guidance", href: "/ask?q=Home+loan+bank+comparison+Tricity", icon: "🏦" },
+  { step: 10, title: "Purchase", desc: "Close with confidence — you knew before you bought", href: "/buyer", icon: "🔑" },
+];
+
+export const SELLER_JOURNEY = [
+  { title: "List property", desc: "Upload facts — AreaIQ handles the intelligence", href: "/seller", icon: "📝" },
+  { title: "AI creates description", desc: "Buyer-ready copy from structured data", href: "/seller", icon: "✦" },
+  { title: "AI prices property", desc: "Fair value based on market comparables", href: "/ask?q=How+to+price+my+property+fairly", icon: "💰" },
+  { title: "AI SEO", desc: "Optimized for search and discovery", href: "/seller", icon: "🔍" },
+  { title: "Connect Partner assignment", desc: "One verified partner per listing", href: "/connect", icon: "🤝" },
+  { title: "Verified buyers", desc: "Qualified leads routed to your partner", href: "/seller", icon: "👥" },
+  { title: "Site visits", desc: "Scheduled and tracked in CRM", href: "/seller", icon: "📅" },
+  { title: "Offer management", desc: "Negotiate and close with intelligence", href: "/seller", icon: "✅" },
+];
+
+export const BUILDER_JOURNEY = [
+  { title: "Inventory upload", desc: "Bulk or project-wise listing", href: "/seller", icon: "📦" },
+  { title: "AI enrichment", desc: "Scores, insights, and market positioning", href: "/ask?q=AI+property+enrichment", icon: "✦" },
+  { title: "AI descriptions", desc: "Premium buyer-facing copy at scale", href: "/seller", icon: "📝" },
+  { title: "Area intelligence", desc: "Micro-market reports per project", href: "/ask?q=Area+intelligence+for+builders", icon: "📍" },
+  { title: "Lead routing", desc: "Qualified buyers to Connect Partners", href: "/connect", icon: "🔗" },
+  { title: "Connect Partner", desc: "Dedicated CRM per project", href: "/connect", icon: "🤝" },
+  { title: "Analytics", desc: "Demand, visits, and conversion tracking", href: "/seller", icon: "📊" },
+];
+
+export const TESTIMONIALS = [
+  { quote: "AreaIQ saved me ₹4 lakh by flagging an overpriced listing and suggesting a better project.", name: "Rajesh K.", role: "Buyer, Mohali", icon: "💰" },
+  { quote: "The builder comparison helped me avoid a delayed project. Trust score was spot on.", name: "Priya S.", role: "First-time buyer", icon: "🛡️" },
+  { quote: "Found a 6.2% rental yield property I would never have discovered on listing sites.", name: "Amit V.", role: "Investor", icon: "📈" },
+  { quote: "Negotiation tips from AI helped me close 5% below asking price.", name: "Neha M.", role: "Buyer, Zirakpur", icon: "🤝" },
+];
+
+export const NEWS_INTELLIGENCE = [
+  { title: "GMADA announces new residential sectors", category: "Government", time: "Today", href: "/ask?q=GMADA+new+sectors+announcement" },
+  { title: "Mohali prices up 2.3% month-on-month", category: "Price Movement", time: "Today", href: "/ask?q=Mohali+price+trends+2025" },
+  { title: "Sushma launches Phase 3 in Sector 117", category: "Builder Launch", time: "Yesterday", href: "/ask?q=Sushma+Sector+117+launch" },
+  { title: "RBI holds repo rate — EMI impact analysis", category: "Interest Rates", time: "2 days ago", href: "/ask?q=RBI+rate+impact+home+loans" },
+  { title: "PR7 corridor infra update: widening complete", category: "Infrastructure", time: "3 days ago", href: "/ask?q=PR7+corridor+infrastructure+update" },
+  { title: "Metro Phase 2 alignment confirmed for Tricity", category: "Infrastructure", time: "This week", href: "/ask?q=Metro+Phase+2+Tricity+alignment" },
+];
+
+export const ECOSYSTEM_ROLES = [
+  {
+    role: "Buyer",
+    icon: "🏠",
+    desc: "Browse, save, compare, ask AI, and book site visits",
+    features: ["Browse", "Save", "Compare", "AI", "Visits"],
+    href: "/buyer",
+    cta: "Buyer Dashboard",
+  },
+  {
+    role: "Seller",
+    icon: "📋",
+    desc: "List property, manage inquiries, and track analytics",
+    features: ["List property", "Manage inquiries", "Analytics"],
+    href: "/seller",
+    cta: "Seller Portal",
+  },
+  {
+    role: "Builder",
+    icon: "🏗️",
+    desc: "Upload inventory, manage projects, and route leads",
+    features: ["Inventory", "Projects", "Lead management"],
+    href: "/seller",
+    cta: "Builder Portal",
+  },
+  {
+    role: "Connect Partner",
+    icon: "🤝",
+    desc: "Handle assigned properties, CRM, buyers, and site visits",
+    features: ["Assigned properties", "CRM", "Buyer handling", "Site visits"],
+    href: "/connect",
+    cta: "Connect Dashboard",
+  },
+  {
+    role: "Admin",
+    icon: "⚙️",
+    desc: "Property management, moderation, AI, and analytics",
+    features: ["Property management", "Moderation", "AI management", "Analytics"],
+    href: "/admin",
+    cta: "Admin Console",
+  },
+];
+
+export const PROPERTY_COMPARE_METRICS = [
+  "Builder reputation",
+  "Location score",
+  "Construction quality",
+  "Amenities",
+  "Price fairness",
+  "Rental yield",
+  "ROI projection",
+  "Resale potential",
+  "Pros & cons",
+  "AI verdict",
 ];
 
 /** @deprecated use SMART_CHIPS */

@@ -109,11 +109,11 @@ export const CMS_SECTIONS = [
 
 export const ADMIN_FORM_STYLES = {
   input:
-    "w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100",
-  label: "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-neutral-500",
+    "w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-input placeholder:text-placeholder outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100",
+  label: "mb-1.5 block text-xs font-semibold uppercase tracking-wide text-label",
   textarea:
-    "w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-neutral-900 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 min-h-[88px] resize-y",
+    "w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm text-input placeholder:text-placeholder outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100 min-h-[88px] resize-y",
   card: "rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm",
-  sectionTitle: "text-lg font-bold tracking-tight text-neutral-900",
-  sectionDesc: "mt-1 text-sm text-neutral-500",
+  sectionTitle: "text-lg font-bold tracking-tight text-heading-primary",
+  sectionDesc: "mt-1 text-sm text-muted",
 } as const;

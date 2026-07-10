@@ -45,7 +45,7 @@ export default function PropertyDetailView({ property }: PropertyDetailViewProps
         </div>
       </div>
 
-      <footer className="mt-12 border-t border-neutral-200 bg-neutral-900 text-neutral-400">
+      <footer className="mt-12 border-t border-neutral-200 bg-neutral-900 text-muted">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6 lg:px-8">
           <Logo size="footer" variant="dark" href="/" />
           <p className="text-center text-xs sm:text-sm">

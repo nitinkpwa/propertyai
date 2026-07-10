@@ -129,14 +129,14 @@ export default function PropertyCmsEditor({ propertyId, adminUserId, onBack }: P
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <button type="button" onClick={onBack} className="text-xs font-medium text-neutral-500 hover:text-neutral-800">
+          <button type="button" onClick={onBack} className="text-xs font-medium text-label hover:text-heading-secondary">
             ← Back to properties
           </button>
-          <h1 className="mt-1 text-2xl font-bold text-neutral-900">{form.title || "Property CMS"}</h1>
-          <p className="text-sm text-neutral-500">Humans collect facts · AI creates intelligence</p>
+          <h1 className="mt-1 text-2xl font-bold text-heading-primary">{form.title || "Property CMS"}</h1>
+          <p className="text-sm text-muted">Humans collect facts · AI creates intelligence</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href={`/property/${propertyId}`} target="_blank" className="rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-neutral-700 hover:bg-neutral-50">
+          <Link href={`/property/${propertyId}`} target="_blank" className="rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-body hover:bg-neutral-50">
             Open public page ↗
           </Link>
           <button type="button" disabled={saving} onClick={() => void handleSave()} className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
@@ -157,7 +157,7 @@ export default function PropertyCmsEditor({ propertyId, adminUserId, onBack }: P
               type="button"
               onClick={() => setSection(s.id)}
               className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${
-                section === s.id ? "bg-emerald-50 font-semibold text-emerald-800" : "text-neutral-700 hover:bg-neutral-50"
+                section === s.id ? "bg-emerald-50 font-semibold text-emerald-800" : "text-body hover:bg-neutral-50"
               }`}
             >
               <span>{s.icon}</span>
@@ -173,8 +173,8 @@ export default function PropertyCmsEditor({ propertyId, adminUserId, onBack }: P
             <div className="space-y-6">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-lg font-bold text-neutral-900">AI Intelligence</h3>
-                  <p className="text-sm text-neutral-500">Read-only outputs generated from property facts.</p>
+                  <h3 className="text-lg font-bold text-heading-primary">AI Intelligence</h3>
+                  <p className="text-sm text-muted">Read-only outputs generated from property facts.</p>
                 </div>
                 <button
                   type="button"
@@ -187,10 +187,10 @@ export default function PropertyCmsEditor({ propertyId, adminUserId, onBack }: P
               </div>
               {ai ? (
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <div className="rounded-xl bg-neutral-50 p-3"><p className="text-[11px] text-neutral-500">Generated</p><p className="text-sm font-semibold">{ai.generatedAt ? new Date(ai.generatedAt).toLocaleString("en-IN") : "—"}</p></div>
-                  <div className="rounded-xl bg-neutral-50 p-3"><p className="text-[11px] text-neutral-500">AI Version</p><p className="text-sm font-semibold">{ai.pipelineVersion}</p></div>
-                  <div className="rounded-xl bg-neutral-50 p-3"><p className="text-[11px] text-neutral-500">Confidence</p><p className="text-sm font-semibold">{ai.confidence}%</p></div>
-                  <div className="rounded-xl bg-neutral-50 p-3"><p className="text-[11px] text-neutral-500">Last Updated</p><p className="text-sm font-semibold">{ai.lastUpdated ? new Date(ai.lastUpdated).toLocaleString("en-IN") : "—"}</p></div>
+                  <div className="rounded-xl bg-neutral-50 p-3"><p className="text-[11px] text-muted">Generated</p><p className="text-sm font-semibold">{ai.generatedAt ? new Date(ai.generatedAt).toLocaleString("en-IN") : "—"}</p></div>
+                  <div className="rounded-xl bg-neutral-50 p-3"><p className="text-[11px] text-muted">AI Version</p><p className="text-sm font-semibold">{ai.pipelineVersion}</p></div>
+                  <div className="rounded-xl bg-neutral-50 p-3"><p className="text-[11px] text-muted">Confidence</p><p className="text-sm font-semibold">{ai.confidence}%</p></div>
+                  <div className="rounded-xl bg-neutral-50 p-3"><p className="text-[11px] text-muted">Last Updated</p><p className="text-sm font-semibold">{ai.lastUpdated ? new Date(ai.lastUpdated).toLocaleString("en-IN") : "—"}</p></div>
                 </div>
               ) : (
                 <p className="rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">Save the property to generate AI intelligence.</p>
@@ -200,19 +200,19 @@ export default function PropertyCmsEditor({ propertyId, adminUserId, onBack }: P
                   {compiledEntries.map(([key, value]) => (
                     <div key={key} className="rounded-xl border border-neutral-100 bg-gradient-to-br from-white to-emerald-50/30 p-4">
                       <p className="text-[11px] font-bold uppercase tracking-wide text-emerald-700">{key.replace(/([A-Z])/g, " $1")}</p>
-                      <p className="mt-2 text-sm leading-relaxed text-neutral-700">{value}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-body">{value}</p>
                     </div>
                   ))}
                 </div>
               ) : null}
               {ai?.agents ? (
                 <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">Agent outputs</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-label">Agent outputs</p>
                   <div className="space-y-2">
                     {Object.entries(ai.agents).map(([id, agent]) => (
                       <div key={id} className="rounded-lg border border-neutral-100 px-3 py-2 text-sm">
-                        <span className="font-semibold text-neutral-800">{AI_AGENT_LABELS[id as keyof typeof AI_AGENT_LABELS] ?? id}</span>
-                        <span className="ml-2 text-xs text-neutral-400">{agent?.confidence ?? 0}% confidence</span>
+                        <span className="font-semibold text-heading-secondary">{AI_AGENT_LABELS[id as keyof typeof AI_AGENT_LABELS] ?? id}</span>
+                        <span className="ml-2 text-xs text-muted">{agent?.confidence ?? 0}% confidence</span>
                       </div>
                     ))}
                   </div>

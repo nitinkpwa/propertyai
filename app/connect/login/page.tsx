@@ -60,10 +60,10 @@ function ConnectLoginForm() {
           <div className="flex justify-center">
             <Logo size="dashboard" suffix="Connect" href="/connect" />
           </div>
-          <h1 className="mt-6 text-2xl font-bold tracking-tight text-neutral-900">
+          <h1 className="mt-6 text-2xl font-bold tracking-tight text-heading-primary">
             Connect Partner Login
           </h1>
-          <p className="mt-2 text-sm text-neutral-500">
+          <p className="mt-2 text-sm text-muted">
             Sign in to manage your buyers, properties, and leads.
           </p>
         </div>
@@ -98,7 +98,7 @@ function ConnectLoginForm() {
           </form>
         </div>
 
-        <p className="mt-6 text-center text-sm text-neutral-500">
+        <p className="mt-6 text-center text-sm text-muted">
           Need access?{" "}
           <a
             href="mailto:connect@areaiq.app?subject=Partner%20Access%20Request"

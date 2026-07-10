@@ -47,13 +47,13 @@ export default function AuthInput({
 
   return (
     <div className="mb-4">
-      <label className="mb-2 block text-sm font-medium text-neutral-700">
+      <label className="mb-2 block text-sm font-medium text-label">
         {label}
       </label>
       <div className="relative">
         <input
           type={inputType}
-          className={`w-full rounded-xl border bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none transition-all placeholder:text-neutral-400 focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 ${
+          className={`w-full rounded-xl border bg-neutral-50 px-4 py-3 text-sm text-input outline-none transition-all placeholder:text-placeholder focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 ${
             error ? "border-rose-300" : "border-neutral-200"
           } ${isPassword ? "pr-12" : ""} ${className}`}
           {...props}
@@ -62,7 +62,7 @@ export default function AuthInput({
           <button
             type="button"
             onClick={() => setVisible((value) => !value)}
-            className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-neutral-400 transition-colors hover:text-neutral-600"
+            className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-placeholder transition-colors hover:text-body"
             aria-label={visible ? "Hide password" : "Show password"}
           >
             <EyeIcon open={visible} />

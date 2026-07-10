@@ -26,7 +26,7 @@ export default function HorizontalCarousel({
         type="button"
         onClick={() => scroll("left")}
         aria-label="Scroll left"
-        className="absolute -left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-neutral-200/80 bg-white/90 text-neutral-700 shadow-lg backdrop-blur-md transition-all hover:scale-105 hover:border-emerald-200 hover:text-emerald-600 md:flex"
+        className="absolute -left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-neutral-200/80 bg-white/90 text-body shadow-lg backdrop-blur-md transition-all hover:scale-105 hover:border-emerald-200 hover:text-emerald-600 md:flex"
       >
         ←
       </button>
@@ -34,7 +34,7 @@ export default function HorizontalCarousel({
         type="button"
         onClick={() => scroll("right")}
         aria-label="Scroll right"
-        className="absolute -right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-neutral-200/80 bg-white/90 text-neutral-700 shadow-lg backdrop-blur-md transition-all hover:scale-105 hover:border-emerald-200 hover:text-emerald-600 md:flex"
+        className="absolute -right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-neutral-200/80 bg-white/90 text-body shadow-lg backdrop-blur-md transition-all hover:scale-105 hover:border-emerald-200 hover:text-emerald-600 md:flex"
       >
         →
       </button>

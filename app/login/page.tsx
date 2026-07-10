@@ -72,7 +72,7 @@ function LoginForm() {
       title="Welcome back"
       subtitle="Sign in to your AreaIQ account"
       footer={
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted">
           Don&apos;t have an account?{" "}
           <Link
             href="/register"

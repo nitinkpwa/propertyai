@@ -156,8 +156,8 @@ export default function BuyerProfilePage() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {summaryItems.map((item) => (
           <Card key={item.label} padding="sm" className="text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">{item.label}</p>
-            <p className="mt-1 text-xs font-semibold text-neutral-800">{item.value}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-label">{item.label}</p>
+            <p className="mt-1 text-xs font-semibold text-heading-secondary">{item.value}</p>
           </Card>
         ))}
       </div>
@@ -168,7 +168,7 @@ export default function BuyerProfilePage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <section>
-            <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-neutral-400">Basic Info</h2>
+            <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted">Basic Info</h2>
             <div className="space-y-1">
               <AuthInput
                 label="Full Name"
@@ -186,11 +186,11 @@ export default function BuyerProfilePage() {
                 placeholder="98765 43210"
               />
               <div className="mb-4">
-                <label className="mb-2 block text-sm font-medium text-neutral-700">City</label>
+                <label className="mb-2 block text-sm font-medium text-label">City</label>
                 <select
                   value={city}
                   onChange={(event) => setCity(event.target.value)}
-                  className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none transition-all focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+                  className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-heading-primary outline-none transition-all focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
                 >
                   <option value="">Select city</option>
                   {CITY_OPTIONS.map((option) => (
@@ -202,9 +202,9 @@ export default function BuyerProfilePage() {
           </section>
 
           <section>
-            <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-neutral-400">Buying Preferences</h2>
+            <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted">Buying Preferences</h2>
             <div className="mb-4">
-              <p className="mb-2 text-sm font-medium text-neutral-700">Buying Purpose</p>
+              <p className="mb-2 text-sm font-medium text-label">Buying Purpose</p>
               <div className="flex flex-wrap gap-2">
                 {BUYING_PURPOSE_OPTIONS.map((opt) => (
                   <SelectableChip
@@ -218,7 +218,7 @@ export default function BuyerProfilePage() {
               </div>
             </div>
             <div className="mb-4">
-              <p className="mb-2 text-sm font-medium text-neutral-700">Purchase Timeline</p>
+              <p className="mb-2 text-sm font-medium text-label">Purchase Timeline</p>
               <div className="flex flex-wrap gap-2">
                 {BUYING_TIMELINE_OPTIONS.map((opt) => (
                   <SelectableChip
@@ -232,7 +232,7 @@ export default function BuyerProfilePage() {
               </div>
             </div>
             <div className="mb-4">
-              <p className="mb-2 text-sm font-medium text-neutral-700">Loan Status</p>
+              <p className="mb-2 text-sm font-medium text-label">Loan Status</p>
               <div className="flex flex-wrap gap-2">
                 {LOAN_STATUS_OPTIONS.map((opt) => (
                   <SelectableChip
@@ -246,11 +246,11 @@ export default function BuyerProfilePage() {
               </div>
             </div>
             <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium text-neutral-700">Budget</label>
+              <label className="mb-2 block text-sm font-medium text-label">Budget</label>
               <select
                 value={budgetKey}
                 onChange={(event) => setBudgetKey(Number(event.target.value))}
-                className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none transition-all focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
+                className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-heading-primary outline-none transition-all focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10"
               >
                 {BUDGET_PRESETS.map((preset, index) => (
                   <option key={preset.label} value={index}>{preset.label}</option>
@@ -258,7 +258,7 @@ export default function BuyerProfilePage() {
               </select>
             </div>
             <div className="mb-4">
-              <p className="mb-2 text-sm font-medium text-neutral-700">Preferred Locations</p>
+              <p className="mb-2 text-sm font-medium text-label">Preferred Locations</p>
               <div className="flex flex-wrap gap-2">
                 {CITY_OPTIONS.map((location) => (
                   <SelectableChip
@@ -272,7 +272,7 @@ export default function BuyerProfilePage() {
               </div>
             </div>
             <div className="mb-4">
-              <p className="mb-2 text-sm font-medium text-neutral-700">Preferred Property Types</p>
+              <p className="mb-2 text-sm font-medium text-label">Preferred Property Types</p>
               <div className="flex flex-wrap gap-2">
                 {PROPERTY_TYPE_PRESETS.map((type) => (
                   <SelectableChip
@@ -288,7 +288,7 @@ export default function BuyerProfilePage() {
           </section>
 
           <section>
-            <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-neutral-400">Additional Details</h2>
+            <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted">Additional Details</h2>
             <AuthInput
               label="Occupation"
               value={occupation}
@@ -304,7 +304,7 @@ export default function BuyerProfilePage() {
               placeholder="e.g. 4"
             />
             <div className="mb-4">
-              <label className="mb-2 block text-sm font-medium text-neutral-700">Additional Notes</label>
+              <label className="mb-2 block text-sm font-medium text-label">Additional Notes</label>
               <textarea
                 value={buyerNotes}
                 onChange={(e) => setBuyerNotes(e.target.value)}
