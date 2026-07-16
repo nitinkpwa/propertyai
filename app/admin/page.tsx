@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthButton from "@/components/auth/AuthButton";
 import AdminEmptyState from "./components/AdminEmptyState";
@@ -109,10 +109,34 @@ function StatCard({
   );
 }
 
-export default function AdminPage() {
+const ADMIN_TABS: AdminTab[] = [
+  "dashboard",
+  "properties",
+  "pending",
+  "users",
+  "builders",
+  "leads",
+  "crm",
+  "visits",
+  "chats",
+  "analytics",
+  "settings",
+  "add",
+  "bulk",
+];
+
+function parseAdminTab(value: string | null): AdminTab {
+  if (value && ADMIN_TABS.includes(value as AdminTab)) {
+    return value as AdminTab;
+  }
+  return "dashboard";
+}
+
+function AdminPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [accessState, setAccessState] = useState<AdminAccessState>("loading");
-  const [tab, setTab] = useState<AdminTab>("dashboard");
+  const tab = parseAdminTab(searchParams.get("tab"));
   const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
@@ -189,6 +213,18 @@ export default function AdminPage() {
     setAdminUserId(null);
     setData(null);
     setSupabaseRoleWarning(null);
+  };
+
+  const goToTab = (next: AdminTab) => {
+    if (next === "leads") {
+      router.push("/admin/leads");
+      return;
+    }
+    setSearchQ("");
+    setUserRoleFilter("all");
+    setStatusFilter("all");
+    const href = next === "dashboard" ? "/admin" : `/admin?tab=${next}`;
+    router.replace(href, { scroll: false });
   };
 
   const handleAdminLogin = async (event: React.FormEvent) => {
@@ -287,7 +323,7 @@ export default function AdminPage() {
   const startEdit = (p: AdminPropertyRow) => {
     setEditId(p.id);
     setWizardForm(adminRowToForm(p));
-    setTab("add");
+    goToTab("add");
   };
 
   const resetWizard = () => {
@@ -328,10 +364,10 @@ export default function AdminPage() {
         description: row.description || "",
         photos: [],
         amenities: [],
-        status: "active",
+        status: "draft",
       });
       results.push(
-        error ? `Row ${i} (${row.title}): ERROR — ${error.message}` : `Row ${i} (${row.title}): ✅ Added`,
+        error ? `Row ${i} (${row.title}): ERROR — ${error.message}` : `Row ${i} (${row.title}): ✅ Added as draft`,
       );
     }
     setBulkResult(results);
@@ -418,16 +454,7 @@ export default function AdminPage() {
   return (
     <AdminShell
       tab={tab}
-      onTabChange={(next) => {
-        if (next === "leads") {
-          router.push("/admin/leads");
-          return;
-        }
-        setTab(next);
-        setSearchQ("");
-        setUserRoleFilter("all");
-        setStatusFilter("all");
-      }}
+      onTabChange={goToTab}
       navItems={navItems}
       onLogout={logoutAdmin}
     >
@@ -505,7 +532,7 @@ export default function AdminPage() {
               type="button"
               onClick={() => {
                 resetWizard();
-                setTab("add");
+                goToTab("add");
               }}
               className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
               style={{ backgroundColor: EMERALD }}
@@ -576,7 +603,14 @@ export default function AdminPage() {
                         <div className="flex flex-wrap gap-1">
                           <Link href={`/admin/properties/${prop.id}`} className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100">CMS</Link>
                           <button type="button" onClick={() => startEdit(prop)} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium hover:bg-neutral-50">Edit</button>
-                          <button type="button" onClick={async () => { await updatePropertyStatus(prop.id, prop.status === "active" ? "paused" : "active"); await loadAll(); }} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium hover:bg-neutral-50">{prop.status === "active" ? "Pause" : "Activate"}</button>
+                          <button type="button" onClick={async () => {
+                            const result = await updatePropertyStatus(prop.id, prop.status === "active" ? "paused" : "active");
+                            if (!result.ok) {
+                              window.alert(result.error ?? "Could not update status");
+                              return;
+                            }
+                            await loadAll();
+                          }} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium hover:bg-neutral-50">{prop.status === "active" ? "Pause" : "Activate"}</button>
                           <button type="button" onClick={async () => { if (confirm("Delete this property?")) { await deleteProperty(prop.id); await loadAll(); } }} className="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600">Delete</button>
                         </div>
                       </td>
@@ -636,7 +670,14 @@ export default function AdminPage() {
                       className="flex-1 border-0 bg-transparent p-0"
                     />
                     <div className="flex gap-2">
-                      <button type="button" onClick={async () => { await approveProperty(prop.id); await loadAll(); }} className="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-semibold text-white">Approve</button>
+                      <button type="button" onClick={async () => {
+                        const result = await approveProperty(prop.id);
+                        if (!result.ok) {
+                          window.alert(result.error ?? "Could not approve property");
+                          return;
+                        }
+                        await loadAll();
+                      }} className="rounded-xl bg-emerald-500 px-4 py-2 text-xs font-semibold text-white">Approve</button>
                       <button type="button" onClick={async () => { await rejectProperty(prop.id); await loadAll(); }} className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-600">Reject</button>
                       <button type="button" onClick={() => startEdit(prop)} className="rounded-xl border border-neutral-200 px-4 py-2 text-xs font-semibold text-body">Edit</button>
                     </div>
@@ -889,11 +930,11 @@ export default function AdminPage() {
           onSaved={async () => {
             resetWizard();
             await loadAll();
-            setTab("properties");
+            goToTab("properties");
           }}
           onCancel={() => {
             resetWizard();
-            setTab("properties");
+            goToTab("properties");
           }}
         />
       ) : null}
@@ -922,5 +963,19 @@ export default function AdminPage() {
         </div>
       ) : null}
     </AdminShell>
+  );
+}
+
+export default function AdminPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-neutral-50">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+        </div>
+      }
+    >
+      <AdminPageInner />
+    </Suspense>
   );
 }

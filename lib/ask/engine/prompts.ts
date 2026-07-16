@@ -323,7 +323,7 @@ Suggest they can ask about:
 Keep it brief and professional.`;
 
 export const AI_UNAVAILABLE_MESSAGE =
-  "AreaIQ AI is temporarily unavailable. Please check that OPENAI_API_KEY is configured and try again.";
+  "AreaIQ AI is temporarily unavailable. Please try again in a moment.";
 
 export const NO_EXACT_MATCH_MESSAGE =
   "I couldn't find an exact match in AreaIQ database.";

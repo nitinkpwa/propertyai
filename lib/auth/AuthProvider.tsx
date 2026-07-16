@@ -50,8 +50,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error,
       } = await supabase.auth.getUser();
 
+      // Guests have no session — Supabase returns AuthSessionMissingError.
+      // Do not console.error that case: Next.js Dev Overlay treats it as a
+      // blocking Console Error and intercepts all clicks on /ask and elsewhere.
       if (error) {
-        console.error("Failed to restore session:", error.message);
+        const missingSession =
+          error.name === "AuthSessionMissingError" ||
+          error.message === "Auth session missing!" ||
+          error.message.toLowerCase().includes("auth session missing");
+        if (!missingSession) {
+          console.error("Failed to restore session:", error.message);
+        }
       }
 
       const {

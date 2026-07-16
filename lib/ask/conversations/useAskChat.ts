@@ -237,6 +237,11 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
       };
       setActiveConversation(withUser);
 
+      const phaseTimers = [
+        window.setTimeout(() => setTypingPhase("searching"), 700),
+        window.setTimeout(() => setTypingPhase("responding"), 2200),
+      ];
+
       try {
         const history = conversationToHistory(conversation);
         const engineResponse = await queryAskEngine(
@@ -246,7 +251,8 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
           conversation.suggestedPropertyIds,
         );
 
-        setTypingPhase(engineResponse.searchedDatabase ? "searching" : "responding");
+        phaseTimers.forEach((id) => window.clearTimeout(id));
+        setTypingPhase(engineResponse.searchedDatabase ? "responding" : "responding");
 
         const { message: assistantMessage } = buildAssistantMessage(
           messageText,
@@ -288,6 +294,7 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
           });
         }
       } catch (error) {
+        phaseTimers.forEach((id) => window.clearTimeout(id));
         console.error("Ask engine error:", error);
         const errorMessage: AskChatMessage = {
           id: crypto.randomUUID(),
@@ -302,6 +309,7 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
           updatedAt: new Date().toISOString(),
         });
       } finally {
+        phaseTimers.forEach((id) => window.clearTimeout(id));
         setLoading(false);
         setTypingPhase("understanding");
       }

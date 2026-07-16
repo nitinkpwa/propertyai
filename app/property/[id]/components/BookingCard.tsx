@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { useSavedProperty } from "@/lib/buyer/useSavedProperty";
 import type { PropertyDetail } from "../data";
 import { formatPrice } from "../data";
-import SiteVisitModal from "./SiteVisitModal";
+import { useBookSiteVisit } from "./BookSiteVisitProvider";
 import {
   EMERALD,
   HeartIcon,
@@ -21,8 +21,8 @@ interface BookingCardProps {
 
 export default function BookingCard({ property }: BookingCardProps) {
   const { saved, toggle, saving } = useSavedProperty(property.id);
+  const { requestBookVisit } = useBookSiteVisit();
   const [shared, setShared] = useState(false);
-  const [visitModalOpen, setVisitModalOpen] = useState(false);
 
   const handleShare = useCallback(async () => {
     const url = window.location.href;
@@ -78,18 +78,18 @@ export default function BookingCard({ property }: BookingCardProps) {
           </div>
 
           <p className="text-xs leading-relaxed text-muted">
-            Book a site visit to connect with the seller. Contact details are shared only after your
-            request is approved.
+            Schedule a guided property visit. Contact details are shared only after your request is
+            approved.
           </p>
 
           <div className="space-y-2.5 pt-2">
             <button
               type="button"
-              onClick={() => setVisitModalOpen(true)}
+              onClick={requestBookVisit}
               className="flex w-full items-center justify-center rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all hover:shadow-[0_4px_14px_rgba(34,197,94,0.45)] hover:brightness-105 active:scale-[0.98]"
               style={{ backgroundColor: EMERALD }}
             >
-              Book Site Visit
+              Schedule Property Visit
             </button>
 
             <div className="grid grid-cols-2 gap-2">
@@ -119,14 +119,6 @@ export default function BookingCard({ property }: BookingCardProps) {
           </div>
         </div>
       </div>
-
-      <SiteVisitModal
-        propertyId={property.id}
-        propertyName={property.name}
-        builderName={property.builder.name}
-        open={visitModalOpen}
-        onClose={() => setVisitModalOpen(false)}
-      />
     </aside>
   );
 }

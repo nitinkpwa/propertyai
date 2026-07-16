@@ -15,6 +15,7 @@ export interface WorkflowSideEffects {
 
 const ACTIVITY_NOTIFY_PARTNER: Partial<Record<ActivityType, NotificationType>> = {
   site_visit_booked: "site_visit_booked",
+  visit_requested: "site_visit_booked",
   inquiry_sent: "new_inquiry",
   negotiation_started: "negotiation_started",
 };

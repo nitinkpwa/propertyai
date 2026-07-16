@@ -449,6 +449,25 @@ export function getPendingProperties(
 }
 
 export async function approveProperty(id: string): Promise<{ ok: boolean; error?: string }> {
+  const { data: property, error: fetchError } = await supabase
+    .from("properties")
+    .select("id, connect_partner_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError) {
+    return { ok: false, error: fetchError.message };
+  }
+  if (!property) {
+    return { ok: false, error: "Property not found" };
+  }
+  if (!property.connect_partner_id) {
+    return {
+      ok: false,
+      error: "Assign a Connect Partner before publishing.",
+    };
+  }
+
   const usesApproval = await hasApprovalStatusColumn();
   const payload = usesApproval
     ? { approval_status: "approved", status: "active", updated_at: new Date().toISOString() }
@@ -476,12 +495,30 @@ export async function deleteProperty(id: string): Promise<boolean> {
 export async function updatePropertyStatus(
   id: string,
   status: string,
-): Promise<boolean> {
+): Promise<{ ok: boolean; error?: string }> {
+  if (status === "active") {
+    const { data: property, error: fetchError } = await supabase
+      .from("properties")
+      .select("connect_partner_id")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (fetchError) {
+      return { ok: false, error: fetchError.message };
+    }
+    if (!property?.connect_partner_id) {
+      return {
+        ok: false,
+        error: "Assign a Connect Partner before publishing.",
+      };
+    }
+  }
+
   const { error } = await supabase
     .from("properties")
     .update({ status, updated_at: new Date().toISOString() })
     .eq("id", id);
-  return !error;
+  return error ? { ok: false, error: error.message } : { ok: true };
 }
 
 export function buildBuilderRows(

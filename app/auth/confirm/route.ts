@@ -1,5 +1,6 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest, NextResponse } from "next/server";
+import { sanitizeRedirectPath } from "@/lib/auth/routes";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 /**
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const next = searchParams.get("next") ?? "/reset-password";
-  const destination = next.startsWith("/") ? next : "/reset-password";
+  const destination = sanitizeRedirectPath(next, "/reset-password");
 
   if (!token_hash || !type) {
     return NextResponse.redirect(`${origin}/forgot-password?error=invalid_link`);

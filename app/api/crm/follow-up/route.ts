@@ -83,6 +83,40 @@ export async function PATCH(req: NextRequest) {
   }
 
   const supabase = await createSupabaseServerClient();
+
+  const { data: followUp } = await supabase
+    .from("crm_follow_ups")
+    .select("id, lead_id")
+    .eq("id", followUpId)
+    .maybeSingle();
+
+  if (!followUp) {
+    return NextResponse.json({ error: "Follow-up not found" }, { status: 404 });
+  }
+
+  const { data: lead } = await supabase
+    .from("crm_leads")
+    .select("assigned_connect_id, connect_partner_id")
+    .eq("id", followUp.lead_id as string)
+    .maybeSingle();
+
+  if (!lead) {
+    return NextResponse.json({ error: "Lead not found" }, { status: 404 });
+  }
+
+  const partnerId = await getPartnerIdForProfile(supabase, user.id);
+  const isPartner =
+    lead.assigned_connect_id === user.id || lead.connect_partner_id === partnerId;
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!isPartner && profile?.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const ok = await completeFollowUp(supabase, followUpId);
 
   if (!ok) {

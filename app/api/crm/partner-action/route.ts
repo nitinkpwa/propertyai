@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
   }
 
   const partnerId = await getPartnerIdForProfile(supabase, user.id);
-  const isPartner = lead.assigned_connect_id === user.id || Boolean(partnerId);
+  const isPartner =
+    lead.assigned_connect_id === user.id || lead.connect_partner_id === partnerId;
   const { data: profile } = await supabase
     .from("profiles")
     .select("role")

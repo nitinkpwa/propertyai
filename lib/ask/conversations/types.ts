@@ -17,6 +17,9 @@ export interface AskChatMessage {
   stats?: AskSearchStats | null;
   isSimilar?: boolean;
   suggestedPropertyIds?: string[];
+  /** Extracted entities from engine (optional; older messages may omit) */
+  location?: string | null;
+  builder?: string | null;
 }
 
 export interface AskConversation {

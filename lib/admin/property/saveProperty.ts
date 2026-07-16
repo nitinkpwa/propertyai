@@ -14,6 +14,19 @@ export async function saveAdminProperty(
   }
 
   const payload = formToDbPayload(form, adminUserId, { existingNearbyPlaces });
+  const wantsActive = payload.status === "active";
+
+  if (wantsActive && !form.connect_partner_id) {
+    return {
+      ok: false,
+      error: "Assign a Connect Partner before publishing.",
+    };
+  }
+
+  // Never publish without partner assigned first — save as draft, assign, then activate.
+  if (wantsActive) {
+    payload.status = "draft";
+  }
 
   const { data: inserted, error } = editId
     ? await supabase.from("properties").update(payload).eq("id", editId).select("id").single()
@@ -25,12 +38,25 @@ export async function saveAdminProperty(
 
   const propertyId = editId ?? (inserted?.id as string);
 
-  if (propertyId) {
-    await fetch(`/api/admin/properties/${propertyId}/partner`, {
+  if (propertyId && form.connect_partner_id) {
+    const assignRes = await fetch(`/api/admin/properties/${propertyId}/partner`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ connectPartnerId: form.connect_partner_id || null }),
+      body: JSON.stringify({ connectPartnerId: form.connect_partner_id }),
     });
+    if (!assignRes.ok) {
+      return { ok: false, error: "Failed to assign Connect Partner.", propertyId };
+    }
+  }
+
+  if (wantsActive && propertyId) {
+    const { error: publishError } = await supabase
+      .from("properties")
+      .update({ status: "active", updated_at: new Date().toISOString() })
+      .eq("id", propertyId);
+    if (publishError) {
+      return { ok: false, error: publishError.message, propertyId };
+    }
   }
 
   return { ok: true, propertyId };

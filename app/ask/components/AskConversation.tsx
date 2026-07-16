@@ -6,8 +6,16 @@ import { formatPriceShort } from "@/lib/ask/responses";
 import Logo from "@/components/common/Logo";
 import { AskResultsGrid } from "./AskResultsSection";
 
-function formatInline(text: string) {
+function escapeHtml(text: string) {
   return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function formatInline(text: string) {
+  return escapeHtml(text)
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/^###\s+(.+)$/gm, '<h4 class="mt-4 mb-1 text-sm font-semibold text-heading-primary">$1</h4>')
     .replace(/^##\s+(.+)$/gm, '<h3 class="mt-5 mb-2 text-base font-semibold text-heading-primary">$1</h3>')

@@ -159,8 +159,12 @@ export default function ConnectDashboardPanel({
             </div>
           ) : null}
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4 text-sm">
-            <p className="font-semibold text-emerald-900">Performance Score: {Math.min(100, 60 + conversionRate + analytics.hot * 5)}/100</p>
-            <p className="mt-1 text-emerald-800">Keep response time under 2 hours to improve your partner ranking.</p>
+            <p className="font-semibold text-emerald-900">
+              {analytics.totalBuyers} leads · {conversionRate}% conversion
+            </p>
+            <p className="mt-1 text-emerald-800">
+              Keep response time under 2 hours to improve conversion on assigned properties.
+            </p>
           </div>
         </div>
       </section>

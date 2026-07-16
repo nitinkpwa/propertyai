@@ -18,6 +18,16 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createSupabaseServerClient();
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profile?.role !== "buyer") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const { data: property, error: propError } = await supabase
     .from("properties")
     .select("id, title, seller_id, connect_partner_id, assigned_connect_id")
@@ -47,12 +57,6 @@ export async function POST(req: NextRequest) {
     console.error("CRM inquiry insert:", inqError?.message);
     return NextResponse.json({ error: "Failed to send inquiry" }, { status: 500 });
   }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", user.id)
-    .maybeSingle();
 
   await recordLeadActivity(supabase, {
     buyerId: user.id,

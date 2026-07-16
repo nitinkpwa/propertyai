@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import DashboardHome from "./components/DashboardHome";
 import MyPropertiesTab from "./components/MyPropertiesTab";
@@ -54,10 +54,28 @@ const TAB_TITLES: Record<SellerTab, string> = {
   profile: "Profile",
 };
 
-export default function SellerDashboard() {
+const SELLER_TABS = Object.keys(TAB_TITLES) as SellerTab[];
+
+function parseSellerTab(value: string | null): SellerTab {
+  if (value && SELLER_TABS.includes(value as SellerTab)) {
+    return value as SellerTab;
+  }
+  return "home";
+}
+
+function SellerDashboardInner() {
   const router = useRouter();
-  const [tab, setTab] = useState<SellerTab>("home");
+  const searchParams = useSearchParams();
+  const tab = parseSellerTab(searchParams.get("tab"));
   const [user, setUser] = useState<SellerProfile | null>(null);
+
+  const handleTabChange = useCallback(
+    (next: SellerTab) => {
+      const href = next === "home" ? "/seller" : `/seller?tab=${next}`;
+      router.replace(href, { scroll: false });
+    },
+    [router],
+  );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -161,10 +179,8 @@ export default function SellerDashboard() {
       setSaveMsg("Please fill property name, price and location");
       return;
     }
-    if (!editId && listings.filter((l) => l.status !== "draft").length >= 10 && !asDraft) {
-      setSaveMsg("Free plan allows max 10 active listings");
-      return;
-    }
+    // Sellers always submit drafts for admin review — never publish directly.
+    void asDraft;
 
     setSaving(true);
     setSaveMsg("");
@@ -175,20 +191,24 @@ export default function SellerDashboard() {
     const keptExisting = existingPhotos.filter((url) => photoUrls.includes(url));
     const allPhotos = [...keptExisting, ...uploaded].slice(0, 6);
 
-    const payload = formToPayload(form, user, allPhotos, asDraft ? "draft" : "active");
+    const payload = formToPayload(form, user, allPhotos, "draft");
     const result = await saveSellerProperty(user.id, payload, editId);
 
     if (!result.ok) {
       setSaveMsg(`Error: ${result.error}`);
     } else {
-      setSaveMsg(asDraft ? "✅ Saved as draft" : editId ? "✅ Property updated!" : "✅ Property published!");
+      setSaveMsg(
+        editId
+          ? "✅ Property updated. Changes stay in review until AreaIQ publishes."
+          : "✅ Submitted for review. AreaIQ will publish after Connect Partner assignment.",
+      );
       setForm({ ...emptyForm });
       setPhotos([]);
       setPhotoUrls([]);
       setExistingPhotos([]);
       setEditId(null);
       await refresh();
-      setTab("listings");
+      handleTabChange("listings");
     }
     setSaving(false);
   };
@@ -227,7 +247,7 @@ export default function SellerDashboard() {
     setPhotoUrls(prop.photos ?? []);
     setPhotos([]);
     setSaveMsg("");
-    setTab("add");
+    handleTabChange("add");
   };
 
   const cancelEdit = () => {
@@ -237,7 +257,7 @@ export default function SellerDashboard() {
     setPhotoUrls([]);
     setExistingPhotos([]);
     setSaveMsg("");
-    setTab("listings");
+    handleTabChange("listings");
   };
 
   const handleDelete = async (id: string) => {
@@ -248,14 +268,26 @@ export default function SellerDashboard() {
 
   const handleTogglePause = async (id: string, status: string) => {
     if (!user) return;
-    const next = status === "active" ? "paused" : "active";
-    await updatePropertyStatus(id, user.id, next);
+    // Sellers may pause live listings but cannot re-publish — admin publishes.
+    if (status !== "active") {
+      setSaveMsg("Only AreaIQ admin can publish or reactivate listings.");
+      return;
+    }
+    const result = await updatePropertyStatus(id, user.id, "paused");
+    if (!result.ok) {
+      setSaveMsg(result.error ?? "Could not pause listing");
+      return;
+    }
     await refresh();
   };
 
   const handleMarkSold = async (id: string) => {
     if (!user || !confirm("Mark this property as sold?")) return;
-    await updatePropertyStatus(id, user.id, "sold");
+    const result = await updatePropertyStatus(id, user.id, "sold");
+    if (!result.ok) {
+      setSaveMsg(result.error ?? "Could not update listing");
+      return;
+    }
     await refresh();
   };
 
@@ -287,7 +319,7 @@ export default function SellerDashboard() {
 
   const handleAddProperty = () => {
     cancelEdit();
-    setTab("add");
+    handleTabChange("add");
   };
 
   const handleLogout = async () => {
@@ -313,7 +345,7 @@ export default function SellerDashboard() {
   return (
     <SellerShell
       tab={tab}
-      onTabChange={setTab}
+      onTabChange={handleTabChange}
       userName={user?.full_name}
       avatarUrl={user?.avatar_url}
       newLeads={newLeads}
@@ -397,5 +429,19 @@ export default function SellerDashboard() {
         ) : null}
       </div>
     </SellerShell>
+  );
+}
+
+export default function SellerDashboard() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA]">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+        </div>
+      }
+    >
+      <SellerDashboardInner />
+    </Suspense>
   );
 }

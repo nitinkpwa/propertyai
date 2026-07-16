@@ -13,6 +13,8 @@ export type SiteVisitErrorCode =
   | "UNKNOWN"
   | "BUYER_PROFILE_MISSING"
   | "BUYER_NOT_BUYER_ROLE"
+  | "CONNECT_PARTNER_MISSING"
+  | "DUPLICATE_VISIT"
   | "SELLER_NOT_FOUND"
   | "SELLER_PROFILE_MISSING"
   | "PROPERTY_OWNER_NOT_FOUND"
@@ -37,7 +39,10 @@ const CODE_MESSAGES: Partial<Record<SiteVisitErrorCode, string>> = {
   UNAUTHORIZED: "Please sign in to book a site visit.",
   VALIDATION: "Please fill in all required fields.",
   BUYER_PROFILE_MISSING: "Buyer profile missing. Please sign out and sign in again.",
-  BUYER_NOT_BUYER_ROLE: "Only buyer accounts can book site visits.",
+  BUYER_NOT_BUYER_ROLE: "Please continue as a Buyer to book a site visit.",
+  CONNECT_PARTNER_MISSING:
+    "This property is not ready for site visits yet. Please try again later.",
+  DUPLICATE_VISIT: "You already have an active site visit request for this property.",
   SELLER_NOT_FOUND: "Property owner not found.",
   SELLER_PROFILE_MISSING: "Seller profile missing.",
   PROPERTY_OWNER_NOT_FOUND: "Property owner not found.",
@@ -87,6 +92,27 @@ export function mapSiteVisitError(
     return {
       code: "VALIDATION",
       message: serverMessage ?? CODE_MESSAGES.VALIDATION!,
+    };
+  }
+
+  if (status === 401) {
+    return {
+      code: "UNAUTHORIZED",
+      message: serverMessage ?? CODE_MESSAGES.UNAUTHORIZED!,
+    };
+  }
+
+  if (status === 403) {
+    return {
+      code: "BUYER_NOT_BUYER_ROLE",
+      message: serverMessage ?? CODE_MESSAGES.BUYER_NOT_BUYER_ROLE!,
+    };
+  }
+
+  if (status === 409) {
+    return {
+      code: "DUPLICATE_VISIT",
+      message: serverMessage ?? CODE_MESSAGES.DUPLICATE_VISIT!,
     };
   }
 

@@ -389,10 +389,33 @@ export async function saveSellerProperty(
   payload: ReturnType<typeof formToPayload>,
   editId?: string | null,
 ): Promise<{ ok: boolean; error?: string }> {
+  // Sellers may only create/update drafts. Admin publishes after review + Connect Partner.
+  const safePayload = { ...payload, status: "draft" as const };
+
   if (editId) {
+    const { data: existing } = await supabase
+      .from("properties")
+      .select("status")
+      .eq("id", editId)
+      .eq("seller_id", sellerId)
+      .maybeSingle();
+
+    // Allow sellers to edit content of already-published listings without changing status.
+    const preservePublishedStatus =
+      existing?.status === "active" ||
+      existing?.status === "paused" ||
+      existing?.status === "sold" ||
+      existing?.status === "rented";
+
+    const updatePayload = preservePublishedStatus
+      ? Object.fromEntries(
+          Object.entries(safePayload).filter(([key]) => key !== "status"),
+        )
+      : safePayload;
+
     const { error } = await supabase
       .from("properties")
-      .update(payload)
+      .update(updatePayload)
       .eq("id", editId)
       .eq("seller_id", sellerId);
     return error ? { ok: false, error: error.message } : { ok: true };
@@ -400,7 +423,7 @@ export async function saveSellerProperty(
 
   const { error } = await supabase
     .from("properties")
-    .insert({ ...payload, seller_id: sellerId });
+    .insert({ ...safePayload, seller_id: sellerId });
 
   return error ? { ok: false, error: error.message } : { ok: true };
 }
@@ -422,14 +445,22 @@ export async function updatePropertyStatus(
   propertyId: string,
   sellerId: string,
   status: PropertyListingStatus,
-): Promise<boolean> {
+): Promise<{ ok: boolean; error?: string }> {
+  // Sellers may pause or mark sold/rented, but never publish (activate).
+  if (status === "active") {
+    return {
+      ok: false,
+      error: "Only AreaIQ admin can publish listings after review.",
+    };
+  }
+
   const { error } = await supabase
     .from("properties")
     .update({ status, updated_at: new Date().toISOString() })
     .eq("id", propertyId)
     .eq("seller_id", sellerId);
 
-  return !error;
+  return error ? { ok: false, error: error.message } : { ok: true };
 }
 
 export async function duplicateProperty(

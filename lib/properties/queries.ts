@@ -1,4 +1,4 @@
-import { extractNearbyPlacesList } from "@/lib/properties/nearbyPlacesMeta";
+import { extractNearbyPlacesList, extractPropertyMeta } from "@/lib/properties/nearbyPlacesMeta";
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
 import type {
   AISummary,
@@ -8,6 +8,11 @@ import type {
   PropertyDetail,
 } from "@/app/property/[id]/data";
 import { areaIntelligenceService } from "@/lib/intelligence/AreaIntelligenceService";
+import { fetchMarketContext } from "@/lib/intelligence/data/marketContext";
+import {
+  buildAiSummaryFromSources,
+  buildPropertyIntelligenceBundle,
+} from "@/lib/properties/intelligenceBundle";
 import { supabase, type Property } from "@/lib/supabase";
 import type {
   Amenity,
@@ -361,49 +366,114 @@ export function mapPropertyRowToDetail(
   row: PropertyRow,
   similarProperties: PropertyCardProps[] = [],
   intelligenceReport: Awaited<ReturnType<typeof areaIntelligenceService.generateReport>> = null,
+  marketContext?: Awaited<ReturnType<typeof fetchMarketContext>> | null,
 ): PropertyDetail {
   const possession = mapPossession(row.possession);
   const bedrooms = row.bedrooms ?? 0;
   const area = row.area_sqft ?? 0;
   const builder = buildBuilderInfo(row);
   const amenities = buildAmenityLabels(row.amenities);
+  const nearbyPlaces = buildNearbyPlaces(row);
+  const structuredMeta = extractPropertyMeta(row.nearby_places);
+  const statusLabel = row.status === "active" ? "Available" : row.status;
+  const price = row.price ?? 0;
+  const pricePerSqFt = area > 0 ? Math.round(price / area) : 0;
+  const city = row.city?.trim() || "Tricity";
+  const location = row.location?.trim() || "Location not specified";
 
   const phone = row.contact_phone?.trim() ?? "";
   const whatsapp = phone.replace(/\D/g, "");
+
+  const market =
+    marketContext ??
+    ({
+      city,
+      locality: location,
+      listings: [],
+      totalListings: 0,
+      newListings90d: 0,
+      buyListings: 0,
+      rentListings: 0,
+      medianPricePerSqft: null,
+      recentMedianPricePerSqft: null,
+      olderMedianPricePerSqft: null,
+      avgViews: null,
+    } as Awaited<ReturnType<typeof fetchMarketContext>>);
+
+  const intelligenceBundle = buildPropertyIntelligenceBundle({
+    id: row.id,
+    name: row.title?.trim() || "Property",
+    price,
+    pricePerSqFt,
+    area,
+    status: statusLabel,
+    possession: formatPossessionLabel(possession),
+    city,
+    location,
+    builderName: builder.name,
+    amenities,
+    reraVerified: Boolean(row.rera_verified),
+    aiVerified: Boolean(row.ai_verified),
+    report: intelligenceReport,
+    meta: structuredMeta,
+    market,
+    similarProperties: similarProperties ?? [],
+    nearbyPlaces,
+  });
+
+  const fallbackSummary = buildAiSummary(row, intelligenceReport);
+  const aiSummary = buildAiSummaryFromSources(
+    fallbackSummary,
+    structuredMeta,
+    intelligenceBundle,
+  );
+
+  const compiledDescription =
+    structuredMeta?.ai?.compiled?.propertySummary?.trim() ||
+    row.description?.trim() ||
+    `${row.title} is listed in ${row.location}, ${row.city}. Contact the seller for full details, site visit scheduling, and documentation.`;
 
   return {
     id: row.id,
     name: row.title?.trim() || "Property",
     project: row.project_name?.trim() || row.title?.trim() || "Property",
-    builder,
-    location: row.location?.trim() || "Location not specified",
-    city: row.city?.trim() || "Tricity",
-    price: row.price ?? 0,
-    pricePerSqFt: area > 0 ? Math.round(row.price / area) : 0,
+    builder: {
+      ...builder,
+      projectsDelivered: intelligenceBundle.builder.projectsDelivered,
+    },
+    location,
+    city,
+    price,
+    pricePerSqFt,
     propertyType: SUB_TYPE_LABELS[row.sub_type] ?? "Property",
     bhk: (bedrooms || 1) as PropertyDetail["bhk"],
     area,
-    status: row.status === "active" ? "Available" : row.status,
+    status: statusLabel,
     possession: formatPossessionLabel(possession),
     configuration:
       bedrooms > 0 ? `${bedrooms} BHK` : SUB_TYPE_LABELS[row.sub_type] ?? "—",
-    totalFloors: null,
+    totalFloors: (() => {
+      const floors = structuredMeta?.specs.totalFloors?.trim();
+      if (!floors) return null;
+      const n = parseInt(floors, 10);
+      return Number.isFinite(n) ? n : null;
+    })(),
     parking: amenities.some((item) => item.toLowerCase().includes("parking"))
       ? "Available"
       : "Contact for details",
     facing: row.facing?.trim() || "Contact for details",
     furnishing: row.furnishing?.trim() || "Contact for details",
-    description:
-      row.description?.trim() ||
-      `${row.title} is listed in ${row.location}, ${row.city}. Contact the seller for full details, site visit scheduling, and documentation.`,
+    description: compiledDescription,
     aiVerified: Boolean(row.ai_verified),
     reraVerified: Boolean(row.rera_verified),
     images: buildGalleryImages(row.photos),
     amenities,
     intelligenceReport,
-    aiSummary: buildAiSummary(row, intelligenceReport),
+    intelligenceBundle,
+    structuredMeta,
+    aiSummary,
     floorPlans: buildFloorPlans(row),
-    nearbyPlaces: buildNearbyPlaces(row),
+    nearbyPlaces,
     similarProperties: similarProperties ?? [],
     contactPhone: phone,
     whatsapp,
@@ -449,12 +519,13 @@ export async function fetchPropertyDetailById(
     }
 
     const row = data as PropertyRow;
-    const [similar, intelligenceReport] = await Promise.all([
-      fetchSimilarListingProperties(row.city, row.id, 4),
+    const [similar, intelligenceReport, marketContext] = await Promise.all([
+      fetchSimilarListingProperties(row.city, row.id, 6),
       areaIntelligenceService.generateReport(row.id),
+      fetchMarketContext(row.city, row.location, row.id),
     ]);
 
-    return mapPropertyRowToDetail(row, similar, intelligenceReport);
+    return mapPropertyRowToDetail(row, similar, intelligenceReport, marketContext);
   } catch (error) {
     console.error("Failed to fetch property detail:", error);
     return null;

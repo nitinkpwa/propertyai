@@ -82,20 +82,47 @@ export function ExpandIcon() {
 
 const AMENITY_ICONS: Record<string, string> = {
   Gym: "🏋️",
+  gym: "🏋️",
   "Swimming Pool": "🏊",
+  "swimming pool": "🏊",
+  Pool: "🏊",
+  pool: "🏊",
   "Club House": "🏛️",
+  "club house": "🏛️",
+  Club: "🏛️",
+  club: "🏛️",
   "Kids Area": "🎠",
+  "kids area": "🎠",
+  "Children's Play Area": "🎠",
+  Sports: "🎾",
+  sports: "🎾",
+  "Pet Friendly": "🐾",
+  "pet friendly": "🐾",
   Security: "🛡️",
+  security: "🛡️",
   "Power Backup": "⚡",
   Lift: "🛗",
   Garden: "🌳",
   Parking: "🅿️",
   "Jogging Track": "🏃",
   "EV Charging": "🔌",
+  "ev charging": "🔌",
 };
 
 export function getAmenityIcon(name: string): string {
-  return AMENITY_ICONS[name] ?? "✨";
+  if (AMENITY_ICONS[name]) return AMENITY_ICONS[name];
+  const lower = name.toLowerCase();
+  if (lower.includes("pool")) return "🏊";
+  if (lower.includes("gym")) return "🏋️";
+  if (lower.includes("club")) return "🏛️";
+  if (lower.includes("ev") || lower.includes("charg")) return "🔌";
+  if (lower.includes("kid") || lower.includes("play")) return "🎠";
+  if (lower.includes("sport") || lower.includes("court") || lower.includes("tennis")) return "🎾";
+  if (lower.includes("pet")) return "🐾";
+  if (lower.includes("secur")) return "🛡️";
+  if (lower.includes("park")) return "🅿️";
+  if (AMENITY_ICONS[lower]) return AMENITY_ICONS[lower];
+  return "✨";
 }
 
 const PLACE_ICONS: Record<string, string> = {

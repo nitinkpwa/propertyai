@@ -127,7 +127,7 @@ async function verifyBuyer(
       ok: false,
       status: 403,
       code: "BUYER_NOT_BUYER_ROLE",
-      message: "Only buyer accounts can book site visits.",
+      message: "Please continue as a Buyer to book a site visit.",
       dev: { buyerId, role: profile.role },
     };
   }
@@ -324,6 +324,80 @@ export async function bookSiteVisit(
 
   const property = lookup.property;
 
+  const connectPartnerId = property.connect_partner_id?.trim() || null;
+  if (!connectPartnerId) {
+    return {
+      ok: false,
+      status: 404,
+      code: "CONNECT_PARTNER_MISSING",
+      message: "This property is not ready for site visits yet. Please try again later.",
+      dev: { propertyId, connect_partner_id: property.connect_partner_id },
+    };
+  }
+
+  const { data: connectPartner, error: partnerError } = await supabase
+    .from("connect_partners")
+    .select("id")
+    .eq("id", connectPartnerId)
+    .maybeSingle();
+
+  if (partnerError) {
+    return {
+      ok: false,
+      status: 500,
+      code: "DATABASE",
+      message: "Could not verify the assigned Connect Partner.",
+      dev: {
+        propertyId,
+        connectPartnerId,
+        supabaseError: partnerError.message,
+      },
+    };
+  }
+
+  if (!connectPartner) {
+    return {
+      ok: false,
+      status: 404,
+      code: "CONNECT_PARTNER_MISSING",
+      message: "This property is not ready for site visits yet. Please try again later.",
+      dev: { propertyId, connectPartnerId },
+    };
+  }
+
+  const { data: existingVisit, error: existingVisitError } = await supabase
+    .from("site_visits")
+    .select("id")
+    .eq("user_id", input.buyerId)
+    .eq("property_id", propertyId)
+    .in("status", ["pending_approval", "accepted", "scheduled"])
+    .limit(1)
+    .maybeSingle();
+
+  if (existingVisitError) {
+    return {
+      ok: false,
+      status: 500,
+      code: "DATABASE",
+      message: "Could not verify existing site visits.",
+      dev: {
+        propertyId,
+        buyerId: input.buyerId,
+        supabaseError: existingVisitError.message,
+      },
+    };
+  }
+
+  if (existingVisit) {
+    return {
+      ok: false,
+      status: 409,
+      code: "DUPLICATE_VISIT",
+      message: "You already have an active site visit request for this property.",
+      dev: { propertyId, buyerId: input.buyerId, visitId: existingVisit.id },
+    };
+  }
+
   const ownerDebug = await debugPropertyOwnerResolution(supabase, propertyId);
 
   devLogSiteVisit("Canonical owner field audit", {
@@ -361,7 +435,7 @@ export async function bookSiteVisit(
   // Connect partner assigned to this property (if any), independent of any
   // other enquiry the buyer has made.
   const lead = await ensureLead(supabase, input.buyerId, "new", {
-    connectPartnerId: property.connect_partner_id ?? null,
+    connectPartnerId,
     primaryPropertyId: propertyId,
   });
   if (!lead) {
@@ -419,7 +493,7 @@ export async function bookSiteVisit(
     checklist,
     lead_id: lead.id,
     inquiry_id: inquiryId,
-    connect_partner_id: property.connect_partner_id ?? null,
+    connect_partner_id: connectPartnerId,
   });
 
   if (!("visitId" in visitInsert)) return visitInsert;

@@ -1,5 +1,5 @@
 import type { PropertyDetail } from "../data";
-import { ProgressBar, scoreTone, SectionCard, SectionTitle, SparkIcon } from "./shared";
+import { ProgressBar, scoreTone, SectionCard, SparkIcon } from "./shared";
 
 interface AISummaryProps {
   summary: PropertyDetail["aiSummary"];
@@ -14,6 +14,10 @@ const RISK_STYLES = {
 export default function AISummary({ summary }: AISummaryProps) {
   const hasScore = summary.investmentScore !== null;
   const tone = hasScore ? scoreTone(summary.investmentScore!) : scoreTone(0);
+  const bullets =
+    summary.bullets && summary.bullets.length > 0
+      ? summary.bullets
+      : [summary.summary, ...summary.pros].slice(0, 7);
 
   return (
     <SectionCard className="relative overflow-hidden border-emerald-200/60 bg-gradient-to-br from-white via-white to-emerald-50/30">
@@ -26,9 +30,11 @@ export default function AISummary({ summary }: AISummaryProps) {
           </span>
           <div>
             <h2 className="text-xl font-bold tracking-tight text-heading-primary sm:text-2xl">
-              AI Investment Summary
+              AI Intelligence Summary
             </h2>
-            <p className="text-xs font-medium text-emerald-600">Powered by AreaIQ Intelligence</p>
+            <p className="text-xs font-medium text-emerald-600">
+              Should I buy? Overpriced? Growth? Builder? Rental? Risk?
+            </p>
           </div>
         </div>
 
@@ -36,10 +42,24 @@ export default function AISummary({ summary }: AISummaryProps) {
           &ldquo;{summary.summary}&rdquo;
         </p>
 
-        <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <ul className="mt-5 grid gap-2 sm:grid-cols-2">
+          {bullets.map((bullet) => (
+            <li
+              key={bullet}
+              className="flex items-start gap-2.5 rounded-xl border border-neutral-100 bg-white/80 px-3.5 py-3 text-sm text-body"
+            >
+              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
+              {bullet}
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-emerald-700">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs">✓</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 text-xs">
+                ✓
+              </span>
               Pros
             </h3>
             <ul className="space-y-2">
@@ -53,8 +73,10 @@ export default function AISummary({ summary }: AISummaryProps) {
           </div>
           <div>
             <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-700">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-xs">!</span>
-              Cons
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-100 text-xs">
+                !
+              </span>
+              Cons / Watchouts
             </h3>
             <ul className="space-y-2">
               {summary.cons.map((con) => (
@@ -69,24 +91,29 @@ export default function AISummary({ summary }: AISummaryProps) {
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className={`rounded-2xl p-4 sm:p-5 ${hasScore ? tone.bg : "bg-neutral-50"}`}>
-            <p className="text-xs font-semibold uppercase tracking-wider text-label">Investment Score</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-label">
+              Investment Score
+            </p>
             {hasScore ? (
               <>
                 <div className="mt-1 flex items-baseline gap-1">
-                  <span className={`text-3xl font-bold tabular-nums ${tone.text}`}>{summary.investmentScore}</span>
+                  <span className={`text-3xl font-bold tabular-nums ${tone.text}`}>
+                    {summary.investmentScore}
+                  </span>
                   <span className="text-sm text-muted">/ 100</span>
                 </div>
                 <ProgressBar value={summary.investmentScore!} className="mt-3" />
-                <p className="mt-2 text-[11px] text-muted">Source: AreaIQ Calculated</p>
               </>
             ) : (
-              <p className="mt-2 text-sm text-muted">Insufficient data — AreaIQ needs more market listings to calculate this score.</p>
+              <p className="mt-2 text-sm text-muted">Insufficient data to score yet.</p>
             )}
           </div>
           <div className="flex flex-col justify-center rounded-2xl border border-neutral-100 bg-neutral-50/80 p-4 sm:p-5">
             <p className="text-xs font-semibold uppercase tracking-wider text-label">Risk Level</p>
             {summary.riskLevel ? (
-              <span className={`mt-2 inline-flex w-fit rounded-full px-4 py-1.5 text-sm font-bold ${RISK_STYLES[summary.riskLevel]}`}>
+              <span
+                className={`mt-2 inline-flex w-fit rounded-full px-4 py-1.5 text-sm font-bold ${RISK_STYLES[summary.riskLevel]}`}
+              >
                 {summary.riskLevel}
               </span>
             ) : (

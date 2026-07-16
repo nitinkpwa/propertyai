@@ -1,26 +1,20 @@
 "use client";
 
-import CapabilitiesSection from "./sections/CapabilitiesSection";
-import MarketIntelligenceSection from "./sections/MarketIntelligenceSection";
-import RecommendationsCarousel from "./RecommendationsCarousel";
-import PropertyComparisonSection from "./sections/PropertyComparisonSection";
-import BuilderIntelligenceSection from "./sections/BuilderIntelligenceSection";
-import ExploreAreasSection from "./sections/ExploreAreasSection";
-import InvestmentHeatmapSection from "./sections/InvestmentHeatmapSection";
-import AIAssistantShowcase from "./sections/AIAssistantShowcase";
-import BuyerJourneySection from "./sections/BuyerJourneySection";
-import SellerBuilderJourneySection from "./sections/SellerBuilderJourneySection";
-import ConnectSection from "./sections/ConnectSection";
-import TestimonialsSection from "./sections/TestimonialsSection";
-import NewsIntelligenceSection from "./sections/NewsIntelligenceSection";
-import EcosystemSection from "./sections/EcosystemSection";
+import dynamic from "next/dynamic";
 import FloatingAIButton from "./FloatingAIButton";
 import StickyAskBar from "./StickyAskBar";
-import FinalCTA from "./FinalCTA";
 import HomeFooter from "./HomeFooter";
 import HomeHero from "./HomeHero";
 import HomeNavbar from "./HomeNavbar";
 import MarketTicker from "./MarketTicker";
+
+const PopularAIQuestions = dynamic(() => import("./sections/PopularAIQuestions"));
+const MarketIntelligenceSection = dynamic(() => import("./sections/MarketIntelligenceSection"));
+const FeaturedIntelligenceCarousel = dynamic(() => import("./FeaturedIntelligenceCarousel"));
+const WhyAreaIQSection = dynamic(() => import("./sections/WhyAreaIQSection"));
+const ExploreAreasSection = dynamic(() => import("./sections/ExploreAreasSection"));
+const BuilderIntelligenceSection = dynamic(() => import("./sections/BuilderIntelligenceSection"));
+const FinalCTA = dynamic(() => import("./FinalCTA"));
 
 export default function HomePage() {
   return (
@@ -29,20 +23,12 @@ export default function HomePage() {
       <HomeNavbar />
       <main>
         <HomeHero />
-        <CapabilitiesSection />
+        <PopularAIQuestions />
         <MarketIntelligenceSection />
-        <RecommendationsCarousel />
-        <PropertyComparisonSection />
-        <BuilderIntelligenceSection />
+        <FeaturedIntelligenceCarousel />
+        <WhyAreaIQSection />
         <ExploreAreasSection />
-        <InvestmentHeatmapSection />
-        <AIAssistantShowcase />
-        <BuyerJourneySection />
-        <SellerBuilderJourneySection />
-        <ConnectSection />
-        <TestimonialsSection />
-        <NewsIntelligenceSection />
-        <EcosystemSection />
+        <BuilderIntelligenceSection />
         <FinalCTA />
       </main>
       <HomeFooter />

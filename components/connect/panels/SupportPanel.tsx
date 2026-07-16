@@ -11,18 +11,6 @@ export default function SupportPanel() {
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className={`${connectTokens.card} p-6`}>
-          <span className="text-2xl">📞</span>
-          <h3 className="mt-3 font-bold text-heading-primary">Partner Hotline</h3>
-          <p className="mt-1 text-sm text-body">Mon–Sat, 9 AM – 7 PM IST</p>
-          <a href="tel:+911800000000" className={`mt-4 inline-block ${connectTokens.btnPrimary}`}>Call Support</a>
-        </div>
-        <div className={`${connectTokens.card} p-6`}>
-          <span className="text-2xl">💬</span>
-          <h3 className="mt-3 font-bold text-heading-primary">WhatsApp Support</h3>
-          <p className="mt-1 text-sm text-body">Quick responses for urgent lead issues</p>
-          <a href="https://wa.me/911800000000" target="_blank" rel="noopener noreferrer" className={`mt-4 inline-block ${connectTokens.btnSecondary}`}>Chat on WhatsApp</a>
-        </div>
-        <div className={`${connectTokens.card} p-6`}>
           <span className="text-2xl">📧</span>
           <h3 className="mt-3 font-bold text-heading-primary">Email</h3>
           <p className="mt-1 text-sm text-body">For property assignment and account issues</p>

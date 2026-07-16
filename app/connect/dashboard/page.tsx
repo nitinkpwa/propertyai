@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import ConnectShell from "../components/ConnectShell";
 import {
   ConnectDashboardPanel,
@@ -16,7 +16,7 @@ import {
   SettingsPanel,
   SupportPanel,
 } from "@/components/connect/panels";
-import type { ConnectTab } from "@/lib/connect/types";
+import { CONNECT_NAV, type ConnectTab } from "@/lib/connect/types";
 import type {
   ConnectPartner,
   ConnectPartnerActivity,
@@ -28,9 +28,19 @@ import type { ConnectSiteVisitRow } from "@/lib/crm/types";
 import { fetchProfile } from "@/lib/auth/profile";
 import { supabase, type Profile } from "@/lib/supabase";
 
-export default function ConnectDashboardPage() {
+const CONNECT_TABS = CONNECT_NAV.map((item) => item.key);
+
+function parseConnectTab(value: string | null): ConnectTab {
+  if (value && CONNECT_TABS.includes(value as ConnectTab)) {
+    return value as ConnectTab;
+  }
+  return "home";
+}
+
+function ConnectDashboardInner() {
   const router = useRouter();
-  const [tab, setTab] = useState<ConnectTab>("home");
+  const searchParams = useSearchParams();
+  const tab = parseConnectTab(searchParams.get("tab"));
   const [profile, setProfile] = useState<Profile | null>(null);
   const [partner, setPartner] = useState<ConnectPartner | null>(null);
   const [buyers, setBuyers] = useState<ConnectPartnerBuyerRow[]>([]);
@@ -39,6 +49,17 @@ export default function ConnectDashboardPage() {
   const [analytics, setAnalytics] = useState<ConnectPartnerAnalytics | null>(null);
   const [siteVisits, setSiteVisits] = useState<ConnectSiteVisitRow[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleTabChange = useCallback(
+    (next: ConnectTab) => {
+      const href =
+        next === "home"
+          ? "/connect/dashboard"
+          : `/connect/dashboard?tab=${next}`;
+      router.replace(href, { scroll: false });
+    },
+    [router],
+  );
 
   const loadDashboard = useCallback(async () => {
     const res = await fetch("/api/connect/dashboard");
@@ -92,7 +113,7 @@ export default function ConnectDashboardPage() {
   return (
     <ConnectShell
       tab={tab}
-      onTabChange={setTab}
+      onTabChange={handleTabChange}
       companyName={partner?.company_name}
       userName={profile?.full_name}
       userId={profile?.id}
@@ -109,7 +130,7 @@ export default function ConnectDashboardPage() {
           properties={properties}
           activities={activities}
           siteVisits={siteVisits}
-          onNavigate={(t) => setTab(t as ConnectTab)}
+          onNavigate={(t) => handleTabChange(t as ConnectTab)}
         />
       ) : null}
       {tab === "properties" ? <AssignedPropertiesPanel properties={properties} onRefresh={loadDashboard} /> : null}
@@ -123,5 +144,19 @@ export default function ConnectDashboardPage() {
       {tab === "settings" && partner ? <SettingsPanel partner={partner} onRefresh={loadDashboard} /> : null}
       {tab === "support" ? <SupportPanel /> : null}
     </ConnectShell>
+  );
+}
+
+export default function ConnectDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC]">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+        </div>
+      }
+    >
+      <ConnectDashboardInner />
+    </Suspense>
   );
 }

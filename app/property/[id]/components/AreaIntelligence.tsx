@@ -185,6 +185,10 @@ export default function AreaIntelligence({ propertyId }: AreaIntelligenceProps) 
               className="mt-3 space-y-2 text-sm leading-relaxed text-body"
               dangerouslySetInnerHTML={{
                 __html: outlook
+                  .replace(/&/g, "&amp;")
+                  .replace(/</g, "&lt;")
+                  .replace(/>/g, "&gt;")
+                  .replace(/"/g, "&quot;")
                   .replace(/^-\s+/gm, "• ")
                   .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
                   .replace(/\n/g, "<br />"),

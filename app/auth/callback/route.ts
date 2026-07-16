@@ -3,13 +3,14 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { normalizeMobileNumber } from "@/lib/auth/mobile";
 import { getDashboardPath } from "@/lib/auth/profile";
+import { sanitizeRedirectPath } from "@/lib/auth/routes";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? searchParams.get("redirect_to") ?? "/buyer";
   const type = searchParams.get("type");
-  const destination = next.startsWith("/") ? next : "/buyer";
+  const destination = sanitizeRedirectPath(next, "/buyer");
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=missing_code`);
@@ -52,13 +53,10 @@ export async function GET(request: Request) {
     data.user.email?.split("@")[0] ??
     "User";
 
-  const role =
-    (data.user.user_metadata?.role as
-      | "buyer"
-      | "seller"
-      | "builder"
-      | "admin"
-      | undefined) ?? "buyer";
+  // Public auth callback may only set buyer/seller. Admin/builder are provisioned server-side.
+  const rawRole = data.user.user_metadata?.role;
+  const role: "buyer" | "seller" =
+    rawRole === "seller" ? "seller" : "buyer";
 
   const phone = data.user.user_metadata?.phone
     ? normalizeMobileNumber(String(data.user.user_metadata.phone))

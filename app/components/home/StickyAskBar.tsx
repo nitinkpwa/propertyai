@@ -35,6 +35,7 @@ export default function StickyAskBar() {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="Ask AreaIQ anything…"
+          aria-label="Ask AreaIQ"
           className="min-w-0 flex-1 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-input placeholder:text-placeholder outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
         />
         <button

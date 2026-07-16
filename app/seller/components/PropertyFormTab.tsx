@@ -51,7 +51,9 @@ export default function PropertyFormTab({
         {editId ? "Edit Property" : "Add New Property"}
       </h2>
       <p className="mt-1 text-sm text-muted">
-        {editId ? "Update your listing details below." : "Fill in the details to publish a new listing."}
+        {editId
+          ? "Update your listing details. AreaIQ publishes after review."
+          : "Submit your listing for AreaIQ review. Publishing requires Connect Partner assignment."}
       </p>
 
       {saveMsg ? (
@@ -222,7 +224,13 @@ export default function PropertyFormTab({
           style={{ ...btnPrimary, opacity: saving ? 0.7 : 1 }}
           onClick={() => onSave(false)}
         >
-          {uploadingPhotos ? "Uploading..." : saving ? "Saving..." : editId ? "Update Property" : "Publish Listing"}
+          {uploadingPhotos
+            ? "Uploading..."
+            : saving
+              ? "Saving..."
+              : editId
+                ? "Update Property"
+                : "Submit for Review"}
         </button>
         <button type="button" disabled={saving} style={btnSecondary} onClick={() => onSave(true)}>
           Save as Draft

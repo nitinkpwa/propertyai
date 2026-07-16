@@ -34,6 +34,8 @@ export function buildAssistantMessage(
     stats: response.stats,
     isSimilar: response.isSimilar,
     suggestedPropertyIds,
+    location: response.location,
+    builder: response.builder,
   };
 
   return { turn, message };

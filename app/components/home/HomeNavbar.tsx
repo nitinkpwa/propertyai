@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import UserMenu from "../UserMenu";
+import MobileNavPanel from "../MobileNavPanel";
 import Logo from "@/components/common/Logo";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { HOME_NAV_LINKS } from "./data";
@@ -14,6 +15,14 @@ export default function HomeNavbar() {
   const { user, loading } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuPath, setMenuPath] = useState(pathname);
+
+  if (pathname !== menuPath) {
+    setMenuPath(pathname);
+    if (mobileOpen) setMobileOpen(false);
+  }
+
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -23,8 +32,19 @@ export default function HomeNavbar() {
   }, []);
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMobile();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [closeMobile]);
 
   const solid = scrolled;
 
@@ -74,41 +94,37 @@ export default function HomeNavbar() {
               type="button"
               onClick={() => setMobileOpen((o) => !o)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200/80 bg-white/80 lg:hidden"
-              aria-label="Menu"
+              aria-expanded={mobileOpen}
+              aria-controls="mobile-nav"
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
             >
-              ☰
+              <span className="relative h-4 w-5" aria-hidden>
+                <span
+                  className={`absolute left-0 h-0.5 w-5 rounded-full bg-neutral-800 transition-all duration-300 ${
+                    mobileOpen ? "top-2 rotate-45" : "top-0"
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 top-2 h-0.5 w-5 rounded-full bg-neutral-800 transition-all duration-300 ${
+                    mobileOpen ? "opacity-0" : "opacity-100"
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 h-0.5 w-5 rounded-full bg-neutral-800 transition-all duration-300 ${
+                    mobileOpen ? "top-2 -rotate-45" : "top-4"
+                  }`}
+                />
+              </span>
             </button>
           </div>
         </div>
       </header>
 
-      {mobileOpen ? (
-        <div className="fixed inset-x-0 top-[100px] z-40 border-b border-neutral-200 bg-white p-4 shadow-lg lg:hidden">
-          <nav className="flex flex-col gap-1">
-            {HOME_NAV_LINKS.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="rounded-xl px-4 py-3 text-sm font-medium text-label no-underline hover:bg-[#F7F9FB]"
-              >
-                {link.label}
-              </Link>
-            ))}
-            <Link href="/seller" className="rounded-xl px-4 py-3 text-sm font-medium text-label no-underline hover:bg-[#F7F9FB]">
-              List Property
-            </Link>
-            {!user ? (
-              <Link
-                href="/login"
-                className="mt-2 rounded-xl py-3 text-center text-sm font-semibold text-white"
-                style={{ backgroundColor: IQ_GREEN }}
-              >
-                Sign In
-              </Link>
-            ) : null}
-          </nav>
-        </div>
-      ) : null}
+      <MobileNavPanel
+        open={mobileOpen}
+        onClose={closeMobile}
+        accentColor={IQ_GREEN}
+      />
     </>
   );
 }

@@ -61,9 +61,11 @@ function PropertyActionsMenu({
               View
             </a>
             <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onEdit(prop); setOpen(false); }}>Edit</button>
-            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onTogglePause(prop.id, prop.status); setOpen(false); }}>
-              {prop.status === "active" ? "Pause" : "Activate"}
-            </button>
+            {prop.status === "active" ? (
+              <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onTogglePause(prop.id, prop.status); setOpen(false); }}>
+                Pause
+              </button>
+            ) : null}
             <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onMarkSold(prop.id); setOpen(false); }}>Mark Sold</button>
             <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onDuplicate(prop.id); setOpen(false); }}>Duplicate</button>
             <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50" onClick={() => { onDelete(prop.id); setOpen(false); }}>Delete</button>

@@ -2,16 +2,35 @@ import type { PropertyDetail, AISummary } from "@/app/property/[id]/data";
 import type { AdminPropertyRow } from "@/lib/admin/types";
 import { runPropertyIntelligencePipeline } from "@/lib/admin/property/intelligence/pipeline";
 import {
+  buildAiSummaryFromSources,
+  buildPropertyIntelligenceBundle,
+} from "@/lib/properties/intelligenceBundle";
+import {
   buildNearbyPlacesPayload,
   extractNearbyPlacesList,
   extractPropertyMeta,
   type PropertyStructuredMeta,
 } from "@/lib/properties/nearbyPlacesMeta";
+import type { MarketContext } from "@/lib/intelligence/types";
 import {
   createEmptyAdminPropertyForm,
   type AdminPropertyFormSource,
   type AdminPropertyFormState,
 } from "./types";
+
+const EMPTY_MARKET: MarketContext = {
+  city: "",
+  locality: "",
+  listings: [],
+  totalListings: 0,
+  newListings90d: 0,
+  buyListings: 0,
+  rentListings: 0,
+  medianPricePerSqft: null,
+  recentMedianPricePerSqft: null,
+  olderMedianPricePerSqft: null,
+  avgViews: null,
+};
 
 function numStr(value: unknown): string {
   if (value == null || value === "") return "";
@@ -209,7 +228,7 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
   const bedrooms = parseInt(form.bedrooms, 10) || 0;
   const compiled = getCompiled(form);
 
-  const aiSummary: AISummary = {
+  const fallbackSummary: AISummary = {
     summary: compiled.buyerSummary || compiled.propertySummary || form.title,
     pros: (compiled.pros || "")
       .split("\n")
@@ -251,20 +270,55 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
           },
         ];
 
+  const location = form.location || form.locationMeta.locality || form.sector;
+  const city = form.city;
+  const pricePerSqFt =
+    area > 0 ? Math.round(price / area) : parseFloat(form.pricing.pricePerSqft) || 0;
+  const nearbyPlaces = (form.nearbyPlaces.length ? form.nearbyPlaces : buildPlacesFromLocation(form)).map(
+    (p) => ({
+      name: p.name,
+      distance: p.distance,
+      type: (p.type as "airport" | "school" | "hospital" | "mall" | "metro" | "it") || "mall",
+    }),
+  );
+  const meta = buildFactualMetaFromForm(form, form.aiIntelligence);
+  const builderName = form.builder_name || form.basic.builder || "Builder";
+  const intelligenceBundle = buildPropertyIntelligenceBundle({
+    id,
+    name: form.title || "Untitled Property",
+    price,
+    pricePerSqFt,
+    area,
+    status: form.basic.propertyStatus || form.publishing.workflowStatus,
+    possession: form.possession || "—",
+    city,
+    location,
+    builderName,
+    amenities: form.amenities,
+    reraVerified: Boolean(form.rera_number),
+    aiVerified: (form.aiIntelligence?.confidence ?? 0) >= 70,
+    report: null,
+    meta,
+    market: { ...EMPTY_MARKET, city, locality: location },
+    similarProperties: [],
+    nearbyPlaces,
+  });
+  const aiSummary = buildAiSummaryFromSources(fallbackSummary, meta, intelligenceBundle);
+
   return {
     id,
     name: form.title || "Untitled Property",
     project: form.basic.project || form.title,
     builder: {
-      name: form.builder_name || form.basic.builder || "Builder",
-      logoInitials: (form.builder_name || form.basic.builder || "B").slice(0, 2).toUpperCase(),
+      name: builderName,
+      logoInitials: builderName.slice(0, 2).toUpperCase(),
       yearsExperience: null,
-      projectsDelivered: null,
+      projectsDelivered: intelligenceBundle.builder.projectsDelivered,
     },
-    location: form.location || form.locationMeta.locality || form.sector,
-    city: form.city,
+    location,
+    city,
     price,
-    pricePerSqFt: area > 0 ? Math.round(price / area) : parseFloat(form.pricing.pricePerSqft) || 0,
+    pricePerSqFt,
     propertyType: form.sub_type.replace("_", " "),
     bhk: (bedrooms || 1) as PropertyDetail["bhk"],
     area,
@@ -280,6 +334,8 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
     reraVerified: Boolean(form.rera_number),
     images,
     amenities: form.amenities,
+    intelligenceBundle,
+    structuredMeta: meta,
     aiSummary,
     floorPlans: [
       {
@@ -289,13 +345,7 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
         label: form.basic.configuration || `${bedrooms || 1} BHK`,
       },
     ],
-    nearbyPlaces: (form.nearbyPlaces.length ? form.nearbyPlaces : buildPlacesFromLocation(form)).map(
-      (p) => ({
-        name: p.name,
-        distance: p.distance,
-        type: (p.type as "airport" | "school" | "hospital" | "mall" | "metro" | "it") || "mall",
-      }),
-    ),
+    nearbyPlaces,
     similarProperties: [],
     contactPhone: form.contact_phone,
     whatsapp: form.contact_phone,

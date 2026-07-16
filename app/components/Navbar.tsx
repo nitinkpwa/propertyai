@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import UserMenu from "./UserMenu";
+import MobileNavPanel from "./MobileNavPanel";
 import Logo from "@/components/common/Logo";
-import { useAuth } from "@/lib/auth/AuthProvider";
 import { EMERALD } from "@/lib/auth/constants";
-import { getProfileDisplayName, getProfileSubtitle, getInitials } from "@/lib/auth/profile";
 
 const NAV_LINKS = [
   { label: "Home", href: "/" },
@@ -48,22 +47,17 @@ function NavLink({
   href,
   label,
   active,
-  onNavigate,
-  className = "",
   light = false,
 }: {
   href: string;
   label: string;
   active: boolean;
-  onNavigate?: () => void;
-  className?: string;
   light?: boolean;
 }) {
   return (
     <Link
       href={href}
-      onClick={onNavigate}
-      className={`group relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${className} ${
+      className={`group relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
         active
           ? light
             ? "text-white"
@@ -86,13 +80,17 @@ function NavLink({
 }
 
 function NavbarInner() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user, profile, loading, dashboardPath, signOut } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [menuPath, setMenuPath] = useState(pathname);
   const isHomeHero = pathname === "/" && !scrolled;
+
+  if (pathname !== menuPath) {
+    setMenuPath(pathname);
+    if (mobileOpen) setMobileOpen(false);
+  }
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
@@ -102,10 +100,6 @@ function NavbarInner() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  useEffect(() => {
-    closeMobile();
-  }, [pathname, searchParams, closeMobile]);
 
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -134,10 +128,8 @@ function NavbarInner() {
         }`}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          {/* Left — logo + tagline */}
           <Logo showTagline variant={isHomeHero ? "light" : "default"} priority />
 
-          {/* Center — desktop nav */}
           <nav
             className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 lg:flex"
             aria-label="Main navigation"
@@ -153,7 +145,6 @@ function NavbarInner() {
             ))}
           </nav>
 
-          {/* Right — actions */}
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/seller"
@@ -167,7 +158,6 @@ function NavbarInner() {
             </Link>
             <UserMenu />
 
-            {/* Mobile hamburger */}
             <button
               type="button"
               onClick={() => setMobileOpen((open) => !open)}
@@ -202,140 +192,7 @@ function NavbarInner() {
         </div>
       </header>
 
-      {/* Mobile overlay */}
-      <div
-        className={`fixed inset-0 z-40 bg-neutral-900/20 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
-          mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={closeMobile}
-        aria-hidden={!mobileOpen}
-      />
-
-      {/* Mobile slide-out panel */}
-      <aside
-        id="mobile-nav"
-        className={`fixed right-0 top-0 z-50 flex h-full w-[min(320px,88vw)] flex-col bg-white shadow-[-8px_0_32px_rgba(0,0,0,0.08)] transition-transform duration-300 ease-out lg:hidden ${
-          mobileOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-        aria-hidden={!mobileOpen}
-      >
-        <div className="flex h-16 items-center justify-between border-b border-neutral-100 px-5">
-          <span className="text-base font-semibold text-heading-primary">
-            Menu
-          </span>
-          <button
-            type="button"
-            onClick={closeMobile}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-neutral-100 hover:text-heading-secondary"
-            aria-label="Close menu"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-              <path
-                d="M4 4L14 14M14 4L4 14"
-                stroke="currentColor"
-                strokeWidth="1.75"
-                strokeLinecap="round"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-6" aria-label="Mobile navigation">
-          {NAV_LINKS.map((link) => {
-            const active = isLinkActive(link.href, pathname, searchParams);
-            return (
-              <Link
-                key={link.label}
-                href={link.href}
-                onClick={closeMobile}
-                className={`rounded-xl px-4 py-3 text-[15px] font-medium transition-colors ${
-                  active
-                    ? "bg-emerald-50 text-heading-primary"
-                    : "text-body hover:bg-neutral-50 hover:text-heading-primary"
-                }`}
-              >
-                <span className="flex items-center gap-3">
-                  {active && (
-                    <span
-                      className="h-1.5 w-1.5 shrink-0 rounded-full"
-                      style={{ backgroundColor: EMERALD }}
-                      aria-hidden
-                    />
-                  )}
-                  {link.label}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="space-y-3 border-t border-neutral-100 p-5">
-          {!loading && user ? (
-            <>
-              <div className="flex items-center gap-3 rounded-2xl bg-neutral-50 px-4 py-3">
-                <span
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white"
-                  style={{ backgroundColor: EMERALD }}
-                >
-                  {getInitials(profile?.full_name, profile?.username ?? profile?.phone)}
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-heading-primary">
-                    {getProfileDisplayName(profile, user)}
-                  </p>
-                  <p className="truncate text-xs text-muted">
-                    {getProfileSubtitle(profile)}
-                  </p>
-                </div>
-              </div>
-              <Link
-                href={dashboardPath}
-                onClick={closeMobile}
-                className="flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-label shadow-sm"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/profile"
-                onClick={closeMobile}
-                className="flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-label shadow-sm"
-              >
-                Profile
-              </Link>
-              <button
-                type="button"
-                onClick={async () => {
-                  await signOut();
-                  closeMobile();
-                  router.push("/");
-                  router.refresh();
-                }}
-                className="flex w-full items-center justify-center rounded-full border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-600"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                href="/seller"
-                onClick={closeMobile}
-                className="flex w-full items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-3 text-sm font-medium text-label shadow-sm transition-all hover:border-neutral-300 hover:bg-neutral-50"
-              >
-                List Property
-              </Link>
-              <Link
-                href="/login"
-                onClick={closeMobile}
-                className="flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)]"
-                style={{ backgroundColor: EMERALD }}
-              >
-                Sign In
-              </Link>
-            </>
-          )}
-        </div>
-      </aside>
+      <MobileNavPanel open={mobileOpen} onClose={closeMobile} />
     </>
   );
 }
