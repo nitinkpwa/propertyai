@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode, type SyntheticEvent } from "react";
 import type { AskSection, AskTurn } from "@/lib/ask/types";
 import { AskPropertyCarousel } from "../intel/AskPropertyCarousel";
 import { AskMarkdown } from "../shared/AskMarkdown";
@@ -179,27 +179,15 @@ export function AskAssistantMessage({
           {/* Top Recommendations → What to Watch → other insights */}
           {hasSections ? (
             <div className={`grid gap-4 sm:grid-cols-2 ${hasListings ? "mt-5" : "mt-4"}`}>
-              {visibleSections.map((section) => {
-                const title = section.title.toLowerCase();
-                const preferOpen = title.includes("top recommendation");
-                return (
-                  <details
-                    key={section.title}
-                    className="group rounded-xl border border-neutral-100 bg-neutral-50/50 open:bg-white open:shadow-sm"
-                    defaultOpen={preferOpen}
-                  >
-                    <summary className="cursor-pointer list-none px-3 py-2.5 text-xs font-semibold text-heading-primary marker:content-none [&::-webkit-details-marker]:hidden">
-                      <span className="flex items-center justify-between gap-2">
-                        {section.title}
-                        <span className="text-muted transition group-open:rotate-180">▾</span>
-                      </span>
-                    </summary>
-                    <div className="border-t border-neutral-100 px-3 py-2.5">
-                      <AskMarkdown content={section.content} />
-                    </div>
-                  </details>
-                );
-              })}
+              {visibleSections.map((section) => (
+                <InsightDetails
+                  key={section.title}
+                  title={section.title}
+                  initiallyOpen={section.title.toLowerCase().includes("top recommendation")}
+                >
+                  <AskMarkdown content={section.content} />
+                </InsightDetails>
+              ))}
             </div>
           ) : turn.aiContent ? (
             <div
@@ -249,6 +237,38 @@ export function AskAssistantMessage({
         </div>
       </div>
     </div>
+  );
+}
+
+function InsightDetails({
+  title,
+  initiallyOpen,
+  children,
+}: {
+  title: string;
+  initiallyOpen: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(initiallyOpen);
+
+  const handleToggle = (event: SyntheticEvent<HTMLDetailsElement>) => {
+    setOpen(event.currentTarget.open);
+  };
+
+  return (
+    <details
+      className="group rounded-xl border border-neutral-100 bg-neutral-50/50 open:bg-white open:shadow-sm"
+      open={open}
+      onToggle={handleToggle}
+    >
+      <summary className="cursor-pointer list-none px-3 py-2.5 text-xs font-semibold text-heading-primary marker:content-none [&::-webkit-details-marker]:hidden">
+        <span className="flex items-center justify-between gap-2">
+          {title}
+          <span className="text-muted transition group-open:rotate-180">▾</span>
+        </span>
+      </summary>
+      <div className="border-t border-neutral-100 px-3 py-2.5">{children}</div>
+    </details>
   );
 }
 
