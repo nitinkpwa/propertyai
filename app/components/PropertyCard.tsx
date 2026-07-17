@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-const EMERALD = "#22C55E";
+import { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
 
 export type BHKOption = 1 | 2 | 3 | 4 | 5;
 
@@ -205,7 +205,7 @@ export default function PropertyCard({
                 <span className="text-emerald-500">
                   <SparkIcon />
                 </span>
-                AI Verified
+                AreaIQ Intelligence
               </span>
             )}
             {reraVerified && (
@@ -325,7 +325,7 @@ export default function PropertyCard({
           <Link
             href={href}
             onClick={handleViewDetails}
-            className="inline-flex flex-1 items-center justify-center rounded-xl px-3 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.3)] transition-all duration-200 hover:shadow-[0_4px_14px_rgba(34,197,94,0.4)] hover:brightness-105 active:scale-[0.98]"
+            className="inline-flex flex-1 items-center justify-center rounded-xl px-3 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.3)] transition-all duration-200 hover:shadow-[0_4px_14px_rgba(74, 170, 39,0.4)] hover:brightness-105 active:scale-[0.98]"
             style={{ backgroundColor: EMERALD }}
           >
             View Details

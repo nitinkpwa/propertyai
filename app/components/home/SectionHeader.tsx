@@ -21,14 +21,14 @@ export default function SectionHeader({
       <div className="max-w-2xl">
         <p
           className={`mb-2 text-xs font-bold uppercase tracking-[0.14em] ${
-            isDark ? "text-emerald-400" : "text-[#16C784]"
+            isDark ? "text-shadow-brand text-emerald-400" : "text-[#4AAA27]"
           }`}
         >
           {eyebrow}
         </p>
         <h2
           className={`text-2xl font-bold tracking-tight sm:text-3xl ${
-            isDark ? "text-white" : "text-heading-primary"
+            isDark ? "text-shadow-premium text-white" : "text-heading-primary"
           }`}
         >
           {title}
@@ -49,7 +49,7 @@ export default function SectionHeader({
           className={`group inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold no-underline transition-colors ${
             isDark
               ? "text-emerald-400 hover:text-emerald-300"
-              : "text-[#16C784] hover:text-emerald-600"
+              : "text-[#4AAA27] hover:text-emerald-600"
           }`}
         >
           {action.label}

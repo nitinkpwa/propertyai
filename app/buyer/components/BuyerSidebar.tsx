@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import Logo from "@/components/common/Logo";
 import ProfileCompletionRing from "@/components/premium/ProfileCompletionRing";
 import { useProgressiveProfileOptional } from "@/components/buyer/ProgressiveProfileProvider";
 import { useBuyerNotifications } from "@/lib/buyer/notifications";
@@ -99,15 +98,17 @@ export default function BuyerSidebar({
 
   return (
     <aside
-      className={`fixed bottom-0 left-0 top-0 z-50 flex w-64 flex-col border-r border-neutral-200/80 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.04)] transition-transform duration-300 lg:translate-x-0 ${
+      className={`fixed bottom-0 left-0 top-16 z-40 flex w-64 flex-col border-r border-neutral-200/80 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.04)] transition-transform duration-300 lg:translate-x-0 ${
         mobileOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
       <div className="border-b border-neutral-100 p-5">
-        <Logo size="dashboard" href="/buyer" className="mb-4" />
-        <div className="flex items-center gap-3">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">
+          Buyer Portal
+        </p>
+        <div className="mt-3 flex items-center gap-3">
           <div
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)]"
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white shadow-[0_2px_8px_rgba(74,170,39,0.35)]"
             style={{ backgroundColor: EMERALD }}
           >
             {initials || "B"}
@@ -116,7 +117,7 @@ export default function BuyerSidebar({
             <p className="truncate text-sm font-semibold text-heading-primary">
               {fullName ?? "Buyer"}
             </p>
-            <p className="text-xs text-muted">Buyer Portal</p>
+            <p className="text-xs text-muted">Your workspace</p>
           </div>
         </div>
       </div>
@@ -132,7 +133,7 @@ export default function BuyerSidebar({
               onClick={onCloseMobile}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                 active
-                  ? "bg-emerald-50 text-emerald-800 shadow-[inset_0_0_0_1px_rgba(34,197,94,0.15)]"
+                  ? "bg-emerald-50 text-emerald-800 shadow-[inset_0_0_0_1px_rgba(74, 170, 39,0.15)]"
                   : "text-body hover:bg-neutral-50 hover:text-heading-primary"
               }`}
             >

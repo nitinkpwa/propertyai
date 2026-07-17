@@ -21,7 +21,6 @@ import Recommendations from "./components/Recommendations";
 import RentalIntelligence from "./components/RentalIntelligence";
 import ReportSidebar from "./components/ReportSidebar";
 import SimilarSales from "./components/SimilarSales";
-import Logo from "@/components/common/Logo";
 
 interface PropertyDetailViewProps {
   property: PropertyDetail;
@@ -126,11 +125,13 @@ export default function PropertyDetailView({ property }: PropertyDetailViewProps
 
         <footer className="mt-12 border-t border-neutral-200 bg-neutral-900 text-muted">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6 lg:px-8">
-            <Logo size="footer" variant="dark" href="/" />
+            <p className="text-sm font-semibold text-white">AreaIQ</p>
             <p className="text-center text-xs sm:text-sm">
-              AI-Powered Property Intelligence · Chandigarh · Mohali · Panchkula
+              Property Intelligence · Powered by Tech172
             </p>
-            <p className="text-xs sm:text-sm">© {new Date().getFullYear()} AreaIQ</p>
+            <p className="text-xs sm:text-sm">
+              © {new Date().getFullYear()} AreaIQ · Tech172 Intelligence
+            </p>
           </div>
         </footer>
       </div>

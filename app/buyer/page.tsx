@@ -107,13 +107,13 @@ export default function BuyerDashboardPage() {
             <p className="text-xs font-semibold uppercase tracking-widest text-emerald-100">
               {getGreeting()} · AreaIQ Intelligence
             </p>
-            <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+            <h1 className="text-shadow-premium mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
               {firstName}, your property journey
             </h1>
             <p className="mt-2 max-w-lg text-sm text-emerald-50/90">
               {upcomingVisits.length > 0
                 ? `You have ${upcomingVisits.length} upcoming visit${upcomingVisits.length > 1 ? "s" : ""}. Let's get you closer to your dream home.`
-                : "Discover, compare, and book site visits — all powered by AI insights tailored to you."}
+                : "Discover, compare, and book site visits — powered by AreaIQ Intelligence."}
             </p>
             {leadStatus ? (
               <div className="mt-3 inline-flex rounded-full bg-white/15 px-1 py-1 backdrop-blur">
@@ -151,7 +151,7 @@ export default function BuyerDashboardPage() {
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <MetricCard icon="❤️" label="Saved" value={crmCounts.savedCount} href="/buyer/saved" accent="rose" />
             <MetricCard icon="👀" label="Viewed" value={crmCounts.viewedCount} accent="blue" />
-            <MetricCard icon="🤖" label="AI Chats" value={crmCounts.chatsCount} href="/ask" accent="violet" />
+            <MetricCard icon="🤖" label="Intelligence" value={crmCounts.chatsCount} href="/ask" accent="violet" />
             <MetricCard icon="📅" label="Visits" value={crmCounts.visitsCount} href="/buyer/site-visits" accent="amber" />
             <MetricCard icon="📩" label="Inquiries" value={crmCounts.enquiriesCount} href="/buyer/crm" accent="emerald" />
           </div>

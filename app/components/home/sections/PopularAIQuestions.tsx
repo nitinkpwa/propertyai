@@ -11,10 +11,10 @@ export default function PopularAIQuestions() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionHeader
-            eyebrow="Popular AI Questions"
+            eyebrow="Popular Intelligence Questions"
             title="Ask what buyers actually ask"
-            description="Every card opens AreaIQ Assistant with verified database context — never fabricated answers."
-            action={{ label: "Open AI Assistant", href: "/ask" }}
+            description="Every card opens AreaIQ Intelligence with verified database context — never fabricated answers."
+            action={{ label: "Open AreaIQ Intelligence", href: "/ask" }}
           />
         </FadeIn>
 

@@ -17,7 +17,7 @@ export function AskIntelBuilder({ builderName, summary, onAction }: AskIntelBuil
 
   const metrics = [
     { label: "Builder Rating", value: "Review live" },
-    { label: "Projects Delivered", value: "Ask AI" },
+    { label: "Projects Delivered", value: "Ask AreaIQ" },
     { label: "Construction Quality", value: "Verify on site" },
     { label: "Delivery History", value: "Check RERA" },
     { label: "Legal Score", value: "RERA diligence" },

@@ -13,7 +13,7 @@ export default function AIAssistantShowcase() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeIn>
           <SectionHeader
-            eyebrow="AI Advisor"
+            eyebrow="AreaIQ Intelligence"
             title="Talk to Your Property Advisor"
             description="Real questions Tricity buyers ask — answered with intelligence, not listings."
             action={{ label: "Start conversation", href: "/ask" }}
@@ -33,7 +33,7 @@ export default function AIAssistantShowcase() {
                   <div key={c} className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />
                 ))}
               </div>
-              <span className="text-sm font-medium text-body">AreaIQ AI Assistant</span>
+              <span className="text-sm font-medium text-body">AreaIQ Intelligence</span>
             </div>
             <div className="max-h-[420px] space-y-4 overflow-y-auto p-5">
               {AI_CONVERSATION_EXAMPLES.slice(0, 5).map((ex) => (

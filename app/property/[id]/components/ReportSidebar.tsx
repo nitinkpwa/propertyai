@@ -58,7 +58,7 @@ export default function ReportSidebar({ property }: ReportSidebarProps) {
             {property.aiVerified && (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
                 <SparkIcon className="text-emerald-500" />
-                AI Verified
+                AreaIQ Intelligence
               </span>
             )}
             {property.reraVerified && (

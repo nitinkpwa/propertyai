@@ -37,12 +37,9 @@ export default function ConnectLandingPage() {
     <div className="min-h-screen bg-[#FAFAFA] pt-16">
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-neutral-200 bg-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(34,197,94,0.08),transparent_50%)]" />
-        <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(74,170,39,0.08),transparent_50%)]" />
+        <div className="relative mx-auto max-w-6xl px-4 py-20 pt-28 sm:px-6 sm:py-28 sm:pt-32 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 flex justify-center">
-              <Logo size="hero" suffix="Connect" showTagline href="/connect" priority />
-            </div>
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">
               Builder & Developer Portal
             </p>
@@ -62,7 +59,7 @@ export default function ConnectLandingPage() {
               </Link>
               <a
                 href="mailto:connect@areaiq.app?subject=Book%20a%20Demo"
-                className="inline-flex rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all hover:shadow-md"
+                className="inline-flex rounded-xl px-6 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.35)] transition-all hover:shadow-md"
                 style={{ backgroundColor: EMERALD }}
               >
                 Book Demo
@@ -290,13 +287,13 @@ export default function ConnectLandingPage() {
                 <ul className="space-y-2">
                   <li><Link href="/" className="hover:text-white">Home</Link></li>
                   <li><Link href="/properties" className="hover:text-white">Properties</Link></li>
-                  <li><Link href="/ask" className="hover:text-white">AI Assistant</Link></li>
+                  <li><Link href="/ask" className="hover:text-white">AreaIQ Intelligence</Link></li>
                 </ul>
               </div>
             </div>
           </div>
           <p className="mt-10 border-t border-neutral-800 pt-6 text-center text-xs text-muted">
-            © {new Date().getFullYear()} AreaIQ. All rights reserved.
+            © {new Date().getFullYear()} AreaIQ. Powered by Tech172 Intelligence. All Rights Reserved.
           </p>
         </div>
       </footer>

@@ -18,7 +18,7 @@ export default function AuthButton({
     <button
       type="button"
       disabled={disabled || loading}
-      className={`inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all duration-200 hover:shadow-[0_4px_14px_rgba(34,197,94,0.45)] hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 ${className}`}
+      className={`inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.35)] transition-all duration-200 hover:shadow-[0_4px_14px_rgba(74, 170, 39,0.45)] hover:brightness-105 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 ${className}`}
       style={{ backgroundColor: EMERALD }}
       {...props}
     >

@@ -49,7 +49,7 @@ export default function ExploreTricityMap() {
                   onClick={() => setActive(area.name)}
                   className={`absolute flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full text-[11px] font-bold transition-all sm:h-12 sm:w-12 ${
                     active === area.name
-                      ? "z-10 scale-110 text-white shadow-[0_0_0_4px_rgba(22,199,132,0.25)]"
+                      ? "z-10 scale-110 text-white shadow-[0_0_0_4px_rgba(74, 170, 39,0.25)]"
                       : "border-2 border-white bg-white/90 text-body shadow-md hover:scale-105"
                   }`}
                   style={{

@@ -52,13 +52,13 @@ export const WHY_AREAIQ_ITEMS: WhyAreaIQItem[] = [
   {
     id: "price",
     title: "Price Prediction",
-    description: "Ask AI about appreciation outlook.",
+    description: "Ask AreaIQ about appreciation outlook.",
     href: "/ask?q=Price+appreciation+outlook+Tricity",
   },
   {
     id: "assistant",
-    title: "AI Assistant",
-    description: "Natural language. Verified data answers.",
+    title: "AreaIQ Copilot",
+    description: "Natural language. Verified intelligence answers.",
     href: "/ask",
   },
   {

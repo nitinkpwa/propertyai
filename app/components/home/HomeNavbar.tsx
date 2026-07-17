@@ -57,8 +57,14 @@ export default function HomeNavbar() {
             : "border-b border-white/20 bg-white/40 backdrop-blur-md"
         }`}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <Logo accentColor={IQ_GREEN} lightAccentColor={IQ_GREEN} priority />
+        <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 py-2 pl-6 pr-4 sm:gap-4 sm:pr-6 lg:pr-8">
+          <Logo
+            size="navbar"
+            accentColor={IQ_GREEN}
+            lightAccentColor={IQ_GREEN}
+            showTagline={false}
+            priority
+          />
 
           <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">
             {HOME_NAV_LINKS.map((link) => (
@@ -82,7 +88,7 @@ export default function HomeNavbar() {
             {!loading && !user ? (
               <Link
                 href="/login"
-                className="hidden rounded-full px-5 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(22,199,132,0.35)] transition-transform hover:scale-[1.02] sm:inline-flex"
+                className="hidden rounded-full px-5 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(74, 170, 39,0.35)] transition-transform hover:scale-[1.02] sm:inline-flex"
                 style={{ backgroundColor: IQ_GREEN }}
               >
                 Sign In

@@ -55,7 +55,7 @@ export default function UserMenu() {
     return (
       <Link
         href="/login"
-        className="hidden rounded-full px-5 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all duration-200 hover:shadow-[0_4px_14px_rgba(34,197,94,0.45)] hover:brightness-105 sm:inline-flex"
+        className="hidden rounded-full px-5 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.35)] transition-all duration-200 hover:shadow-[0_4px_14px_rgba(74, 170, 39,0.45)] hover:brightness-105 sm:inline-flex"
         style={{ backgroundColor: EMERALD }}
       >
         Sign In

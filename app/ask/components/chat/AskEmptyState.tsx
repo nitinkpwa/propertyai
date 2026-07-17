@@ -2,7 +2,7 @@
 
 import type { PropertyContext } from "@/lib/ask/client";
 import { STARTER_SUGGESTIONS } from "@/lib/ask/followUps";
-import Logo from "@/components/common/Logo";
+import { BRAND } from "@/lib/brand";
 
 interface AskEmptyStateProps {
   propertyContext: PropertyContext | null;
@@ -12,17 +12,35 @@ interface AskEmptyStateProps {
 export function AskEmptyState({ propertyContext, onSuggest }: AskEmptyStateProps) {
   return (
     <div className="flex min-h-full flex-1 flex-col items-center justify-center px-4 py-8 text-center sm:py-10">
-      <div className="mb-5">
-        <Logo size="hero" showTagline={false} href={null} />
-      </div>
       <h1 className="text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
-        AreaIQ Copilot
+        {BRAND.productsNames.intelligence}
       </h1>
-      <p className="mt-2 max-w-md text-sm leading-relaxed text-muted sm:text-base">
-        India&apos;s smartest real estate advisor for Chandigarh Tricity. Ask about
-        properties, areas, builders, EMI, or investment — backed by live listings, never
-        fabricated data.
+      <p className="mt-3 max-w-md text-sm leading-relaxed text-muted sm:text-base">
+        Enterprise real estate intelligence for India. Analyze properties, areas, builders,
+        and investments — grounded in live listings, never fabricated data.
       </p>
+
+      <div className="mt-6 w-full max-w-lg rounded-2xl border border-emerald-100 bg-[#F8FFFC] px-4 py-4 text-left">
+        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-700">
+          Analyzing
+        </p>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+          {BRAND.analyzingSignals.map((signal) => (
+            <li
+              key={signal}
+              className="flex items-center gap-2 text-[13px] font-medium text-heading-primary"
+            >
+              <span
+                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white"
+                aria-hidden
+              >
+                ✓
+              </span>
+              {signal}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       {propertyContext ? (
         <div className="mt-5 max-w-md rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3 text-left text-sm text-emerald-900">

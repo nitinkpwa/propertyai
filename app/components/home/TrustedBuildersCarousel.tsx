@@ -58,7 +58,7 @@ export default function TrustedBuildersCarousel() {
                 </div>
                 <div className="mt-3 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/50 px-3 py-2.5 text-center">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
-                    AI Rating
+                    AreaIQ Rating
                   </p>
                   <p className="mt-0.5 text-xs font-medium text-emerald-600">Ask AreaIQ →</p>
                 </div>

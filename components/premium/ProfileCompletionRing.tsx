@@ -41,7 +41,7 @@ export default function ProfileCompletionRing({
             cy={dim / 2}
             r={radius}
             fill="none"
-            stroke="#059669"
+            stroke="#4AAA27"
             strokeWidth={stroke}
             strokeLinecap="round"
             strokeDasharray={circumference}

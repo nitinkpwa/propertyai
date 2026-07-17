@@ -33,9 +33,9 @@ export default function AmenitiesSection({ amenities }: AmenitiesSectionProps) {
   if (sorted.length === 0) {
     return (
       <SectionCard>
-        <SectionTitle title="Amenities" subtitle="AI-detected lifestyle features" />
+        <SectionTitle title="Amenities" subtitle="AreaIQ-detected lifestyle features" />
         <p className="text-sm text-muted">
-          Amenities not listed yet for this property. Ask AI or book a visit to confirm on-site
+          Amenities not listed yet for this property. Ask AreaIQ or book a visit to confirm on-site
           facilities.
         </p>
       </SectionCard>
@@ -46,7 +46,7 @@ export default function AmenitiesSection({ amenities }: AmenitiesSectionProps) {
     <SectionCard>
       <SectionTitle
         title="Amenities"
-        subtitle="AI-detected and listing-verified lifestyle features"
+        subtitle="AreaIQ-detected and listing-verified lifestyle features"
       />
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
         {sorted.map((amenity) => (

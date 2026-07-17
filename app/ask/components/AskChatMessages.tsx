@@ -3,7 +3,6 @@
 import type { RefObject } from "react";
 import type { AskChatMessage } from "@/lib/ask/conversations/types";
 import type { PropertyContext } from "@/lib/ask/client";
-import Logo from "@/components/common/Logo";
 import {
   AskRecommendedProperties,
   AskResponseCard,
@@ -58,8 +57,7 @@ export function AskChatMessages({
   if (messages.length === 0 && !loading) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-12 text-center">
-        <Logo size="hero" showTagline href={null} />
-        <h1 className="mt-6 text-2xl font-bold text-heading-primary sm:text-3xl">
+        <h1 className="text-2xl font-bold text-heading-primary sm:text-3xl">
           AreaIQ Intelligence
         </h1>
         <p className="mt-3 max-w-lg text-muted">

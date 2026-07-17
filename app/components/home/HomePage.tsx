@@ -12,6 +12,7 @@ const PopularAIQuestions = dynamic(() => import("./sections/PopularAIQuestions")
 const MarketIntelligenceSection = dynamic(() => import("./sections/MarketIntelligenceSection"));
 const FeaturedIntelligenceCarousel = dynamic(() => import("./FeaturedIntelligenceCarousel"));
 const WhyAreaIQSection = dynamic(() => import("./sections/WhyAreaIQSection"));
+const AboutAreaIQSection = dynamic(() => import("./sections/AboutAreaIQSection"));
 const ExploreAreasSection = dynamic(() => import("./sections/ExploreAreasSection"));
 const BuilderIntelligenceSection = dynamic(() => import("./sections/BuilderIntelligenceSection"));
 const FinalCTA = dynamic(() => import("./FinalCTA"));
@@ -27,6 +28,7 @@ export default function HomePage() {
         <MarketIntelligenceSection />
         <FeaturedIntelligenceCarousel />
         <WhyAreaIQSection />
+        <AboutAreaIQSection />
         <ExploreAreasSection />
         <BuilderIntelligenceSection />
         <FinalCTA />

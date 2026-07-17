@@ -37,7 +37,7 @@ export default function ExploreAreasSection() {
           <SectionHeader
             eyebrow="Area Intelligence"
             title="Know the micro-market"
-            description="Scores and averages only when present on live listings. Everything else → Ask AI."
+            description="Scores and averages only when present on live listings. Everything else → Ask AreaIQ."
             action={{ label: "Compare areas", href: "/ask?q=Compare+areas+Tricity" }}
           />
         </FadeIn>
@@ -93,7 +93,7 @@ export default function ExploreAreasSection() {
                   </div>
                   <div>
                     <dt className="text-xs text-muted">Deeper intel</dt>
-                    <dd className="font-semibold text-emerald-600">Ask AI →</dd>
+                    <dd className="font-semibold text-emerald-600">Ask AreaIQ →</dd>
                   </div>
                 </dl>
               </GlassCard>

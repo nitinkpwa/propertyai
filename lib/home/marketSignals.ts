@@ -22,7 +22,7 @@ function average(nums: number[]): number | null {
   return nums.reduce((a, b) => a + b, 0) / nums.length;
 }
 
-/** Build market signal cards from live listings. Unknown metrics stay null + Ask AI. */
+/** Build market signal cards from live listings. Unknown metrics stay null + Ask AreaIQ. */
 export function buildMarketSignals(listings: ListingProperty[]): MarketSignal[] {
   const prices = listings.map((l) => l.price).filter((p) => p > 0);
   const avgPrice = average(prices);
@@ -71,7 +71,7 @@ export function buildMarketSignals(listings: ListingProperty[]): MarketSignal[] 
       id: "rental-yield",
       label: "Rental Yield",
       value: avgYield != null ? `${avgYield.toFixed(1)}%` : null,
-      hint: avgYield != null ? "Avg from listed yields" : "Ask AI for yield outlook",
+      hint: avgYield != null ? "Avg from listed yields" : "Ask AreaIQ for yield outlook",
       href: "/ask?q=Highest+rental+yield+Tricity",
       kind: avgYield != null ? "metric" : "ask",
     },
@@ -79,7 +79,7 @@ export function buildMarketSignals(listings: ListingProperty[]): MarketSignal[] 
       id: "today-growth",
       label: "Today's Growth",
       value: null,
-      hint: "Ask AI for market movement",
+      hint: "Ask AreaIQ for market movement",
       href: "/ask?q=Today+property+price+growth+Tricity",
       kind: "ask",
     },
@@ -87,7 +87,7 @@ export function buildMarketSignals(listings: ListingProperty[]): MarketSignal[] 
       id: "weekly-growth",
       label: "Weekly Growth",
       value: null,
-      hint: "Ask AI for weekly trends",
+      hint: "Ask AreaIQ for weekly trends",
       href: "/ask?q=Weekly+property+price+trends+Tricity",
       kind: "ask",
     },
@@ -95,7 +95,7 @@ export function buildMarketSignals(listings: ListingProperty[]): MarketSignal[] 
       id: "launches",
       label: "Projects Launching",
       value: null,
-      hint: "Ask AI for new launches",
+      hint: "Ask AreaIQ for new launches",
       href: "/ask?q=New+launch+projects+Tricity",
       kind: "ask",
     },
@@ -103,7 +103,7 @@ export function buildMarketSignals(listings: ListingProperty[]): MarketSignal[] 
       id: "most-viewed",
       label: "Most Viewed",
       value: null,
-      hint: "Ask AI what's trending",
+      hint: "Ask AreaIQ what's trending",
       href: "/ask?q=Most+viewed+properties+Tricity",
       kind: "ask",
     },
@@ -111,7 +111,7 @@ export function buildMarketSignals(listings: ListingProperty[]): MarketSignal[] 
       id: "most-booked",
       label: "Most Booked",
       value: null,
-      hint: "Ask AI about visit demand",
+      hint: "Ask AreaIQ about visit demand",
       href: "/ask?q=Most+booked+site+visits+Tricity",
       kind: "ask",
     },
@@ -119,7 +119,7 @@ export function buildMarketSignals(listings: ListingProperty[]): MarketSignal[] 
       id: "builder-score",
       label: "Builder Score",
       value: null,
-      hint: "Ask AI to compare builders",
+      hint: "Ask AreaIQ to compare builders",
       href: "/ask?q=Most+reliable+builders+Tricity",
       kind: "ask",
     },
@@ -127,7 +127,7 @@ export function buildMarketSignals(listings: ListingProperty[]): MarketSignal[] 
       id: "confidence",
       label: "Market Confidence",
       value: null,
-      hint: "Ask AI for outlook",
+      hint: "Ask AreaIQ for outlook",
       href: "/ask?q=Market+confidence+Tricity+real+estate",
       kind: "ask",
     },

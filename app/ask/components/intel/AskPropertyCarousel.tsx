@@ -8,7 +8,7 @@ import { addComparedProperty } from "@/lib/buyer/queries";
 import { useSavedPropertyToggle } from "@/lib/buyer/useSavedProperty";
 import type { ListingProperty } from "@/lib/properties/types";
 
-const EMERALD = "#22C55E";
+import { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
 
 function formatPrice(price: number): string {
   if (price >= 10_000_000) return `₹${(price / 10_000_000).toFixed(2)} Cr`;
@@ -138,7 +138,7 @@ export function AskPropertyCarousel({
                     onClick={() => onAskAbout?.(`Tell me more about ${p.name}`)}
                     className="rounded-lg border border-emerald-200 bg-emerald-50 py-1.5 text-[11px] font-semibold text-emerald-800"
                   >
-                    Ask AI
+                    Ask AreaIQ
                   </button>
                   <button
                     type="button"

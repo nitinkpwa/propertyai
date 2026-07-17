@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Logo from "@/components/common/Logo";
 
 export default function AdminLeadsChrome({
   title,
@@ -17,16 +16,12 @@ export default function AdminLeadsChrome({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
-      <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <div className="flex min-w-0 items-center gap-4">
-            <Logo size="dashboard" suffix="Admin" href="/admin" />
-            <span className="hidden h-6 w-px bg-neutral-200 sm:block" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-heading-primary">{title}</p>
-              {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}
-            </div>
+    <div className="min-h-screen bg-[#FAFAFA] pt-16">
+      <header className="sticky top-16 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-heading-primary">{title}</p>
+            {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}
           </div>
           <div className="flex items-center gap-3">
             <Link href={backHref} className="text-sm font-medium text-emerald-700 hover:text-emerald-800">

@@ -43,7 +43,7 @@ export default function EmptyState({
           href="/ask"
           className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
         >
-          <span aria-hidden>🤖</span> Ask AI for help
+          <span aria-hidden>🤖</span> Ask AreaIQ
         </Link>
       </div>
     </div>

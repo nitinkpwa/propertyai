@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Logo from "@/components/common/Logo";
 import ConnectNotificationBell from "@/components/connect/ConnectNotificationBell";
 import { CONNECT_NAV, type ConnectTab } from "@/lib/connect/types";
 import { getInitials } from "@/lib/auth/profile";
@@ -65,17 +64,16 @@ export default function ConnectShell({
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
-      <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/95 backdrop-blur-xl">
-        <div className="flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:pl-[17.5rem] lg:pr-8">
-          <div className="flex items-center gap-3 lg:hidden">
-            <button type="button" onClick={() => setMobileOpen(true)} className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200" aria-label="Open menu">☰</button>
-            <Logo size="dashboard" suffix="Connect" href="/connect" />
+    <div className="min-h-screen bg-[#F8FAFC] pt-16">
+      <header className="sticky top-16 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur-xl">
+        <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6 lg:pl-[17.5rem] lg:pr-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <button type="button" onClick={() => setMobileOpen(true)} className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 lg:hidden" aria-label="Open menu">☰</button>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-heading-primary">Connect Dashboard</p>
+              <p className="truncate text-xs text-muted">{companyName ?? "Partner CRM"}</p>
+            </div>
           </div>
-          <Logo size="dashboard" suffix="Connect" href="/connect" className="hidden lg:flex" />
-          <p className="hidden truncate text-sm font-semibold text-body sm:block">
-            {companyName ?? "Connect Partner CRM"}
-          </p>
           <div className="flex items-center gap-2">
             <ConnectNotificationBell userId={userId} onViewAll={() => onTabChange("notifications")} />
             <button type="button" onClick={() => onTabChange("settings")} className="relative inline-flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-emerald-600" aria-label="Settings">
@@ -92,11 +90,11 @@ export default function ConnectShell({
       </header>
 
       <div className="flex">
-        <aside className="fixed bottom-0 left-0 top-16 hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
+        <aside className="fixed bottom-0 left-0 top-[7.5rem] hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
           <div className="border-b border-neutral-100 px-4 py-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-label">Channel Partner</p>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">AreaIQ Connect</p>
             <p className="mt-1 truncate text-sm font-bold text-heading-primary">{companyName ?? userName ?? "Partner"}</p>
-            <p className="text-xs text-emerald-600">Property-based CRM</p>
+            <p className="text-xs text-muted">Partner workspace</p>
           </div>
           {sidebar}
         </aside>

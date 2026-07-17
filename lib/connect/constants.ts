@@ -1,4 +1,4 @@
-export const EMERALD = "#22C55E";
+export { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
 
 export const CONNECT_FEATURES = [
   {

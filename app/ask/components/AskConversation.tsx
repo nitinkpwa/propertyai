@@ -3,7 +3,6 @@
 import type { ListingProperty } from "@/lib/properties/types";
 import type { AskSearchStats, AskSection, AskTurn } from "@/lib/ask/types";
 import { formatPriceShort } from "@/lib/ask/responses";
-import Logo from "@/components/common/Logo";
 import { AskResultsGrid } from "./AskResultsSection";
 
 function escapeHtml(text: string) {
@@ -64,9 +63,6 @@ export function AskHero({
 }: AskHeroProps) {
   return (
     <section className="text-center">
-      <div className="mb-6 flex justify-center">
-        <Logo size="hero" showTagline href="/ask" priority />
-      </div>
       <h1 className="text-3xl font-bold tracking-tight text-heading-primary sm:text-4xl lg:text-5xl">
         AreaIQ Intelligence
       </h1>
@@ -217,9 +213,8 @@ interface AskResponseCardProps {
 export function AskResponseCard({ turn }: AskResponseCardProps) {
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white px-5 py-5 shadow-[0_4px_24px_rgba(0,0,0,0.04)] sm:px-6 sm:py-6">
-      <Logo size="footer" iconOnly href={null} className="mb-3" />
       <p className="text-xs font-semibold uppercase tracking-wider text-emerald-600">
-        AreaIQ Intelligence Agent
+        AreaIQ Intelligence
       </p>
       <h2 className="mt-2 text-lg font-semibold text-heading-primary sm:text-xl">
         {turn.headline}
@@ -319,8 +314,7 @@ interface AskLoadingCardProps {
 export function AskLoadingCard({ status }: AskLoadingCardProps) {
   return (
     <div className="rounded-2xl border border-neutral-200 bg-white px-5 py-5 shadow-sm">
-      <Logo size="footer" iconOnly href={null} className="mb-3" />
-      <div className="mt-3 flex items-center gap-3 text-sm text-body">
+      <div className="flex items-center gap-3 text-sm text-body">
         <span className="inline-flex gap-1" aria-hidden>
           {[0, 1, 2].map((dot) => (
             <span

@@ -36,7 +36,7 @@ export default function CompareTable({ items }: CompareTableProps) {
     { label: "Area", render: (p) => `${p.area.toLocaleString("en-IN")} sq ft` },
     { label: "Growth Score", render: (p) => (p.growthScore !== null ? `${p.growthScore}/100` : "N/A"), bestIdx: growthBest },
     { label: "Rental Yield", render: (p) => (p.rentalYield !== null ? `${p.rentalYield}%` : "N/A"), bestIdx: yieldBest },
-    { label: "AI Verified", render: (p) => (p.aiVerified ? "Yes ✓" : "No") },
+    { label: "AreaIQ Intelligence", render: (p) => (p.aiVerified ? "Yes ✓" : "No") },
     { label: "RERA Verified", render: (p) => (p.reraVerified ? "Yes ✓" : "No") },
   ];
 

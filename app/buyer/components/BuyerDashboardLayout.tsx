@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import Logo from "@/components/common/Logo";
 import NotificationBell from "@/components/buyer/NotificationBell";
 import MobileBottomNav from "@/components/buyer/MobileBottomNav";
 import BuyerTopBar from "@/components/buyer/BuyerTopBar";
@@ -51,7 +50,7 @@ export default function BuyerDashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50 pt-16">
       <div className="lg:flex">
         <BuyerSidebar
           fullName={profile?.full_name}
@@ -72,7 +71,7 @@ export default function BuyerDashboardLayout({
         <div className="flex min-w-0 flex-1 flex-col lg:pl-64">
           <BuyerTopBar subtitle={profile?.full_name ?? undefined} />
 
-          <div className="sticky top-0 z-30 flex items-center gap-3 border-b border-neutral-200/80 bg-white/95 px-4 py-3 backdrop-blur-xl lg:hidden">
+          <div className="sticky top-16 z-30 flex items-center gap-3 border-b border-neutral-200/80 bg-white/95 px-4 py-3 backdrop-blur-xl lg:hidden">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
@@ -83,10 +82,12 @@ export default function BuyerDashboardLayout({
                 <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
               </svg>
             </button>
-            <Logo size="dashboard" href="/buyer" iconOnly />
             <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-brand-dark">
+                Buyer Portal
+              </p>
               <p className="truncate text-sm font-semibold text-heading-primary">
-                {profile?.full_name ?? "Buyer Portal"}
+                {profile?.full_name ?? "Dashboard"}
               </p>
             </div>
             <NotificationBell />

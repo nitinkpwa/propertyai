@@ -21,8 +21,7 @@ export default function PropertyNotFound() {
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/properties"
-              className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all hover:brightness-105"
-              style={{ backgroundColor: "#22C55E" }}
+              className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74,170,39,0.35)] transition-all hover:bg-brand-hover"
             >
               Browse Properties
             </Link>

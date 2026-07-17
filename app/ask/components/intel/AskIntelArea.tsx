@@ -31,8 +31,8 @@ export function AskIntelArea({ areaName, stats, summary, onAction }: AskIntelAre
     { label: "Schools", value: "Ask nearby" },
     { label: "Hospitals", value: "Ask nearby" },
     { label: "Traffic", value: "Data pending" },
-    { label: "Growth Prediction", value: "Ask AI" },
-    { label: "Future Infra", value: "Ask AI" },
+    { label: "Growth Prediction", value: "Ask AreaIQ" },
+    { label: "Future Infra", value: "Ask AreaIQ" },
     { label: "Price Trend", value: "Ask market trend" },
   ];
 

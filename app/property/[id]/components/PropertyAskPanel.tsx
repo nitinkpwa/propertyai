@@ -96,7 +96,7 @@ export default function PropertyAskPanel({
           { role: "assistant", content: response.answer },
         ]);
       } catch {
-        setError("Could not reach AreaIQ AI. Try again or open full Ask.");
+        setError("Could not reach AreaIQ Intelligence. Try again or open Copilot.");
       } finally {
         setLoading(false);
       }
@@ -117,15 +117,15 @@ export default function PropertyAskPanel({
             <SparkIcon size={14} />
           </span>
           <div>
-            <p className="text-sm font-bold text-heading-primary">Ask AI about this property</p>
-            <p className="text-[11px] text-muted">Persistent intelligence panel</p>
+            <p className="text-sm font-bold text-heading-primary">AreaIQ Intelligence</p>
+            <p className="text-[11px] text-muted">Powered by Tech172</p>
           </div>
         </div>
         <Link
           href={`/ask?propertyId=${property.id}`}
           className="text-[11px] font-semibold text-emerald-700 hover:underline"
         >
-          Full Ask →
+          Open Copilot →
         </Link>
       </div>
 

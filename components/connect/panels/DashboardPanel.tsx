@@ -55,7 +55,9 @@ export default function ConnectDashboardPanel({
       <div className={connectTokens.hero}>
         <div className="relative">
           <p className="text-xs font-semibold uppercase tracking-widest text-emerald-200">{getGreeting()}</p>
-          <h1 className="mt-2 text-2xl font-bold sm:text-3xl">{firstName}, your sales command center</h1>
+          <h1 className="text-shadow-premium mt-2 text-2xl font-bold sm:text-3xl">
+            {firstName}, your sales command center
+          </h1>
           <p className="mt-2 max-w-xl text-sm text-white/70">
             {properties.length} assigned properties · {analytics.totalBuyers} property leads · {conversionRate}% conversion
           </p>

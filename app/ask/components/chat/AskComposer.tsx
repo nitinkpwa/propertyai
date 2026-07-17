@@ -200,7 +200,7 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
           <button
             type="submit"
             disabled={loading || !query.trim()}
-            className="mb-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-[0_2px_10px_rgba(34,197,94,0.35)] transition-all hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
+            className="mb-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-[0_2px_10px_rgba(74, 170, 39,0.35)] transition-all hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
             aria-label="Send"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

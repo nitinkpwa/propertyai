@@ -87,7 +87,7 @@ export function AskIntelCompare({ listings, onAction }: AskIntelCompareProps) {
         }
         className="w-full rounded-xl border border-emerald-200 bg-emerald-50 py-2 text-xs font-semibold text-emerald-800"
       >
-        Ask AI verdict
+        AreaIQ verdict
       </button>
     </div>
   );

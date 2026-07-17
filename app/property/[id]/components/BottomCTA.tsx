@@ -21,7 +21,7 @@ export default function BottomCTA({ property }: BottomCTAProps) {
       <div className="pointer-events-none absolute -bottom-16 -left-16 h-56 w-56 rounded-full bg-emerald-400/10 blur-3xl" />
 
       <div className="relative mx-auto max-w-2xl text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
+        <h2 className="text-shadow-premium text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-4xl">
           Ready to Visit?
         </h2>
         <p className="mt-3 text-sm leading-relaxed text-muted sm:text-base">

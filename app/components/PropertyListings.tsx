@@ -35,16 +35,16 @@ function EmptyCatalogState() {
         No properties available yet
       </p>
       <p className="mx-auto mt-2 max-w-md text-sm text-muted">
-        New listings are added regularly. Check back soon or explore our AI
-        assistant for market insights in the meantime.
+        New listings are added regularly. Check back soon or explore AreaIQ
+        Intelligence for market insights in the meantime.
       </p>
       <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Link
           href="/ask"
-          className="inline-flex rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all hover:brightness-105"
-          style={{ backgroundColor: "#22C55E" }}
+          className="inline-flex rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.35)] transition-all hover:brightness-105"
+          style={{ backgroundColor: "#4AAA27" }}
         >
-          Ask AI Assistant
+          Ask AreaIQ Intelligence
         </Link>
         <Link
           href="/"
@@ -121,8 +121,8 @@ export default function PropertyListings() {
           <button
             type="button"
             onClick={clearFilters}
-            className="mt-6 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all hover:brightness-105"
-            style={{ backgroundColor: "#22C55E" }}
+            className="mt-6 rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.35)] transition-all hover:brightness-105"
+            style={{ backgroundColor: "#4AAA27" }}
           >
             Clear Filters
           </button>

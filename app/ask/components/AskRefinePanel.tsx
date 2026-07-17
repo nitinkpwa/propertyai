@@ -71,7 +71,7 @@ export default function AskRefinePanel({
         type="button"
         onClick={onRefine}
         disabled={loading}
-        className="mt-5 inline-flex items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)] transition-all hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-5 inline-flex items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.35)] transition-all hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {loading ? "Refining..." : "Refine Search"}
       </button>

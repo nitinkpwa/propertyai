@@ -37,7 +37,7 @@ export default function BuilderIntelligenceSection() {
           <SectionHeader
             eyebrow="Builder Showcase"
             title="Know the builder before you book"
-            description="Active inventory and listing-backed averages only. Delivery history and legal status: Ask AI."
+            description="Active inventory and listing-backed averages only. Delivery history and legal status: Ask AreaIQ."
             action={{ label: "Compare builders", href: "/ask?q=Compare+builders+Tricity" }}
           />
         </FadeIn>
@@ -99,7 +99,7 @@ export default function BuilderIntelligenceSection() {
                   </div>
                   <div className="col-span-2">
                     <p className="text-xs font-semibold text-emerald-600">
-                      Delivery · quality · legal → Ask AI
+                      Delivery · quality · legal → Ask AreaIQ
                     </p>
                   </div>
                 </div>

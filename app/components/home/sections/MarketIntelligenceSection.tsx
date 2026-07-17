@@ -18,7 +18,7 @@ function MarketSignalCard({ signal }: { signal: MarketSignal }) {
         </p>
         {signal.kind === "ask" ? (
           <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold uppercase text-emerald-700">
-            Ask AI
+            Ask AreaIQ
           </span>
         ) : null}
       </div>

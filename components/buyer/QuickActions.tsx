@@ -4,7 +4,7 @@ import Link from "next/link";
 
 const ACTIONS = [
   { href: "/properties", icon: "🔍", label: "Search", desc: "Find properties" },
-  { href: "/ask", icon: "🤖", label: "Ask AI", desc: "Get insights" },
+  { href: "/ask", icon: "🤖", label: "Ask AreaIQ", desc: "Get insights" },
   { href: "/buyer/saved", icon: "❤️", label: "Saved", desc: "Your shortlist" },
   { href: "/buyer/compare", icon: "⚖️", label: "Compare", desc: "Side by side" },
   { href: "/buyer/site-visits", icon: "📅", label: "Visits", desc: "Book & track" },

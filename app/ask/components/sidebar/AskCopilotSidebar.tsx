@@ -7,8 +7,6 @@ import {
   TIME_GROUP_LABELS,
 } from "@/lib/ask/conversations/grouping";
 import type { AskConversationSummary } from "@/lib/ask/conversations/types";
-import Logo from "@/components/common/Logo";
-
 interface AskCopilotSidebarProps {
   conversations: AskConversationSummary[];
   activeId: string | null;
@@ -48,9 +46,9 @@ export function AskCopilotSidebar({
     <aside className="flex h-full min-h-0 w-full flex-col border-r border-neutral-200/80 bg-[#F7F9F8]">
       <div className="flex shrink-0 items-center justify-between border-b border-neutral-200/80 px-4 py-4">
         <div>
-          <Logo size="footer" href="/" />
-          <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
-            AI Copilot
+          <p className="text-sm font-bold text-heading-primary">AI Copilot</p>
+          <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+            Property Intelligence
           </p>
         </div>
         {onClose ? (
@@ -71,7 +69,7 @@ export function AskCopilotSidebar({
         <button
           type="button"
           onClick={onNewChat}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(34,197,94,0.3)] transition-all hover:brightness-105"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_2px_10px_rgba(74, 170, 39,0.3)] transition-all hover:brightness-105"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

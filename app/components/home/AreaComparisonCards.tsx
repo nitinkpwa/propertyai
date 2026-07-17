@@ -41,7 +41,7 @@ export default function AreaComparisonCards() {
                       className="text-sm font-semibold opacity-0 transition-opacity group-hover:opacity-100"
                       style={{ color: IQ_GREEN }}
                     >
-                      Ask AI →
+                      Ask AreaIQ →
                     </span>
                   </div>
                   <div className="mt-6 overflow-hidden rounded-xl border border-neutral-100">

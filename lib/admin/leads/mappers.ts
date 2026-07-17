@@ -388,7 +388,7 @@ export function buildBuyerJourney(input: {
   if (firstChat) {
     events.push({
       id: `chat-${firstChat.id}`,
-      title: "AI Chat Started",
+      title: "Intelligence Session Started",
       description: firstChat.title,
       at: firstChat.created_at,
       icon: "🤖",

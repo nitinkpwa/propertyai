@@ -1,31 +1,42 @@
 import Image from "next/image";
 import Link from "next/link";
-import { EMERALD } from "@/lib/auth/constants";
+import { BRAND_LIGHT, BRAND_PRIMARY } from "@/lib/design/colors";
+import { TEXT_SHADOW_BRAND, TEXT_SHADOW_ON_PHOTO } from "@/lib/design/text";
+import { BRAND } from "@/lib/brand";
 
-export const LOGO_SRC = "/logo.png";
-export const LOGO_TAGLINE = "AI-Powered Real Estate Intelligence";
+export const LOGO_SRC = BRAND.assets.logo;
+export const LOGO_TAGLINE = BRAND.poweredBy;
+export const LOGO_ALT = BRAND.alt.logo;
 
+/** Display heights — mobile 34–38px, desktop 40–44px. */
 const ICON_SIZES = {
-  navbar: 42,
-  hero: 70,
-  footer: 36,
-  dashboard: 42,
+  navbar: { mobile: 36, desktop: 42 },
+  hero: { mobile: 38, desktop: 44 },
+  footer: { mobile: 34, desktop: 36 },
+  dashboard: { mobile: 36, desktop: 40 },
 } as const;
 
 export type LogoSize = keyof typeof ICON_SIZES;
 
 const WORD_CLASSES: Record<LogoSize, string> = {
-  navbar: "text-lg",
-  hero: "text-2xl sm:text-[1.75rem]",
-  footer: "text-base",
-  dashboard: "text-base",
+  navbar: "text-[15px] sm:text-lg",
+  hero: "text-lg sm:text-xl",
+  footer: "text-sm sm:text-base",
+  dashboard: "text-sm sm:text-base",
 };
 
 const TAGLINE_CLASSES: Record<LogoSize, string> = {
-  navbar: "text-xs",
-  hero: "text-xs sm:text-sm",
-  footer: "text-xs",
-  dashboard: "text-xs",
+  navbar: "text-[10px] sm:text-xs",
+  hero: "text-[10px] sm:text-xs",
+  footer: "text-[10px] sm:text-xs",
+  dashboard: "text-[10px] sm:text-xs",
+};
+
+const HEIGHT_CLASSES: Record<LogoSize, string> = {
+  navbar: "h-9 w-9 sm:h-[42px] sm:w-[42px]",
+  hero: "h-[38px] w-[38px] sm:h-11 sm:w-11",
+  footer: "h-[34px] w-[34px] sm:h-9 sm:w-9",
+  dashboard: "h-9 w-9 sm:h-10 sm:w-10",
 };
 
 export type LogoProps = {
@@ -52,23 +63,26 @@ export default function Logo({
   iconOnly = false,
   className = "",
   priority = false,
-  accentColor = EMERALD,
-  lightAccentColor = "#4ADE80",
+  accentColor = BRAND_PRIMARY,
+  lightAccentColor = BRAND_LIGHT,
 }: LogoProps) {
-  const iconPx = ICON_SIZES[size];
+  const dims = ICON_SIZES[size];
   const isLight = variant === "light";
   const isDark = variant === "dark";
-  const iqColor = isLight ? lightAccentColor : isDark ? "#4ADE80" : accentColor;
+  const iqColor = isLight ? lightAccentColor : isDark ? BRAND_LIGHT : accentColor;
+
+  const imageAlt = iconOnly || !href ? LOGO_ALT : "";
 
   const image = (
     <Image
       src={LOGO_SRC}
-      alt={iconOnly ? "AreaIQ" : ""}
-      width={iconPx}
-      height={iconPx}
-      priority={priority || size === "hero" || size === "navbar"}
-      className="shrink-0 object-contain"
-      aria-hidden={!iconOnly && showWordmark ? true : undefined}
+      alt={imageAlt}
+      width={dims.desktop}
+      height={dims.desktop}
+      priority={priority || size === "navbar"}
+      sizes={`${dims.mobile}px`}
+      className={`shrink-0 object-contain object-center ${HEIGHT_CLASSES[size]}`}
+      aria-hidden={imageAlt ? undefined : true}
     />
   );
 
@@ -76,16 +90,24 @@ export default function Logo({
     image
   ) : (
     <>
-      {image}
+      <span className="inline-flex shrink-0 items-center justify-center p-0.5">{image}</span>
       {showWordmark ? (
-        <div className="flex min-w-0 flex-col">
+        <div className="flex min-w-0 flex-col justify-center py-0.5">
           <span
-            className={`font-semibold tracking-tight ${WORD_CLASSES[size]} ${
+            className={`font-semibold leading-none tracking-tight ${WORD_CLASSES[size]} ${
               isLight || isDark ? "text-white" : "text-heading-primary"
             }`}
-            style={isLight ? { textShadow: "0 2px 10px rgba(0,0,0,0.3)" } : undefined}
+            style={isLight ? { textShadow: TEXT_SHADOW_ON_PHOTO } : undefined}
           >
-            Area<span style={{ color: iqColor }}>IQ</span>
+            Area
+            <span
+              style={{
+                color: iqColor,
+                ...(isLight ? { textShadow: TEXT_SHADOW_BRAND } : null),
+              }}
+            >
+              IQ
+            </span>
             {suffix ? (
               <span className={isLight || isDark ? "text-white/90" : "text-heading-secondary"}>
                 {" "}
@@ -95,30 +117,40 @@ export default function Logo({
           </span>
           {showTagline ? (
             <span
-              className={`font-medium leading-snug ${TAGLINE_CLASSES[size]} ${
-                isLight
-                  ? "text-white/75"
-                  : "text-muted"
+              className={`mt-0.5 font-medium leading-snug ${TAGLINE_CLASSES[size]} ${
+                isLight ? "text-white/75" : "text-muted"
               } ${size === "navbar" ? "hidden sm:block" : ""}`}
-              style={isLight ? { textShadow: "0 1px 8px rgba(0,0,0,0.25)" } : undefined}
+              style={isLight ? { textShadow: TEXT_SHADOW_ON_PHOTO } : undefined}
             >
               {LOGO_TAGLINE}
             </span>
           ) : null}
         </div>
+      ) : showTagline ? (
+        <span
+          className={`font-medium leading-snug ${TAGLINE_CLASSES[size]} ${
+            isLight ? "text-white/75" : "text-muted"
+          }`}
+        >
+          {LOGO_TAGLINE}
+        </span>
       ) : null}
     </>
   );
 
-  const rootClass = `group inline-flex shrink-0 items-center gap-3 no-underline ${className}`;
+  const rootClass = `group inline-flex shrink-0 items-center gap-2.5 no-underline sm:gap-3 ${className}`;
 
   if (href) {
     return (
-      <Link href={href} className={rootClass}>
+      <Link href={href} className={rootClass} aria-label={LOGO_ALT}>
         {content}
       </Link>
     );
   }
 
-  return <div className={rootClass.replace("no-underline", "")}>{content}</div>;
+  return (
+    <div className={rootClass.replace("no-underline", "")} role="img" aria-label={LOGO_ALT}>
+      {content}
+    </div>
+  );
 }

@@ -61,7 +61,7 @@ export default function FloatingAIButton() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="group flex h-14 w-14 items-center justify-center rounded-full text-white shadow-[0_8px_32px_rgba(22,199,132,0.45)] transition-transform hover:scale-105 active:scale-95 sm:h-16 sm:w-16"
+        className="group flex h-14 w-14 items-center justify-center rounded-full text-white shadow-[0_8px_32px_rgba(74, 170, 39,0.45)] transition-transform hover:scale-105 active:scale-95 sm:h-16 sm:w-16"
         style={{ backgroundColor: IQ_GREEN }}
         aria-expanded={open}
         aria-haspopup="menu"

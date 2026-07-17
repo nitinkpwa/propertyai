@@ -5,8 +5,6 @@ import {
   TIME_GROUP_LABELS,
 } from "@/lib/ask/conversations/grouping";
 import type { AskConversationSummary } from "@/lib/ask/conversations/types";
-import Logo from "@/components/common/Logo";
-
 interface AskSidebarProps {
   conversations: AskConversationSummary[];
   activeId: string | null;
@@ -84,7 +82,7 @@ export function AskSidebar({
   return (
     <aside className="flex h-full w-full flex-col border-r border-neutral-200 bg-neutral-50">
       <div className="flex items-center justify-between border-b border-neutral-200 px-4 py-4">
-        <Logo size="footer" href="/" />
+        <p className="text-sm font-bold text-heading-primary">AI Copilot</p>
         {onClose ? (
           <button
             type="button"

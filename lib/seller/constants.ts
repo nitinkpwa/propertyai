@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { PropertyListingStatus } from "./types";
 
-export const EMERALD = "#22C55E";
+export { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
 
 /** Shared inline styles for legacy form fields — modern neutral theme */
 export const inp: CSSProperties = {
@@ -34,7 +34,7 @@ export const card: CSSProperties = {
 };
 
 export const btnPrimary: CSSProperties = {
-  background: "#22C55E",
+  background: "#4AAA27",
   color: "#fff",
   border: "none",
   padding: "10px 20px",
@@ -43,7 +43,7 @@ export const btnPrimary: CSSProperties = {
   fontWeight: 600,
   cursor: "pointer",
   fontFamily: "Inter, sans-serif",
-  boxShadow: "0 2px 8px rgba(34,197,94,0.25)",
+  boxShadow: "0 2px 8px rgba(74, 170, 39,0.25)",
 };
 
 export const btnSecondary: CSSProperties = {

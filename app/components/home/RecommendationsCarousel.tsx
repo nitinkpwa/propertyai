@@ -133,7 +133,7 @@ export default function RecommendationsCarousel() {
                     className="text-xs font-semibold no-underline hover:underline"
                     style={{ color: IQ_GREEN }}
                   >
-                    Ask AI
+                    Ask AreaIQ
                   </Link>
                 </div>
                 {pick.property ? (

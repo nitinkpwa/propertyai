@@ -18,7 +18,7 @@ export default function CrmSummaryCards({
   const cards = [
     { label: "My Enquiries", value: enquiriesCount, href: "/buyer/crm#enquiries", icon: "📩" },
     { label: "Saved Properties", value: savedCount, href: "/buyer/saved", icon: "❤️" },
-    { label: "AI Chats", value: chatsCount, href: "/ask", icon: "💬" },
+    { label: "Intelligence", value: chatsCount, href: "/ask", icon: "💬" },
     { label: "Site Visits", value: visitsCount, href: "/buyer/site-visits", icon: "📅" },
   ];
 

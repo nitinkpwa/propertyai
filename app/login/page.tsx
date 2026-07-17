@@ -70,7 +70,7 @@ function LoginForm() {
   return (
     <AuthLayout
       title="Welcome back"
-      subtitle="Sign in to your AreaIQ account"
+      subtitle="Sign in to continue with AreaIQ Intelligence"
       footer={
         <p className="text-sm text-muted">
           Don&apos;t have an account?{" "}
@@ -125,7 +125,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <AuthLayout title="Welcome back" subtitle="Sign in to your AreaIQ account">
+        <AuthLayout title="Welcome back" subtitle="Sign in to continue with AreaIQ Intelligence">
           <div className="flex justify-center py-8">
             <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
           </div>

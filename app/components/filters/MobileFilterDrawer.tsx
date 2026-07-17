@@ -83,8 +83,8 @@ export default function MobileFilterDrawer({
           <button
             type="button"
             onClick={onClose}
-            className="flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(34,197,94,0.35)]"
-            style={{ backgroundColor: "#22C55E" }}
+            className="flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.35)]"
+            style={{ backgroundColor: "#4AAA27" }}
           >
             Show Results
           </button>

@@ -198,7 +198,7 @@ export default function BuyerCrmPage() {
         {[
           { label: "Inquiries", value: summary?.enquiriesCount ?? 0, icon: "📩" },
           { label: "Saved", value: summary?.savedCount ?? 0, icon: "❤️", href: "/buyer/saved" },
-          { label: "AI Chats", value: summary?.chatsCount ?? 0, icon: "🤖", href: "/ask" },
+          { label: "Intelligence", value: summary?.chatsCount ?? 0, icon: "🤖", href: "/ask" },
           { label: "Visits", value: summary?.visitsCount ?? 0, icon: "📅", href: "/buyer/site-visits" },
         ].map((stat) => (
           <Link

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Logo from "@/components/common/Logo";
 import NotificationBell from "./NotificationBell";
 import { ButtonLink } from "@/components/ui/Button";
 
@@ -10,18 +9,15 @@ interface BuyerTopBarProps {
   subtitle?: string;
 }
 
-export default function BuyerTopBar({ title, subtitle }: BuyerTopBarProps) {
+export default function BuyerTopBar({
+  title = "Buyer Dashboard",
+  subtitle,
+}: BuyerTopBarProps) {
   return (
-    <header className="sticky top-0 z-30 hidden items-center justify-between gap-4 border-b border-neutral-200/80 bg-white/95 px-6 py-3 backdrop-blur-xl lg:flex">
+    <header className="sticky top-16 z-30 hidden items-center justify-between gap-4 border-b border-neutral-200/80 bg-white/95 px-6 py-3 backdrop-blur-xl lg:flex">
       <div className="min-w-0">
-        {title ? (
-          <>
-            <p className="text-sm font-semibold text-heading-primary">{title}</p>
-            {subtitle ? <p className="text-xs text-muted">{subtitle}</p> : null}
-          </>
-        ) : (
-          <Logo size="dashboard" href="/buyer" />
-        )}
+        <p className="text-sm font-semibold text-heading-primary">{title}</p>
+        {subtitle ? <p className="text-xs text-muted">{subtitle}</p> : null}
       </div>
 
       <div className="flex items-center gap-2">
@@ -30,7 +26,7 @@ export default function BuyerTopBar({ title, subtitle }: BuyerTopBarProps) {
           className="hidden items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-body transition hover:bg-white sm:flex"
         >
           <span aria-hidden>🤖</span>
-          <span className="font-medium">Ask AI</span>
+          <span className="font-medium">Ask AreaIQ</span>
         </Link>
         <NotificationBell />
         <ButtonLink href="/properties" variant="secondary" size="sm">

@@ -52,7 +52,9 @@ export default function IntelligencePropertyCard({ property }: Props) {
             className="flex h-full w-full items-end bg-gradient-to-br from-neutral-700 via-neutral-600 to-emerald-700/50 p-4"
             aria-hidden
           >
-            <span className="text-sm font-semibold text-white/90">{property.name}</span>
+            <span className="text-shadow-photo text-sm font-semibold text-white/90">
+              {property.name}
+            </span>
           </div>
         )}
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
@@ -63,7 +65,7 @@ export default function IntelligencePropertyCard({ property }: Props) {
           ) : null}
           {property.aiVerified ? (
             <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase text-heading-primary">
-              AI reviewed
+              AreaIQ Intelligence
             </span>
           ) : null}
         </div>
@@ -120,7 +122,7 @@ export default function IntelligencePropertyCard({ property }: Props) {
             href={property.askHref}
             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-label no-underline hover:bg-neutral-50"
           >
-            Ask AI
+            Ask AreaIQ
           </Link>
           <button
             type="button"

@@ -10,7 +10,7 @@ export default function AiDemoSection() {
     <section className="border-y border-neutral-100 bg-white py-16 sm:py-24">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8">
         <FadeIn>
-          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#16C784]">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#4AAA27]">
             AI That Actually Helps
           </p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
@@ -43,7 +43,7 @@ export default function AiDemoSection() {
             className="mt-8 inline-flex rounded-xl px-6 py-3.5 text-sm font-bold text-white shadow-md transition-transform hover:scale-[1.02]"
             style={{ backgroundColor: IQ_GREEN }}
           >
-            Try AI Assistant →
+            Try AreaIQ Intelligence →
           </Link>
         </FadeIn>
 
@@ -59,7 +59,7 @@ export default function AiDemoSection() {
                 <div key={c} className="h-2.5 w-2.5 rounded-full" style={{ background: c }} />
               ))}
             </div>
-            <span className="text-sm text-muted">AreaIQ AI Assistant</span>
+            <span className="text-sm text-muted">AreaIQ Intelligence</span>
           </div>
           <div className="space-y-4 p-5">
             <div className="flex justify-end">

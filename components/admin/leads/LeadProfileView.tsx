@@ -246,7 +246,7 @@ export default function LeadProfileView({
           )}
         </Section>
 
-        <Section title="Full AI Chat">
+        <Section title="Full Intelligence Session">
           <input
             value={chatQuery}
             onChange={(e) => setChatQuery(e.target.value)}

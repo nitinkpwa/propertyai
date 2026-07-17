@@ -109,7 +109,7 @@ export default function RangeFilter({
           step={step}
           value={displayMin}
           onChange={(event) => handleMinSlider(Number(event.target.value))}
-          className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-200 accent-[#22C55E]"
+          className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-200 accent-[#4AAA27]"
         />
         <input
           type="range"
@@ -118,7 +118,7 @@ export default function RangeFilter({
           step={step}
           value={displayMax}
           onChange={(event) => handleMaxSlider(Number(event.target.value))}
-          className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-200 accent-[#22C55E]"
+          className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral-200 accent-[#4AAA27]"
         />
       </div>
 

@@ -31,9 +31,9 @@ export function getRoleDisplayLabel(
 const GUEST_ITEMS: MobileNavItem[] = [
   { id: "home", label: "Home", href: "/" },
   { id: "explore", label: "Explore", href: "/properties?type=buy" },
-  { id: "ask", label: "AI Assistant", href: "/ask" },
+  { id: "ask", label: "AreaIQ Intelligence", href: "/ask" },
   { id: "properties", label: "Properties", href: "/properties" },
-  { id: "insights", label: "Insights", href: "/ask?q=Latest+Tricity+market+insights" },
+  { id: "insights", label: "Market Intelligence", href: "/ask?q=Latest+Tricity+market+insights" },
   { id: "connect", label: "Connect", href: "/connect" },
   { id: "list", label: "List Property", href: "/seller" },
   { id: "signin", label: "Sign In", href: "/login" },
@@ -78,7 +78,7 @@ export function getMobileNavItems(
       { id: "analytics", label: "Analytics", href: "/seller?tab=analytics" },
       { id: "profile", label: "Profile", href: "/seller?tab=profile" },
       { id: "home", label: "Home", href: "/" },
-      { id: "ask", label: "AI Assistant", href: "/ask" },
+      { id: "ask", label: "AreaIQ Intelligence", href: "/ask" },
       { id: "logout", label: "Logout", action: "logout" },
     ];
   }
@@ -133,11 +133,11 @@ export function getMobileNavItems(
     },
     { id: "saved", label: "Saved Properties", href: "/buyer/saved" },
     { id: "visits", label: "Site Visits", href: "/buyer/site-visits" },
-    { id: "chats", label: "AI Chats", href: "/ask" },
+    { id: "chats", label: "Intelligence", href: "/ask" },
     { id: "notifications", label: "Notifications", href: "/buyer/notifications" },
     { id: "home", label: "Home", href: "/" },
     { id: "explore", label: "Explore", href: "/properties?type=buy" },
-    { id: "ask", label: "AI Assistant", href: "/ask" },
+    { id: "ask", label: "AreaIQ Intelligence", href: "/ask" },
     { id: "properties", label: "Properties", href: "/properties" },
     {
       id: "insights",

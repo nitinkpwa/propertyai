@@ -138,10 +138,10 @@ function AskPageContent() {
 
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold text-heading-primary">
-              {activeConversation?.title ?? "AreaIQ Copilot"}
+              {activeConversation?.title ?? "AreaIQ Intelligence"}
             </p>
             <p className="hidden text-[11px] text-muted sm:block">
-              OpenAI × Perplexity × Bloomberg for Tricity real estate
+              Powered by Tech172 Intelligence
             </p>
           </div>
 

@@ -410,7 +410,7 @@ export const POPULAR_SEARCHES = [
 
 export const HOME_NAV_LINKS = [
   { label: "Explore", href: "/properties?type=buy" },
-  { label: "AI Assistant", href: "/ask" },
+  { label: "AreaIQ Intelligence", href: "/ask" },
   { label: "Properties", href: "/properties" },
   { label: "Insights", href: "/ask?q=Latest+Tricity+market+insights" },
   { label: "Connect", href: "/connect" },

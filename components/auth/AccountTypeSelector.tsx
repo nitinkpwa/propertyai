@@ -32,7 +32,7 @@ export default function AccountTypeSelector({
               aria-pressed={selected}
               className={`rounded-xl border px-2 py-3 text-center transition-all duration-200 active:scale-[0.98] ${
                 selected
-                  ? "border-emerald-400 bg-emerald-50 shadow-[0_0_0_3px_rgba(34,197,94,0.12)]"
+                  ? "border-emerald-400 bg-emerald-50 shadow-[0_0_0_3px_rgba(74, 170, 39,0.12)]"
                   : "border-neutral-200 bg-neutral-50 hover:border-neutral-300 hover:bg-white"
               }`}
             >

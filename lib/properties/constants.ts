@@ -5,7 +5,7 @@ import type {
   PropertyType,
 } from "./types";
 
-export const EMERALD = "#22C55E";
+export { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
 
 export const PROPERTY_TYPE_OPTIONS: { value: PropertyType; label: string }[] =
   [

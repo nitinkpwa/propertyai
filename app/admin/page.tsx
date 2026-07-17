@@ -16,7 +16,6 @@ import AdminProfileCard, {
   AdminPropertySellerInline,
 } from "@/components/admin/AdminProfileCard";
 import BuyerProfileGrid from "@/components/crm/BuyerProfileGrid";
-import Logo from "@/components/common/Logo";
 import { isAdminRole } from "@/lib/auth/admin";
 import { signInWithEmailPassword } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
@@ -291,7 +290,7 @@ function AdminPageInner() {
     { key: "leads", label: "Leads", icon: "📩", count: leads.length },
     { key: "crm", label: "CRM", icon: "🔗" },
     { key: "visits", label: "Site Visits", icon: "📅", count: siteVisits.length },
-    { key: "chats", label: "AI Chats", icon: "🤖", count: conversations.length },
+    { key: "chats", label: "Intelligence Sessions", icon: "🤖", count: conversations.length },
     { key: "analytics", label: "Analytics", icon: "📈" },
     { key: "add", label: editId ? "Edit Property" : "Property Studio", icon: "✨" },
     { key: "bulk", label: "Bulk Import", icon: "📋" },
@@ -388,8 +387,8 @@ function AdminPageInner() {
       <div className="flex min-h-screen items-center justify-center bg-[#FAFAFA] px-4">
         <div className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm">
           <div className="mb-6 flex flex-col items-center text-center">
-            <Logo size="dashboard" suffix="Admin" href={null} />
-            <p className="mt-4 text-sm text-muted">
+            <h1 className="text-xl font-bold text-heading-primary">Admin Dashboard</h1>
+            <p className="mt-2 text-sm text-muted">
               Sign in with your Supabase admin account
             </p>
           </div>
@@ -480,7 +479,7 @@ function AdminPageInner() {
             <StatCard icon="🏷️" label="Sellers" value={stats.sellers} />
             <StatCard icon="🏗️" label="Builders" value={stats.builders} />
             <StatCard icon="📅" label="Site Visits" value={stats.siteVisits} />
-            <StatCard icon="🤖" label="AI Chats" value={stats.aiChats} />
+            <StatCard icon="🤖" label="Intelligence Sessions" value={stats.aiChats} />
             <StatCard icon="📩" label="Leads" value={stats.leads} />
           </div>
 
@@ -509,7 +508,7 @@ function AdminPageInner() {
               {leads.length === 0 ? <p className="text-sm text-muted">No leads yet</p> : null}
             </div>
             <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-              <h2 className="mb-4 font-semibold text-heading-primary">Recent AI Chats</h2>
+              <h2 className="mb-4 font-semibold text-heading-primary">Recent Intelligence Sessions</h2>
               {conversations.slice(0, 5).map((c) => (
                 <div key={c.id} className="border-b border-neutral-100 py-3 last:border-0">
                   <AdminProfileInline profile={c.user} profileId={c.user_id} lookup={profileLookup} />
@@ -781,11 +780,11 @@ function AdminPageInner() {
 
       {tab === "chats" ? (
         <div>
-          <h1 className="mb-6 text-2xl font-bold text-heading-primary">AI Chats</h1>
+          <h1 className="mb-6 text-2xl font-bold text-heading-primary">Intelligence Sessions</h1>
           {!data?.hasConversationsTable ? (
             <AdminEmptyState icon="🤖" title="Conversations table not available" description="The conversations table is not accessible. AI chat history will appear here when available." />
           ) : conversations.length === 0 ? (
-            <AdminEmptyState icon="🤖" title="No AI conversations yet" description="User AI assistant conversations will appear here." />
+            <AdminEmptyState icon="🤖" title="No intelligence sessions yet" description="User AreaIQ Intelligence sessions will appear here." />
           ) : (
             <div className={`grid gap-4 ${selectedChat ? "lg:grid-cols-2" : ""}`}>
               <div className="space-y-2">
@@ -914,7 +913,7 @@ function AdminPageInner() {
               <ul className="mt-3 space-y-2 text-sm text-body">
                 <li>• Approval workflow: {usesApprovalStatus ? "using approval_status column" : "using status field fallback (draft → pending)"}</li>
                 <li>• Site visits: {data?.hasSiteVisitsTable ? "connected" : "table not found"}</li>
-                <li>• AI chats: {data?.hasConversationsTable ? "connected" : "table not accessible"}</li>
+                <li>• Intelligence Sessions: {data?.hasConversationsTable ? "connected" : "table not accessible"}</li>
               </ul>
             </div>
           </div>

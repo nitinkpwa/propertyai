@@ -75,7 +75,7 @@ export default function InvestmentCalculators() {
           <SectionHeader
             eyebrow="Investment Tools"
             title="Plan with confidence"
-            description="Quick calculators — validate every number with AreaIQ AI before you commit."
+            description="Quick calculators — validate every number with AreaIQ Intelligence before you commit."
           />
         </FadeIn>
 

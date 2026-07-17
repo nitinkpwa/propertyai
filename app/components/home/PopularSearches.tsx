@@ -28,7 +28,7 @@ export default function PopularSearches() {
                 href={s.href}
                 className="flex items-center gap-3 rounded-2xl border border-neutral-200/80 bg-[#F7F9FB] px-4 py-3.5 text-sm font-medium text-label no-underline transition-all hover:border-emerald-200 hover:bg-white hover:shadow-sm"
               >
-                <span className="font-bold text-[#16C784]">→</span>
+                <span className="font-bold text-[#4AAA27]">→</span>
                 {s.label}
               </Link>
             </motion.div>

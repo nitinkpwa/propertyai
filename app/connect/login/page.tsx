@@ -5,7 +5,6 @@ import { Suspense, useState } from "react";
 import AuthAlert from "@/components/auth/AuthAlert";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthInput from "@/components/auth/AuthInput";
-import Logo from "@/components/common/Logo";
 import { signInWithIdentifier } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import { sanitizeRedirectPath } from "@/lib/auth/routes";
@@ -57,10 +56,7 @@ function ConnectLoginForm() {
     <div className="min-h-screen bg-[#FAFAFA] pt-24 pb-16">
       <div className="mx-auto w-full max-w-md px-4 sm:px-6">
         <div className="mb-8 text-center">
-          <div className="flex justify-center">
-            <Logo size="dashboard" suffix="Connect" href="/connect" />
-          </div>
-          <h1 className="mt-6 text-2xl font-bold tracking-tight text-heading-primary">
+          <h1 className="text-2xl font-bold tracking-tight text-heading-primary">
             Connect Partner Login
           </h1>
           <p className="mt-2 text-sm text-muted">

@@ -82,7 +82,7 @@ export function showBrowserNotification(title: string, body: string, href?: stri
 
   const notification = new Notification(title, {
     body,
-    icon: "/favicon.ico",
+    icon: "/android-chrome-192x192.png",
     tag: `areaiq-${Date.now()}`,
   });
 

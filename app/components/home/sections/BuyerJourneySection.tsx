@@ -56,10 +56,10 @@ export default function BuyerJourneySection() {
               className="rounded-2xl border border-white/10 bg-white/5 p-8 backdrop-blur-sm"
             >
               <span className="text-3xl">{step.icon}</span>
-              <p className="mt-4 text-xs font-bold uppercase tracking-widest text-emerald-400">
+              <p className="text-shadow-brand mt-4 text-xs font-bold uppercase tracking-widest text-emerald-400">
                 Step {step.step} of {BUYER_JOURNEY.length}
               </p>
-              <h3 className="mt-2 text-2xl font-bold">{step.title}</h3>
+              <h3 className="text-shadow-photo mt-2 text-2xl font-bold">{step.title}</h3>
               <p className="mt-3 max-w-lg leading-relaxed text-white/70">{step.desc}</p>
               <Link
                 href={step.href}

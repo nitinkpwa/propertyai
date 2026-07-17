@@ -67,7 +67,7 @@ export default function FeaturedIntelligenceCarousel() {
               className="mt-5 inline-flex rounded-xl px-5 py-2.5 text-sm font-bold text-white no-underline"
               style={{ backgroundColor: IQ_GREEN }}
             >
-              Start with AI
+              Start with AreaIQ
             </Link>
           </div>
         ) : (

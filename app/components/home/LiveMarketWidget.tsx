@@ -4,7 +4,12 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import AnimatedCounter from "./AnimatedCounter";
 import { LIVE_ACTIVITY } from "./data";
-import { HERO_GLASS_STYLE, HERO_TEXT_SHADOW, IQ_GREEN } from "./theme";
+import {
+  HERO_GLASS_STYLE,
+  HERO_TEXT_SHADOW,
+  HERO_TEXT_SHADOW_SOFT,
+  IQ_GREEN,
+} from "./theme";
 
 type LiveMarketWidgetProps = {
   className?: string;
@@ -78,7 +83,7 @@ export default function LiveMarketWidget({
                     ? "text-white/80 group-hover:text-white"
                     : "text-body group-hover:text-heading-primary"
                 }`}
-                style={isHero ? { textShadow: "0 1px 6px rgba(0,0,0,0.3)" } : undefined}
+                style={isHero ? { textShadow: HERO_TEXT_SHADOW_SOFT } : undefined}
               >
                 {item.label}
               </span>
