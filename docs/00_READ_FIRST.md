@@ -54,15 +54,15 @@ All property information must originate from verified database records.
 
 ---
 
-## One Property = One Connect Partner
+## Seller owns the property; Connect Partner is optional
 
-Every property has exactly ONE assigned Connect Partner.
+The Seller owns and manages their listing end-to-end.
 
-No secondary partners.
+Connect Partner assignment is optional (at most one when assigned).
 
-No partner sharing.
+No secondary partners or partner sharing.
 
-Every enquiry goes to that assigned partner.
+Without a partner, enquiries, visits, and deals stay with the seller.
 
 ---
 

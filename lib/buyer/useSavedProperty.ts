@@ -3,17 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { buildLoginUrlWithIntent, clearPendingAuthIntent } from "@/lib/auth/pendingIntent";
 import { useProgressiveProfileOptional } from "@/components/buyer/ProgressiveProfileProvider";
 import {
   fetchSavedPropertyIds,
   isPropertySaved,
   toggleSavedProperty,
 } from "@/lib/buyer/queries";
-
-function loginRedirectPath(): string {
-  if (typeof window === "undefined") return "/login";
-  return `/login?redirect=${encodeURIComponent(window.location.pathname)}`;
-}
 
 export function useSavedPropertyToggle() {
   const router = useRouter();
@@ -35,7 +31,16 @@ export function useSavedPropertyToggle() {
   const handleFavoriteToggle = useCallback(
     async (propertyId: string, favorited: boolean) => {
       if (!user) {
-        router.push(loginRedirectPath());
+        router.push(
+          buildLoginUrlWithIntent({
+            action: "save_property",
+            propertyId,
+            returnUrl:
+              typeof window !== "undefined"
+                ? `${window.location.pathname}${window.location.search}`
+                : "/",
+          }),
+        );
         return;
       }
 
@@ -55,6 +60,7 @@ export function useSavedPropertyToggle() {
           return next;
         });
       } else if (favorited) {
+        clearPendingAuthIntent();
         void profilePrompt?.promptIfNeeded("save_property");
       }
     },
@@ -85,9 +91,30 @@ export function useSavedProperty(propertyId: string) {
       .finally(() => setChecking(false));
   }, [user, propertyId]);
 
+  // Resume UI after pending save completes
+  useEffect(() => {
+    const onComplete = (e: Event) => {
+      const detail = (e as CustomEvent<{ propertyId: string }>).detail;
+      if (detail?.propertyId === propertyId) {
+        setSaved(true);
+      }
+    };
+    window.addEventListener("areaiq:pending-save-complete", onComplete);
+    return () => window.removeEventListener("areaiq:pending-save-complete", onComplete);
+  }, [propertyId]);
+
   const toggle = useCallback(async () => {
     if (!user) {
-      router.push(loginRedirectPath());
+      router.push(
+        buildLoginUrlWithIntent({
+          action: "save_property",
+          propertyId,
+          returnUrl:
+            typeof window !== "undefined"
+              ? `${window.location.pathname}${window.location.search}`
+              : `/property/${propertyId}`,
+        }),
+      );
       return;
     }
 
@@ -99,6 +126,7 @@ export function useSavedProperty(propertyId: string) {
     if (!ok) {
       setSaved(!next);
     } else if (next) {
+      clearPendingAuthIntent();
       void profilePrompt?.promptIfNeeded("save_property");
     }
 

@@ -7,12 +7,23 @@ interface PropertyOverviewProps {
 }
 
 export default function PropertyOverview({ property }: PropertyOverviewProps) {
+  const pd = property.pricingDisplay;
+  const rateSpec =
+    pd?.preferredUnit === "sqyd" && pd.pricePerSqyd
+      ? { label: "Price / Sq Yard", value: `₹${Math.round(pd.pricePerSqyd).toLocaleString("en-IN")}` }
+      : pd?.preferredUnit === "acre" && pd.pricePerAcre
+        ? { label: "Price / Acre", value: formatPrice(pd.pricePerAcre) }
+        : pd?.pricePerSqft
+          ? { label: "Price / Sq Ft", value: `₹${Math.round(pd.pricePerSqft).toLocaleString("en-IN")}` }
+          : null;
+
   const specs = [
     { label: "Builder", value: property.builder.name },
     { label: "Project", value: property.project },
     { label: "Location", value: `${property.location}, ${property.city}` },
-    { label: "Price", value: formatPrice(property.price) },
-    { label: "Price / Sq Ft", value: `₹${property.pricePerSqFt.toLocaleString("en-IN")}` },
+    { label: "Price", value: pd?.primaryPriceLabel || formatPrice(property.price) },
+    ...(rateSpec ? [rateSpec] : []),
+    ...(property.sizeLabel ? [{ label: "Plot Size", value: property.sizeLabel }] : []),
     { label: "Possession", value: property.possession },
     { label: "Configuration", value: property.configuration },
     { label: "Total Floors", value: property.totalFloors !== null ? String(property.totalFloors) : "Contact for details" },

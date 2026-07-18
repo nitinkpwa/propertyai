@@ -65,7 +65,7 @@ Can:
 - Compare projects
 - Book site visits
 - Chat with AI
-- Contact assigned Connect Partner
+- Contact the seller (or assigned Connect Partner when one is set)
 - Receive recommendations
 - Track enquiries
 
@@ -96,11 +96,11 @@ Cannot:
 
 ## Connect Partner
 
-Every property belongs to ONE Connect Partner.
+Optional assistant for a property when Admin assigns one (at most one).
 
-Responsibilities:
+When assigned, may:
 
-- Receive buyer enquiries
+- Assist with buyer enquiries
 - Schedule visits
 - Manage communication
 - Convert leads
@@ -109,8 +109,9 @@ Responsibilities:
 Cannot:
 
 - Modify platform settings
-- Change ownership
+- Change ownership (seller remains owner)
 - View unrelated properties
+- Block property approval or go-live
 
 ---
 
@@ -145,17 +146,25 @@ Ownership never changes automatically.
 
 # Connect Assignment
 
-Every property has exactly ONE assigned Connect Partner.
+Connect Partner assignment is OPTIONAL.
 
-There are NO:
+The Seller is the primary owner and manager of the property throughout its lifecycle.
 
-- secondary partners
-- backup partners
-- shared partners
+When no Connect Partner is assigned:
 
-Every enquiry automatically belongs to that partner.
+- the property functions normally
+- the seller manages enquiries
+- the seller schedules visits
+- the seller closes deals
 
-Changing the partner transfers future enquiries only unless manually reassigned.
+When a Connect Partner is assigned (Admin action):
+
+- at most ONE partner may be assigned to a property
+- there are no secondary, backup, or shared partners
+- that partner may assist with buyer enquiries for the listing
+- changing the partner transfers future assisted enquiries only unless manually reassigned
+
+Admin may Assign or Remove a Connect Partner at any time without blocking approval.
 
 ---
 
@@ -203,7 +212,7 @@ Seller creates listing.
 
 ↓
 
-Saved as Draft
+Pending Review
 
 ↓
 
@@ -211,25 +220,17 @@ Admin review
 
 ↓
 
-Assign Connect Partner
+Approve → Live · Reject → Seller edits and resubmits
 
 ↓
 
-Admin publishes
+Buyer enquiries go to the Seller
 
 ↓
 
-Buyer enquiries
+(Optional) Admin assigns Connect Partner to assist
 
-↓
-
-Connect Partner manages buyer
-
-↓
-
-Seller receives updates
-
-Seller can NEVER publish directly. Only AreaIQ Admin may set a listing to Published/Active, and only after a Connect Partner is assigned.
+Seller can NEVER publish directly. Only AreaIQ Admin may set a listing to Published/Active. Connect Partner assignment is optional and never required for approval.
 
 ---
 
@@ -307,19 +308,15 @@ AI is never the source of truth.
 
 Typical lifecycle:
 
-Draft
+Seller creates listing (Pending Review)
 
 ↓
 
-Review (Admin)
+Admin reviews
 
 ↓
 
-Connect Partner assigned
-
-↓
-
-Published (Active)
+Approve → Live (`active`) · Reject → Seller edits and resubmits
 
 ↓
 
@@ -331,7 +328,7 @@ Archived
 
 Only valid transitions should be allowed.
 
-Published properties MUST have exactly one Connect Partner (`properties.connect_partner_id`). Publishing without a partner is blocked.
+Connect Partner is not required for approval or go-live. Seller remains owner; enquiries go to the seller unless a partner is optionally assigned.
 
 ---
 
@@ -541,7 +538,7 @@ do not build it.
 
 # Non-Negotiable Rules
 
-✓ One Property = One Connect Partner
+✓ Seller owns the property; Connect Partner is optional (at most one when assigned)
 
 ✓ One Source of Truth = Database
 

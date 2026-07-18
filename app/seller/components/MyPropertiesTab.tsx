@@ -1,6 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import {
+  matchesSellerStatusFilter,
+  sellerListingBadge,
+  sellerListingBadgeClass,
+  type SellerStatusFilter,
+} from "@/lib/seller/listingStatus";
 import type { SellerPropertyRow } from "@/lib/seller/types";
 import {
   PAGE_SIZE,
@@ -9,33 +15,33 @@ import {
   formatDate,
   formatPrice,
   inp,
-  statusBadgeClass,
 } from "@/lib/seller/constants";
+import DeletePropertyModal from "./DeletePropertyModal";
 
 interface Props {
   listings: SellerPropertyRow[];
   onEdit: (prop: SellerPropertyRow) => void;
-  onDelete: (id: string) => void;
-  onTogglePause: (id: string, status: string) => void;
-  onMarkSold: (id: string) => void;
-  onDuplicate: (id: string) => void;
+  onDelete: (prop: SellerPropertyRow) => Promise<boolean>;
+  onDuplicate: (prop: SellerPropertyRow) => Promise<void>;
+  onPreview: (prop: SellerPropertyRow) => void;
   onCreateListing?: () => void;
+  busyId?: string | null;
 }
 
 function PropertyActionsMenu({
   prop,
+  busy,
   onEdit,
-  onDelete,
-  onTogglePause,
-  onMarkSold,
+  onDeleteRequest,
   onDuplicate,
+  onPreview,
 }: {
   prop: SellerPropertyRow;
+  busy: boolean;
   onEdit: Props["onEdit"];
-  onDelete: Props["onDelete"];
-  onTogglePause: Props["onTogglePause"];
-  onMarkSold: Props["onMarkSold"];
+  onDeleteRequest: () => void;
   onDuplicate: Props["onDuplicate"];
+  onPreview: Props["onPreview"];
 }) {
   const [open, setOpen] = useState(false);
 
@@ -43,8 +49,9 @@ function PropertyActionsMenu({
     <div className="relative">
       <button
         type="button"
+        disabled={busy}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-body transition-colors hover:bg-neutral-50"
+        className="inline-flex items-center gap-1 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-medium text-body transition-colors hover:bg-neutral-50 disabled:opacity-50"
       >
         Actions ▾
       </button>
@@ -52,23 +59,46 @@ function PropertyActionsMenu({
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} aria-hidden />
           <div className="absolute right-0 top-full z-20 mt-1 min-w-[160px] overflow-hidden rounded-xl border border-neutral-200 bg-white py-1 shadow-lg">
-            <a
-              href={`/property/${prop.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block px-3 py-2 text-xs font-medium text-body hover:bg-neutral-50"
+            <button
+              type="button"
+              className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50"
+              onClick={() => {
+                onEdit(prop);
+                setOpen(false);
+              }}
             >
-              View
-            </a>
-            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onEdit(prop); setOpen(false); }}>Edit</button>
-            {prop.status === "active" ? (
-              <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onTogglePause(prop.id, prop.status); setOpen(false); }}>
-                Pause
-              </button>
-            ) : null}
-            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onMarkSold(prop.id); setOpen(false); }}>Mark Sold</button>
-            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50" onClick={() => { onDuplicate(prop.id); setOpen(false); }}>Duplicate</button>
-            <button type="button" className="block w-full px-3 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50" onClick={() => { onDelete(prop.id); setOpen(false); }}>Delete</button>
+              Edit
+            </button>
+            <button
+              type="button"
+              className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50"
+              onClick={() => {
+                onPreview(prop);
+                setOpen(false);
+              }}
+            >
+              Preview
+            </button>
+            <button
+              type="button"
+              className="block w-full px-3 py-2 text-left text-xs font-medium text-body hover:bg-neutral-50"
+              onClick={() => {
+                void onDuplicate(prop);
+                setOpen(false);
+              }}
+            >
+              Duplicate
+            </button>
+            <button
+              type="button"
+              className="block w-full px-3 py-2 text-left text-xs font-medium text-red-600 hover:bg-red-50"
+              onClick={() => {
+                onDeleteRequest();
+                setOpen(false);
+              }}
+            >
+              Delete
+            </button>
           </div>
         </>
       ) : null}
@@ -80,15 +110,17 @@ export default function MyPropertiesTab({
   listings,
   onEdit,
   onDelete,
-  onTogglePause,
-  onMarkSold,
   onDuplicate,
+  onPreview,
   onCreateListing,
+  busyId = null,
 }: Props) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<SellerStatusFilter>("all");
   const [sort, setSort] = useState<"updated" | "price_asc" | "price_desc" | "views">("updated");
   const [page, setPage] = useState(0);
+  const [deleteTarget, setDeleteTarget] = useState<SellerPropertyRow | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const filtered = useMemo(() => {
     let rows = [...listings];
@@ -101,9 +133,9 @@ export default function MyPropertiesTab({
           p.city.toLowerCase().includes(q),
       );
     }
-    if (statusFilter !== "all") {
-      rows = rows.filter((p) => p.status === statusFilter);
-    }
+    rows = rows.filter((p) =>
+      matchesSellerStatusFilter(p.status, p.nearby_places, statusFilter),
+    );
     rows.sort((a, b) => {
       if (sort === "price_asc") return a.price - b.price;
       if (sort === "price_desc") return b.price - a.price;
@@ -118,6 +150,14 @@ export default function MyPropertiesTab({
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageRows = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const ok = await onDelete(deleteTarget);
+    setDeleting(false);
+    if (ok) setDeleteTarget(null);
+  };
+
   if (listings.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-neutral-200 bg-white px-6 py-16 text-center shadow-sm">
@@ -126,7 +166,7 @@ export default function MyPropertiesTab({
         </div>
         <h3 className="text-lg font-semibold text-heading-primary">No properties yet</h3>
         <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
-          Create your first listing to start receiving leads and tracking performance.
+          Create your first listing.
         </p>
         {onCreateListing ? (
           <button type="button" onClick={onCreateListing} style={btnPrimary} className="mt-6">
@@ -153,15 +193,17 @@ export default function MyPropertiesTab({
           style={{ ...inp, width: "100%" }}
           value={statusFilter}
           onChange={(e) => {
-            setStatusFilter(e.target.value);
+            setStatusFilter(e.target.value as SellerStatusFilter);
             setPage(0);
           }}
         >
           <option value="all">All Status</option>
-          <option value="active">Active</option>
           <option value="draft">Draft</option>
-          <option value="paused">Paused</option>
+          <option value="pending_review">Pending Review</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
           <option value="sold">Sold</option>
+          <option value="rented">Rented</option>
         </select>
         <select
           style={{ ...inp, width: "100%" }}
@@ -176,63 +218,85 @@ export default function MyPropertiesTab({
       </div>
 
       <div className="space-y-3">
-        {pageRows.map((prop) => (
-          <div
-            key={prop.id}
-            className="flex flex-wrap items-start gap-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md sm:p-5"
-          >
-            <div className="h-20 w-24 shrink-0 overflow-hidden rounded-xl bg-neutral-100">
-              {(prop.featured_image || prop.photos?.[0]) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={prop.featured_image || prop.photos[0]}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-2xl">🏠</div>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <h3 className="font-semibold text-heading-primary">{prop.title}</h3>
-                  <p className="mt-0.5 text-xs text-muted">
-                    {prop.location}, {prop.city}
-                  </p>
+        {pageRows.map((prop) => {
+          const badge = sellerListingBadge(prop.status, prop.nearby_places);
+          return (
+            <div
+              key={prop.id}
+              className="flex flex-wrap items-start gap-4 rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md sm:p-5"
+            >
+              <div className="h-20 w-24 shrink-0 overflow-hidden rounded-xl bg-neutral-100">
+                {prop.featured_image || prop.photos?.[0] ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={prop.featured_image || prop.photos[0]}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-2xl">🏠</div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <h3 className="font-semibold text-heading-primary">{prop.title}</h3>
+                    <p className="mt-0.5 text-xs text-muted">
+                      {prop.location}, {prop.city}
+                    </p>
+                  </div>
+                  <span
+                    className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${sellerListingBadgeClass(badge)}`}
+                  >
+                    {badge}
+                  </span>
                 </div>
-                <span
-                  className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize ${statusBadgeClass(prop.status)}`}
-                >
-                  {prop.status}
-                </span>
+                <p className="mt-2 text-base font-bold text-emerald-600">{formatPrice(prop.price)}</p>
+                <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted">
+                  <span>👁 {prop.view_count} views</span>
+                  <span>📩 {prop.lead_count} leads</span>
+                  <span>Updated {formatDate(prop.updated_at ?? prop.created_at)}</span>
+                </div>
               </div>
-              <p className="mt-2 text-base font-bold text-emerald-600">{formatPrice(prop.price)}</p>
-              <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted">
-                <span>👁 {prop.view_count} views</span>
-                <span>📩 {prop.lead_count} leads</span>
-                <span>Updated {formatDate(prop.updated_at ?? prop.created_at)}</span>
-              </div>
+              <PropertyActionsMenu
+                prop={prop}
+                busy={busyId === prop.id}
+                onEdit={onEdit}
+                onDeleteRequest={() => setDeleteTarget(prop)}
+                onDuplicate={onDuplicate}
+                onPreview={onPreview}
+              />
             </div>
-            <PropertyActionsMenu
-              prop={prop}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onTogglePause={onTogglePause}
-              onMarkSold={onMarkSold}
-              onDuplicate={onDuplicate}
-            />
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {filtered.length > PAGE_SIZE ? (
         <div className="mt-6 flex items-center justify-center gap-3">
-          <button type="button" style={btnSecondary} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>Previous</button>
-          <span className="text-sm text-muted">Page {page + 1} of {totalPages}</span>
-          <button type="button" style={btnSecondary} disabled={page >= totalPages - 1} onClick={() => setPage((p) => p + 1)}>Next</button>
+          <button type="button" style={btnSecondary} disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
+            Previous
+          </button>
+          <span className="text-sm text-muted">
+            Page {page + 1} of {totalPages}
+          </span>
+          <button
+            type="button"
+            style={btnSecondary}
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((p) => p + 1)}
+          >
+            Next
+          </button>
         </div>
       ) : null}
+
+      <DeletePropertyModal
+        open={Boolean(deleteTarget)}
+        propertyTitle={deleteTarget?.title ?? ""}
+        deleting={deleting}
+        onCancel={() => (deleting ? null : setDeleteTarget(null))}
+        onConfirm={() => void confirmDelete()}
+      />
     </div>
   );
 }

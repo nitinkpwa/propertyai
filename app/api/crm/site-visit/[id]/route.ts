@@ -61,7 +61,7 @@ export async function PATCH(
       );
       break;
     case "complete":
-      result = await completeSiteVisit(supabase, id);
+      result = await completeSiteVisit(supabase, id, user.id);
       break;
     default:
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });

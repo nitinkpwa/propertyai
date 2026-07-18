@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import AuthAlert from "@/components/auth/AuthAlert";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthLayout from "@/components/auth/AuthLayout";
 import { signInWithEmailPassword, signInWithIdentifier } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
-import { fetchProfile, getDashboardPath, upsertProfile } from "@/lib/auth/profile";
-import { sanitizeRedirectPath } from "@/lib/auth/routes";
+import {
+  clearPendingAuthIntentIfManualLogin,
+  resolvePostAuthDestination,
+} from "@/lib/auth/pendingIntent";
+import { getDashboardPath, upsertProfile } from "@/lib/auth/profile";
 import { validateLogin } from "@/lib/auth/validation";
 
 function LoginForm() {
@@ -23,6 +26,15 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldError, setFieldError] = useState<string | null>(null);
+
+  // Navbar / manual login → clear stale protected-action intent
+  useEffect(() => {
+    clearPendingAuthIntentIfManualLogin(Boolean(redirectTo));
+  }, [redirectTo]);
+
+  const registerHref = redirectTo
+    ? `/register?redirect=${encodeURIComponent(redirectTo)}`
+    : "/register";
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -53,9 +65,9 @@ function LoginForm() {
           phone: user.user_metadata?.phone as string | undefined,
         }));
 
-      const destination = sanitizeRedirectPath(
-        redirectTo,
+      const destination = resolvePostAuthDestination(
         getDashboardPath(resolvedProfile?.role),
+        redirectTo,
       );
 
       router.push(destination);
@@ -75,7 +87,7 @@ function LoginForm() {
         <p className="text-sm text-muted">
           Don&apos;t have an account?{" "}
           <Link
-            href="/register"
+            href={registerHref}
             className="font-semibold text-emerald-600 transition-colors hover:text-emerald-700"
           >
             Create one free
@@ -84,6 +96,12 @@ function LoginForm() {
       }
     >
       {error ? <AuthAlert type="error" message={error} /> : null}
+
+      {redirectTo ? (
+        <p className="mb-4 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+          Sign in to continue where you left off.
+        </p>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-1">
         <AuthInput

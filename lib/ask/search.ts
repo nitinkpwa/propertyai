@@ -1,10 +1,13 @@
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
 import { mapPropertyRowToCardProps, mapPropertyRowToListing } from "@/lib/properties/queries";
 import type { ListingProperty } from "@/lib/properties/types";
+import { PROPERTIES_CARD_SELECT } from "@/lib/seller/propertySchema";
 import { supabase, type Property } from "@/lib/supabase";
 import type { AskSearchResult, PropertySearchFilters } from "./types";
 
-type PropertyRow = Property & {
+type PropertyRow = Omit<Property, "contact_name" | "contact_phone"> & {
+  contact_name?: string | null;
+  contact_phone?: string | null;
   growth_score?: number | null;
   rental_yield?: number | null;
   ai_verified?: boolean | null;
@@ -15,8 +18,7 @@ type PropertyRow = Property & {
   seller?: { full_name?: string | null } | null;
 };
 
-const SELECT =
-  "*, seller:profiles!properties_seller_id_fkey(full_name)";
+const SELECT = `${PROPERTIES_CARD_SELECT}, seller:profiles!properties_seller_id_fkey(full_name)`;
 
 const RESULT_LIMIT = 50;
 
@@ -74,7 +76,11 @@ function scoreProperty(row: PropertyRow, filters: PropertySearchFilters): number
 }
 
 async function runQuery(filters: PropertySearchFilters, options: QueryOptions) {
-  let query = supabase.from("properties").select(SELECT).eq("status", "active");
+  let query = supabase
+    .from("properties")
+    .select(SELECT)
+    .eq("status", "active")
+    .is("deleted_at", null);
 
   if (filters.listingType) {
     query = query.eq("type", filters.listingType);
@@ -106,7 +112,7 @@ async function runQuery(filters: PropertySearchFilters, options: QueryOptions) {
     return [] as PropertyRow[];
   }
 
-  let rows = (data as PropertyRow[]) ?? [];
+  let rows = (data as unknown as PropertyRow[]) ?? [];
 
   if (options.strict && filters.locality) {
     rows = rows.filter((row) => matchesLocality(row, filters.locality!));
@@ -151,7 +157,7 @@ async function fetchFallbackProperties(filters: PropertySearchFilters): Promise<
   const { data, error } = await supabase
     .from("properties")
     .select(SELECT)
-    .eq("status", "active")
+    .eq("status", "active").is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(RESULT_LIMIT);
 
@@ -161,7 +167,7 @@ async function fetchFallbackProperties(filters: PropertySearchFilters): Promise<
   }
 
   return {
-    rows: (data as PropertyRow[]) ?? [],
+    rows: (data as unknown as PropertyRow[]) ?? [],
     reason: "recently added active listings",
   };
 }
@@ -232,7 +238,7 @@ export async function searchPropertiesByBuilder(
   const { data, error } = await supabase
     .from("properties")
     .select(SELECT)
-    .eq("status", "active")
+    .eq("status", "active").is("deleted_at", null)
     .or(
       `contact_name.ilike.%${builderName}%,description.ilike.%${builderName}%,title.ilike.%${builderName}%`,
     )
@@ -283,7 +289,7 @@ export async function searchPropertiesByLocality(
   const { data, error } = await supabase
     .from("properties")
     .select(SELECT)
-    .eq("status", "active")
+    .eq("status", "active").is("deleted_at", null)
     .or(
       `location.ilike.%${locality}%,title.ilike.%${locality}%,city.ilike.%${locality}%,sector.ilike.%${locality}%`,
     )
@@ -334,7 +340,7 @@ export async function searchPropertiesByName(
   const { data, error } = await supabase
     .from("properties")
     .select(SELECT)
-    .eq("status", "active")
+    .eq("status", "active").is("deleted_at", null)
     .or(
       `title.ilike.%${name}%,project_name.ilike.%${name}%,description.ilike.%${name}%,location.ilike.%${name}%`,
     )
@@ -384,7 +390,7 @@ export async function searchPropertyById(
     .from("properties")
     .select(SELECT)
     .eq("id", id)
-    .eq("status", "active")
+    .eq("status", "active").is("deleted_at", null)
     .maybeSingle();
 
   if (error || !data) {

@@ -69,7 +69,8 @@
   --color-emerald-950: var(--emerald-950);
 
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
 }
 
 body {
@@ -105,23 +106,6 @@ body {
 
 .animate-pulse-slow {
   animation: pulse-slow 4s ease-in-out infinite;
-}
-
-@keyframes ticker-scroll {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.animate-ticker-scroll {
-  animation: ticker-scroll 40s linear infinite;
-}
-
-.animate-ticker-scroll:hover {
-  animation-play-state: paused;
 }
 
 /* Premium typography lighting — soft separation, never heavy black outlines */

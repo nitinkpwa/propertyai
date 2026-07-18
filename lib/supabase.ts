@@ -113,13 +113,16 @@ export type Property = {
   lng?: number;
   photos: string[];
   amenities: string[];
-  status: "active" | "sold" | "rented" | "paused" | "draft";
+  /** Live DB: active | sold | rented | paused (no draft). */
+  status: "active" | "sold" | "rented" | "paused";
   is_featured: boolean;
   contact_name: string;
   contact_phone: string;
   created_at: string;
   connect_partner_id?: string | null;
   assigned_connect_id?: string | null;
+  /** Default true — buyers can request visits when status is active. */
+  site_visit_enabled?: boolean;
 };
 
 export type SavedProperty = {

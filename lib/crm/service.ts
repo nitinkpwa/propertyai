@@ -43,8 +43,9 @@ export interface EnsureLeadOptions {
 }
 
 /**
- * Resolve the Connect partner assigned to a property.
- * properties.connect_partner_id is the single source of truth for ownership.
+ * Resolve the optional Connect partner assigned to a property.
+ * Seller (`properties.seller_id`) remains the owner; Connect Partner only
+ * assists when `connect_partner_id` is explicitly set.
  */
 export async function getPropertyConnectPartnerId(
   propertyId: string,
@@ -282,7 +283,7 @@ async function notifyForPropertyActivity(
       userId: adminId,
       type: "new_lead",
       title: "Builder property activity",
-      message: `${input.buyerName ?? "A buyer"} ${input.message} on a builder listing. Assign a Connect partner.`,
+      message: `${input.buyerName ?? "A buyer"} ${input.message} on a listing. Seller owns the enquiry; assign a Connect Partner only if assistance is needed.`,
       leadId: input.leadId,
       propertyId: input.propertyId,
     });

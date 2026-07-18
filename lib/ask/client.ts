@@ -1,6 +1,6 @@
 import type { AskEngineIntent, AskEngineResponse, PropertyContext } from "./engine/types";
-import type { ConversationMessage } from "./openai-client";
-import { parseMarkdownSections } from "./engine/openai";
+import type { ConversationMessage } from "./types";
+import { parseMarkdownSections } from "./markdown";
 import type { AskIntent, AskTurn } from "./types";
 
 export type { ConversationMessage, PropertyContext };

@@ -4,6 +4,7 @@
  */
 
 import type { PropertyAIIntelligence } from "@/lib/admin/property/intelligence/types";
+import type { ImportKnowledge } from "@/lib/admin/property/studio/types";
 
 export const METADATA_KEY = "meta";
 export const PLACES_KEY = "places";
@@ -46,10 +47,14 @@ export interface PropertyStructuredMeta {
   pricing: {
     basePrice: string;
     currentPrice: string;
+    /** Explicit total listing price (same currency as currentPrice). */
+    totalPrice: string;
     launchPrice: string;
     expectedAppreciation: string;
     rentalEstimate: string;
     pricePerSqft: string;
+    pricePerSqyd: string;
+    pricePerAcre: string;
     maintenance: string;
     plc: string;
     gst: string;
@@ -78,6 +83,9 @@ export interface PropertyStructuredMeta {
     builtUpArea: string;
     superArea: string;
     plotArea: string;
+    minPlotSize: string;
+    maxPlotSize: string;
+    plotSizeUnit: string;
     ceilingHeight: string;
     constructionQuality: string;
     greenRating: string;
@@ -108,6 +116,9 @@ export interface PropertyStructuredMeta {
     editorsPick: boolean;
   };
   ai: PropertyAIIntelligence | null;
+  /** AI Property Studio import knowledge (OCR stubs, sources, confidence). */
+  importKnowledge?: ImportKnowledge | null;
+  fieldConfidence?: Record<string, number>;
 }
 
 /** Legacy v1 shape — read-only for migration */
@@ -201,10 +212,13 @@ export function emptyPropertyStructuredMeta(): PropertyStructuredMeta {
     pricing: {
       basePrice: "",
       currentPrice: "",
+      totalPrice: "",
       launchPrice: "",
       expectedAppreciation: "",
       rentalEstimate: "",
       pricePerSqft: "",
+      pricePerSqyd: "",
+      pricePerAcre: "",
       maintenance: "",
       plc: "",
       gst: "",
@@ -233,6 +247,9 @@ export function emptyPropertyStructuredMeta(): PropertyStructuredMeta {
       builtUpArea: "",
       superArea: "",
       plotArea: "",
+      minPlotSize: "",
+      maxPlotSize: "",
+      plotSizeUnit: "",
       ceilingHeight: "",
       constructionQuality: "",
       greenRating: "",

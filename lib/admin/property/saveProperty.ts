@@ -14,23 +14,22 @@ export async function saveAdminProperty(
   }
 
   const payload = formToDbPayload(form, adminUserId, { existingNearbyPlaces });
-  const wantsActive = payload.status === "active";
 
-  if (wantsActive && !form.connect_partner_id) {
-    return {
-      ok: false,
-      error: "Assign a Connect Partner before publishing.",
-    };
-  }
-
-  // Never publish without partner assigned first — save as draft, assign, then activate.
-  if (wantsActive) {
-    payload.status = "draft";
-  }
-
-  const { data: inserted, error } = editId
+  let result = editId
     ? await supabase.from("properties").update(payload).eq("id", editId).select("id").single()
     : await supabase.from("properties").insert(payload).select("id").single();
+
+  if (
+    result.error &&
+    (result.error.message.includes("site_visit_enabled") || result.error.code === "42703")
+  ) {
+    const { site_visit_enabled: _sv, ...withoutVisitFlag } = payload;
+    result = editId
+      ? await supabase.from("properties").update(withoutVisitFlag).eq("id", editId).select("id").single()
+      : await supabase.from("properties").insert(withoutVisitFlag).select("id").single();
+  }
+
+  const { data: inserted, error } = result;
 
   if (error) {
     return { ok: false, error: error.message };
@@ -38,24 +37,19 @@ export async function saveAdminProperty(
 
   const propertyId = editId ?? (inserted?.id as string);
 
-  if (propertyId && form.connect_partner_id) {
+  // Connect Partner is optional — sync assignment (or clear) after the row exists.
+  if (propertyId) {
     const assignRes = await fetch(`/api/admin/properties/${propertyId}/partner`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ connectPartnerId: form.connect_partner_id }),
+      body: JSON.stringify({ connectPartnerId: form.connect_partner_id || null }),
     });
     if (!assignRes.ok) {
-      return { ok: false, error: "Failed to assign Connect Partner.", propertyId };
-    }
-  }
-
-  if (wantsActive && propertyId) {
-    const { error: publishError } = await supabase
-      .from("properties")
-      .update({ status: "active", updated_at: new Date().toISOString() })
-      .eq("id", propertyId);
-    if (publishError) {
-      return { ok: false, error: publishError.message, propertyId };
+      return {
+        ok: false,
+        error: "Property saved, but Connect Partner assignment failed.",
+        propertyId,
+      };
     }
   }
 
@@ -104,6 +98,26 @@ export async function uploadAdminPropertyPhoto(file: File, userId: string): Prom
   });
   if (error) {
     console.error("uploadAdminPropertyPhoto:", error.message);
+    return null;
+  }
+  const { data } = supabase.storage.from(PROPERTY_PHOTOS_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+/** Upload brochure / price list / layout PDFs (and other docs) into property storage. */
+export async function uploadAdminPropertyDocument(
+  file: File,
+  userId: string,
+): Promise<string | null> {
+  const ext = file.name.split(".").pop() || "pdf";
+  const path = `${userId}/docs/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabase.storage.from(PROPERTY_PHOTOS_BUCKET).upload(path, file, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType: file.type || "application/pdf",
+  });
+  if (error) {
+    console.error("uploadAdminPropertyDocument:", error.message);
     return null;
   }
   const { data } = supabase.storage.from(PROPERTY_PHOTOS_BUCKET).getPublicUrl(path);

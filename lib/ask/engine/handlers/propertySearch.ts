@@ -5,9 +5,9 @@ import { classificationToResponseFields } from "../types";
 import { entitiesToFilters } from "../classifier";
 import { buildMemoryContext, buildPropertyMemoryContext, wantsAlternativeProperties } from "../memory";
 import { logAsk } from "../logger";
+import { extractPropertyRationales } from "../../markdown";
 import {
   buildListingsContext,
-  extractPropertyRationales,
   generatePropertySearchSummary,
 } from "../openai";
 import { NO_EXACT_MATCH_MESSAGE } from "../prompts";

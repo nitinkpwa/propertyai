@@ -2,11 +2,18 @@
 
 import { useState } from "react";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
+import { getPendingAuthIntent } from "@/lib/auth/pendingIntent";
 import { buildAuthCallbackUrl } from "@/lib/auth/redirects";
+import { sanitizeRedirectPath } from "@/lib/auth/routes";
 import { supabase } from "@/lib/supabase/client";
 import AuthButton from "./AuthButton";
 
-export default function GoogleSignInButton() {
+interface Props {
+  /** Prefer this path (e.g. login ?redirect=). Falls back to pending intent, then /buyer. */
+  nextPath?: string | null;
+}
+
+export default function GoogleSignInButton({ nextPath }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,10 +22,16 @@ export default function GoogleSignInButton() {
     setError(null);
 
     try {
+      const intent = getPendingAuthIntent();
+      const destination = sanitizeRedirectPath(
+        nextPath || intent?.returnUrl || "/buyer",
+        "/buyer",
+      );
+
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: buildAuthCallbackUrl(),
+          redirectTo: buildAuthCallbackUrl(destination),
         },
       });
 

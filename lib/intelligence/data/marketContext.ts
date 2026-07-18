@@ -64,6 +64,7 @@ export async function fetchPropertyIntelligenceInput(
     .select(PROPERTY_SELECT)
     .eq("id", propertyId)
     .eq("status", "active")
+    .is("deleted_at", null)
     .maybeSingle();
 
   if (error) {
@@ -102,6 +103,7 @@ export async function fetchMarketContext(
     .from("properties")
     .select(MARKET_SELECT)
     .eq("status", "active")
+    .is("deleted_at", null)
     .ilike("city", `%${city}%`)
     .limit(250);
 

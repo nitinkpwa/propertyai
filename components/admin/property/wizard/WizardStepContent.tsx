@@ -318,7 +318,15 @@ export default function WizardStepContent({
         <FlagToggle label="Premium" checked={form.publishing.premium} onChange={(v) => setNested("publishing", "premium", v)} />
         <FlagToggle label="Exclusive" checked={form.publishing.exclusive} onChange={(v) => setNested("publishing", "exclusive", v)} />
         <FlagToggle label="Editor's Pick" checked={form.publishing.editorsPick} onChange={(v) => setNested("publishing", "editorsPick", v)} />
+        <FlagToggle
+          label="Enable Site Visits"
+          checked={form.site_visit_enabled !== false}
+          onChange={(v) => setForm({ ...form, site_visit_enabled: v })}
+        />
       </div>
+      <p className="mt-3 text-xs text-muted">
+        When disabled, buyers see “Site visits are temporarily unavailable” and cannot request a visit.
+      </p>
     </>
   );
 }

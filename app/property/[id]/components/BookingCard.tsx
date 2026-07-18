@@ -45,11 +45,13 @@ export default function BookingCard({ property }: BookingCardProps) {
       <div className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:rounded-3xl">
         <div className="border-b border-neutral-100 p-5 sm:p-6">
           <p className="text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
-            {formatPrice(property.price)}
+            {property.pricingDisplay?.primaryPriceLabel || formatPrice(property.price)}
           </p>
-          <p className="mt-1 text-sm text-muted">
-            ₹{property.pricePerSqFt.toLocaleString("en-IN")} / sq ft
-          </p>
+          {property.pricingDisplay?.rateLabel || property.sizeLabel ? (
+            <p className="mt-1 text-sm text-muted">
+              {[property.pricingDisplay?.rateLabel, property.sizeLabel].filter(Boolean).join(" · ")}
+            </p>
+          ) : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
             {property.aiVerified && (

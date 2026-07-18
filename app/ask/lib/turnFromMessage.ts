@@ -1,4 +1,4 @@
-import { parseMarkdownSections } from "@/lib/ask/engine/openai";
+import { parseMarkdownSections } from "@/lib/ask/markdown";
 import type { AskChatMessage } from "@/lib/ask/conversations/types";
 import type { AskTurn } from "@/lib/ask/types";
 

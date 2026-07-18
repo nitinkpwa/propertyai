@@ -1,7 +1,18 @@
 import type { CSSProperties } from "react";
+import {
+  PROPERTY_STATUS_LABELS,
+  type PropertyStatus,
+} from "@/lib/properties/status";
 import type { PropertyListingStatus } from "./types";
 
 export { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
+
+export function statusLabel(status: PropertyListingStatus | string): string {
+  if (status in PROPERTY_STATUS_LABELS) {
+    return PROPERTY_STATUS_LABELS[status as PropertyStatus];
+  }
+  return status;
+}
 
 /** Shared inline styles for legacy form fields — modern neutral theme */
 export const inp: CSSProperties = {
@@ -82,13 +93,12 @@ export function statusBadgeStyle(status: string): CSSProperties {
   switch (status) {
     case "active":
       return { ...base, background: "#DCFCE7", color: "#166534" };
-    case "draft":
-      return { ...base, background: "#FFEDD5", color: "#C2410C" };
     case "sold":
     case "rented":
       return { ...base, background: "#DBEAFE", color: "#1D4ED8" };
     case "paused":
-      return { ...base, background: "#FEE2E2", color: "#DC2626" };
+      // Unpublished / pending review (DB has no draft value)
+      return { ...base, background: "#FFEDD5", color: "#C2410C" };
     default:
       return { ...base, background: "#F3F4F6", color: "#6B7280" };
   }
@@ -98,13 +108,11 @@ export function statusBadgeClass(status: PropertyListingStatus | string): string
   switch (status) {
     case "active":
       return "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200/60";
-    case "draft":
-      return "bg-orange-50 text-orange-700 ring-1 ring-orange-200/60";
     case "sold":
     case "rented":
       return "bg-blue-50 text-blue-700 ring-1 ring-blue-200/60";
     case "paused":
-      return "bg-red-50 text-red-700 ring-1 ring-red-200/60";
+      return "bg-orange-50 text-orange-700 ring-1 ring-orange-200/60";
     default:
       return "bg-neutral-100 text-body ring-1 ring-neutral-200/60";
   }
@@ -206,4 +214,5 @@ export const emptyForm = {
   featured_image: "",
   contact_name: "",
   contact_phone: "",
+  site_visit_enabled: true,
 };

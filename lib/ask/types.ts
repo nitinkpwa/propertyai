@@ -1,6 +1,12 @@
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
 import type { ListingProperty } from "@/lib/properties/types";
 
+/** Chat turn shape shared by client + server (no OpenAI dependency). */
+export interface ConversationMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export type AskIntent =
   | "search"
   | "analysis"

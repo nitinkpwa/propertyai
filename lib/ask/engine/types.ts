@@ -1,6 +1,6 @@
 import type { ListingProperty } from "@/lib/properties/types";
 import type { AskSearchStats } from "../types";
-import type { ConversationMessage } from "../openai-client";
+import type { ConversationMessage } from "../types";
 
 export const ASK_ENGINE_INTENTS = [
   "PROPERTY_SEARCH",

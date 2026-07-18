@@ -1,4 +1,10 @@
-export const VISIT_TIMES = ["10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00"] as const;
+export const VISIT_TIMES = ["10:00", "11:00", "12:00", "14:00", "15:00", "16:00", "17:00", "18:00"] as const;
+
+export const VISIT_TIME_GROUPS = [
+  { id: "morning", label: "Morning", times: ["10:00", "11:00", "12:00"] as const },
+  { id: "afternoon", label: "Afternoon", times: ["14:00", "15:00", "16:00"] as const },
+  { id: "evening", label: "Evening", times: ["17:00", "18:00"] as const },
+] as const;
 
 export const PURPOSE_CHIPS = [
   "Investment",
@@ -45,7 +51,7 @@ export type VisitorOption = (typeof VISITOR_OPTIONS)[number];
 export type LanguageOption = (typeof LANGUAGE_OPTIONS)[number];
 export type TransportOption = (typeof TRANSPORT_OPTIONS)[number];
 
-export type AvailabilityStatus = "available" | "limited" | "unavailable";
+export type AvailabilityStatus = "available" | "limited" | "unavailable" | "loading";
 
 export interface AiRecommendedSlot {
   dateIso: string;
@@ -126,6 +132,7 @@ export function buildPurposePayload(input: {
   loanAssist: "" | "yes" | "no";
   language: string;
   transport: string;
+  buyerNotes?: string;
 }): string | undefined {
   const parts: string[] = [];
   const purpose =
@@ -133,6 +140,7 @@ export function buildPurposePayload(input: {
       ? input.purposeCustom.trim()
       : input.purposeChip || input.purposeCustom.trim();
   if (purpose) parts.push(purpose);
+  if (input.buyerNotes?.trim()) parts.push(`Notes: ${input.buyerNotes.trim()}`);
   if (input.visitors) parts.push(`Visitors: ${input.visitors}`);
   if (input.loanAssist === "yes") parts.push("Home loan assistance: Yes");
   if (input.loanAssist === "no") parts.push("Home loan assistance: No");
@@ -146,7 +154,7 @@ export function friendlyBookingError(
   fallback: string,
 ): { availability?: AvailabilityStatus; message: string } {
   switch (code) {
-    case "CONNECT_PARTNER_MISSING":
+    case "SITE_VISITS_DISABLED":
     case "PROPERTY_UNAVAILABLE":
     case "SCHEMA_NOT_READY":
       return {
@@ -176,12 +184,14 @@ export function computeProgressStep(input: {
   visitTime: string;
   purposeChip: string;
   purposeCustom: string;
+  buyerNotes?: string;
 }): 1 | 2 | 3 | 4 {
   if (!input.visitDate) return 1;
   if (!input.visitTime) return 2;
   const purposeReady =
     Boolean(input.purposeChip && input.purposeChip !== "Other") ||
-    Boolean(input.purposeCustom.trim());
+    Boolean(input.purposeCustom.trim()) ||
+    Boolean(input.buyerNotes?.trim());
   if (!purposeReady) return 3;
   return 4;
 }

@@ -45,6 +45,13 @@ GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 ALTER TABLE public.properties
   ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
 
+ALTER TABLE public.properties
+  ADD COLUMN IF NOT EXISTS site_visit_enabled boolean NOT NULL DEFAULT true;
+
+UPDATE public.properties
+SET site_visit_enabled = true
+WHERE site_visit_enabled IS NULL;
+
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS city text;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS budget_min integer;
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS budget_max integer;
@@ -91,8 +98,19 @@ UPDATE public.site_visits SET status = 'pending_approval'
 ALTER TABLE public.site_visits
   ADD CONSTRAINT site_visits_status_check
   CHECK (status IN (
-    'pending_approval', 'accepted', 'scheduled', 'completed', 'rejected', 'cancelled'
+    'pending_approval', 'accepted', 'scheduled', 'rescheduled', 'completed', 'rejected', 'cancelled'
   ));
+
+ALTER TABLE public.site_visits
+  ADD COLUMN IF NOT EXISTS rejected_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL;
+ALTER TABLE public.site_visits
+  ADD COLUMN IF NOT EXISTS rejected_at timestamptz;
+ALTER TABLE public.site_visits
+  ADD COLUMN IF NOT EXISTS completed_at timestamptz;
+ALTER TABLE public.site_visits
+  ADD COLUMN IF NOT EXISTS rescheduled_from text;
+ALTER TABLE public.site_visits
+  ADD COLUMN IF NOT EXISTS rescheduled_to text;
 
 CREATE INDEX IF NOT EXISTS site_visits_user_id_idx
   ON public.site_visits (user_id, visit_date DESC);

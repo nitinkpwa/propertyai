@@ -8,7 +8,7 @@ export const BRAND = {
   tagline: "AI-powered Real Estate Intelligence Platform for India.",
   trustLine: "Trusted AI platform for Real Estate Intelligence.",
   assets: {
-    logo: "/logo.png",
+    logo: "/logo.webp",
     hero: "/hero-banner.jpg",
     favicon: "/favicon.ico",
     favicon16: "/favicon-16x16.png",

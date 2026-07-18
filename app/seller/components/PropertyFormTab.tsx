@@ -53,7 +53,7 @@ export default function PropertyFormTab({
       <p className="mt-1 text-sm text-muted">
         {editId
           ? "Update your listing details. AreaIQ publishes after review."
-          : "Submit your listing for AreaIQ review. Publishing requires Connect Partner assignment."}
+          : "Submit your listing for AreaIQ review. Once approved, it goes live and you manage enquiries directly."}
       </p>
 
       {saveMsg ? (
@@ -214,6 +214,38 @@ export default function PropertyFormTab({
         <div>
           <label style={lbl}>Contact Phone *</label>
           <input style={inp} value={form.contact_phone} onChange={(e) => set("contact_phone", e.target.value)} />
+        </div>
+        <div className="sm:col-span-2">
+          <label style={lbl}>Site Visits</label>
+          <div className="mt-1 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, site_visit_enabled: true })}
+              className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${
+                form.site_visit_enabled !== false
+                  ? "border-emerald-500 bg-emerald-50 text-emerald-800"
+                  : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+              }`}
+            >
+              Enable Site Visits
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, site_visit_enabled: false })}
+              className={`rounded-xl border px-4 py-2.5 text-sm font-semibold transition ${
+                form.site_visit_enabled === false
+                  ? "border-rose-400 bg-rose-50 text-rose-800"
+                  : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+              }`}
+            >
+              Disable Site Visits
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            {form.site_visit_enabled !== false
+              ? "Buyers can request site visits while this listing is Active / Approved."
+              : "Buyers will see that site visits are temporarily unavailable for this property."}
+          </p>
         </div>
       </div>
 

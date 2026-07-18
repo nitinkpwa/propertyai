@@ -1,4 +1,8 @@
+import "server-only";
 import OpenAI from "openai";
+import type { ConversationMessage } from "./types";
+
+export type { ConversationMessage };
 
 export const OPENAI_MODEL = "gpt-4o-mini";
 
@@ -20,11 +24,6 @@ export function isOpenAIConfigured(): boolean {
 }
 
 export type ChatRole = "system" | "user" | "assistant";
-
-export interface ConversationMessage {
-  role: "user" | "assistant";
-  content: string;
-}
 
 export function toOpenAIMessages(
   history: ConversationMessage[],

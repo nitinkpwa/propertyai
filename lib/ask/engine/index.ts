@@ -24,4 +24,4 @@ export type {
   PropertyContext,
 } from "./types";
 
-export type { ConversationMessage } from "../openai-client";
+export type { ConversationMessage } from "../types";

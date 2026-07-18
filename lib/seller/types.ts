@@ -1,5 +1,6 @@
-import type { Property, Profile } from "@/lib/supabase";
 import type { BuyerProfileForCRM } from "@/lib/crm/buyerProfile";
+import type { PropertyStatus } from "@/lib/properties/status";
+import type { Property, Profile } from "@/lib/supabase";
 
 export type SellerTab =
   | "home"
@@ -11,12 +12,7 @@ export type SellerTab =
   | "notifications"
   | "profile";
 
-export type PropertyListingStatus =
-  | "active"
-  | "paused"
-  | "sold"
-  | "rented"
-  | "draft";
+export type PropertyListingStatus = PropertyStatus;
 
 export type LeadStatus =
   | "new"
@@ -30,6 +26,7 @@ export type VisitStatus =
   | "pending_approval"
   | "accepted"
   | "scheduled"
+  | "rescheduled"
   | "completed"
   | "rejected"
   | "cancelled";
@@ -58,6 +55,7 @@ export interface SellerPropertyRow extends Property {
   featured_image?: string | null;
   updated_at?: string | null;
   deleted_at?: string | null;
+  site_visit_enabled?: boolean;
   view_count: number;
   save_count: number;
   lead_count: number;
@@ -137,6 +135,8 @@ export interface PropertyFormState {
   featured_image: string;
   contact_name: string;
   contact_phone: string;
+  /** Default true — sellers can disable visit requests per listing. */
+  site_visit_enabled: boolean;
 }
 
 export interface PropertyListFilters {

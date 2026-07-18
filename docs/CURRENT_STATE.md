@@ -146,9 +146,9 @@ Publishing improvements
 
 Autosave
 
-Known issue:
+Workflow:
 
-Publishing requires Connect Partner assignment before status can become active. Seller submissions always remain draft until Admin publishes.
+Seller submissions stay Pending Review until Admin approves (`active`) or rejects. Connect Partner assignment is optional and does not block publishing.
 
 ---
 
@@ -162,9 +162,7 @@ Architecture finalized.
 
 Business Rule:
 
-Every property has ONE assigned Connect Partner.
-
-Multiple partner assignment has been removed.
+Seller owns and manages the property. Connect Partner assignment is optional (at most one when assigned).
 
 ---
 

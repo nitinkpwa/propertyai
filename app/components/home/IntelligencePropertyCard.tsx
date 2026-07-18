@@ -45,7 +45,6 @@ export default function IntelligencePropertyCard({ property }: Props) {
             fill
             sizes="340px"
             className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            unoptimized
           />
         ) : (
           <div

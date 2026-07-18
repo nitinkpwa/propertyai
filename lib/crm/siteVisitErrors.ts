@@ -14,6 +14,7 @@ export type SiteVisitErrorCode =
   | "BUYER_PROFILE_MISSING"
   | "BUYER_NOT_BUYER_ROLE"
   | "CONNECT_PARTNER_MISSING"
+  | "SITE_VISITS_DISABLED"
   | "DUPLICATE_VISIT"
   | "SELLER_NOT_FOUND"
   | "SELLER_PROFILE_MISSING"
@@ -42,6 +43,7 @@ const CODE_MESSAGES: Partial<Record<SiteVisitErrorCode, string>> = {
   BUYER_NOT_BUYER_ROLE: "Please continue as a Buyer to book a site visit.",
   CONNECT_PARTNER_MISSING:
     "This property is not ready for site visits yet. Please try again later.",
+  SITE_VISITS_DISABLED: "Site visits are temporarily unavailable for this property.",
   DUPLICATE_VISIT: "You already have an active site visit request for this property.",
   SELLER_NOT_FOUND: "Property owner not found.",
   SELLER_PROFILE_MISSING: "Seller profile missing.",

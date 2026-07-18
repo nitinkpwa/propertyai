@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import {
+  fetchConnectPartnerById,
   fetchPartnerActivities,
   fetchPartnerAnalytics,
   fetchPartnerBuyers,
   fetchPartnerProperties,
+  fetchPartnerSiteVisits,
   getPartnerIdForProfile,
 } from "@/lib/connect/partners/queries";
-import { fetchConnectPartnerById } from "@/lib/connect/partners/queries";
 import { logConnectPartnerActivity } from "@/lib/connect/partners/service";
-import { fetchAssignedConnectSiteVisits } from "@/lib/crm/queries";
 import { createSupabaseServerClient, getAuthenticatedUser } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -44,10 +44,11 @@ export async function GET() {
 
   const [buyers, properties, activities, analytics, siteVisits] = await Promise.all([
     fetchPartnerBuyers(supabase, partnerId),
-    fetchPartnerProperties(supabase, partnerId),
+    fetchPartnerProperties(supabase, partnerId, user.id),
     fetchPartnerActivities(supabase, { partnerId, limit: 30 }),
     fetchPartnerAnalytics(supabase, partnerId),
-    fetchAssignedConnectSiteVisits(user.id),
+    // Visits via assigned properties — never by buyer ownership.
+    fetchPartnerSiteVisits(supabase, partnerId, user.id),
   ]);
 
   return NextResponse.json({ partner, buyers, properties, activities, analytics, siteVisits });

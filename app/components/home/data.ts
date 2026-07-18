@@ -1,11 +1,3 @@
-export const MARKET_TICKER_ITEMS = [
-  { icon: "📈", text: "Mohali prices +2.3%", href: "/ask?q=Mohali+price+trends+2025" },
-  { icon: "🏗", text: "3 New Launches Today", href: "/ask?q=New+launch+projects+Tricity+today" },
-  { icon: "🔥", text: "Aerocity Rental Yield 6.8%", href: "/ask?q=Aerocity+rental+yield" },
-  { icon: "👥", text: "12 Buyers searched Zirakpur today", href: "/properties?type=buy&city=Zirakpur" },
-  { icon: "🎁", text: "Builder Offer ending in 2 days", href: "/ask?q=Current+builder+offers+Tricity" },
-];
-
 export const LOCATIONS = [
   "Chandigarh",
   "Mohali",
@@ -91,18 +83,19 @@ export const AI_CAPABILITIES = [
   { title: "Construction quality analysis", icon: "🔬", href: "/ask?q=Construction+quality+builder+review" },
 ];
 
+/** MVP Zero-Level: no fabricated market counts — explore via AreaIQ */
 export const MARKET_INTELLIGENCE_CARDS = [
-  { label: "New Launches", value: "12", trend: "Today", icon: "🚀", href: "/ask?q=New+launch+projects+Tricity+today" },
-  { label: "Price Drops", value: "8", trend: "This week", icon: "📉", href: "/ask?q=Properties+with+price+drops+Tricity" },
-  { label: "Builder Offers", value: "5", trend: "Active", icon: "🎁", href: "/ask?q=Current+builder+offers+Tricity" },
-  { label: "Rental Yield", value: "6.8%", trend: "Aerocity avg", icon: "🏠", href: "/ask?q=Aerocity+rental+yield" },
-  { label: "Price Growth", value: "+2.3%", trend: "Mohali MoM", icon: "📈", href: "/ask?q=Mohali+price+trends+2025" },
-  { label: "Infrastructure", value: "4", trend: "Updates", icon: "🏗️", href: "/ask?q=Infrastructure+updates+Tricity" },
-  { label: "GMADA", value: "New", trend: "Sectors", icon: "🏛️", href: "/ask?q=GMADA+approved+projects" },
-  { label: "Metro", value: "Planned", trend: "Phase 2", icon: "🚇", href: "/ask?q=Metro+impact+Tricity+property" },
-  { label: "PR7", value: "Hot", trend: "Corridor", icon: "✈️", href: "/ask?q=PR7+Airport+Road+outlook" },
-  { label: "Airport", value: "↑18%", trend: "Demand", icon: "🛫", href: "/ask?q=Airport+road+property+investment" },
-  { label: "Ring Road", value: "Active", trend: "Development", icon: "🛣️", href: "/ask?q=Ring+road+impact+Tricity" },
+  { label: "New Launches", value: "—", trend: "Ask AreaIQ", icon: "🚀", href: "/ask?q=New+launch+projects+Tricity" },
+  { label: "Price Drops", value: "—", trend: "Ask AreaIQ", icon: "📉", href: "/ask?q=Properties+with+price+drops+Tricity" },
+  { label: "Builder Offers", value: "—", trend: "Ask AreaIQ", icon: "🎁", href: "/ask?q=Current+builder+offers+Tricity" },
+  { label: "Rental Yield", value: "—", trend: "Ask AreaIQ", icon: "🏠", href: "/ask?q=Aerocity+rental+yield" },
+  { label: "Price Growth", value: "—", trend: "Ask AreaIQ", icon: "📈", href: "/ask?q=Mohali+price+trends" },
+  { label: "Infrastructure", value: "—", trend: "Ask AreaIQ", icon: "🏗️", href: "/ask?q=Infrastructure+updates+Tricity" },
+  { label: "GMADA", value: "—", trend: "Ask AreaIQ", icon: "🏛️", href: "/ask?q=GMADA+approved+projects" },
+  { label: "Metro", value: "—", trend: "Ask AreaIQ", icon: "🚇", href: "/ask?q=Metro+impact+Tricity+property" },
+  { label: "PR7", value: "—", trend: "Ask AreaIQ", icon: "✈️", href: "/ask?q=PR7+Airport+Road+outlook" },
+  { label: "Airport", value: "—", trend: "Ask AreaIQ", icon: "🛫", href: "/ask?q=Airport+road+property+investment" },
+  { label: "Ring Road", value: "—", trend: "Ask AreaIQ", icon: "🛣️", href: "/ask?q=Ring+road+impact+Tricity" },
 ];
 
 export const BUILDER_INTELLIGENCE = [
@@ -166,7 +159,7 @@ export const SELLER_JOURNEY = [
   { title: "AI creates description", desc: "Buyer-ready copy from structured data", href: "/seller", icon: "✦" },
   { title: "AI prices property", desc: "Fair value based on market comparables", href: "/ask?q=How+to+price+my+property+fairly", icon: "💰" },
   { title: "AI SEO", desc: "Optimized for search and discovery", href: "/seller", icon: "🔍" },
-  { title: "Connect Partner assignment", desc: "One verified partner per listing", href: "/connect", icon: "🤝" },
+  { title: "Optional Connect Partners", desc: "Partners assist only when assigned", href: "/connect", icon: "🤝" },
   { title: "Verified buyers", desc: "Qualified leads routed to your partner", href: "/seller", icon: "👥" },
   { title: "Site visits", desc: "Scheduled and tracked in CRM", href: "/seller", icon: "📅" },
   { title: "Offer management", desc: "Negotiate and close with intelligence", href: "/seller", icon: "✅" },
@@ -295,12 +288,13 @@ export const TRICITY_TODAY = [
 /** @deprecated use TRICITY_TODAY */
 export const TRENDING_INTELLIGENCE = TRICITY_TODAY;
 
+/** MVP Zero-Level: zeroed — no seeded activity counts */
 export const LIVE_ACTIVITY = [
-  { label: "New Listings Today", value: 24, href: "/properties?type=buy" },
-  { label: "Price Drops", value: 8, href: "/ask?q=Properties+with+price+drops+Tricity" },
-  { label: "Builder Offers", value: 5, href: "/ask?q=Current+builder+offers+Tricity" },
-  { label: "Site Visits Booked", value: 17, href: "/buyer/site-visits" },
-  { label: "Buyer Searches", value: 142, href: "/ask?q=Popular+buyer+searches+Tricity" },
+  { label: "New Listings Today", value: 0, href: "/properties?type=buy" },
+  { label: "Price Drops", value: 0, href: "/ask?q=Properties+with+price+drops+Tricity" },
+  { label: "Builder Offers", value: 0, href: "/ask?q=Current+builder+offers+Tricity" },
+  { label: "Site Visits Booked", value: 0, href: "/buyer/site-visits" },
+  { label: "Buyer Searches", value: 0, href: "/ask?q=Popular+buyer+searches+Tricity" },
 ];
 
 export const TRUSTED_BUILDERS = [

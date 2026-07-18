@@ -15,6 +15,7 @@
     "db:check-property-ownership": "node scripts/check-property-ownership.mjs",
     "db:check-connect-partners": "node scripts/check-connect-partners-schema.mjs",
     "db:inspect-production": "node scripts/inspect-production-schema.mjs",
+    "db:reset-demo-data": "node scripts/reset-demo-data.mjs",
     "icons:generate": "node scripts/generate-favicons.mjs"
   },
   "dependencies": {
@@ -24,7 +25,8 @@
     "next": "16.2.6",
     "openai": "^6.39.1",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

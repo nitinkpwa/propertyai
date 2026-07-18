@@ -7,12 +7,13 @@ import type {
   NearbyPlace,
   PropertyDetail,
 } from "@/app/property/[id]/data";
-import { areaIntelligenceService } from "@/lib/intelligence/AreaIntelligenceService";
-import { fetchMarketContext } from "@/lib/intelligence/data/marketContext";
+import type { AreaIntelligenceReport, MarketContext } from "@/lib/intelligence/types";
 import {
   buildAiSummaryFromSources,
   buildPropertyIntelligenceBundle,
 } from "@/lib/properties/intelligenceBundle";
+import { normalizePricing } from "@/lib/properties/pricingDisplay";
+import { PROPERTIES_CARD_SELECT } from "@/lib/seller/propertySchema";
 import { supabase, type Property } from "@/lib/supabase";
 import type {
   Amenity,
@@ -22,7 +23,9 @@ import type {
   PropertyType,
 } from "./types";
 
-type PropertyRow = Property & {
+type PropertyRow = Omit<Property, "contact_name" | "contact_phone"> & {
+  contact_name?: string | null;
+  contact_phone?: string | null;
   growth_score?: number | null;
   rental_yield?: number | null;
   ai_verified?: boolean | null;
@@ -33,8 +36,17 @@ type PropertyRow = Property & {
   nearby_places?: unknown;
   facing?: string | null;
   furnishing?: string | null;
+  parking?: string | null;
+  rera_number?: string | null;
+  featured_image?: string | null;
+  deleted_at?: string | null;
   seller?: { full_name?: string | null } | null;
 };
+
+function isReraVerified(row: PropertyRow): boolean {
+  if (typeof row.rera_verified === "boolean") return row.rera_verified;
+  return Boolean(row.rera_number?.trim());
+}
 
 const GALLERY_GRADIENTS = [
   "from-emerald-600/80 via-emerald-500/60 to-teal-400/50",
@@ -83,8 +95,8 @@ const SUB_TYPE_LABELS: Record<string, string> = {
   coworking: "Co-working Space",
 };
 
-const ACTIVE_LISTINGS_SELECT =
-  "*, seller:profiles!properties_seller_id_fkey(full_name)";
+/** Narrow select for hot listing paths — avoids pulling unused / private columns. */
+const ACTIVE_LISTINGS_SELECT = `${PROPERTIES_CARD_SELECT}, seller:profiles!properties_seller_id_fkey(full_name)`;
 
 const PROPERTY_PHOTOS_BUCKET = "property-photos";
 
@@ -241,7 +253,7 @@ function buildGalleryImages(photos: string[] | null | undefined) {
 
 function buildAiSummary(
   row: PropertyRow,
-  intelligenceReport: Awaited<ReturnType<typeof areaIntelligenceService.generateReport>>,
+  intelligenceReport: AreaIntelligenceReport | null,
 ): AISummary {
   const investmentScore =
     intelligenceReport?.investmentScore.available &&
@@ -258,7 +270,7 @@ function buildAiSummary(
 
   const pros = [
     `Located in ${row.city} — ${row.location}`,
-    row.rera_verified ? "RERA verified listing" : null,
+    isReraVerified(row) ? "RERA verified listing" : null,
     intelligenceReport?.rentalYield.available
       ? `Estimated rental yield ${intelligenceReport.rentalYield.displayValue}`
       : null,
@@ -332,7 +344,7 @@ export function mapPropertyRowToListing(row: PropertyRow): ListingProperty {
     imageUrl: resolvePhotoUrl(row.photos?.[0] ?? "") ?? null,
     imageAlt: row.title,
     aiVerified: Boolean(row.ai_verified),
-    reraVerified: Boolean(row.rera_verified),
+    reraVerified: isReraVerified(row),
     propertyType: mapPropertyType(row.sub_type),
     listingType: mapListingType(row.type),
     possession,
@@ -365,26 +377,40 @@ export function mapPropertyRowToCardProps(row: PropertyRow): PropertyCardProps {
 export function mapPropertyRowToDetail(
   row: PropertyRow,
   similarProperties: PropertyCardProps[] = [],
-  intelligenceReport: Awaited<ReturnType<typeof areaIntelligenceService.generateReport>> = null,
-  marketContext?: Awaited<ReturnType<typeof fetchMarketContext>> | null,
+  intelligenceReport: AreaIntelligenceReport | null = null,
+  marketContext?: MarketContext | null,
 ): PropertyDetail {
   const possession = mapPossession(row.possession);
   const bedrooms = row.bedrooms ?? 0;
-  const area = row.area_sqft ?? 0;
   const builder = buildBuilderInfo(row);
   const amenities = buildAmenityLabels(row.amenities);
   const nearbyPlaces = buildNearbyPlaces(row);
   const structuredMeta = extractPropertyMeta(row.nearby_places);
   const statusLabel = row.status === "active" ? "Available" : row.status;
-  const price = row.price ?? 0;
-  const pricePerSqFt = area > 0 ? Math.round(price / area) : 0;
   const city = row.city?.trim() || "Tricity";
   const location = row.location?.trim() || "Location not specified";
+
+  const pricingDisplay = normalizePricing({
+    dbPrice: row.price,
+    dbAreaSqft: row.area_sqft,
+    subType: row.sub_type,
+    propertyTypeLabel: SUB_TYPE_LABELS[row.sub_type] ?? row.sub_type,
+    meta: structuredMeta,
+  });
+
+  const price = pricingDisplay.totalPrice ?? 0;
+  const pricePerSqFt = pricingDisplay.pricePerSqft ?? 0;
+  const area =
+    pricingDisplay.minPlotSize && row.sub_type === "plot"
+      ? pricingDisplay.minPlotSize
+      : row.area_sqft && row.area_sqft < 50_000
+        ? row.area_sqft
+        : pricingDisplay.minPlotSize ?? 0;
 
   const phone = row.contact_phone?.trim() ?? "";
   const whatsapp = phone.replace(/\D/g, "");
 
-  const market =
+  const market: MarketContext =
     marketContext ??
     ({
       city,
@@ -398,7 +424,7 @@ export function mapPropertyRowToDetail(
       recentMedianPricePerSqft: null,
       olderMedianPricePerSqft: null,
       avgViews: null,
-    } as Awaited<ReturnType<typeof fetchMarketContext>>);
+    } satisfies MarketContext);
 
   const intelligenceBundle = buildPropertyIntelligenceBundle({
     id: row.id,
@@ -412,7 +438,7 @@ export function mapPropertyRowToDetail(
     location,
     builderName: builder.name,
     amenities,
-    reraVerified: Boolean(row.rera_verified),
+    reraVerified: isReraVerified(row),
     aiVerified: Boolean(row.ai_verified),
     report: intelligenceReport,
     meta: structuredMeta,
@@ -445,13 +471,16 @@ export function mapPropertyRowToDetail(
     city,
     price,
     pricePerSqFt,
+    pricingDisplay,
     propertyType: SUB_TYPE_LABELS[row.sub_type] ?? "Property",
     bhk: (bedrooms || 1) as PropertyDetail["bhk"],
     area,
+    sizeLabel: pricingDisplay.sizeLabel || "",
     status: statusLabel,
     possession: formatPossessionLabel(possession),
     configuration:
-      bedrooms > 0 ? `${bedrooms} BHK` : SUB_TYPE_LABELS[row.sub_type] ?? "—",
+      pricingDisplay.sizeLabel ||
+      (bedrooms > 0 ? `${bedrooms} BHK` : SUB_TYPE_LABELS[row.sub_type] ?? "—"),
     totalFloors: (() => {
       const floors = structuredMeta?.specs.totalFloors?.trim();
       if (!floors) return null;
@@ -465,7 +494,7 @@ export function mapPropertyRowToDetail(
     furnishing: row.furnishing?.trim() || "Contact for details",
     description: compiledDescription,
     aiVerified: Boolean(row.ai_verified),
-    reraVerified: Boolean(row.rera_verified),
+    reraVerified: isReraVerified(row),
     images: buildGalleryImages(row.photos),
     amenities,
     intelligenceReport,
@@ -481,55 +510,43 @@ export function mapPropertyRowToDetail(
 }
 
 export async function fetchListingProperties(): Promise<ListingProperty[]> {
+  console.log("[fetchListingProperties] query", {
+    select: ACTIVE_LISTINGS_SELECT,
+    where: { status: "active", deleted_at: null },
+  });
+
   const { data, error } = await supabase
     .from("properties")
     .select(ACTIVE_LISTINGS_SELECT)
     .eq("status", "active")
+    .is("deleted_at", null)
     .order("created_at", { ascending: false });
 
   if (error) {
-    console.error("Failed to fetch listing properties:", error.message);
+    console.error("[fetchListingProperties] failed", {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      why:
+        "Public catalog requires status=active and deleted_at IS NULL. " +
+        "If the select lists missing columns (e.g. growth_score), PostgREST returns zero rows.",
+    });
     return [];
   }
 
-  return (data as PropertyRow[] | null)?.map(mapPropertyRowToListing) ?? [];
-}
-
-export async function fetchPropertyDetailById(
-  id: string,
-): Promise<PropertyDetail | null> {
-  const normalizedId = id?.trim();
-  if (!normalizedId || !UUID_RE.test(normalizedId)) {
-    return null;
+  const rows = (data as PropertyRow[] | null) ?? [];
+  console.log("[fetchListingProperties] ok", {
+    count: rows.length,
+    ids: rows.map((r) => r.id),
+  });
+  if (rows.length === 0) {
+    console.warn(
+      "[fetchListingProperties] zero rows — no active non-deleted properties visible under RLS, or catalog is empty.",
+    );
   }
 
-  try {
-    const { data, error } = await supabase
-      .from("properties")
-      .select(ACTIVE_LISTINGS_SELECT)
-      .eq("id", normalizedId)
-      .eq("status", "active")
-      .maybeSingle();
-
-    if (error || !data) {
-      if (error) {
-        console.error("Failed to fetch property detail:", error.message);
-      }
-      return null;
-    }
-
-    const row = data as PropertyRow;
-    const [similar, intelligenceReport, marketContext] = await Promise.all([
-      fetchSimilarListingProperties(row.city, row.id, 6),
-      areaIntelligenceService.generateReport(row.id),
-      fetchMarketContext(row.city, row.location, row.id),
-    ]);
-
-    return mapPropertyRowToDetail(row, similar, intelligenceReport, marketContext);
-  } catch (error) {
-    console.error("Failed to fetch property detail:", error);
-    return null;
-  }
+  return rows.map(mapPropertyRowToListing);
 }
 
 export async function fetchSimilarListingProperties(
@@ -541,13 +558,17 @@ export async function fetchSimilarListingProperties(
     .from("properties")
     .select(ACTIVE_LISTINGS_SELECT)
     .eq("status", "active")
+    .is("deleted_at", null)
     .eq("city", city)
     .neq("id", excludeId)
     .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) {
-    console.error("Failed to fetch similar properties:", error.message);
+    console.error("[fetchSimilarListingProperties] failed", {
+      message: error.message,
+      code: error.code,
+    });
     return [];
   }
 

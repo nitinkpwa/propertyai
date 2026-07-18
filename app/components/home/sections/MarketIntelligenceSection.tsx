@@ -6,7 +6,7 @@ import SectionHeader from "../SectionHeader";
 import GlassCard from "../ui/GlassCard";
 import { buildMarketSignals } from "@/lib/home/marketSignals";
 import type { MarketSignal } from "@/lib/home/types";
-import { fetchListingProperties } from "@/lib/properties/queries";
+import { getCachedListingProperties } from "@/lib/home/listingsCache";
 import { IQ_GREEN } from "../theme";
 
 function MarketSignalCard({ signal }: { signal: MarketSignal }) {
@@ -39,7 +39,7 @@ export default function MarketIntelligenceSection() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchListingProperties()
+    getCachedListingProperties()
       .then((rows) => {
         if (!cancelled) setSignals(buildMarketSignals(rows));
       })

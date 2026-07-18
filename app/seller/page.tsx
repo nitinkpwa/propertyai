@@ -2,19 +2,10 @@
 
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import DashboardHome from "./components/DashboardHome";
-import MyPropertiesTab from "./components/MyPropertiesTab";
-import PropertyFormTab from "./components/PropertyFormTab";
-import LeadsTab from "./components/LeadsTab";
-import VisitsTab from "./components/VisitsTab";
-import AnalyticsTab from "./components/AnalyticsTab";
-import NotificationsTab from "./components/NotificationsTab";
-import ProfileTab from "./components/ProfileTab";
-import SellerShell from "./components/SellerShell";
-import { emptyForm } from "@/lib/seller/constants";
 import { manageSiteVisit } from "@/lib/crm/queries";
+import { emptyForm } from "@/lib/seller/constants";
 import {
+  deleteSellerProperty,
   duplicateProperty,
   fetchSellerAnalytics,
   fetchSellerDashboardStats,
@@ -24,9 +15,8 @@ import {
   fetchSellerProperties,
   fetchSellerSiteVisits,
   formToPayload,
+  propertyRowToFormState,
   saveSellerProperty,
-  softDeleteProperty,
-  updatePropertyStatus,
   updateSellerProfile,
   uploadPropertyPhotos,
   uploadSellerAsset,
@@ -42,6 +32,17 @@ import type {
   SellerTab,
   SellerVisitRow,
 } from "@/lib/seller/types";
+import { supabase } from "@/lib/supabase";
+import DashboardHome from "./components/DashboardHome";
+import MyPropertiesTab from "./components/MyPropertiesTab";
+import PropertyFormTab from "./components/PropertyFormTab";
+import LeadsTab from "./components/LeadsTab";
+import VisitsTab from "./components/VisitsTab";
+import AnalyticsTab from "./components/AnalyticsTab";
+import NotificationsTab from "./components/NotificationsTab";
+import ProfileTab from "./components/ProfileTab";
+import SellerShell from "./components/SellerShell";
+import SellerToast, { type SellerToastState } from "./components/SellerToast";
 
 const TAB_TITLES: Record<SellerTab, string> = {
   home: "Dashboard",
@@ -112,45 +113,73 @@ function SellerDashboardInner() {
   const [saving, setSaving] = useState(false);
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
+  const [toast, setToast] = useState<SellerToastState>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [editNearbyPlaces, setEditNearbyPlaces] = useState<unknown>(null);
+
+  const showToast = useCallback((type: "success" | "error", message: string) => {
+    setToast({ type, message });
+  }, []);
 
   const loadAll = useCallback(async (userId: string) => {
-    const [
-      profile,
-      statsData,
-      props,
-      leadsData,
-      visitsData,
-      analyticsData,
-      notifData,
-    ] = await Promise.all([
-      fetchSellerProfile(userId),
-      fetchSellerDashboardStats(userId),
-      fetchSellerProperties(userId),
-      fetchSellerLeads(userId),
-      fetchSellerSiteVisits(userId),
-      fetchSellerAnalytics(userId),
-      fetchSellerNotifications(userId),
-    ]);
+    try {
+      const [
+        profile,
+        statsData,
+        props,
+        leadsData,
+        visitsData,
+        analyticsData,
+        notifData,
+      ] = await Promise.all([
+        fetchSellerProfile(userId),
+        fetchSellerDashboardStats(userId),
+        fetchSellerProperties(userId),
+        fetchSellerLeads(userId),
+        fetchSellerSiteVisits(userId),
+        fetchSellerAnalytics(userId),
+        fetchSellerNotifications(userId),
+      ]);
 
-    if (profile) setUser(profile);
-    setStats(statsData);
-    setListings(props);
-    setLeads(leadsData);
-    setVisits(visitsData);
-    setAnalytics(analyticsData);
-    setNotifications(notifData);
+      if (profile) setUser(profile);
+      setStats(statsData);
+      setListings(props);
+      setLeads(leadsData);
+      setVisits(visitsData);
+      setAnalytics(analyticsData);
+      setNotifications(notifData);
+      console.log("[loadAll] ok", {
+        userId,
+        listings: props.length,
+        draftListings: statsData.draftListings,
+      });
+    } catch (err) {
+      console.error("[loadAll] failed", err);
+      setSaveMsg(
+        `Error loading seller data: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }, []);
 
   useEffect(() => {
+    let poll: number | undefined;
+    let authUserId: string | null = null;
     (async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) {
         router.push("/login?redirect=/seller");
         return;
       }
+      authUserId = authUser.id;
       await loadAll(authUser.id);
       setLoading(false);
+      poll = window.setInterval(() => {
+        if (authUserId) void loadAll(authUserId);
+      }, 20_000);
     })();
+    return () => {
+      if (poll) window.clearInterval(poll);
+    };
   }, [router, loadAll]);
 
   const refresh = async () => {
@@ -174,76 +203,86 @@ function SellerDashboardInner() {
   };
 
   const handleSave = async (asDraft: boolean) => {
-    if (!user) return;
+    if (!user) {
+      setSaveMsg("Error: You must be signed in to create a property.");
+      showToast("error", "You must be signed in to create a property.");
+      return;
+    }
     if (!form.title || !form.price || !form.location) {
       setSaveMsg("Please fill property name, price and location");
       return;
     }
-    // Sellers always submit drafts for admin review — never publish directly.
-    void asDraft;
 
     setSaving(true);
     setSaveMsg("");
+
     setUploadingPhotos(true);
-    const uploaded = await uploadPropertyPhotos(user.id, photos);
+    let uploaded: string[] = [];
+    try {
+      uploaded = await uploadPropertyPhotos(user.id, photos);
+    } catch (err) {
+      setUploadingPhotos(false);
+      setSaving(false);
+      const msg = `Photo upload failed — ${err instanceof Error ? err.message : String(err)}`;
+      setSaveMsg(`Error: ${msg}`);
+      showToast("error", msg);
+      return;
+    }
     setUploadingPhotos(false);
 
     const keptExisting = existingPhotos.filter((url) => photoUrls.includes(url));
     const allPhotos = [...keptExisting, ...uploaded].slice(0, 6);
 
-    const payload = formToPayload(form, user, allPhotos, "draft");
-    const result = await saveSellerProperty(user.id, payload, editId);
+    const payload = formToPayload(form, user, allPhotos, {
+      asDraft,
+      existingNearbyPlaces: editNearbyPlaces,
+    });
 
-    if (!result.ok) {
-      setSaveMsg(`Error: ${result.error}`);
-    } else {
-      setSaveMsg(
-        editId
-          ? "✅ Property updated. Changes stay in review until AreaIQ publishes."
-          : "✅ Submitted for review. AreaIQ will publish after Connect Partner assignment.",
-      );
-      setForm({ ...emptyForm });
-      setPhotos([]);
-      setPhotoUrls([]);
-      setExistingPhotos([]);
-      setEditId(null);
-      await refresh();
-      handleTabChange("listings");
+    let result: Awaited<ReturnType<typeof saveSellerProperty>>;
+    try {
+      result = await saveSellerProperty(user.id, payload, editId, { asDraft });
+    } catch (err) {
+      setSaving(false);
+      const msg = `Save failed — ${err instanceof Error ? err.message : String(err)}`;
+      setSaveMsg(`Error: ${msg}`);
+      showToast("error", msg);
+      return;
     }
+
+    if (!result.ok || !result.propertyId) {
+      const msg = result.error ?? "Property was not saved. No database id returned.";
+      setSaveMsg(`Error: ${msg}`);
+      showToast("error", msg);
+      setSaving(false);
+      return;
+    }
+
+    const successMsg = editId
+      ? asDraft
+        ? "Property updated and saved as Draft."
+        : "Property updated and submitted for review."
+      : asDraft
+        ? "Draft saved."
+        : "Submitted for review.";
+
+    setSaveMsg(`✅ ${successMsg}`);
+    showToast("success", successMsg);
+    setForm({ ...emptyForm });
+    setPhotos([]);
+    setPhotoUrls([]);
+    setExistingPhotos([]);
+    setEditNearbyPlaces(null);
+    setEditId(null);
+    await refresh();
+    handleTabChange("listings");
     setSaving(false);
   };
 
   const startEdit = (prop: SellerPropertyRow) => {
     setEditId(prop.id);
     setExistingPhotos(prop.photos ?? []);
-    setForm({
-      title: prop.title ?? "",
-      description: prop.description ?? "",
-      type: prop.type,
-      sub_type: prop.sub_type,
-      price: prop.price?.toString() ?? "",
-      area_sqft: prop.area_sqft?.toString() ?? "",
-      bedrooms: prop.bedrooms?.toString() ?? "",
-      bathrooms: prop.bathrooms?.toString() ?? "",
-      location: prop.location ?? "",
-      city: prop.city ?? "Mohali",
-      sector: prop.sector ?? "",
-      builder_name: prop.builder_name ?? "",
-      furnishing: prop.furnishing ?? "",
-      parking: prop.parking ?? "",
-      facing: prop.facing ?? "",
-      amenities: (prop.amenities ?? []).join(", "),
-      nearby_places: Array.isArray(prop.nearby_places)
-        ? prop.nearby_places.join(", ")
-        : "",
-      lat: prop.lat?.toString() ?? "",
-      lng: prop.lng?.toString() ?? "",
-      rera_number: prop.rera_number ?? "",
-      possession: prop.possession ?? "",
-      featured_image: prop.featured_image ?? "",
-      contact_name: prop.contact_name ?? "",
-      contact_phone: prop.contact_phone ?? "",
-    });
+    setEditNearbyPlaces(prop.nearby_places ?? null);
+    setForm(propertyRowToFormState(prop));
     setPhotoUrls(prop.photos ?? []);
     setPhotos([]);
     setSaveMsg("");
@@ -256,45 +295,52 @@ function SellerDashboardInner() {
     setPhotos([]);
     setPhotoUrls([]);
     setExistingPhotos([]);
+    setEditNearbyPlaces(null);
     setSaveMsg("");
     handleTabChange("listings");
   };
 
-  const handleDelete = async (id: string) => {
-    if (!user || !confirm("Delete this listing? It will be removed from public view.")) return;
-    await softDeleteProperty(id, user.id);
-    await refresh();
-  };
-
-  const handleTogglePause = async (id: string, status: string) => {
-    if (!user) return;
-    // Sellers may pause live listings but cannot re-publish — admin publishes.
-    if (status !== "active") {
-      setSaveMsg("Only AreaIQ admin can publish or reactivate listings.");
-      return;
+  const handleDelete = async (prop: SellerPropertyRow): Promise<boolean> => {
+    if (!user) {
+      showToast("error", "You must be signed in.");
+      return false;
     }
-    const result = await updatePropertyStatus(id, user.id, "paused");
+    setBusyId(prop.id);
+    const previous = listings;
+    setListings((rows) => rows.filter((r) => r.id !== prop.id));
+
+    const result = await deleteSellerProperty(prop.id, user.id);
+    setBusyId(null);
+
     if (!result.ok) {
-      setSaveMsg(result.error ?? "Could not pause listing");
-      return;
+      setListings(previous);
+      showToast("error", result.error ?? "Could not delete property.");
+      return false;
     }
+
+    showToast("success", "Property deleted.");
     await refresh();
+    return true;
   };
 
-  const handleMarkSold = async (id: string) => {
-    if (!user || !confirm("Mark this property as sold?")) return;
-    const result = await updatePropertyStatus(id, user.id, "sold");
+  const handleDuplicate = async (prop: SellerPropertyRow) => {
+    if (!user) {
+      showToast("error", "You must be signed in.");
+      return;
+    }
+    setBusyId(prop.id);
+    const result = await duplicateProperty(prop.id, user.id);
+    setBusyId(null);
     if (!result.ok) {
-      setSaveMsg(result.error ?? "Could not update listing");
+      showToast("error", result.error ?? "Could not duplicate property.");
       return;
     }
+    showToast("success", "Draft copy created.");
     await refresh();
   };
 
-  const handleDuplicate = async (id: string) => {
-    if (!user) return;
-    await duplicateProperty(id, user.id);
-    await refresh();
+  const handlePreview = (prop: SellerPropertyRow) => {
+    window.open(`/property/${prop.id}`, "_blank", "noopener,noreferrer");
   };
 
   const handleVisitAccept = async (id: string) => {
@@ -318,7 +364,13 @@ function SellerDashboardInner() {
   };
 
   const handleAddProperty = () => {
-    cancelEdit();
+    setEditId(null);
+    setForm({ ...emptyForm });
+    setPhotos([]);
+    setPhotoUrls([]);
+    setExistingPhotos([]);
+    setEditNearbyPlaces(null);
+    setSaveMsg("");
     handleTabChange("add");
   };
 
@@ -354,14 +406,16 @@ function SellerDashboardInner() {
       onLogout={handleLogout}
       onAddProperty={handleAddProperty}
     >
+      <SellerToast toast={toast} onDismiss={() => setToast(null)} />
       {tab !== "home" ? (
         <div className="mb-6 transition-opacity duration-300">
           <h2 className="text-2xl font-bold tracking-tight text-heading-primary">
-            {TAB_TITLES[tab]}
+            {editId && tab === "add" ? "Edit Property" : TAB_TITLES[tab]}
           </h2>
           {tab === "listings" ? (
             <p className="mt-1 text-sm text-muted">
-              {stats.activeListings} active · {stats.totalProperties} total properties
+              {stats.activeListings} approved · {stats.draftListings} pending/draft ·{" "}
+              {stats.totalProperties} total
             </p>
           ) : null}
         </div>
@@ -374,10 +428,10 @@ function SellerDashboardInner() {
             listings={listings}
             onEdit={startEdit}
             onDelete={handleDelete}
-            onTogglePause={handleTogglePause}
-            onMarkSold={handleMarkSold}
             onDuplicate={handleDuplicate}
+            onPreview={handlePreview}
             onCreateListing={handleAddProperty}
+            busyId={busyId}
           />
         ) : null}
         {tab === "add" ? (

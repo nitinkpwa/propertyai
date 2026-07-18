@@ -12,12 +12,19 @@ import {
 } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import {
+  buildLoginUrlWithIntent,
+  clearPendingAuthIntent,
+  matchPendingIntentForProperty,
+} from "@/lib/auth/pendingIntent";
 import SiteVisitModal from "./SiteVisitModal";
 
 export const BOOK_VISIT_QUERY = "bookVisit";
 
 interface BookSiteVisitContextValue {
   requestBookVisit: () => void;
+  /** Call after a successful booking to clear pending auth intent. */
+  onVisitBooked: () => void;
 }
 
 const BookSiteVisitContext = createContext<BookSiteVisitContextValue | null>(null);
@@ -35,8 +42,13 @@ export function buildBookVisitReturnPath(pathname: string): string {
   return `${base}${sep}${BOOK_VISIT_QUERY}=1`;
 }
 
-export function buildLoginUrlForBookVisit(pathname: string): string {
-  return `/login?redirect=${encodeURIComponent(buildBookVisitReturnPath(pathname))}`;
+/** @deprecated use buildLoginUrlWithIntent — kept for SiteVisitModal imports */
+export function buildLoginUrlForBookVisit(pathname: string, propertyId?: string): string {
+  return buildLoginUrlWithIntent({
+    action: "book_visit",
+    propertyId: propertyId ?? null,
+    returnUrl: buildBookVisitReturnPath(pathname),
+  });
 }
 
 export function BookSiteVisitProvider({
@@ -68,23 +80,39 @@ export function BookSiteVisitProvider({
     if (loading) return;
 
     if (!user) {
-      router.push(buildLoginUrlForBookVisit(pathname));
+      router.push(
+        buildLoginUrlWithIntent({
+          action: "book_visit",
+          propertyId,
+          returnUrl: buildBookVisitReturnPath(pathname),
+        }),
+      );
       return;
     }
 
     openForBuyer();
-  }, [loading, user, router, pathname, openForBuyer]);
+  }, [loading, user, router, pathname, propertyId, openForBuyer]);
 
   const resumeAfterLogin = useCallback((): "opened" | "role_blocked" | "redirected" => {
     if (loading) return "redirected";
 
     if (!user) {
-      router.push(buildLoginUrlForBookVisit(pathname));
+      router.push(
+        buildLoginUrlWithIntent({
+          action: "book_visit",
+          propertyId,
+          returnUrl: buildBookVisitReturnPath(pathname),
+        }),
+      );
       return "redirected";
     }
 
     return openForBuyer();
-  }, [loading, user, router, pathname, openForBuyer]);
+  }, [loading, user, router, pathname, propertyId, openForBuyer]);
+
+  const onVisitBooked = useCallback(() => {
+    clearPendingAuthIntent();
+  }, []);
 
   useEffect(() => {
     if (!roleMessage) return;
@@ -92,14 +120,21 @@ export function BookSiteVisitProvider({
     return () => clearTimeout(t);
   }, [roleMessage]);
 
-  const value = useMemo(() => ({ requestBookVisit }), [requestBookVisit]);
+  const value = useMemo(
+    () => ({ requestBookVisit, onVisitBooked }),
+    [requestBookVisit, onVisitBooked],
+  );
 
   return (
     <BookSiteVisitContext.Provider value={value}>
       {children}
 
       <Suspense fallback={null}>
-        <BookVisitResumeEffect onResume={resumeAfterLogin} authReady={!loading} />
+        <BookVisitResumeEffect
+          propertyId={propertyId}
+          onResume={resumeAfterLogin}
+          authReady={!loading}
+        />
       </Suspense>
 
       <SiteVisitModal
@@ -109,6 +144,7 @@ export function BookSiteVisitProvider({
         builderName={builderName}
         open={visitModalOpen}
         onClose={() => setVisitModalOpen(false)}
+        onSuccess={onVisitBooked}
       />
 
       {roleMessage ? (
@@ -124,9 +160,11 @@ export function BookSiteVisitProvider({
 }
 
 function BookVisitResumeEffect({
+  propertyId,
   onResume,
   authReady,
 }: {
+  propertyId: string;
   onResume: () => "opened" | "role_blocked" | "redirected";
   authReady: boolean;
 }) {
@@ -137,19 +175,28 @@ function BookVisitResumeEffect({
 
   useEffect(() => {
     if (!authReady || handledRef.current) return;
-    if (searchParams.get(BOOK_VISIT_QUERY) !== "1") return;
+
+    const fromQuery = searchParams.get(BOOK_VISIT_QUERY) === "1";
+    const fromIntent = matchPendingIntentForProperty(propertyId, "book_visit");
+    if (!fromQuery && !fromIntent) return;
 
     handledRef.current = true;
     const result = onResume();
 
-    // Do not race a login navigation with a replace that strips the flag.
     if (result === "redirected") return;
 
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete(BOOK_VISIT_QUERY);
-    const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }, [authReady, searchParams, onResume, router, pathname]);
+    // Clear intent once modal is opened (or role-blocked)
+    if (result === "opened") {
+      clearPendingAuthIntent();
+    }
+
+    if (fromQuery) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete(BOOK_VISIT_QUERY);
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }
+  }, [authReady, searchParams, onResume, router, pathname, propertyId]);
 
   return null;
 }

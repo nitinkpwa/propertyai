@@ -1,8 +1,10 @@
 import type { Property } from "@/lib/supabase";
 import type { AdminPropertyRow } from "@/lib/admin/types";
 import type { PropertyAIIntelligence } from "@/lib/admin/property/intelligence/types";
+import type { ImportKnowledge } from "@/lib/admin/property/studio/types";
 import type { PropertyStructuredMeta } from "@/lib/properties/nearbyPlacesMeta";
 import { emptyPropertyStructuredMeta } from "@/lib/properties/nearbyPlacesMeta";
+import { PROPERTY_STATUS_DEFAULT_CREATE } from "@/lib/properties/status";
 
 export type WizardStepId =
   | "basic"
@@ -43,6 +45,8 @@ export interface AdminPropertyFormState {
   possession: string;
   featured_image: string;
   connect_partner_id: string;
+  /** When false, buyers cannot book site visits. Default true. */
+  site_visit_enabled: boolean;
 
   basic: PropertyStructuredMeta["basic"];
   locationMeta: PropertyStructuredMeta["location"];
@@ -54,6 +58,10 @@ export interface AdminPropertyFormState {
   publishing: PropertyStructuredMeta["publishing"];
   aiIntelligence: PropertyAIIntelligence | null;
   nearbyPlaces: Array<{ name: string; distance: string; type: string }>;
+  /** AI Import knowledge blob (persisted in nearby_places.meta). */
+  importKnowledge: ImportKnowledge | null;
+  /** Per-field extraction confidence 0–100. */
+  fieldConfidence: Record<string, number>;
 }
 
 export interface AdminPropertySaveResult {
@@ -81,7 +89,7 @@ export function createEmptyAdminPropertyForm(): AdminPropertyFormState {
     contact_phone: "",
     amenities: [],
     photos: [],
-    status: "draft",
+    status: PROPERTY_STATUS_DEFAULT_CREATE,
     is_featured: false,
     builder_name: "",
     furnishing: "",
@@ -91,6 +99,7 @@ export function createEmptyAdminPropertyForm(): AdminPropertyFormState {
     possession: "",
     featured_image: "",
     connect_partner_id: "",
+    site_visit_enabled: true,
     basic: { ...meta.basic },
     locationMeta: { ...meta.location },
     pricing: { ...meta.pricing },
@@ -101,6 +110,8 @@ export function createEmptyAdminPropertyForm(): AdminPropertyFormState {
     publishing: { ...meta.publishing },
     aiIntelligence: null,
     nearbyPlaces: [],
+    importKnowledge: null,
+    fieldConfidence: {},
   };
 }
 
@@ -118,4 +129,5 @@ export type AdminPropertyFormSource = AdminPropertyRow & {
   growth_score?: number | null;
   rental_yield?: number | null;
   photos?: string[];
+  site_visit_enabled?: boolean | null;
 };

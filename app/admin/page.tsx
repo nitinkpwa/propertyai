@@ -6,10 +6,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthButton from "@/components/auth/AuthButton";
 import AdminEmptyState from "./components/AdminEmptyState";
+import AdminSiteVisitsPanel from "./components/AdminSiteVisitsPanel";
 import AdminShell, { type AdminNavItem } from "./components/AdminShell";
 import AdminConnectPanel from "@/components/admin/connect/AdminConnectPanel";
 import ConnectPartnerAssignSelect from "@/components/admin/connect/ConnectPartnerAssignSelect";
-import PropertyWizard from "@/components/admin/property/PropertyWizard";
+import PropertyStudio from "@/components/admin/property/studio/PropertyStudio";
 import AdminCrmPanel from "@/components/crm/AdminCrmPanel";
 import AdminProfileCard, {
   AdminProfileInline,
@@ -52,6 +53,7 @@ import type {
   AdminPropertyRow,
   AdminTab,
 } from "@/lib/admin/types";
+import { PROPERTY_STATUS_DEFAULT_CREATE, PROPERTY_STATUS_LABELS } from "@/lib/properties/status";
 import { supabase } from "@/lib/supabase/client";
 
 type AdminAccessState = "loading" | "signed_out" | "ready";
@@ -61,8 +63,8 @@ const ADMIN_SETUP_HINT =
 
 function statusBadgeClass(status: string): string {
   if (status === "active" || status === "approved") return "bg-emerald-50 text-emerald-700";
-  if (status === "draft" || status === "pending") return "bg-amber-50 text-amber-700";
-  if (status === "paused" || status === "rejected") return "bg-red-50 text-red-700";
+  if (status === "pending" || status === "rejected") return "bg-amber-50 text-amber-700";
+  if (status === "paused") return "bg-amber-50 text-amber-700";
   return "bg-neutral-100 text-body";
 }
 
@@ -203,6 +205,23 @@ function AdminPageInner() {
     if (accessState === "ready") loadAll();
   }, [accessState]);
 
+  // One-time upgrade of legacy AI listings into multi-unit pricing / plot-range schema
+  useEffect(() => {
+    if (accessState !== "ready") return;
+    if (typeof window === "undefined") return;
+    const key = "areaiq_pricing_normalized_v1";
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, "1");
+    void fetch("/api/admin/properties/normalize-pricing", { method: "POST" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.updated > 0) void loadAll();
+      })
+      .catch(() => {
+        /* non-blocking */
+      });
+  }, [accessState]);
+
   const logoutAdmin = async () => {
     await supabase.auth.signOut();
     setAccessState("signed_out");
@@ -292,7 +311,7 @@ function AdminPageInner() {
     { key: "visits", label: "Site Visits", icon: "📅", count: siteVisits.length },
     { key: "chats", label: "Intelligence Sessions", icon: "🤖", count: conversations.length },
     { key: "analytics", label: "Analytics", icon: "📈" },
-    { key: "add", label: editId ? "Edit Property" : "Property Studio", icon: "✨" },
+    { key: "add", label: editId ? "Edit Property" : "AI Property Studio", icon: "✨" },
     { key: "bulk", label: "Bulk Import", icon: "📋" },
     { key: "settings", label: "Settings", icon: "⚙️" },
   ];
@@ -363,10 +382,12 @@ function AdminPageInner() {
         description: row.description || "",
         photos: [],
         amenities: [],
-        status: "draft",
+        status: PROPERTY_STATUS_DEFAULT_CREATE,
       });
       results.push(
-        error ? `Row ${i} (${row.title}): ERROR — ${error.message}` : `Row ${i} (${row.title}): ✅ Added as draft`,
+        error
+          ? `Row ${i} (${row.title}): ERROR — ${error.message}`
+          : `Row ${i} (${row.title}): ✅ Added (pending review)`,
       );
     }
     setBulkResult(results);
@@ -548,9 +569,9 @@ function AdminPageInner() {
             >
               <option value="all">All statuses</option>
               <option value="active">Active</option>
-              <option value="draft">Draft</option>
-              <option value="paused">Paused</option>
+              <option value="paused">Pending Review</option>
               <option value="sold">Sold</option>
+              <option value="rented">Rented</option>
             </select>
           </div>
           <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
@@ -593,8 +614,8 @@ function AdminPageInner() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${statusBadgeClass(prop.status)}`}>
-                          {prop.status}
+                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(prop.status)}`}>
+                          {PROPERTY_STATUS_LABELS[prop.status as keyof typeof PROPERTY_STATUS_LABELS] ?? prop.status}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-xs text-muted">{formatDate(prop.created_at)}</td>
@@ -630,7 +651,7 @@ function AdminPageInner() {
           <h1 className="mb-2 text-2xl font-bold text-heading-primary">Pending Approval</h1>
           {!usesApprovalStatus ? (
             <p className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-              The <code className="font-mono">approval_status</code> column is not in your database. Showing properties with status <strong>draft</strong> as pending. Approve sets status to <strong>active</strong>; reject sets <strong>paused</strong>.
+              The <code className="font-mono">approval_status</code> column is not in your database. Showing properties with status <strong>paused</strong> as pending review. Approve sets status to <strong>active</strong> (live) without requiring a Connect Partner; reject keeps <strong>paused</strong> for seller edits.
             </p>
           ) : null}
           {pendingProperties.length === 0 ? (
@@ -744,38 +765,11 @@ function AdminPageInner() {
       {tab === "crm" ? <AdminCrmPanel profileLookup={profileLookup} /> : null}
 
       {tab === "visits" ? (
-        <div>
-          <h1 className="mb-6 text-2xl font-bold text-heading-primary">Site Visits</h1>
-          {!data?.hasSiteVisitsTable ? (
-            <AdminEmptyState icon="📅" title="Site visits table not available" description="The site_visits table is not present in your Supabase schema. Visits will appear here once the table is created." />
-          ) : siteVisits.length === 0 ? (
-            <AdminEmptyState icon="📅" title="No site visits yet" description="Booked property visits will appear here." />
-          ) : (
-            <div className="space-y-4">
-              {siteVisits.map((v) => (
-                <article key={v.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-                  <div className="border-b border-neutral-100 px-5 py-4">
-                    <p className="font-semibold text-heading-primary">{v.property?.title ?? "—"}</p>
-                    <p className="mt-1 text-sm text-muted">
-                      {v.visit_date} at {v.visit_time?.slice?.(0, 5) ?? v.visit_time}
-                    </p>
-                  </div>
-                  <div className="space-y-4 px-5 py-4">
-                    <AdminProfileCard
-                      profile={{ ...(v.buyer ?? {}), role: "buyer" }}
-                      profileId={v.user_id}
-                      lookup={profileLookup}
-                      status={v.status}
-                      statusClassName={statusBadgeClass(v.status)}
-                      subtitle={`Site visit · ${v.property?.city ?? "—"}`}
-                    />
-                    <BuyerProfileGrid buyer={v.buyer} variant="compact" />
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
+        <AdminSiteVisitsPanel
+          siteVisits={siteVisits}
+          hasSiteVisitsTable={Boolean(data?.hasSiteVisitsTable)}
+          profileLookup={profileLookup}
+        />
       ) : null}
 
       {tab === "chats" ? (
@@ -911,7 +905,7 @@ function AdminPageInner() {
             <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
               <h2 className="font-semibold text-heading-primary">Schema Notes</h2>
               <ul className="mt-3 space-y-2 text-sm text-body">
-                <li>• Approval workflow: {usesApprovalStatus ? "using approval_status column" : "using status field fallback (draft → pending)"}</li>
+                <li>• Approval workflow: {usesApprovalStatus ? "using approval_status column" : "using status field fallback (paused → pending)"}</li>
                 <li>• Site visits: {data?.hasSiteVisitsTable ? "connected" : "table not found"}</li>
                 <li>• Intelligence Sessions: {data?.hasConversationsTable ? "connected" : "table not accessible"}</li>
               </ul>
@@ -921,11 +915,16 @@ function AdminPageInner() {
       ) : null}
 
       {tab === "add" && adminUserId ? (
-        <PropertyWizard
+        <PropertyStudio
           key={editId ?? "new"}
           adminUserId={adminUserId}
           editId={editId}
           initialForm={wizardForm}
+          existingTitles={properties.map((p) => ({
+            title: p.title || "",
+            builder: "builder_name" in p && typeof p.builder_name === "string" ? p.builder_name : "",
+            city: p.city || "",
+          }))}
           onSaved={async () => {
             resetWizard();
             await loadAll();

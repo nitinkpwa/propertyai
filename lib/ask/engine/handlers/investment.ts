@@ -6,9 +6,9 @@ import { classificationToResponseFields } from "../types";
 import { entitiesToFilters } from "../classifier";
 import { buildMemoryContext, buildPropertyMemoryContext, wantsAlternativeProperties } from "../memory";
 import { logAsk } from "../logger";
+import { extractPropertyRationales } from "../../markdown";
 import {
   buildListingsContext,
-  extractPropertyRationales,
   generateAreaIQResponse,
   INVESTMENT_PROMPT,
 } from "../openai";

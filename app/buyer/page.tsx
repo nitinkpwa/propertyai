@@ -19,7 +19,6 @@ import { ButtonLink } from "@/components/ui/Button";
 import {
   fetchRecentViewedWithMeta,
   fetchRecommendedPropertyCards,
-  fetchUpcomingVisits,
   fetchSiteVisits,
 } from "@/lib/buyer/queries";
 import { fetchBuyerCrmSummary } from "@/lib/crm/queries";
@@ -54,13 +53,20 @@ export default function BuyerDashboardPage() {
     const load = async () => {
       setLoading(true);
       const preferred = profile?.preferred_locations ?? [];
-      const [nextRecent, nextRecommended, crm, upcoming, allVisits] = await Promise.all([
+      const [nextRecent, nextRecommended, crm, allVisits] = await Promise.all([
         fetchRecentViewedWithMeta(user.id, 6),
         fetchRecommendedPropertyCards(user.id, preferred, 4),
         fetchBuyerCrmSummary(user.id),
-        fetchUpcomingVisits(user.id, 3),
         fetchSiteVisits(user.id),
       ]);
+      const today = new Date().toISOString().slice(0, 10);
+      const upcoming = allVisits
+        .filter(
+          (v) =>
+            v.visit_date >= today &&
+            ["pending_approval", "accepted", "scheduled"].includes(v.status),
+        )
+        .slice(0, 3);
       setRecent(nextRecent);
       setRecommended(nextRecommended);
       setUpcomingVisits(upcoming);

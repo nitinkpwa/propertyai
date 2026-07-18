@@ -8,7 +8,7 @@ import FadeIn from "./FadeIn";
 import SectionHeader from "./SectionHeader";
 import { RECOMMENDATION_CATEGORIES } from "./data";
 import { IQ_GREEN } from "./theme";
-import { fetchListingProperties } from "@/lib/properties/queries";
+import { getCachedListingProperties } from "@/lib/home/listingsCache";
 import type { ListingProperty } from "@/lib/properties/types";
 
 function listingToCard(listing: ListingProperty): PropertyCardProps {
@@ -74,7 +74,7 @@ export default function RecommendationsCarousel() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchListingProperties()
+    getCachedListingProperties()
       .then((rows) => {
         if (!cancelled) setListings(rows);
       })

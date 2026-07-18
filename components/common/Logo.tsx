@@ -79,7 +79,7 @@ export default function Logo({
       alt={imageAlt}
       width={dims.desktop}
       height={dims.desktop}
-      priority={priority || size === "navbar"}
+      priority={priority}
       sizes={`${dims.mobile}px`}
       className={`shrink-0 object-contain object-center ${HEIGHT_CLASSES[size]}`}
       aria-hidden={imageAlt ? undefined : true}

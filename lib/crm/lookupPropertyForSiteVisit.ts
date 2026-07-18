@@ -4,6 +4,9 @@ export interface PropertyForSiteVisit {
   id: string;
   title: string;
   seller_id: string;
+  status: string;
+  site_visit_enabled?: boolean | null;
+  deleted_at?: string | null;
   connect_partner_id?: string | null;
   assigned_connect_id?: string | null;
   type?: string | null;
@@ -23,19 +26,18 @@ const SELLER_EMBED = "seller:profiles!properties_seller_id_fkey(full_name, role)
 
 /**
  * Resilient property lookup for site-visit booking.
- * Uses only verified profile columns (no company/agency fields).
+ * Returns the row regardless of status so callers can evaluate availability.
  */
 export async function lookupPropertyForSiteVisit(
   supabase: SupabaseClient,
   propertyId: string,
 ): Promise<LookupResult> {
-  const primarySelect = `id, title, seller_id, connect_partner_id, assigned_connect_id, type, sub_type, contact_name, builder_name, rera_number, parking, ${SELLER_EMBED}`;
+  const primarySelect = `id, title, seller_id, status, site_visit_enabled, deleted_at, connect_partner_id, assigned_connect_id, type, sub_type, contact_name, builder_name, rera_number, parking, ${SELLER_EMBED}`;
 
   const { data, error } = await supabase
     .from("properties")
     .select(primarySelect)
     .eq("id", propertyId)
-    .eq("status", "active")
     .maybeSingle();
 
   if (!error && data) {
@@ -50,13 +52,20 @@ export async function lookupPropertyForSiteVisit(
   if (isMissingColumn) {
     const { data: fallback, error: fallbackError } = await supabase
       .from("properties")
-      .select(`id, title, seller_id, type, sub_type, contact_name, ${SELLER_EMBED}`)
+      .select(
+        `id, title, seller_id, status, connect_partner_id, assigned_connect_id, type, sub_type, contact_name, builder_name, rera_number, parking, ${SELLER_EMBED}`,
+      )
       .eq("id", propertyId)
-      .eq("status", "active")
       .maybeSingle();
 
     if (!fallbackError && fallback) {
-      return { property: fallback as PropertyForSiteVisit, error: null };
+      return {
+        property: {
+          ...(fallback as PropertyForSiteVisit),
+          site_visit_enabled: true,
+        },
+        error: null,
+      };
     }
 
     if (fallbackError) {
@@ -72,13 +81,18 @@ export async function lookupPropertyForSiteVisit(
 
   const { data: bare, error: bareError } = await supabase
     .from("properties")
-    .select("id, title, seller_id, type, sub_type, contact_name")
+    .select("id, title, seller_id, status, type, sub_type, contact_name")
     .eq("id", propertyId)
-    .eq("status", "active")
     .maybeSingle();
 
   if (!bareError && bare) {
-    return { property: bare as PropertyForSiteVisit, error: null };
+    return {
+      property: {
+        ...(bare as PropertyForSiteVisit),
+        site_visit_enabled: true,
+      },
+      error: null,
+    };
   }
 
   if (bareError) {
@@ -87,7 +101,7 @@ export async function lookupPropertyForSiteVisit(
 
   return {
     property: null,
-    error: "No active property row for id",
+    error: "No property row for id",
     code: "PROPERTY_UNAVAILABLE",
   };
 }

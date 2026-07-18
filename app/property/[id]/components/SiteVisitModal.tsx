@@ -32,7 +32,7 @@ import {
   NEXT_STEPS,
   PURPOSE_CHIPS,
   TRANSPORT_OPTIONS,
-  VISIT_TIMES,
+  VISIT_TIME_GROUPS,
   VISITOR_OPTIONS,
   buildPurposePayload,
   computeProgressStep,
@@ -86,9 +86,10 @@ export default function SiteVisitModal({
   const [loanAssist, setLoanAssist] = useState<LoanAssist>("");
   const [language, setLanguage] = useState<LanguageOption>("English");
   const [transport, setTransport] = useState<TransportOption | "">("");
+  const [buyerNotes, setBuyerNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [availability, setAvailability] = useState<AvailabilityStatus>("available");
+  const [availability, setAvailability] = useState<AvailabilityStatus>("loading");
   const [waitlistJoined, setWaitlistJoined] = useState(false);
   const [successVisitId, setSuccessVisitId] = useState<string | null>(null);
 
@@ -100,15 +101,17 @@ export default function SiteVisitModal({
     visitTime,
     purposeChip,
     purposeCustom,
+    buyerNotes,
   });
+  const bookingBlocked = availability === "unavailable" || availability === "loading";
 
   const displayName = profile?.full_name?.trim() || null;
   const displayPhone = profile?.phone?.trim() || null;
   const displayEmail = profile?.email?.trim() || user?.email || null;
 
   const redirectToLogin = useCallback(() => {
-    router.push(buildLoginUrlForBookVisit(pathname));
-  }, [router, pathname]);
+    router.push(buildLoginUrlForBookVisit(pathname, propertyId));
+  }, [router, pathname, propertyId]);
 
   useEffect(() => {
     if (!open) return;
@@ -122,6 +125,50 @@ export default function SiteVisitModal({
     }, 50);
     return () => window.clearTimeout(t);
   }, [open, propertyId, propertyName]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    let cancelled = false;
+    setAvailability("loading");
+    setError(null);
+    setWaitlistJoined(false);
+    setSuccessVisitId(null);
+
+    const normalized = propertyId?.trim() ?? "";
+    if (!normalized || !PROPERTY_UUID_RE.test(normalized)) {
+      setAvailability("unavailable");
+      return;
+    }
+
+    void (async () => {
+      try {
+        const res = await fetch(
+          `/api/crm/site-visit/availability?propertyId=${encodeURIComponent(normalized)}`,
+        );
+        const data = (await res.json().catch(() => ({}))) as {
+          available?: boolean;
+          message?: string;
+        };
+        if (cancelled) return;
+        if (data.available) {
+          setAvailability("available");
+        } else {
+          setAvailability("unavailable");
+          if (data.message) setError(data.message);
+        }
+      } catch {
+        if (cancelled) return;
+        // Fail open for active listings when the preflight call fails —
+        // booking API still enforces availability.
+        setAvailability("available");
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, propertyId]);
 
   useEffect(() => {
     if (!open) return;
@@ -178,7 +225,7 @@ export default function SiteVisitModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (submittingRef.current) return;
-    if (availability === "unavailable") return;
+    if (bookingBlocked) return;
 
     setError(null);
 
@@ -223,6 +270,7 @@ export default function SiteVisitModal({
       loanAssist,
       language,
       transport,
+      buyerNotes,
     });
 
     const payload = {
@@ -340,6 +388,19 @@ export default function SiteVisitModal({
                 preferred visit time.
               </p>
 
+              <AvailabilityCard
+                status={availability}
+                nextLabel={
+                  availability === "unavailable" || availability === "loading"
+                    ? undefined
+                    : nextSlot.label
+                }
+                waitlistJoined={waitlistJoined}
+                onJoinWaitlist={() => setWaitlistJoined(true)}
+              />
+
+              {availability !== "unavailable" ? (
+                <>
               <ProgressIndicator current={progressStep} />
 
               {aiSlot ? (
@@ -358,7 +419,7 @@ export default function SiteVisitModal({
                     <button
                       type="button"
                       onClick={applyRecommendedSlot}
-                      disabled={submitting}
+                      disabled={submitting || bookingBlocked}
                       className="shrink-0 rounded-full border border-emerald-200 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                     >
                       Use slot
@@ -376,15 +437,6 @@ export default function SiteVisitModal({
                   </ul>
                 </section>
               ) : null}
-
-              <AvailabilityCard
-                status={availability}
-                nextLabel={
-                  availability === "unavailable" ? undefined : nextSlot.label
-                }
-                waitlistJoined={waitlistJoined}
-                onJoinWaitlist={() => setWaitlistJoined(true)}
-              />
 
               <section className="mt-5 rounded-2xl border border-neutral-100 bg-neutral-50/80 p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
@@ -421,8 +473,8 @@ export default function SiteVisitModal({
               )}
 
               <form id="site-visit-concierge-form" onSubmit={handleSubmit} className="mt-6 space-y-6">
-                <fieldset disabled={submitting || availability === "unavailable"} className="space-y-6">
-                  <FieldBlock label="Preferred date" htmlFor="visit-date" required>
+                <fieldset disabled={submitting || bookingBlocked} className="space-y-6">
+                  <FieldBlock label="Select Date" htmlFor="visit-date" required>
                     <input
                       id="visit-date"
                       type="date"
@@ -434,28 +486,48 @@ export default function SiteVisitModal({
                     />
                   </FieldBlock>
 
-                  <FieldBlock label="Preferred time" htmlFor="visit-time" required>
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                      {VISIT_TIMES.map((t) => {
-                        const selected = visitTime === t;
-                        return (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => setVisitTime(t)}
-                            aria-pressed={selected}
-                            className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
-                              selected
-                                ? "border-emerald-500 bg-emerald-50 text-emerald-800"
-                                : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300"
-                            }`}
-                          >
-                            {formatTimeLabel(t)}
-                          </button>
-                        );
-                      })}
+                  <FieldBlock label="Available Time Slots" htmlFor="visit-time" required>
+                    <div className="space-y-4">
+                      {VISIT_TIME_GROUPS.map((group) => (
+                        <div key={group.id}>
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">
+                            {group.label}
+                          </p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {group.times.map((t) => {
+                              const selected = visitTime === t;
+                              return (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() => setVisitTime(t)}
+                                  aria-pressed={selected}
+                                  className={`rounded-xl border px-2 py-2.5 text-sm font-semibold transition ${
+                                    selected
+                                      ? "border-emerald-500 bg-emerald-50 text-emerald-800"
+                                      : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-300"
+                                  }`}
+                                >
+                                  {formatTimeLabel(t)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                     <input id="visit-time" type="hidden" value={visitTime} required />
+                  </FieldBlock>
+
+                  <FieldBlock label="Buyer Notes" htmlFor="buyer-notes" optional>
+                    <textarea
+                      id="buyer-notes"
+                      value={buyerNotes}
+                      onChange={(e) => setBuyerNotes(e.target.value)}
+                      rows={3}
+                      placeholder="Anything we should know before your visit?"
+                      className={`${inputClass} resize-y`}
+                    />
                   </FieldBlock>
 
                   <FieldBlock label="Visit purpose" optional>
@@ -579,11 +651,13 @@ export default function SiteVisitModal({
                   </ol>
                 </section>
               </form>
+                </>
+              ) : null}
             </>
           )}
         </div>
 
-        {!successVisitId ? (
+        {!successVisitId && availability !== "unavailable" ? (
           <div className="border-t border-neutral-100 bg-white/90 px-5 py-4 backdrop-blur-md sm:px-6">
             <div className="flex gap-3">
               <button
@@ -599,7 +673,7 @@ export default function SiteVisitModal({
                 form="site-visit-concierge-form"
                 disabled={
                   submitting ||
-                  availability === "unavailable" ||
+                  bookingBlocked ||
                   !visitDate ||
                   !visitTime
                 }
@@ -615,7 +689,7 @@ export default function SiteVisitModal({
                     Submitting…
                   </>
                 ) : (
-                  "Request Site Visit"
+                  "Request Visit"
                 )}
               </button>
             </div>
@@ -683,6 +757,19 @@ function AvailabilityCard({
   waitlistJoined: boolean;
   onJoinWaitlist: () => void;
 }) {
+  if (status === "loading") {
+    return (
+      <section className="mt-5 rounded-2xl border border-neutral-100 bg-neutral-50/80 p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-neutral-500">
+          Checking
+        </p>
+        <p className="mt-1 text-sm font-semibold text-neutral-950">
+          Checking site visit availability…
+        </p>
+      </section>
+    );
+  }
+
   if (status === "unavailable") {
     return (
       <section className="mt-5 rounded-2xl border border-rose-100 bg-rose-50/70 p-4">
@@ -690,7 +777,7 @@ function AvailabilityCard({
           Unavailable
         </p>
         <p className="mt-1 text-sm font-semibold text-neutral-950">
-          Site Visits Temporarily Unavailable
+          Site visits are temporarily unavailable for this property.
         </p>
         <button
           type="button"

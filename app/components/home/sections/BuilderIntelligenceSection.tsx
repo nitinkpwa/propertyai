@@ -6,7 +6,7 @@ import SectionHeader from "../SectionHeader";
 import GlassCard from "../ui/GlassCard";
 import { buildBuilderShowcaseCards, formatPriceShort } from "@/lib/home/marketSignals";
 import type { BuilderShowcaseCard } from "@/lib/home/types";
-import { fetchListingProperties } from "@/lib/properties/queries";
+import { getCachedListingProperties } from "@/lib/home/listingsCache";
 import { IQ_GREEN } from "../theme";
 
 export default function BuilderIntelligenceSection() {
@@ -15,7 +15,7 @@ export default function BuilderIntelligenceSection() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchListingProperties()
+    getCachedListingProperties()
       .then((rows) => {
         if (!cancelled) setBuilders(buildBuilderShowcaseCards(rows));
       })

@@ -33,6 +33,7 @@ export interface PropertyCardProps {
 }
 
 function formatPrice(price: number): string {
+  if (!price || price <= 0) return "Price on Request";
   if (price >= 10_000_000) {
     const cr = price / 10_000_000;
     return `₹${cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "")} Cr`;
@@ -185,7 +186,6 @@ export default function PropertyCard({
             src={imageUrl}
             alt={imageAlt ?? name}
             fill
-            unoptimized
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
           />

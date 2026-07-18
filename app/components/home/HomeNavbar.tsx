@@ -51,7 +51,7 @@ export default function HomeNavbar() {
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-9 z-50 transition-all duration-500 ${
+        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
           solid
             ? "border-b border-neutral-200/80 bg-white/95 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur-xl"
             : "border-b border-white/20 bg-white/40 backdrop-blur-md"

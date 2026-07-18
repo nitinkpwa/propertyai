@@ -409,24 +409,34 @@ export async function markAllNotificationsRead(userId: string): Promise<boolean>
 }
 
 /**
- * Site visits visible to a Connect partner: strictly the visits stamped with
- * the partner's id (i.e. visits on properties assigned to them) — never every
- * visit made by buyers they happen to know about.
+ * Client-side Connect visits loader. Prefer /api/connect/dashboard which uses
+ * the server client and property-assignment ownership.
  */
 export async function fetchAssignedConnectSiteVisits(
   connectPartnerProfileId: string,
 ): Promise<ConnectSiteVisitRow[]> {
   const { data: partner } = await supabase
     .from("connect_partners")
-    .select("id")
+    .select("id, profile_id")
     .eq("profile_id", connectPartnerProfileId)
     .maybeSingle();
 
   if (!partner?.id) return [];
 
+  const { data: properties } = await supabase
+    .from("properties")
+    .select("id")
+    .or(
+      `connect_partner_id.eq.${partner.id},assigned_connect_id.eq.${connectPartnerProfileId}`,
+    )
+    .is("deleted_at", null);
+
+  const propertyIds = (properties ?? []).map((p) => p.id as string);
+  if (propertyIds.length === 0) return [];
+
   return fetchSiteVisitsWithBuyers<ConnectSiteVisitRow>({
-    filter: { connectPartnerId: partner.id },
-    order: { column: "visit_date", ascending: true },
+    filter: { propertyIds },
+    order: { column: "created_at", ascending: false },
   });
 }
 
@@ -523,6 +533,13 @@ export async function manageSiteVisit(
   });
   const data = await res.json();
   if (!res.ok) return { ok: false, error: data.error ?? "Action failed" };
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent("areaiq:site-visit-updated", {
+        detail: { visitId, action },
+      }),
+    );
+  }
   return { ok: true };
 }
 

@@ -349,6 +349,7 @@ export async function fetchRecommendedPropertyCards(
     .from("properties")
     .select(`${PROPERTIES_CARD_SELECT}, seller:profiles!properties_seller_id_fkey(full_name)`)
     .eq("status", "active")
+    .is("deleted_at", null)
     .order("created_at", { ascending: false })
     .limit(limit);
 

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 
 import NavbarWrapper from "./components/NavbarWrapper";
@@ -12,15 +12,21 @@ import { BRAND } from "@/lib/brand";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") || "https://tech172.com";
+
+const supabaseOrigin = (() => {
+  try {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return url ? new URL(url).origin : null;
+  } catch {
+    return null;
+  }
+})();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -30,6 +36,9 @@ export const metadata: Metadata = {
   },
   description: BRAND.meta.description,
   applicationName: BRAND.name,
+  alternates: {
+    canonical: "/",
+  },
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
@@ -53,12 +62,6 @@ export const metadata: Metadata = {
         width: 1200,
         height: 600,
         alt: BRAND.alt.hero,
-      },
-      {
-        url: BRAND.assets.logo,
-        width: 1200,
-        height: 1200,
-        alt: BRAND.alt.logo,
       },
     ],
   },
@@ -88,10 +91,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
+      <head>
+        {supabaseOrigin ? (
+          <>
+            <link rel="preconnect" href={supabaseOrigin} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={supabaseOrigin} />
+          </>
+        ) : null}
+      </head>
       <body className="min-h-full flex flex-col">
         <BrandJsonLd />
         <AuthProvider>

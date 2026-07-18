@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Profile } from "@/lib/supabase";
 import { getProfileCompleteness } from "@/lib/buyer/profileCompleteness";
 import {
@@ -8,7 +9,7 @@ import {
 } from "@/lib/buyer/profileFields";
 import { calculateLeadScore } from "@/lib/crm/leadScore";
 import { PROFILE_EMBED_SELECT } from "@/lib/profiles/schema";
-import { supabase } from "@/lib/supabase";
+import { supabase as browserSupabase } from "@/lib/supabase";
 
 /** Columns fetched for every CRM buyer embed / batch load */
 export const BUYER_PROFILE_COLUMNS =
@@ -163,11 +164,12 @@ export function resolveBuyerFromRow(
 
 export async function fetchBuyerProfilesByIds(
   ids: string[],
+  client: SupabaseClient = browserSupabase,
 ): Promise<Map<string, BuyerProfileForCRM>> {
   const unique = [...new Set(ids.filter(Boolean))];
   if (unique.length === 0) return new Map();
 
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from("profiles")
     .select(BUYER_PROFILE_COLUMNS)
     .in("id", unique);
@@ -208,30 +210,38 @@ export function enrichVisitRowBuyer<T extends Record<string, unknown>>(
 
 /** Site visits join properties only — buyer is resolved via crm_leads in TypeScript. */
 export const SITE_VISIT_BASE_SELECT =
-  "*, property:properties(title, location, city)";
+  "*, property:properties(id, title, location, city, builder_name)";
 
-export const SITE_VISIT_ADMIN_SELECT = "*, property:properties(title, city)";
+export const SITE_VISIT_ADMIN_SELECT =
+  "*, property:properties(id, title, city, builder_name)";
+
+export const CONNECT_PARTNER_VISIT_SELECT =
+  "*, property:properties(id, title, location, city, builder_name)";
 
 export type SiteVisitQueryFilter = {
   propertyIds?: string[];
   userIds?: string[];
-  /** Property-based ownership: visits stamped with this Connect partner id. */
+  /** Legacy stamp filter — prefer propertyIds for Connect ownership. */
   connectPartnerId?: string;
 };
 
 /**
  * Load site visits without embedding profiles (no FK on site_visits → profiles).
  * Buyer: site_visits.lead_id → crm_leads.buyer_id → profiles, with user_id fallback.
+ *
+ * Pass a server Supabase client from API routes so RLS uses the authenticated session.
  */
 export async function fetchSiteVisitsWithBuyers<T = Record<string, unknown>>(
   options: {
+    client?: SupabaseClient;
     select?: string;
     filter?: SiteVisitQueryFilter;
     order?: { column: string; ascending: boolean };
   } = {},
 ): Promise<Array<T & { buyer: BuyerProfileForCRM | null }>> {
+  const client = options.client ?? browserSupabase;
   const select = options.select ?? SITE_VISIT_BASE_SELECT;
-  let query = supabase.from("site_visits").select(select);
+  let query = client.from("site_visits").select(select);
 
   if (options.filter?.propertyIds?.length) {
     query = query.in("property_id", options.filter.propertyIds);
@@ -265,7 +275,7 @@ export async function fetchSiteVisitsWithBuyers<T = Record<string, unknown>>(
 
   const buyerIdByLeadId = new Map<string, string>();
   if (leadIds.length > 0) {
-    const { data: leads, error: leadError } = await supabase
+    const { data: leads, error: leadError } = await client
       .from("crm_leads")
       .select("id, buyer_id")
       .in("id", leadIds);
@@ -295,7 +305,7 @@ export async function fetchSiteVisitsWithBuyers<T = Record<string, unknown>>(
     ),
   ];
 
-  const profileMap = await fetchBuyerProfilesByIds(buyerIds);
+  const profileMap = await fetchBuyerProfilesByIds(buyerIds, client);
 
   return visits.map((v) => {
     const row = v as Record<string, unknown>;

@@ -13,6 +13,7 @@ import EMIIntelligence from "./components/EMIIntelligence";
 import FloorPlans from "./components/FloorPlans";
 import HealthScoreDashboard from "./components/HealthScoreDashboard";
 import LocationSection from "./components/LocationSection";
+import PendingActionResume from "./components/PendingActionResume";
 import PriceAnalysis from "./components/PriceAnalysis";
 import ProjectTimeline from "./components/ProjectTimeline";
 import PropertyAskPanel from "./components/PropertyAskPanel";
@@ -48,6 +49,7 @@ export default function PropertyDetailView({ property }: PropertyDetailViewProps
       propertyName={property.name}
       builderName={property.builder.name}
     >
+      <PendingActionResume propertyId={property.id} onAskAi={focusAsk} />
       <div className="min-h-screen bg-[linear-gradient(180deg,#f8faf9_0%,#f5f5f5_40%,#fafafa_100%)] pt-16">
         <div className="border-b border-neutral-200/80 bg-white/80 backdrop-blur-md">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
@@ -86,7 +88,7 @@ export default function PropertyDetailView({ property }: PropertyDetailViewProps
                   />
                   <RentalIntelligence data={bundle.rental} />
                   <EMIIntelligence
-                    price={property.price}
+                    property={property}
                     expectedMonthlyRent={bundle.rental.expectedMonthlyRent}
                   />
                   <AreaIntelligenceReportSection data={bundle.area} />

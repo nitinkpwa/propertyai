@@ -12,8 +12,13 @@ import {
   fetchVisitContact,
   submitVisitFeedback,
 } from "@/lib/crm/queries";
-import { SITE_VISIT_BOOKED_EVENT } from "@/lib/crm/events";
-import { formatVisitStatusLabel } from "@/lib/crm/visitWorkflow";
+import { SITE_VISIT_BOOKED_EVENT, SITE_VISIT_UPDATED_EVENT } from "@/lib/crm/events";
+import {
+  formatVisitStatusLabel,
+  isApprovedVisitStatus,
+  matchesVisitStatusFilter,
+  VISIT_STATUS_FILTERS,
+} from "@/lib/crm/visitWorkflow";
 import type { SiteVisitRow } from "@/lib/buyer/types";
 import StepProgress from "@/components/premium/StepProgress";
 import SiteVisitAssistant from "@/components/buyer/SiteVisitAssistant";
@@ -28,6 +33,7 @@ const STATUS_VARIANT: Record<string, "warning" | "info" | "success" | "error" | 
   pending_approval: "warning",
   accepted: "info",
   scheduled: "success",
+  rescheduled: "info",
   completed: "neutral",
   rejected: "error",
   cancelled: "error",
@@ -148,25 +154,29 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
   const [expanded, setExpanded] = useState(visit.status !== "completed");
 
   useEffect(() => {
-    if (["scheduled", "accepted", "completed"].includes(visit.status)) {
+    if (isApprovedVisitStatus(visit.status) || visit.status === "completed") {
       fetchVisitContact(visit.id).then(setContact);
     }
   }, [visit.id, visit.status]);
 
   const checklist = Array.isArray(visit.checklist) ? visit.checklist : [];
-  const isUpcoming = ["pending_approval", "accepted", "scheduled"].includes(visit.status);
+  const isUpcoming =
+    visit.status === "pending_approval" || isApprovedVisitStatus(visit.status);
 
   const steps = [
     { label: "Requested", done: true, active: visit.status === "pending_approval" },
     {
       label: "Approved",
-      done: ["accepted", "scheduled", "completed"].includes(visit.status),
-      active: visit.status === "accepted",
+      done: isApprovedVisitStatus(visit.status) || visit.status === "completed",
+      active: visit.status === "accepted" || visit.status === "scheduled",
     },
     {
       label: "Contact Shared",
-      done: Boolean(contact?.ownerContact?.phone) || ["scheduled", "completed"].includes(visit.status),
-      active: visit.status === "scheduled",
+      done:
+        Boolean(contact?.ownerContact?.phone) ||
+        isApprovedVisitStatus(visit.status) ||
+        visit.status === "completed",
+      active: visit.status === "scheduled" || visit.status === "accepted",
     },
     { label: "Completed", done: visit.status === "completed", active: false },
   ];
@@ -290,7 +300,7 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
           </div>
         ) : null}
 
-        {["scheduled", "accepted", "completed"].includes(visit.status) && !feedbackDone ? (
+        {(isApprovedVisitStatus(visit.status) || visit.status === "completed") && !feedbackDone ? (
           <>
             <button
               type="button"
@@ -320,6 +330,7 @@ export default function SiteVisitsPage() {
   const { user } = useAuth();
   const [visits, setVisits] = useState<SiteVisitRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     if (!user) return;
@@ -333,13 +344,24 @@ export default function SiteVisitsPage() {
 
     load();
 
-    const onBooked = () => load();
-    window.addEventListener(SITE_VISIT_BOOKED_EVENT, onBooked);
-    return () => window.removeEventListener(SITE_VISIT_BOOKED_EVENT, onBooked);
+    const onChange = () => load();
+    window.addEventListener(SITE_VISIT_BOOKED_EVENT, onChange);
+    window.addEventListener(SITE_VISIT_UPDATED_EVENT, onChange);
+    const poll = window.setInterval(load, 20_000);
+    return () => {
+      window.removeEventListener(SITE_VISIT_BOOKED_EVENT, onChange);
+      window.removeEventListener(SITE_VISIT_UPDATED_EVENT, onChange);
+      window.clearInterval(poll);
+    };
   }, [user]);
 
-  const upcoming = visits.filter((v) => ["pending_approval", "accepted", "scheduled"].includes(v.status));
-  const past = visits.filter((v) => !["pending_approval", "accepted", "scheduled"].includes(v.status));
+  const filtered = visits.filter((v) => matchesVisitStatusFilter(v.status, statusFilter));
+  const upcoming = filtered.filter(
+    (v) => v.status === "pending_approval" || isApprovedVisitStatus(v.status),
+  );
+  const past = filtered.filter(
+    (v) => !["pending_approval", "accepted", "scheduled", "rescheduled"].includes(v.status),
+  );
 
   if (loading) return <PageSkeleton rows={3} />;
 
@@ -356,6 +378,25 @@ export default function SiteVisitsPage() {
         }
       />
 
+      {visits.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {VISIT_STATUS_FILTERS.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setStatusFilter(f.value)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                statusFilter === f.value
+                  ? "border-emerald-500 bg-emerald-50 text-emerald-800"
+                  : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
       {visits.length === 0 ? (
         <EmptyState
           icon="📅"
@@ -367,6 +408,10 @@ export default function SiteVisitsPage() {
             "Share feedback after visiting to improve recommendations",
           ]}
         />
+      ) : filtered.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-neutral-200 bg-white px-6 py-10 text-center text-sm text-muted">
+          No visits match this filter.
+        </p>
       ) : (
         <>
           {upcoming.length > 0 ? (

@@ -39,6 +39,7 @@ export interface SiteVisitRow {
     | "pending_approval"
     | "accepted"
     | "scheduled"
+    | "rescheduled"
     | "completed"
     | "rejected"
     | "cancelled";

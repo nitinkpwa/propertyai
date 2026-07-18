@@ -72,7 +72,6 @@ export function AskPropertyCarousel({
                     src={p.imageUrl}
                     alt={p.imageAlt ?? p.name}
                     fill
-                    unoptimized
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="300px"
                   />

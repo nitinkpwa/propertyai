@@ -1,10 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
+  createNotification,
   ensureInquiry,
   ensureLead,
   notifyAdminsOfLead,
   recordLeadActivity,
 } from "./service";
+import { evaluateSiteVisitAvailability } from "./siteVisitAvailability";
 import { lookupPropertyForSiteVisit } from "./lookupPropertyForSiteVisit";
 import {
   debugPropertyOwnerResolution,
@@ -247,23 +249,33 @@ async function notifyPropertyOwner(
     ownerRole: input.ownerRole,
   });
 
-  const { error } = await supabase.from("crm_notifications").insert({
-    user_id: input.ownerId,
-    type: "site_visit_booked",
-    title: input.title,
-    message: input.message,
-    lead_id: input.leadId,
-    property_id: input.propertyId,
-  });
+  try {
+    await createNotification(supabase, {
+      userId: input.ownerId,
+      type: "site_visit_booked",
+      title: input.title,
+      message: input.message,
+      leadId: input.leadId,
+      propertyId: input.propertyId,
+    });
+    return { ok: true };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "notification failed";
+    return { ok: false, error: message };
+  }
+}
 
-  devLogSiteVisit("Seller notification insert", {
-    userId: input.ownerId,
-    success: !error,
-    error: error?.message,
-  });
-
-  if (error) return { ok: false, error: error.message };
-  return { ok: true };
+async function resolveConnectPartnerProfileId(
+  supabase: SupabaseClient,
+  connectPartnerId: string | null,
+): Promise<string | null> {
+  if (!connectPartnerId) return null;
+  const { data } = await supabase
+    .from("connect_partners")
+    .select("id, profile_id")
+    .eq("id", connectPartnerId)
+    .maybeSingle();
+  return (data?.profile_id as string | null | undefined) ?? null;
 }
 
 export async function bookSiteVisit(
@@ -324,46 +336,24 @@ export async function bookSiteVisit(
 
   const property = lookup.property;
 
-  const connectPartnerId = property.connect_partner_id?.trim() || null;
-  if (!connectPartnerId) {
+  const availability = evaluateSiteVisitAvailability(property);
+  if (!availability.available) {
     return {
       ok: false,
-      status: 404,
-      code: "CONNECT_PARTNER_MISSING",
-      message: "This property is not ready for site visits yet. Please try again later.",
-      dev: { propertyId, connect_partner_id: property.connect_partner_id },
-    };
-  }
-
-  const { data: connectPartner, error: partnerError } = await supabase
-    .from("connect_partners")
-    .select("id")
-    .eq("id", connectPartnerId)
-    .maybeSingle();
-
-  if (partnerError) {
-    return {
-      ok: false,
-      status: 500,
-      code: "DATABASE",
-      message: "Could not verify the assigned Connect Partner.",
+      status: 403,
+      code: "SITE_VISITS_DISABLED",
+      message: availability.message,
       dev: {
         propertyId,
-        connectPartnerId,
-        supabaseError: partnerError.message,
+        reason: availability.reason,
+        status: availability.status,
+        siteVisitEnabled: availability.siteVisitEnabled,
       },
     };
   }
 
-  if (!connectPartner) {
-    return {
-      ok: false,
-      status: 404,
-      code: "CONNECT_PARTNER_MISSING",
-      message: "This property is not ready for site visits yet. Please try again later.",
-      dev: { propertyId, connectPartnerId },
-    };
-  }
+  // Connect Partner is optional — seller owns the listing; partner assists when assigned.
+  const connectPartnerId = property.connect_partner_id?.trim() || null;
 
   const { data: existingVisit, error: existingVisitError } = await supabase
     .from("site_visits")
@@ -543,6 +533,7 @@ export async function bookSiteVisit(
   });
 
   const buyerLabel = buyerCheck.profile.full_name ?? buyerCheck.profile.email ?? "A buyer";
+  const propertyTitle = property.title ?? "a property";
 
   const sellerNotification = await notifyPropertyOwner(supabase, {
     propertyId,
@@ -558,7 +549,28 @@ export async function bookSiteVisit(
 
   await notifyAdminsOfLead(supabase, {
     title: "New site visit lead",
-    message: `${buyerLabel} booked a site visit for ${property.title ?? "a property"}.`,
+    message: `${buyerLabel} booked a site visit for ${propertyTitle}.`,
+    leadId: lead.id,
+    propertyId,
+  });
+
+  const partnerProfileId = await resolveConnectPartnerProfileId(supabase, connectPartnerId);
+  if (partnerProfileId) {
+    await createNotification(supabase, {
+      userId: partnerProfileId,
+      type: "site_visit_booked",
+      title: "Site visit requested",
+      message: `${buyerLabel} requested a visit for ${propertyTitle} — ${activityDescription}`,
+      leadId: lead.id,
+      propertyId,
+    });
+  }
+
+  await createNotification(supabase, {
+    userId: input.buyerId,
+    type: "site_visit_booked",
+    title: "Site visit request submitted",
+    message: `Your visit request for ${propertyTitle} on ${dateLabel} at ${visitTime.slice(0, 5)} is pending confirmation.`,
     leadId: lead.id,
     propertyId,
   });
@@ -568,6 +580,8 @@ export async function bookSiteVisit(
     leadId: lead.id,
     inquiryId,
     propertyId,
+    connectPartnerId,
+    partnerProfileId,
   });
 
   return {

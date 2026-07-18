@@ -1,4 +1,4 @@
-import type { ConversationMessage } from "../openai-client";
+import type { ConversationMessage } from "../types";
 import { detectIntent } from "./classifier";
 import { handleBuilder } from "./handlers/builder";
 import { handleCompare } from "./handlers/compare";

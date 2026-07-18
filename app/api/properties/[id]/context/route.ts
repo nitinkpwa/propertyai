@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchPropertyDetailById } from "@/lib/properties/queries";
+import { fetchPropertyDetailById } from "@/lib/properties/detail";
 import type { PropertyContext } from "@/lib/ask/engine/types";
 
 export async function GET(

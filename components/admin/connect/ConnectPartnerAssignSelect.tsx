@@ -44,10 +44,10 @@ export default function ConnectPartnerAssignSelect({
       onChange={(e) => handleChange(e.target.value)}
       onClick={(e) => e.stopPropagation()}
     >
-      <option value="">No partner</option>
+      <option value="">Remove assignment</option>
       {partners.map((p) => (
         <option key={p.id} value={p.id}>
-          {p.company_name}
+          Assign: {p.company_name}
         </option>
       ))}
     </select>

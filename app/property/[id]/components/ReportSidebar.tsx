@@ -49,11 +49,13 @@ export default function ReportSidebar({ property }: ReportSidebarProps) {
       <div className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
         <div className="border-b border-neutral-100 p-5">
           <p className="text-2xl font-bold tracking-tight text-heading-primary">
-            {formatPrice(property.price)}
+            {property.pricingDisplay?.primaryPriceLabel || formatPrice(property.price)}
           </p>
-          <p className="mt-1 text-sm text-muted">
-            ₹{property.pricePerSqFt.toLocaleString("en-IN")} / sq ft
-          </p>
+          {property.pricingDisplay?.rateLabel || property.sizeLabel ? (
+            <p className="mt-1 text-sm text-muted">
+              {[property.pricingDisplay?.rateLabel, property.sizeLabel].filter(Boolean).join(" · ")}
+            </p>
+          ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
             {property.aiVerified && (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">

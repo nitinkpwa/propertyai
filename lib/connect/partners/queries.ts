@@ -1,4 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  CONNECT_PARTNER_VISIT_SELECT,
+  fetchSiteVisitsWithBuyers,
+} from "@/lib/crm/buyerProfile";
+import type { ConnectSiteVisitRow } from "@/lib/crm/types";
 import { calculateLeadScore } from "@/lib/crm/leadScore";
 import type {
   ConnectPartner,
@@ -258,18 +263,80 @@ export async function fetchPartnerBuyers(
   );
 }
 
+/** Property IDs assigned to this Connect partner (via partner row or profile). */
+export async function fetchPartnerAssignedPropertyIds(
+  supabase: SupabaseClient,
+  partnerId: string,
+  partnerProfileId?: string | null,
+): Promise<string[]> {
+  let query = supabase
+    .from("properties")
+    .select("id")
+    .is("deleted_at", null);
+
+  if (partnerProfileId) {
+    query = query.or(
+      `connect_partner_id.eq.${partnerId},assigned_connect_id.eq.${partnerProfileId}`,
+    );
+  } else {
+    query = query.eq("connect_partner_id", partnerId);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("fetchPartnerAssignedPropertyIds:", error.message);
+    return [];
+  }
+  return (data ?? []).map((row) => row.id as string);
+}
+
+/**
+ * Site visits for a Connect partner — always via assigned properties:
+ * properties (connect_partner_id / assigned_connect_id) → property_ids → site_visits.
+ * Never by buyer assignment.
+ */
+export async function fetchPartnerSiteVisits(
+  supabase: SupabaseClient,
+  partnerId: string,
+  partnerProfileId?: string | null,
+): Promise<ConnectSiteVisitRow[]> {
+  const propertyIds = await fetchPartnerAssignedPropertyIds(
+    supabase,
+    partnerId,
+    partnerProfileId,
+  );
+  if (propertyIds.length === 0) return [];
+
+  return fetchSiteVisitsWithBuyers<ConnectSiteVisitRow>({
+    client: supabase,
+    select: CONNECT_PARTNER_VISIT_SELECT,
+    filter: { propertyIds },
+    order: { column: "created_at", ascending: false },
+  });
+}
+
 export async function fetchPartnerProperties(
   supabase: SupabaseClient,
   partnerId: string,
+  partnerProfileId?: string | null,
 ) {
-  const { data, error } = await supabase
+  let query = supabase
     .from("properties")
     .select(
       "id, title, city, location, price, status, type, sub_type, photos, created_at, updated_at",
     )
-    .eq("connect_partner_id", partnerId)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
+
+  if (partnerProfileId) {
+    query = query.or(
+      `connect_partner_id.eq.${partnerId},assigned_connect_id.eq.${partnerProfileId}`,
+    );
+  } else {
+    query = query.eq("connect_partner_id", partnerId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("fetchPartnerProperties:", error.message);
@@ -285,12 +352,10 @@ export async function fetchPartnerProperties(
     supabase
       .from("inquiries")
       .select("property_id")
-      .eq("connect_partner_id", partnerId)
       .in("property_id", propertyIds),
     supabase
       .from("site_visits")
       .select("property_id")
-      .eq("connect_partner_id", partnerId)
       .in("property_id", propertyIds),
     supabase
       .from("property_views")

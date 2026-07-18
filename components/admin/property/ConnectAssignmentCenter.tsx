@@ -5,7 +5,7 @@ import { useActiveConnectPartners } from "@/lib/connect/partners/useActiveConnec
 import type { ConnectPartnerAnalytics } from "@/lib/connect/partners/types";
 import type { ConnectPartner } from "@/lib/supabase";
 import type { AdminPropertyFormState } from "@/lib/admin/property/types";
-import { Field, FieldGrid, SectionHeader, TextInput } from "./ui/FormPrimitives";
+import { Field, FieldGrid, FlagToggle, SectionHeader, TextInput } from "./ui/FormPrimitives";
 
 interface Props {
   form: AdminPropertyFormState;
@@ -110,23 +110,38 @@ export default function ConnectAssignmentCenter({ form, setForm, compact }: Prop
     <div className={compact ? "space-y-4" : "space-y-6"}>
       {!compact ? (
         <SectionHeader
-          title="Assigned Connect Partner"
-          description="One property → one partner. That partner manages every buyer inquiry for this listing."
+          title="Connect Partner (optional)"
+          description="Seller owns and manages this listing. Assign a Connect Partner only when you want them to assist with enquiries."
         />
       ) : null}
+
+      <div className="rounded-xl border border-neutral-200 bg-neutral-50/60 p-4">
+        <FlagToggle
+          label={form.site_visit_enabled !== false ? "Site Visits Enabled" : "Site Visits Disabled"}
+          checked={form.site_visit_enabled !== false}
+          onChange={(v) => setForm({ ...form, site_visit_enabled: v })}
+        />
+        <p className="mt-2 text-xs text-muted">
+          {form.site_visit_enabled !== false
+            ? "Buyers can request site visits when this listing is Active."
+            : "Buyers will see that site visits are temporarily unavailable."}
+        </p>
+      </div>
 
       <FieldGrid>
         <Field label="Search partners" span={2}>
           <TextInput value={search} onChange={setSearch} placeholder="Search by company, manager or email..." />
         </Field>
-        <Field label="Assigned Connect Partner" span={2}>
+        <Field label="Assign Connect Partner" span={2}>
           <select
             className="w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
             value={form.connect_partner_id}
             disabled={loading}
             onChange={(e) => assignPartner(e.target.value)}
           >
-            <option value="">{loading ? "Loading partners…" : "— No partner assigned —"}</option>
+            <option value="">
+              {loading ? "Loading partners…" : "— Remove assignment / none —"}
+            </option>
             {filteredPartners.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.company_name} · {p.manager_name}

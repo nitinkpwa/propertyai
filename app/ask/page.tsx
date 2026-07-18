@@ -1,14 +1,25 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { PropertyContext } from "@/lib/ask/client";
 import { useAskChat } from "@/lib/ask/conversations/useAskChat";
 import { AskChatThread } from "./components/chat/AskChatThread";
 import { AskComposer } from "./components/chat/AskComposer";
-import { AskIntelPanel } from "./components/intel/AskIntelPanel";
 import { AskCopilotSidebar } from "./components/sidebar/AskCopilotSidebar";
 import { getLatestAssistantMessage } from "./lib/turnFromMessage";
+
+const AskIntelPanel = dynamic(
+  () => import("./components/intel/AskIntelPanel").then((m) => m.AskIntelPanel),
+  {
+    loading: () => (
+      <div className="flex h-full items-center justify-center bg-[#FAFBFA] text-sm text-muted">
+        Loading insights…
+      </div>
+    ),
+  },
+);
 
 function AskPageContent() {
   const searchParams = useSearchParams();

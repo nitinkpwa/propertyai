@@ -1,3 +1,10 @@
+import {
+  buildNearbyPlacesPayload,
+  emptyPropertyStructuredMeta,
+  extractNearbyPlacesList,
+  extractPropertyMeta,
+} from "@/lib/properties/nearbyPlacesMeta";
+import { PROPERTY_STATUS, toPropertyStatus } from "@/lib/properties/status";
 import { supabase } from "@/lib/supabase";
 import type { Profile } from "@/lib/supabase";
 import { PROFILE_EMBED_SELECT } from "@/lib/profiles/schema";
@@ -338,7 +345,7 @@ export function buildOverviewStats(input: {
 }): AdminOverviewStats {
   const pending = input.usesApprovalStatus
     ? input.properties.filter((p) => p.approval_status === "pending").length
-    : input.properties.filter((p) => p.status === "draft").length;
+    : input.properties.filter((p) => p.status === "paused").length;
 
   const approved = input.usesApprovalStatus
     ? input.properties.filter((p) => p.approval_status === "approved").length
@@ -445,43 +452,63 @@ export function getPendingProperties(
   if (usesApprovalStatus) {
     return properties.filter((p) => p.approval_status === "pending");
   }
-  return properties.filter((p) => p.status === "draft");
+  return properties.filter((p) => p.status === "paused");
 }
 
 export async function approveProperty(id: string): Promise<{ ok: boolean; error?: string }> {
-  const { data: property, error: fetchError } = await supabase
-    .from("properties")
-    .select("id, connect_partner_id")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (fetchError) {
-    return { ok: false, error: fetchError.message };
-  }
-  if (!property) {
-    return { ok: false, error: "Property not found" };
-  }
-  if (!property.connect_partner_id) {
-    return {
-      ok: false,
-      error: "Assign a Connect Partner before publishing.",
-    };
-  }
-
+  // Seller remains owner. Connect Partner is optional and not required for go-live.
   const usesApproval = await hasApprovalStatusColumn();
   const payload = usesApproval
-    ? { approval_status: "approved", status: "active", updated_at: new Date().toISOString() }
-    : { status: "active", updated_at: new Date().toISOString() };
+    ? {
+        approval_status: "approved",
+        status: PROPERTY_STATUS.ACTIVE,
+        updated_at: new Date().toISOString(),
+      }
+    : { status: PROPERTY_STATUS.ACTIVE, updated_at: new Date().toISOString() };
 
-  const { error } = await supabase.from("properties").update(payload).eq("id", id);
-  return error ? { ok: false, error: error.message } : { ok: true };
+  const { data, error } = await supabase
+    .from("properties")
+    .update(payload)
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { ok: false, error: error.message };
+  if (!data?.id) return { ok: false, error: "Property not found" };
+  return { ok: true };
 }
 
 export async function rejectProperty(id: string): Promise<{ ok: boolean; error?: string }> {
   const usesApproval = await hasApprovalStatusColumn();
+
+  // Mark seller-facing badge as Rejected via nearby_places.meta.publishing.workflowStatus
+  const { data: existing } = await supabase
+    .from("properties")
+    .select("nearby_places")
+    .eq("id", id)
+    .maybeSingle();
+
+  let nearbyPlaces = existing?.nearby_places ?? null;
+  try {
+    const meta = extractPropertyMeta(nearbyPlaces) ?? emptyPropertyStructuredMeta();
+    meta.publishing = { ...meta.publishing, workflowStatus: "archived" };
+    nearbyPlaces = buildNearbyPlacesPayload(extractNearbyPlacesList(nearbyPlaces), meta);
+  } catch {
+    /* keep existing nearby_places */
+  }
+
   const payload = usesApproval
-    ? { approval_status: "rejected", status: "paused", updated_at: new Date().toISOString() }
-    : { status: "paused", updated_at: new Date().toISOString() };
+    ? {
+        approval_status: "rejected",
+        status: PROPERTY_STATUS.PAUSED,
+        nearby_places: nearbyPlaces,
+        updated_at: new Date().toISOString(),
+      }
+    : {
+        status: PROPERTY_STATUS.PAUSED,
+        nearby_places: nearbyPlaces,
+        updated_at: new Date().toISOString(),
+      };
 
   const { error } = await supabase.from("properties").update(payload).eq("id", id);
   return error ? { ok: false, error: error.message } : { ok: true };
@@ -496,27 +523,10 @@ export async function updatePropertyStatus(
   id: string,
   status: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  if (status === "active") {
-    const { data: property, error: fetchError } = await supabase
-      .from("properties")
-      .select("connect_partner_id")
-      .eq("id", id)
-      .maybeSingle();
-
-    if (fetchError) {
-      return { ok: false, error: fetchError.message };
-    }
-    if (!property?.connect_partner_id) {
-      return {
-        ok: false,
-        error: "Assign a Connect Partner before publishing.",
-      };
-    }
-  }
-
+  const safeStatus = toPropertyStatus(status);
   const { error } = await supabase
     .from("properties")
-    .update({ status, updated_at: new Date().toISOString() })
+    .update({ status: safeStatus, updated_at: new Date().toISOString() })
     .eq("id", id);
   return error ? { ok: false, error: error.message } : { ok: true };
 }

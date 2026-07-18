@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { buildLoginUrlWithIntent, clearPendingAuthIntent } from "@/lib/auth/pendingIntent";
 import { addComparedProperty } from "@/lib/buyer/queries";
 import { useSavedProperty } from "@/lib/buyer/useSavedProperty";
 import type { PropertyDetail } from "../data";
@@ -78,13 +79,20 @@ export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
 
   const handleCompare = useCallback(async () => {
     if (!user) {
-      router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+      router.push(
+        buildLoginUrlWithIntent({
+          action: "compare",
+          propertyId: property.id,
+          returnUrl: `${window.location.pathname}${window.location.search}`,
+        }),
+      );
       return;
     }
     setComparing(true);
     const ok = await addComparedProperty(user.id, property.id);
     setComparing(false);
     if (ok) {
+      clearPendingAuthIntent();
       setCompared(true);
       router.push("/buyer/compare");
     }
@@ -135,14 +143,19 @@ export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
 
             <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <p className="text-3xl font-bold tracking-tight text-heading-primary sm:text-4xl">
-                {formatPrice(property.price)}
+                {property.pricingDisplay?.primaryPriceLabel || formatPrice(property.price)}
               </p>
               <p className="text-sm text-muted">
-                ₹{property.pricePerSqFt.toLocaleString("en-IN")}/sq ft
-                <span className="mx-1.5 text-neutral-300">·</span>
-                {property.configuration}
-                <span className="mx-1.5 text-neutral-300">·</span>
-                {property.area.toLocaleString("en-IN")} sq ft
+                {[
+                  property.pricingDisplay?.rateLabel,
+                  property.configuration,
+                  property.sizeLabel ||
+                    (!/plot/i.test(property.propertyType) && property.area > 0
+                      ? `${property.area.toLocaleString("en-IN")} sq ft`
+                      : null),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
               </p>
             </div>
           </div>

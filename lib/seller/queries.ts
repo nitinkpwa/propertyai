@@ -1,7 +1,22 @@
 import { fetchSiteVisitsWithBuyers } from "@/lib/crm/buyerProfile";
+import {
+  buildNearbyPlacesPayload,
+  emptyPropertyStructuredMeta,
+  extractNearbyPlacesList,
+  extractPropertyMeta,
+} from "@/lib/properties/nearbyPlacesMeta";
+import {
+  PROPERTY_STATUS,
+  PROPERTY_STATUS_DEFAULT_CREATE,
+  toPropertyStatus,
+} from "@/lib/properties/status";
 import { pickWritableProfileFields } from "@/lib/profiles/schema";
 import { supabase } from "@/lib/supabase";
-import { PROPERTIES_BASE_SELECT } from "./propertySchema";
+import {
+  patchPublishingWorkflow,
+  workflowForSellerSave,
+} from "./listingStatus";
+import { PROPERTIES_SELLER_SELECT } from "./propertySchema";
 import type {
   LeadStatus,
   PropertyFormState,
@@ -16,7 +31,45 @@ import type {
   VisitStatus,
 } from "./types";
 
-const PROPERTY_SELECT = PROPERTIES_BASE_SELECT;
+const PROPERTY_SELECT = PROPERTIES_SELLER_SELECT;
+
+const PROPERTY_PHOTOS_BUCKET = "property-photos";
+
+function storagePathFromPublicUrl(url: string): string | null {
+  const marker = `/object/public/${PROPERTY_PHOTOS_BUCKET}/`;
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return decodeURIComponent(url.slice(idx + marker.length).split("?")[0] ?? "");
+}
+
+function buildSellerNearbyPlaces(
+  formNearby: string,
+  existingNearby: unknown,
+  workflowStatus: string,
+) {
+  const fromForm = formNearby
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((name) => ({ name, distance: "", type: "mall" }));
+  const places =
+    fromForm.length > 0 ? fromForm : extractNearbyPlacesList(existingNearby);
+  const baseMeta = extractPropertyMeta(existingNearby) ?? emptyPropertyStructuredMeta();
+  const meta = patchPublishingWorkflow(baseMeta, workflowStatus);
+  return buildNearbyPlacesPayload(places, meta);
+}
+
+function nearbyPlacesToFormString(raw: unknown): string {
+  const places = extractNearbyPlacesList(raw);
+  if (places.length) return places.map((p) => p.name).join(", ");
+  if (Array.isArray(raw)) {
+    return raw
+      .map((item) => (typeof item === "string" ? item : ""))
+      .filter(Boolean)
+      .join(", ");
+  }
+  return "";
+}
 
 function countByPropertyId(rows: Array<{ property_id: string }>): Record<string, number> {
   const map: Record<string, number> = {};
@@ -55,7 +108,7 @@ export async function fetchSellerDashboardStats(
   const stats: SellerDashboardStats = {
     totalProperties: rows.length,
     activeListings: rows.filter((p) => p.status === "active").length,
-    draftListings: rows.filter((p) => p.status === "draft").length,
+    draftListings: rows.filter((p) => p.status === "paused").length,
     soldListings: rows.filter((p) => p.status === "sold").length,
     totalViews: 0,
     savedByBuyers: 0,
@@ -83,18 +136,43 @@ export async function fetchSellerDashboardStats(
 export async function fetchSellerProperties(
   sellerId: string,
 ): Promise<SellerPropertyRow[]> {
-  const { data, error } = await supabase
+  console.log("[fetchSellerProperties] start", { sellerId });
+  const primary = await supabase
     .from("properties")
     .select(PROPERTY_SELECT)
     .eq("seller_id", sellerId)
     .order("updated_at", { ascending: false, nullsFirst: false });
 
-  if (error) {
-    console.error("fetchSellerProperties:", error.message);
-    return [];
+  let rows = primary.data;
+  let fetchError = primary.error;
+
+  // Resilient fallback before site_visit_enabled migration is applied.
+  if (
+    fetchError &&
+    (fetchError.message.includes("site_visit_enabled") || fetchError.code === "42703")
+  ) {
+    const fallbackSelect = PROPERTY_SELECT.replace(", site_visit_enabled", "");
+    const fallback = await supabase
+      .from("properties")
+      .select(fallbackSelect)
+      .eq("seller_id", sellerId)
+      .order("updated_at", { ascending: false, nullsFirst: false });
+    rows = fallback.data as typeof primary.data;
+    fetchError = fallback.error;
   }
 
-  const properties = (data ?? []) as Omit<
+  console.log("[fetchSellerProperties] response", {
+    count: rows?.length ?? 0,
+    error: fetchError ?? null,
+    ids: (rows ?? []).map((r) => r.id),
+  });
+
+  if (fetchError) {
+    console.error("fetchSellerProperties:", fetchError.message, fetchError);
+    throw new Error(`Failed to load properties: ${fetchError.message}`);
+  }
+
+  const properties = (rows ?? []) as Omit<
     SellerPropertyRow,
     "view_count" | "save_count" | "lead_count"
   >[];
@@ -357,10 +435,19 @@ export function formToPayload(
   form: PropertyFormState,
   user: { id: string; full_name?: string | null },
   photos: string[],
-  status: PropertyListingStatus,
+  options?: {
+    status?: PropertyListingStatus;
+    asDraft?: boolean;
+    existingNearbyPlaces?: unknown;
+  },
 ) {
+  const asDraft = options?.asDraft ?? false;
+  const workflow = workflowForSellerSave(asDraft);
+  const featured =
+    form.featured_image?.trim() || photos[0] || null;
+
   return {
-    title: form.title,
+    title: form.title.trim(),
     description: form.description || null,
     type: form.type,
     sub_type: form.sub_type,
@@ -368,19 +455,62 @@ export function formToPayload(
     area_sqft: parseFloat(form.area_sqft) || null,
     bedrooms: parseInt(form.bedrooms, 10) || null,
     bathrooms: parseInt(form.bathrooms, 10) || null,
-    location: form.location,
+    location: form.location.trim(),
     city: form.city,
     sector: form.sector || null,
     lat: form.lat ? parseFloat(form.lat) : null,
     lng: form.lng ? parseFloat(form.lng) : null,
-    contact_name: form.contact_name || user.full_name,
-    contact_phone: form.contact_phone,
+    contact_name: form.contact_name || user.full_name || null,
+    contact_phone: form.contact_phone || null,
     amenities: form.amenities
       ? form.amenities.split(",").map((a) => a.trim()).filter(Boolean)
       : [],
     photos,
-    status,
+    builder_name: form.builder_name || null,
+    furnishing: form.furnishing || null,
+    parking: form.parking || null,
+    facing: form.facing || null,
+    rera_number: form.rera_number || null,
+    possession: form.possession || null,
+    featured_image: featured,
+    nearby_places: buildSellerNearbyPlaces(
+      form.nearby_places,
+      options?.existingNearbyPlaces ?? null,
+      workflow,
+    ),
+    site_visit_enabled: form.site_visit_enabled !== false,
+    status: toPropertyStatus(options?.status ?? PROPERTY_STATUS_DEFAULT_CREATE),
     updated_at: new Date().toISOString(),
+  };
+}
+
+export function propertyRowToFormState(prop: SellerPropertyRow): PropertyFormState {
+  return {
+    title: prop.title ?? "",
+    description: prop.description ?? "",
+    type: prop.type,
+    sub_type: prop.sub_type,
+    price: prop.price?.toString() ?? "",
+    area_sqft: prop.area_sqft?.toString() ?? "",
+    bedrooms: prop.bedrooms?.toString() ?? "",
+    bathrooms: prop.bathrooms?.toString() ?? "",
+    location: prop.location ?? "",
+    city: prop.city ?? "Mohali",
+    sector: prop.sector ?? "",
+    builder_name: prop.builder_name ?? "",
+    furnishing: prop.furnishing ?? "",
+    parking: prop.parking ?? "",
+    facing: prop.facing ?? "",
+    amenities: (prop.amenities ?? []).join(", "),
+    nearby_places: nearbyPlacesToFormString(prop.nearby_places),
+    lat: prop.lat?.toString() ?? "",
+    lng: prop.lng?.toString() ?? "",
+    rera_number: prop.rera_number ?? "",
+    possession: prop.possession ?? "",
+    featured_image: prop.featured_image ?? "",
+    contact_name: prop.contact_name ?? "",
+    contact_phone: prop.contact_phone ?? "",
+    site_visit_enabled: prop.site_visit_enabled ?? true,
   };
 }
 
@@ -388,57 +518,207 @@ export async function saveSellerProperty(
   sellerId: string,
   payload: ReturnType<typeof formToPayload>,
   editId?: string | null,
-): Promise<{ ok: boolean; error?: string }> {
-  // Sellers may only create/update drafts. Admin publishes after review + Connect Partner.
-  const safePayload = { ...payload, status: "draft" as const };
+  options?: { asDraft?: boolean },
+): Promise<{ ok: boolean; error?: string; propertyId?: string }> {
+  const asDraft = options?.asDraft ?? false;
+
+  console.log("[saveSellerProperty] start", {
+    sellerId,
+    editId: editId ?? null,
+    asDraft,
+    status: payload.status,
+    title: payload.title,
+    photos: Array.isArray(payload.photos) ? payload.photos.length : 0,
+  });
 
   if (editId) {
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from("properties")
-      .select("status")
+      .select("id, status, seller_id, nearby_places")
       .eq("id", editId)
       .eq("seller_id", sellerId)
       .maybeSingle();
 
-    // Allow sellers to edit content of already-published listings without changing status.
-    const preservePublishedStatus =
-      existing?.status === "active" ||
-      existing?.status === "paused" ||
-      existing?.status === "sold" ||
-      existing?.status === "rented";
+    if (existingError) {
+      console.error("[saveSellerProperty] fetch existing failed", existingError);
+      return { ok: false, error: existingError.message };
+    }
+    if (!existing) {
+      return {
+        ok: false,
+        error: "Could not load this listing for edit (not found or not owned by you).",
+      };
+    }
 
-    const updatePayload = preservePublishedStatus
-      ? Object.fromEntries(
-          Object.entries(safePayload).filter(([key]) => key !== "status"),
-        )
-      : safePayload;
+    const updatePayload: Record<string, unknown> = { ...payload };
 
-    const { error } = await supabase
+    // Never let sellers self-publish. Keep active/sold/rented; drafts stay paused.
+    if (existing.status === PROPERTY_STATUS.ACTIVE) {
+      updatePayload.status = PROPERTY_STATUS.ACTIVE;
+    } else if (
+      existing.status === PROPERTY_STATUS.SOLD ||
+      existing.status === PROPERTY_STATUS.RENTED
+    ) {
+      updatePayload.status = existing.status;
+    } else {
+      updatePayload.status = PROPERTY_STATUS_DEFAULT_CREATE;
+    }
+
+    // Ensure workflow meta reflects Save as Draft vs Submit for Review.
+    updatePayload.nearby_places = buildSellerNearbyPlaces(
+      extractNearbyPlacesList(payload.nearby_places)
+        .map((p) => p.name)
+        .join(", "),
+      existing.nearby_places,
+      workflowForSellerSave(asDraft),
+    );
+
+    let { data, error } = await supabase
       .from("properties")
       .update(updatePayload)
       .eq("id", editId)
-      .eq("seller_id", sellerId);
-    return error ? { ok: false, error: error.message } : { ok: true };
+      .eq("seller_id", sellerId)
+      .select("id")
+      .maybeSingle();
+
+    if (
+      error &&
+      (error.message.includes("site_visit_enabled") || error.code === "42703")
+    ) {
+      const { site_visit_enabled: _sv, ...withoutVisitFlag } = updatePayload;
+      ({ data, error } = await supabase
+        .from("properties")
+        .update(withoutVisitFlag)
+        .eq("id", editId)
+        .eq("seller_id", sellerId)
+        .select("id")
+        .maybeSingle());
+    }
+
+    console.log("[saveSellerProperty] update response", { data, error });
+    if (error) return { ok: false, error: error.message };
+    if (!data?.id) {
+      return {
+        ok: false,
+        error:
+          "Update reported no row. Check RLS: sellers need SELECT/UPDATE on their own properties.",
+      };
+    }
+    return { ok: true, propertyId: data.id };
   }
 
-  const { error } = await supabase
-    .from("properties")
-    .insert({ ...safePayload, seller_id: sellerId });
+  const insertBody = {
+    ...payload,
+    status: PROPERTY_STATUS_DEFAULT_CREATE,
+    seller_id: sellerId,
+  };
+  console.log("[saveSellerProperty] insert payload", insertBody);
 
-  return error ? { ok: false, error: error.message } : { ok: true };
+  let { data, error } = await supabase
+    .from("properties")
+    .insert(insertBody)
+    .select("id, status, seller_id, title")
+    .maybeSingle();
+
+  if (
+    error &&
+    (error.message.includes("site_visit_enabled") || error.code === "42703")
+  ) {
+    const { site_visit_enabled: _sv, ...withoutVisitFlag } = insertBody;
+    ({ data, error } = await supabase
+      .from("properties")
+      .insert(withoutVisitFlag)
+      .select("id, status, seller_id, title")
+      .maybeSingle());
+  }
+
+  console.log("[saveSellerProperty] insert response", { data, error });
+
+  if (error) {
+    return { ok: false, error: `${error.message}${error.code ? ` (${error.code})` : ""}` };
+  }
+  if (!data?.id) {
+    return {
+      ok: false,
+      error:
+        "Insert returned no row. The listing may have been written but RLS is blocking SELECT.",
+    };
+  }
+
+  return { ok: true, propertyId: data.id };
 }
 
+/** @deprecated Use deleteSellerProperty — soft delete only paused the row and looked like a no-op. */
 export async function softDeleteProperty(
   propertyId: string,
   sellerId: string,
 ): Promise<boolean> {
-  const { error } = await supabase
-    .from("properties")
-    .update({ status: "paused", updated_at: new Date().toISOString() })
-    .eq("id", propertyId)
-    .eq("seller_id", sellerId);
+  const result = await deleteSellerProperty(propertyId, sellerId);
+  return result.ok;
+}
 
-  return !error;
+/** Permanently delete a seller-owned property and its storage images. */
+export async function deleteSellerProperty(
+  propertyId: string,
+  sellerId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  console.log("[deleteSellerProperty] start", { propertyId, sellerId });
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("properties")
+    .select("id, seller_id, photos, featured_image")
+    .eq("id", propertyId)
+    .eq("seller_id", sellerId)
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error("[deleteSellerProperty] fetch failed", fetchError);
+    return { ok: false, error: fetchError.message };
+  }
+  if (!existing) {
+    return { ok: false, error: "Property not found or you do not own it." };
+  }
+
+  const urls = [
+    ...(Array.isArray(existing.photos) ? existing.photos : []),
+    existing.featured_image,
+  ].filter((u): u is string => typeof u === "string" && u.length > 0);
+
+  const paths = [...new Set(urls.map(storagePathFromPublicUrl).filter(Boolean))] as string[];
+  if (paths.length > 0) {
+    const { error: storageError } = await supabase.storage
+      .from(PROPERTY_PHOTOS_BUCKET)
+      .remove(paths);
+    if (storageError) {
+      console.warn("[deleteSellerProperty] storage cleanup warning", storageError.message);
+      // Continue — DB row delete is the source of truth for the listing.
+    } else {
+      console.log("[deleteSellerProperty] removed storage paths", paths);
+    }
+  }
+
+  const { data: deleted, error: deleteError } = await supabase
+    .from("properties")
+    .delete()
+    .eq("id", propertyId)
+    .eq("seller_id", sellerId)
+    .select("id")
+    .maybeSingle();
+
+  console.log("[deleteSellerProperty] delete response", { deleted, deleteError });
+
+  if (deleteError) {
+    return { ok: false, error: deleteError.message };
+  }
+  if (!deleted?.id) {
+    return {
+      ok: false,
+      error:
+        "Delete reported no row. Check RLS: sellers need DELETE on their own properties.",
+    };
+  }
+
+  return { ok: true };
 }
 
 export async function updatePropertyStatus(
@@ -447,7 +727,7 @@ export async function updatePropertyStatus(
   status: PropertyListingStatus,
 ): Promise<{ ok: boolean; error?: string }> {
   // Sellers may pause or mark sold/rented, but never publish (activate).
-  if (status === "active") {
+  if (status === PROPERTY_STATUS.ACTIVE) {
     return {
       ok: false,
       error: "Only AreaIQ admin can publish listings after review.",
@@ -466,25 +746,56 @@ export async function updatePropertyStatus(
 export async function duplicateProperty(
   propertyId: string,
   sellerId: string,
-): Promise<boolean> {
+): Promise<{ ok: boolean; error?: string; propertyId?: string }> {
   const { data, error } = await supabase
     .from("properties")
     .select(PROPERTY_SELECT)
     .eq("id", propertyId)
     .eq("seller_id", sellerId)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) return false;
+  if (error) return { ok: false, error: error.message };
+  if (!data) return { ok: false, error: "Property not found or you do not own it." };
 
-  const { id: _id, created_at: _c, updated_at: _u, ...rest } = data as Record<string, unknown>;
-  const { error: insertError } = await supabase.from("properties").insert({
-    ...rest,
-    title: `Copy of ${data.title}`,
-    status: "draft",
-    seller_id: sellerId,
-  });
+  const row = data as Record<string, unknown>;
+  const {
+    id: _id,
+    created_at: _c,
+    updated_at: _u,
+    views: _views,
+    deleted_at: _deleted,
+    connect_partner_id: _cp,
+    assigned_connect_id: _ac,
+    ...rest
+  } = row;
 
-  return !insertError;
+  const nearby = buildSellerNearbyPlaces(
+    extractNearbyPlacesList(row.nearby_places)
+      .map((p) => p.name)
+      .join(", "),
+    row.nearby_places,
+    "draft",
+  );
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("properties")
+    .insert({
+      ...rest,
+      title: `Copy of ${String(row.title ?? "Listing")}`,
+      status: PROPERTY_STATUS_DEFAULT_CREATE,
+      seller_id: sellerId,
+      nearby_places: nearby,
+      is_featured: false,
+      updated_at: new Date().toISOString(),
+    })
+    .select("id")
+    .maybeSingle();
+
+  if (insertError) return { ok: false, error: insertError.message };
+  if (!inserted?.id) {
+    return { ok: false, error: "Duplicate insert returned no row (check RLS SELECT)." };
+  }
+  return { ok: true, propertyId: inserted.id };
 }
 
 export async function fetchSellerProfile(userId: string): Promise<SellerProfile | null> {
@@ -520,20 +831,29 @@ export async function uploadPropertyPhotos(
   userId: string,
   files: File[],
 ): Promise<string[]> {
+  console.log("[uploadPropertyPhotos] start", { userId, fileCount: files.length });
   const uploaded: string[] = [];
+  const failures: string[] = [];
   for (const photo of files) {
     const ext = photo.name.split(".").pop();
     const filename = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { data, error } = await supabase.storage
       .from("property-photos")
       .upload(filename, photo);
-    if (!error && data) {
-      const { data: urlData } = supabase.storage
-        .from("property-photos")
-        .getPublicUrl(filename);
-      uploaded.push(urlData.publicUrl);
+    if (error || !data) {
+      console.error("[uploadPropertyPhotos] failed", { name: photo.name, error });
+      failures.push(`${photo.name}: ${error?.message ?? "upload failed"}`);
+      continue;
     }
+    const { data: urlData } = supabase.storage
+      .from("property-photos")
+      .getPublicUrl(filename);
+    uploaded.push(urlData.publicUrl);
   }
+  console.log("[uploadPropertyPhotos] done", {
+    uploaded: uploaded.length,
+    failures,
+  });
   return uploaded;
 }
 

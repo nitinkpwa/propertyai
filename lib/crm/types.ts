@@ -77,6 +77,7 @@ export type VisitStatus =
   | "pending_approval"
   | "accepted"
   | "scheduled"
+  | "rescheduled"
   | "completed"
   | "rejected"
   | "cancelled";
@@ -230,9 +231,24 @@ export interface ConnectSiteVisitRow {
   property_id: string;
   visit_date: string;
   visit_time: string;
-  status: string;
+  status: VisitStatus | string;
   purpose?: string | null;
-  property?: { title?: string; location?: string; city?: string } | null;
+  builder_name?: string | null;
+  created_at?: string | null;
+  accepted_at?: string | null;
+  accepted_by?: string | null;
+  rejected_at?: string | null;
+  rejected_by?: string | null;
+  completed_at?: string | null;
+  rescheduled_from?: string | null;
+  rescheduled_to?: string | null;
+  property?: {
+    id?: string;
+    title?: string;
+    location?: string;
+    city?: string;
+    builder_name?: string | null;
+  } | null;
   buyer: BuyerProfileForCRM | null;
 }
 

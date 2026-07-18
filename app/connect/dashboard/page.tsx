@@ -74,6 +74,7 @@ function ConnectDashboardInner() {
   }, []);
 
   useEffect(() => {
+    let poll: number | undefined;
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -89,7 +90,13 @@ function ConnectDashboardInner() {
       await loadDashboard();
       void fetch("/api/connect/dashboard", { method: "POST" });
       setLoading(false);
+      poll = window.setInterval(() => {
+        void loadDashboard();
+      }, 20_000);
     })();
+    return () => {
+      if (poll) window.clearInterval(poll);
+    };
   }, [router, loadDashboard]);
 
   const handleLogout = async () => {

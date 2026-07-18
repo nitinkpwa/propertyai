@@ -30,7 +30,10 @@ export default function PriceAnalysis({ data }: PriceAnalysisProps) {
     },
     {
       label: "Price / sq ft",
-      value: `₹${data.pricePerSqFt.toLocaleString("en-IN")}`,
+      value:
+        data.pricePerSqFt > 0
+          ? `₹${data.pricePerSqFt.toLocaleString("en-IN")}`
+          : "—",
     },
     {
       label: "Area Avg / sq ft",

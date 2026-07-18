@@ -1,6 +1,10 @@
 import type { BHKOption, PropertyCardProps } from "../../components/PropertyCard";
 import type { AreaIntelligenceReport } from "@/lib/intelligence/types";
 import type { PropertyStructuredMeta } from "@/lib/properties/nearbyPlacesMeta";
+import {
+  formatInrAmount,
+  type NormalizedPricing,
+} from "@/lib/properties/pricingDisplay";
 
 export interface AISummary {
   summary: string;
@@ -218,11 +222,17 @@ export interface PropertyDetail {
   builder: BuilderInfo;
   location: string;
   city: string;
+  /** Total price when known; 0 means unknown — use pricingDisplay.primaryPriceLabel */
   price: number;
+  /** Legacy PPSF; prefer pricingDisplay for UI */
   pricePerSqFt: number;
+  /** Normalized multi-unit pricing for buyer UI */
+  pricingDisplay: NormalizedPricing;
   propertyType: string;
   bhk: BHKOption;
   area: number;
+  /** Plot / size display e.g. "100–150 Sq Yard" */
+  sizeLabel: string;
   status: string;
   possession: string;
   configuration: string;
@@ -247,13 +257,11 @@ export interface PropertyDetail {
 }
 
 export function formatPrice(price: number): string {
-  if (price >= 10_000_000) {
-    const cr = price / 10_000_000;
-    return `₹${cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "")} Cr`;
-  }
-  if (price >= 100_000) {
-    const lakhs = price / 100_000;
-    return `₹${lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(2).replace(/\.?0+$/, "")} L`;
-  }
-  return `₹${price.toLocaleString("en-IN")}`;
+  if (!price || price <= 0) return "Price on Request";
+  return formatInrAmount(price);
+}
+
+/** Buyer-facing primary price line from normalized pricing. */
+export function formatPropertyPrice(property: Pick<PropertyDetail, "pricingDisplay" | "price">): string {
+  return property.pricingDisplay?.primaryPriceLabel || formatPrice(property.price);
 }

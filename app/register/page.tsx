@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
 import AccountTypeSelector from "@/components/auth/AccountTypeSelector";
 import AuthAlert from "@/components/auth/AuthAlert";
 import AuthButton from "@/components/auth/AuthButton";
@@ -11,11 +11,18 @@ import AuthLayout from "@/components/auth/AuthLayout";
 import { registerAccount } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
 import type { AccountType } from "@/lib/auth/mobile";
+import {
+  clearPendingAuthIntentIfManualLogin,
+  resolvePostAuthDestination,
+} from "@/lib/auth/pendingIntent";
 import { getDashboardPath } from "@/lib/auth/profile";
 import { validateRegistration } from "@/lib/auth/validation";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
+
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -28,6 +35,14 @@ export default function RegisterPage() {
   const [fieldError, setFieldError] = useState<string | null>(null);
 
   const isBuyer = accountType === "buyer";
+
+  useEffect(() => {
+    clearPendingAuthIntentIfManualLogin(Boolean(redirectTo));
+  }, [redirectTo]);
+
+  const loginHref = redirectTo
+    ? `/login?redirect=${encodeURIComponent(redirectTo)}`
+    : "/login";
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -61,7 +76,13 @@ export default function RegisterPage() {
         contactEmail: isBuyer && email.trim() ? email.trim() : undefined,
       });
 
-      router.push(getDashboardPath(accountType));
+      // Buyers with a pending protected action return to the property; others use role dashboard.
+      const destination =
+        accountType === "buyer"
+          ? resolvePostAuthDestination(getDashboardPath(accountType), redirectTo)
+          : getDashboardPath(accountType);
+
+      router.push(destination);
       router.refresh();
     } catch (err) {
       setError(getAuthErrorMessage(err));
@@ -82,7 +103,7 @@ export default function RegisterPage() {
         <p className="text-sm text-muted">
           Already have an account?{" "}
           <Link
-            href="/login"
+            href={loginHref}
             className="font-semibold text-emerald-600 transition-colors hover:text-emerald-700"
           >
             Sign in
@@ -91,6 +112,12 @@ export default function RegisterPage() {
       }
     >
       {error ? <AuthAlert type="error" message={error} /> : null}
+
+      {redirectTo && isBuyer ? (
+        <p className="mb-4 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+          Create your account to continue where you left off.
+        </p>
+      ) : null}
 
       <form onSubmit={handleSubmit} className="space-y-1">
         <AuthInput
@@ -166,5 +193,21 @@ export default function RegisterPage() {
         </div>
       </form>
     </AuthLayout>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <AuthLayout title="Create your account" subtitle="Join AreaIQ">
+          <div className="flex justify-center py-8">
+            <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
+          </div>
+        </AuthLayout>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

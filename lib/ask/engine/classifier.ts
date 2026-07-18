@@ -1,5 +1,5 @@
 import type { PropertySearchFilters } from "../types";
-import type { ConversationMessage } from "../openai-client";
+import type { ConversationMessage } from "../types";
 import type { IntentEntities, IntentClassification, InvestmentPurpose } from "./types";
 import { EMPTY_ENTITIES } from "./types";
 import { logAsk } from "./logger";
