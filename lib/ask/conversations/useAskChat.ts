@@ -85,7 +85,9 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
   const [typingPhase, setTypingPhase] = useState<TypingPhase>("understanding");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  /** @deprecated scroll ownership moved to AskChatThread — kept for call-site compat */
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const MIN_TYPING_MS = 400;
 
   const refreshConversationList = useCallback(async () => {
     if (isLoggedIn) {
@@ -128,10 +130,6 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
       setPropertyContext(initialPropertyContext);
     }
   }, [initialPropertyContext]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeConversation?.messages.length, loading]);
 
   const persistConversation = useCallback(
     async (conversation: AskConversation) => {
@@ -243,6 +241,7 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
       ];
 
       try {
+        const typingStartedAt = Date.now();
         const history = conversationToHistory(conversation);
         const engineResponse = await queryAskEngine(
           messageText,
@@ -251,8 +250,16 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
           conversation.suggestedPropertyIds,
         );
 
+        // Hold a subtle typing indicator briefly before the answer appears
+        const elapsed = Date.now() - typingStartedAt;
+        if (elapsed < MIN_TYPING_MS) {
+          await new Promise((resolve) =>
+            window.setTimeout(resolve, MIN_TYPING_MS - elapsed),
+          );
+        }
+
         phaseTimers.forEach((id) => window.clearTimeout(id));
-        setTypingPhase(engineResponse.searchedDatabase ? "responding" : "responding");
+        setTypingPhase("responding");
 
         const { message: assistantMessage } = buildAssistantMessage(
           messageText,

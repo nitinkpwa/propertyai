@@ -127,130 +127,146 @@ export default function ProfilePage() {
 
   if (loading || !user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-50 pt-16">
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
+      <div className="min-h-screen bg-neutral-50 px-4 pt-24" aria-busy="true">
+        <div className="mx-auto max-w-2xl space-y-4">
+          <div className="h-10 w-40 animate-shimmer rounded-xl" />
+          <div className="h-48 animate-shimmer rounded-2xl" />
+          <div className="h-64 animate-shimmer rounded-2xl" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 pt-24 pb-16">
-      <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-neutral-200/80 bg-white p-8 shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
-          <h1 className="text-2xl font-bold tracking-tight text-heading-primary">
-            Profile
-          </h1>
-          <p className="mt-2 text-sm text-muted">
-            Manage your account details and security settings.
-          </p>
-
-          <div className="mt-6 space-y-8">
-            {error ? <AuthAlert type="error" message={error} /> : null}
-            {success ? <AuthAlert type="success" message={success} /> : null}
-
-            <form onSubmit={handleSubmit} className="space-y-1">
-              <AuthInput
-                label="Full Name"
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
-              />
-
-              <AuthInput
-                label="Username"
-                value={profile?.username ? `@${profile.username}` : ""}
-                disabled
-                readOnly
-              />
-
-              <AuthInput
-                label="Phone"
-                value={phone}
-                onChange={(event) => setPhone(event.target.value)}
-                placeholder="9876543210"
-              />
-
-              <div className="rounded-xl bg-neutral-50 px-4 py-3 text-sm text-body">
-                Role:{" "}
-                <span className="font-semibold capitalize text-heading-primary">
-                  {profile?.role ?? "buyer"}
-                </span>
-              </div>
-
-              {profile?.phone ? (
-                <p className="px-1 text-xs text-muted">
-                  Login with {profile.username ? `@${profile.username}` : "username"} or{" "}
-                  {formatMobileDisplay(profile.phone)}.
-                </p>
-              ) : null}
-
-              <div className="pt-4">
-                <AuthButton type="submit" loading={saving} loadingText="Saving...">
-                  Save Changes
-                </AuthButton>
-              </div>
-            </form>
-
-            <div className="border-t border-neutral-100 pt-8">
-              <h2 className="text-lg font-semibold text-heading-primary">Change Password</h2>
-              <p className="mt-1 text-sm text-muted">
-                Verify your current password before setting a new one.
-              </p>
-
-              {passwordError ? <div className="mt-4"><AuthAlert type="error" message={passwordError} /></div> : null}
-              {passwordSuccess ? <div className="mt-4"><AuthAlert type="success" message={passwordSuccess} /></div> : null}
-
-              <form onSubmit={handlePasswordSubmit} className="mt-4 space-y-1">
-                <AuthInput
-                  label="Current Password"
-                  type="password"
-                  autoComplete="current-password"
-                  value={currentPassword}
-                  onChange={(event) => setCurrentPassword(event.target.value)}
-                />
-                <AuthInput
-                  label="New Password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={newPassword}
-                  onChange={(event) => setNewPassword(event.target.value)}
-                />
-                <AuthInput
-                  label="Confirm New Password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={confirmNewPassword}
-                  onChange={(event) => setConfirmNewPassword(event.target.value)}
-                  error={passwordFieldError}
-                />
-                <div className="pt-4">
-                  <AuthButton
-                    type="submit"
-                    loading={passwordSaving}
-                    loadingText="Updating password..."
-                  >
-                    Update Password
-                  </AuthButton>
-                </div>
-              </form>
-            </div>
-
-            <div className="flex flex-col gap-3 border-t border-neutral-100 pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <Link
-                href={getDashboardPath(profile?.role)}
-                className="text-sm font-semibold text-emerald-600 transition-colors hover:text-emerald-700"
-              >
-                Back to Dashboard
-              </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-100"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-neutral-50 pt-20 pb-nav lg:pb-16">
+      <div className="mx-auto max-w-2xl space-y-5 px-4 animate-page-enter sm:px-6 lg:px-8">
+        <div>
+          <h1 className="text-[32px] font-bold tracking-tight text-heading-primary">Settings</h1>
+          <p className="mt-1 text-base text-muted">Account, security, and preferences</p>
         </div>
+
+        {error ? <AuthAlert type="error" message={error} /> : null}
+        {success ? <AuthAlert type="success" message={success} /> : null}
+
+        <section className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="text-xl font-semibold text-heading-primary">Profile</h2>
+          <p className="mt-1 text-sm text-muted">Your public account details</p>
+          <form onSubmit={handleSubmit} className="mt-5 space-y-1">
+            <AuthInput
+              label="Full Name"
+              value={fullName}
+              onChange={(event) => setFullName(event.target.value)}
+            />
+            <AuthInput
+              label="Username"
+              value={profile?.username ? `@${profile.username}` : ""}
+              disabled
+              readOnly
+            />
+            <AuthInput
+              label="Phone"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              placeholder="9876543210"
+            />
+            <div className="rounded-xl bg-neutral-50 px-4 py-3.5 text-base text-body">
+              Role:{" "}
+              <span className="font-semibold capitalize text-heading-primary">
+                {profile?.role ?? "buyer"}
+              </span>
+            </div>
+            {profile?.phone ? (
+              <p className="px-1 text-xs text-muted">
+                Login with {profile.username ? `@${profile.username}` : "username"} or{" "}
+                {formatMobileDisplay(profile.phone)}.
+              </p>
+            ) : null}
+            <div className="pt-3">
+              <AuthButton type="submit" loading={saving} loadingText="Saving...">
+                Save Changes
+              </AuthButton>
+            </div>
+          </form>
+        </section>
+
+        <section className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="text-xl font-semibold text-heading-primary">Security</h2>
+          <p className="mt-1 text-sm text-muted">
+            Verify your current password before setting a new one.
+          </p>
+          {passwordError ? (
+            <div className="mt-4">
+              <AuthAlert type="error" message={passwordError} />
+            </div>
+          ) : null}
+          {passwordSuccess ? (
+            <div className="mt-4">
+              <AuthAlert type="success" message={passwordSuccess} />
+            </div>
+          ) : null}
+          <form onSubmit={handlePasswordSubmit} className="mt-5 space-y-1">
+            <AuthInput
+              label="Current Password"
+              type="password"
+              autoComplete="current-password"
+              value={currentPassword}
+              onChange={(event) => setCurrentPassword(event.target.value)}
+            />
+            <AuthInput
+              label="New Password"
+              type="password"
+              autoComplete="new-password"
+              value={newPassword}
+              onChange={(event) => setNewPassword(event.target.value)}
+            />
+            <AuthInput
+              label="Confirm New Password"
+              type="password"
+              autoComplete="new-password"
+              value={confirmNewPassword}
+              onChange={(event) => setConfirmNewPassword(event.target.value)}
+              error={passwordFieldError}
+            />
+            <div className="pt-3">
+              <AuthButton
+                type="submit"
+                loading={passwordSaving}
+                loadingText="Updating password..."
+              >
+                Update Password
+              </AuthButton>
+            </div>
+          </form>
+        </section>
+
+        <section className="rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm sm:p-6">
+          <h2 className="text-xl font-semibold text-heading-primary">Preferences</h2>
+          <p className="mt-1 text-sm text-muted">Notifications and dashboard shortcuts</p>
+          <div className="mt-4 space-y-1">
+            <Link
+              href={getDashboardPath(profile?.role)}
+              className="flex min-h-12 items-center justify-between rounded-xl px-3 text-base font-medium text-heading-primary active:bg-neutral-50"
+            >
+              Open dashboard
+              <span aria-hidden>→</span>
+            </Link>
+            <Link
+              href="/buyer/notifications"
+              className="flex min-h-12 items-center justify-between rounded-xl px-3 text-base font-medium text-heading-primary active:bg-neutral-50"
+            >
+              Notification settings
+              <span aria-hidden>→</span>
+            </Link>
+          </div>
+        </section>
+
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex min-h-12 w-full items-center justify-center rounded-xl border border-rose-200 bg-rose-50 text-base font-semibold text-rose-600"
+        >
+          Logout
+        </button>
       </div>
     </div>
   );

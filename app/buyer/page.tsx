@@ -113,7 +113,7 @@ export default function BuyerDashboardPage() {
             <p className="text-xs font-semibold uppercase tracking-widest text-emerald-100">
               {getGreeting()} · AreaIQ Intelligence
             </p>
-            <h1 className="text-shadow-premium mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+            <h1 className="text-shadow-premium mt-2 text-[28px] font-bold tracking-tight sm:text-3xl">
               {firstName}, your property journey
             </h1>
             <p className="mt-2 max-w-lg text-sm text-emerald-50/90">
@@ -154,7 +154,7 @@ export default function BuyerDashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="-mx-1 flex gap-3 overflow-x-auto scroll-touch pb-1 snap-x sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0 lg:grid-cols-5">
             <MetricCard icon="❤️" label="Saved" value={crmCounts.savedCount} href="/buyer/saved" accent="rose" />
             <MetricCard icon="👀" label="Viewed" value={crmCounts.viewedCount} accent="blue" />
             <MetricCard icon="🤖" label="Intelligence" value={crmCounts.chatsCount} href="/ask" accent="violet" />

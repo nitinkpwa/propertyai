@@ -76,8 +76,6 @@ export function AskIntelPanel({
     propertyContext?.builderName ||
     null;
 
-  const summarySnippet = turn?.sections[0]?.content?.slice(0, 180);
-
   const isSheet = presentation === "sheet";
 
   return (
@@ -159,18 +157,13 @@ export function AskIntelPanel({
         ) : null}
 
         {!loading && showBuilder ? (
-          <AskIntelBuilder
-            builderName={builderName}
-            summary={summarySnippet}
-            onAction={onAction}
-          />
+          <AskIntelBuilder builderName={builderName} onAction={onAction} />
         ) : null}
 
         {!loading && showArea ? (
           <AskIntelArea
             areaName={areaName}
             stats={turn?.stats ?? null}
-            summary={summarySnippet}
             onAction={onAction}
           />
         ) : null}

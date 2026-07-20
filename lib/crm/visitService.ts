@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { isReraApproved } from "@/lib/properties/reraStatus";
 import {
   advanceLeadStatus,
   createNotification,
@@ -441,7 +442,7 @@ export function buildChecklistForProperty(row: {
 }): string[] {
   return buildPropertyChecklist({
     propertyType: row.type,
-    hasRera: Boolean(row.rera_number),
+    hasRera: isReraApproved(row),
     hasParking: Boolean(row.parking),
   });
 }

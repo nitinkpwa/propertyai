@@ -19,7 +19,7 @@ export default function PropertiesPage() {
     <div className="flex min-h-screen flex-col bg-neutral-50">
       <main className="flex-1 pt-16">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
-          <h1 className="mb-8 text-2xl font-bold tracking-tight text-heading-primary sm:mb-10 sm:text-3xl">
+          <h1 className="mb-6 text-[32px] font-bold tracking-tight text-heading-primary sm:mb-8 lg:text-3xl">
             Featured Properties
           </h1>
           <Suspense fallback={<ListingsFallback />}>

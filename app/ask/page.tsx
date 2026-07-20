@@ -86,8 +86,12 @@ function AskPageContent() {
 
   if (authLoading || !hydrated) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center bg-[#F7F9F8] pt-16">
-        <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
+      <div className="fixed inset-0 flex flex-col bg-[#F7F9F8] pt-16" aria-busy="true" aria-label="Loading chat">
+        <div className="flex-1 space-y-4 px-4 py-6">
+          <div className="ml-auto h-14 w-3/4 animate-shimmer rounded-2xl rounded-br-md" />
+          <div className="h-24 w-4/5 animate-shimmer rounded-2xl rounded-bl-md" />
+          <div className="ml-auto h-12 w-1/2 animate-shimmer rounded-2xl rounded-br-md" />
+        </div>
       </div>
     );
   }

@@ -1,13 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import type { ListingProperty } from "@/lib/properties/types";
-
-function formatPrice(price: number): string {
-  if (price >= 10_000_000) return `₹${(price / 10_000_000).toFixed(2)} Cr`;
-  if (price >= 100_000) return `₹${Math.round(price / 100_000)} L`;
-  return `₹${price.toLocaleString("en-IN")}`;
-}
 
 interface AskIntelCompareProps {
   listings: ListingProperty[];
@@ -32,8 +27,17 @@ export function AskIntelCompare({ listings, onAction }: AskIntelCompareProps) {
   }
 
   const rows: { label: string; render: (p: ListingProperty) => string }[] = [
-    { label: "Price", render: (p) => formatPrice(p.price) },
-    { label: "Area", render: (p) => `${p.area.toLocaleString("en-IN")} sq ft` },
+    {
+      label: "Price",
+      render: (p) =>
+        p.priceLabel || (p.price > 0 ? formatInrAmount(p.price) : "Price on Request"),
+    },
+    {
+      label: "Area",
+      render: (p) =>
+        p.sizeLabel ||
+        (p.area > 0 ? `${p.area.toLocaleString("en-IN")} sq ft` : "—"),
+    },
     { label: "Builder", render: (p) => p.builderName },
     {
       label: "Growth",

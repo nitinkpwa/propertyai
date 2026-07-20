@@ -103,6 +103,8 @@ export type Property = {
     | "coworking"
     | "builder_floor";
   price: number;
+  /** Auto-calculated total for search/sort when rate×area is used */
+  calculated_price?: number | null;
   area_sqft: number;
   bedrooms?: number;
   bathrooms?: number;

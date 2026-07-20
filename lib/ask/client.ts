@@ -56,32 +56,35 @@ function mapEngineIntentToUi(intent: AskEngineIntent): AskIntent {
   }
 }
 
+const GENERIC_HEADINGS =
+  /^(summary|search summary|overview|investment brief|matching properties|nearby alternatives|area analysis|builder analysis|investment analysis|recommendation|areaiq recommendation)$/i;
+
 function extractHeadline(answer: string, intent: AskEngineIntent): string {
+  const defaults: Record<AskEngineIntent, string> = {
+    PROPERTY_SEARCH: "Here's what I'd recommend",
+    PROPERTY_ANALYSIS: "My take on this property",
+    COMPARE: "How these compare",
+    KNOWLEDGE: "Quick guidance",
+    LOCALITY: "Area advice",
+    BUILDER: "Builder advice",
+    INVESTMENT: "Investment advice",
+    FINANCE: "Finance guidance",
+    MARKET_TREND: "Market outlook",
+    SELLING: "Selling guidance",
+    GENERAL_CHAT: "AreaIQ Advisor",
+    UNRELATED: "AreaIQ Advisor",
+    UNKNOWN: "Quick clarification",
+  };
+
+  // Only use a markdown title when it is a meaningful, non-generic heading.
+  // Avoid turning the first sentence into a headline — that duplicated the advisor reply.
   const h2Match = answer.match(/^##\s+(.+)/m);
   if (h2Match?.[1]) {
     const cleaned = h2Match[1].replace(/\*\*/g, "").trim();
-    if (cleaned.length > 0 && cleaned.length <= 120) return cleaned;
+    if (cleaned.length > 0 && cleaned.length <= 120 && !GENERIC_HEADINGS.test(cleaned)) {
+      return cleaned;
+    }
   }
-
-  const firstLine = answer.split("\n").find((line) => line.trim().length > 0) ?? "";
-  const cleaned = firstLine.replace(/^#+\s*/, "").replace(/\*\*/g, "").trim();
-  if (cleaned.length > 0 && cleaned.length <= 120) return cleaned;
-
-  const defaults: Record<AskEngineIntent, string> = {
-    PROPERTY_SEARCH: "Property Search Results",
-    PROPERTY_ANALYSIS: "Property Intelligence Report",
-    COMPARE: "Comparison Analysis",
-    KNOWLEDGE: "Real Estate Insight",
-    LOCALITY: "Area Intelligence Report",
-    BUILDER: "Builder Intelligence Report",
-    INVESTMENT: "Investment Intelligence Report",
-    FINANCE: "Finance Guidance",
-    MARKET_TREND: "Market Trend Report",
-    SELLING: "Selling Guidance",
-    GENERAL_CHAT: "AreaIQ",
-    UNRELATED: "AreaIQ — Tricity Real Estate",
-    UNKNOWN: "Need More Details",
-  };
 
   return defaults[intent];
 }
@@ -100,12 +103,10 @@ export function mapEngineResponseToTurn(
     headline: extractHeadline(response.answer, response.intent),
     subtext:
       response.searchedDatabase && response.isSimilar
-        ? "Showing closest matches from AreaIQ database."
+        ? "Closest verified alternatives — not exact matches."
         : response.searchedDatabase && response.properties.length > 0
-          ? "Live listings from AreaIQ database."
-          : response.intent === "PROPERTY_ANALYSIS"
-            ? "Intelligence report generated."
-            : null,
+          ? "Verified listings below."
+          : null,
     aiContent: response.answer,
     sections,
     stats: response.stats,

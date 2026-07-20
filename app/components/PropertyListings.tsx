@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { filterProperties } from "@/lib/properties/filterProperties";
+import { getLiveProperties } from "@/lib/properties/getLiveProperties";
 import {
   extractBuilderOptions,
-  fetchListingProperties,
+  mapPropertyRowToListing,
 } from "@/lib/properties/queries";
 import type { ListingProperty } from "@/lib/properties/types";
 import { usePropertyFilters } from "@/lib/properties/usePropertyFilters";
@@ -14,11 +15,18 @@ import PropertyGrid from "./PropertyGrid";
 
 function ListingsSkeleton() {
   return (
-    <div className="animate-pulse space-y-6">
-      <div className="h-24 rounded-2xl bg-neutral-200/70" />
+    <div className="space-y-6" aria-busy="true" aria-label="Loading listings">
+      <div className="h-24 animate-shimmer rounded-2xl" />
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, index) => (
-          <div key={index} className="h-96 rounded-2xl bg-neutral-200/70" />
+          <div key={index} className="overflow-hidden rounded-2xl border border-neutral-100">
+            <div className="aspect-video animate-shimmer" />
+            <div className="space-y-3 p-4">
+              <div className="h-7 w-32 animate-shimmer rounded-lg" />
+              <div className="h-4 w-48 animate-shimmer rounded-lg" />
+              <div className="h-12 w-full animate-shimmer rounded-xl" />
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -67,7 +75,8 @@ export default function PropertyListings() {
 
     async function loadProperties() {
       setLoading(true);
-      const data = await fetchListingProperties();
+      const rows = await getLiveProperties({ includeSeller: true });
+      const data = rows.map((row) => mapPropertyRowToListing(row));
       if (!cancelled) {
         setProperties(data);
         setLoading(false);

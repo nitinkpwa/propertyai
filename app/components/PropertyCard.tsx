@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
+import { isReraApproved } from "@/lib/properties/reraStatus";
+import BottomSheet from "@/components/ui/BottomSheet";
+import Badge from "@/components/ui/Badge";
+import Price from "@/components/ui/Price";
+import Gallery from "@/components/ui/Gallery";
 
 export type BHKOption = 1 | 2 | 3 | 4 | 5;
 
@@ -14,6 +20,9 @@ export interface PropertyCardProps {
   location: string;
   city?: string;
   price: number;
+  priceLabel?: string | null;
+  rateLabel?: string | null;
+  sizeLabel?: string | null;
   builderName: string;
   bhk: number;
   area: number;
@@ -21,28 +30,18 @@ export interface PropertyCardProps {
   growthScore: number | null;
   rentalYield: number | null;
   imageUrl?: string | null;
+  /** Extra gallery urls for mobile swipe */
+  imageUrls?: string[] | null;
   imageAlt?: string;
   aiVerified?: boolean;
   reraVerified?: boolean;
+  featured?: boolean;
   isFavorite?: boolean;
   isCompared?: boolean;
   href?: string;
   onFavoriteToggle?: (id: string, favorited: boolean) => void;
   onCompareToggle?: (id: string, compared: boolean) => void;
   onViewDetails?: (id: string) => void;
-}
-
-function formatPrice(price: number): string {
-  if (!price || price <= 0) return "Price on Request";
-  if (price >= 10_000_000) {
-    const cr = price / 10_000_000;
-    return `₹${cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "")} Cr`;
-  }
-  if (price >= 100_000) {
-    const lakhs = price / 100_000;
-    return `₹${lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(2).replace(/\.?0+$/, "")} L`;
-  }
-  return `₹${price.toLocaleString("en-IN")}`;
 }
 
 function formatArea(area: number, unit: "sqft" | "sqyd"): string {
@@ -109,6 +108,9 @@ export default function PropertyCard({
   location,
   city,
   price,
+  priceLabel,
+  rateLabel,
+  sizeLabel,
   builderName,
   bhk,
   area,
@@ -116,9 +118,11 @@ export default function PropertyCard({
   growthScore,
   rentalYield,
   imageUrl,
+  imageUrls,
   imageAlt,
   aiVerified = false,
   reraVerified = false,
+  featured = false,
   isFavorite: isFavoriteProp = false,
   isCompared: isComparedProp = false,
   href = `/property/${id}`,
@@ -126,10 +130,12 @@ export default function PropertyCard({
   onCompareToggle,
   onViewDetails,
 }: PropertyCardProps) {
+  const showRera = isReraApproved({ reraVerified });
   const isControlled = onFavoriteToggle !== undefined;
   const [internalFavorite, setInternalFavorite] = useState(isFavoriteProp);
   const isFavorite = isControlled ? isFavoriteProp : internalFavorite;
   const [isCompared, setIsCompared] = useState(isComparedProp);
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (!isControlled) {
@@ -141,11 +147,19 @@ export default function PropertyCard({
   const clampedScore =
     growthScore !== null ? Math.min(100, Math.max(0, growthScore)) : null;
   const growth = clampedScore !== null ? growthTone(clampedScore) : growthTone(0);
+  const displayPrice = priceLabel || (price > 0 ? formatInrAmount(price) : "Price on Request");
+
+  const galleryImages =
+    imageUrls && imageUrls.length > 0
+      ? imageUrls.map((src) => ({ src, alt: imageAlt ?? name }))
+      : imageUrl
+        ? [{ src: imageUrl, alt: imageAlt ?? name }]
+        : [];
 
   const handleFavorite = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+    (e?: React.MouseEvent) => {
+      e?.preventDefault();
+      e?.stopPropagation();
       const next = !isFavorite;
       if (isControlled) {
         onFavoriteToggle?.(id, next);
@@ -157,9 +171,9 @@ export default function PropertyCard({
   );
 
   const handleCompare = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
+    (e?: React.MouseEvent) => {
+      e?.preventDefault();
+      e?.stopPropagation();
       const next = !isCompared;
       setIsCompared(next);
       onCompareToggle?.(id, next);
@@ -178,160 +192,258 @@ export default function PropertyCard({
   );
 
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-neutral-300/80 hover:shadow-[0_4px_12px_rgba(0,0,0,0.06),0_20px_48px_rgba(0,0,0,0.08)]">
-      {/* Image */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-neutral-100">
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={imageAlt ?? name}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-100 via-neutral-50 to-emerald-50/40">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/80 text-3xl shadow-sm backdrop-blur-sm">
+    <>
+      <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] transition-all duration-200 active:scale-[0.99] lg:active:scale-100 lg:duration-300 lg:hover:-translate-y-0.5 lg:hover:border-neutral-300/80 lg:hover:shadow-[0_4px_12px_rgba(0,0,0,0.06),0_20px_48px_rgba(0,0,0,0.08)]">
+        {/* Mobile: 16:9 swipe gallery · Desktop: 4/3 single */}
+        <div className="relative lg:hidden">
+          {galleryImages.length > 0 ? (
+            <Gallery images={galleryImages} aspect="16/9" />
+          ) : (
+            <div className="flex aspect-video items-center justify-center bg-gradient-to-br from-neutral-100 via-neutral-50 to-emerald-50/40 text-3xl">
               🏠
             </div>
+          )}
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-wrap gap-1.5 p-3">
+            {showRera ? <Badge variant="rera">RERA</Badge> : null}
+            {aiVerified ? <Badge variant="verified">Verified</Badge> : null}
+            {featured ? <Badge variant="featured">Featured</Badge> : null}
           </div>
-        )}
+        </div>
 
-        {/* Badges + heart */}
-        <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-          <div className="flex flex-wrap gap-1.5">
-            {aiVerified && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-heading-secondary shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
-                <span className="text-emerald-500">
-                  <SparkIcon />
+        <div className="relative hidden aspect-[4/3] overflow-hidden bg-neutral-100 lg:block">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={imageAlt ?? name}
+              fill
+              sizes="(max-width: 1024px) 50vw, 33vw"
+              className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+            />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-100 via-neutral-50 to-emerald-50/40">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/80 text-3xl shadow-sm backdrop-blur-sm">
+                🏠
+              </div>
+            </div>
+          )}
+
+          <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
+            <div className="flex flex-wrap gap-1.5">
+              {aiVerified && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold tracking-wide text-heading-secondary shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
+                  <span className="text-emerald-500">
+                    <SparkIcon />
+                  </span>
+                  AreaIQ Intelligence
                 </span>
-                AreaIQ Intelligence
-              </span>
-            )}
-            {reraVerified && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-heading-secondary shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
-                <span className="text-blue-600">
-                  <ShieldIcon />
+              )}
+              {showRera && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold tracking-wide text-heading-secondary shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
+                  <span className="text-blue-600">
+                    <ShieldIcon />
+                  </span>
+                  RERA
                 </span>
-                RERA
-              </span>
-            )}
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleFavorite}
+              aria-label={isFavorite ? "Remove from saved" : "Save property"}
+              aria-pressed={isFavorite}
+              className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-white/95 shadow-[0_2px_8px_rgba(0,0,0,0.1)] backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 ${
+                isFavorite
+                  ? "border-rose-200 text-rose-500"
+                  : "border-transparent text-body hover:text-rose-500"
+              }`}
+            >
+              <HeartIcon filled={isFavorite} />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex flex-1 flex-col p-4 sm:p-5">
+          {/* Mobile-first hierarchy: Price → Builder → Location → Config → Area */}
+          <div className="mb-3 flex-1 lg:contents">
+            <div className="lg:hidden">
+              <Price value={displayPrice} size="xl" />
+              {rateLabel && areaUnit === "sqyd" ? (
+                <p className="mt-1 text-sm text-muted">{rateLabel}</p>
+              ) : null}
+              <p className="mt-2 text-sm font-medium text-label">by {builderName}</p>
+              <p className="mt-1 flex items-center gap-1 text-sm text-muted">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="shrink-0" aria-hidden>
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                <span className="line-clamp-1">{locationLabel}</span>
+              </p>
+              <h3 className="mt-2 line-clamp-2 text-base font-semibold text-heading-primary">{name}</h3>
+              <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                <span className="rounded-lg bg-neutral-100 px-2.5 py-1 font-semibold text-body">
+                  {bhk > 0 ? `${bhk} BHK` : "—"}
+                </span>
+                <span className="rounded-lg bg-neutral-100 px-2.5 py-1 font-medium text-body">
+                  {sizeLabel || (area > 0 ? formatArea(area, areaUnit) : "—")}
+                </span>
+              </div>
+            </div>
+
+            <div className="mb-3 hidden flex-1 lg:block">
+              <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-heading-primary sm:text-base">
+                {name}
+              </h3>
+              <p className="mt-1 flex items-center gap-1 text-sm text-muted">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="shrink-0" aria-hidden>
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="12" cy="10" r="3" />
+                </svg>
+                <span className="line-clamp-1">{locationLabel}</span>
+              </p>
+              <p className="mt-2 text-xs font-medium uppercase tracking-wider text-muted">
+                by {builderName}
+              </p>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-lg font-bold tracking-tight text-heading-primary sm:text-xl">
+                    {displayPrice}
+                  </p>
+                  {rateLabel && areaUnit === "sqyd" ? (
+                    <p className="mt-0.5 text-xs font-medium text-muted">{rateLabel}</p>
+                  ) : null}
+                </div>
+                <span className="shrink-0 rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-semibold text-body">
+                  {bhk > 0 ? `${bhk} BHK` : "—"}
+                </span>
+              </div>
+              <p className="mt-1.5 text-sm text-muted">
+                {sizeLabel || (area > 0 ? formatArea(area, areaUnit) : "—")}
+              </p>
+            </div>
           </div>
 
+          {/* Intelligence metrics — desktop */}
+          <div className="mb-4 hidden grid-cols-2 gap-2.5 lg:grid">
+            <div className={`rounded-xl px-3 py-2.5 ${growthScore !== null ? growth.bg : "bg-neutral-50"}`}>
+              <p className="text-xs font-semibold uppercase tracking-wider text-label">
+                AreaIQ Growth
+              </p>
+              <div className="mt-1 flex items-baseline gap-1">
+                <span className={`text-lg font-bold tabular-nums ${growthScore !== null ? growth.text : "text-muted"}`}>
+                  {growthScore !== null ? clampedScore : "N/A"}
+                </span>
+                {growthScore !== null ? (
+                  <span className="text-xs font-medium text-muted">/ 100</span>
+                ) : null}
+              </div>
+              {growthScore !== null ? (
+                <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/70">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${growth.bar}`}
+                    style={{ width: `${clampedScore}%` }}
+                  />
+                </div>
+              ) : (
+                <p className="mt-2 text-xs text-muted">Insufficient data</p>
+              )}
+            </div>
+
+            <div className="rounded-xl bg-neutral-50 px-3 py-2.5">
+              <p className="text-xs font-semibold uppercase tracking-wider text-label">
+                Rental Yield
+              </p>
+              <p className="mt-1 text-lg font-bold tabular-nums text-heading-primary">
+                {rentalYield !== null
+                  ? `${rentalYield % 1 === 0 ? rentalYield.toFixed(0) : rentalYield.toFixed(1)}%`
+                  : "N/A"}
+              </p>
+              <p className="mt-2 text-xs font-medium text-muted">
+                {rentalYield !== null ? "AreaIQ calculated" : "Insufficient data"}
+              </p>
+            </div>
+          </div>
+
+          {/* Actions: mobile View + More · desktop Compare + View */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleCompare}
+              aria-pressed={isCompared}
+              className={`hidden flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] lg:inline-flex ${
+                isCompared
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-neutral-200 bg-white text-body hover:border-neutral-300 hover:bg-neutral-50"
+              }`}
+            >
+              <CompareIcon />
+              {isCompared ? "Added" : "Compare"}
+            </button>
+
+            <Link
+              href={href}
+              onClick={handleViewDetails}
+              className="inline-flex min-h-12 flex-1 items-center justify-center rounded-xl px-3 text-base font-semibold text-white shadow-[0_2px_8px_rgba(74,170,39,0.3)] transition-all duration-200 active:scale-[0.98] lg:min-h-0 lg:py-2.5 lg:text-sm lg:hover:brightness-105"
+              style={{ backgroundColor: EMERALD }}
+            >
+              View
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => setMoreOpen(true)}
+              className="inline-flex min-h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-white text-body lg:hidden"
+              aria-label="More actions"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <circle cx="5" cy="12" r="1.75" />
+                <circle cx="12" cy="12" r="1.75" />
+                <circle cx="19" cy="12" r="1.75" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <BottomSheet
+        open={moreOpen}
+        onClose={() => setMoreOpen(false)}
+        title="Property actions"
+        ariaLabel="Property actions"
+      >
+        <div className="space-y-1 pb-2">
           <button
             type="button"
-            onClick={handleFavorite}
-            aria-label={isFavorite ? "Remove from saved" : "Save property"}
-            aria-pressed={isFavorite}
-            className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-white/95 shadow-[0_2px_8px_rgba(0,0,0,0.1)] backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 ${
-              isFavorite
-                ? "border-rose-200 text-rose-500"
-                : "border-transparent text-body hover:text-rose-500"
-            }`}
+            onClick={() => {
+              handleFavorite();
+              setMoreOpen(false);
+            }}
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-base font-medium text-heading-primary active:bg-neutral-50"
           >
             <HeartIcon filled={isFavorite} />
+            {isFavorite ? "Remove from saved" : "Save"}
           </button>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <div className="mb-3 flex-1">
-          <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-heading-primary sm:text-base">
-            {name}
-          </h3>
-
-          <p className="mt-1 flex items-center gap-1 text-sm text-muted">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="shrink-0" aria-hidden>
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="12" cy="10" r="3" />
-            </svg>
-            <span className="line-clamp-1">{locationLabel}</span>
-          </p>
-
-          <p className="mt-2 text-xs font-medium uppercase tracking-wider text-muted">
-            by {builderName}
-          </p>
-
-          <div className="mt-3 flex items-end justify-between gap-3">
-            <p className="text-lg font-bold tracking-tight text-heading-primary sm:text-xl">
-              {formatPrice(price)}
-            </p>
-            <span className="shrink-0 rounded-lg bg-neutral-100 px-2.5 py-1 text-xs font-semibold text-body">
-              {bhk > 0 ? `${bhk} BHK` : "—"}
-            </span>
-          </div>
-
-          <p className="mt-1.5 text-sm text-muted">{formatArea(area, areaUnit)}</p>
-        </div>
-
-        {/* Intelligence metrics */}
-        <div className="mb-4 grid grid-cols-2 gap-2.5">
-          <div className={`rounded-xl px-3 py-2.5 ${growthScore !== null ? growth.bg : "bg-neutral-50"}`}>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-label">
-              AreaIQ Growth
-            </p>
-            <div className="mt-1 flex items-baseline gap-1">
-              <span className={`text-lg font-bold tabular-nums ${growthScore !== null ? growth.text : "text-muted"}`}>
-                {growthScore !== null ? clampedScore : "N/A"}
-              </span>
-              {growthScore !== null ? (
-                <span className="text-xs font-medium text-muted">/ 100</span>
-              ) : null}
-            </div>
-            {growthScore !== null ? (
-              <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/70">
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${growth.bar}`}
-                  style={{ width: `${clampedScore}%` }}
-                />
-              </div>
-            ) : (
-              <p className="mt-2 text-[10px] text-muted">Insufficient data</p>
-            )}
-          </div>
-
-          <div className="rounded-xl bg-neutral-50 px-3 py-2.5">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-label">
-              Rental Yield
-            </p>
-            <p className="mt-1 text-lg font-bold tabular-nums text-heading-primary">
-              {rentalYield !== null
-                ? `${rentalYield % 1 === 0 ? rentalYield.toFixed(0) : rentalYield.toFixed(1)}%`
-                : "N/A"}
-            </p>
-            <p className="mt-2 text-[11px] font-medium text-muted">
-              {rentalYield !== null ? "AreaIQ calculated" : "Insufficient data"}
-            </p>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex gap-2">
           <button
             type="button"
-            onClick={handleCompare}
-            aria-pressed={isCompared}
-            className={`inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
-              isCompared
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-neutral-200 bg-white text-body hover:border-neutral-300 hover:bg-neutral-50"
-            }`}
+            onClick={() => {
+              handleCompare();
+              setMoreOpen(false);
+            }}
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-base font-medium text-heading-primary active:bg-neutral-50"
           >
             <CompareIcon />
-            {isCompared ? "Added" : "Compare"}
+            {isCompared ? "Remove from compare" : "Compare"}
           </button>
-
           <Link
             href={href}
-            onClick={handleViewDetails}
-            className="inline-flex flex-1 items-center justify-center rounded-xl px-3 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.3)] transition-all duration-200 hover:shadow-[0_4px_14px_rgba(74, 170, 39,0.4)] hover:brightness-105 active:scale-[0.98]"
-            style={{ backgroundColor: EMERALD }}
+            onClick={() => setMoreOpen(false)}
+            className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-base font-medium text-brand-dark"
           >
-            View Details
+            View full details
           </Link>
         </div>
-      </div>
-    </article>
+      </BottomSheet>
+    </>
   );
 }

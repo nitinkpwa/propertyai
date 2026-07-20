@@ -1,43 +1,42 @@
 import { computeSearchStats } from "../../responses";
-import { searchPropertiesFromIntent } from "../../search";
+import { runIntelligencePipeline } from "../../intelligence";
 import { sortAskListings } from "../../sort";
 import type { AskEngineResponse, HandlerContext } from "../types";
 import { classificationToResponseFields } from "../types";
-import { entitiesToFilters } from "../classifier";
-import { buildMemoryContext, buildPropertyMemoryContext, wantsAlternativeProperties } from "../memory";
+import { wantsAlternativeProperties } from "../memory";
 import { logAsk } from "../logger";
-import { extractPropertyRationales } from "../../markdown";
-import {
-  buildListingsContext,
-  generateAreaIQResponse,
-  INVESTMENT_PROMPT,
-} from "../openai";
-import { NO_EXACT_MATCH_MESSAGE } from "../prompts";
 
 export async function handleInvestment(ctx: HandlerContext): Promise<AskEngineResponse> {
-  const filters = entitiesToFilters(ctx.classification.entities);
-  filters.investment = true;
-  const baseFields = classificationToResponseFields(ctx.classification);
-  const memoryContext = buildMemoryContext(ctx.classification);
   const wantsAlternative = wantsAlternativeProperties(ctx.message);
-  if (wantsAlternative && ctx.excludePropertyIds?.length) {
-    filters.excludePropertyIds = ctx.excludePropertyIds;
-  }
-  const propertyMemoryContext = buildPropertyMemoryContext(
-    ctx.excludePropertyIds ?? [],
-    wantsAlternative,
-  );
+  const excludePropertyIds =
+    wantsAlternative && ctx.excludePropertyIds?.length
+      ? ctx.excludePropertyIds
+      : undefined;
+
+  // Force investment flags on the message parse via classification merge
+  const classification = {
+    ...ctx.classification,
+    investmentPurpose: ctx.classification.investmentPurpose ?? ("appreciation" as const),
+    entities: {
+      ...ctx.classification.entities,
+      investmentFocus: ctx.classification.entities.investmentFocus ?? "general",
+    },
+  };
 
   logAsk({
-    event: "supabase_query_start",
+    event: "intelligence_pipeline_start",
     intent: "INVESTMENT",
-    filters,
+  });
+
+  const result = await runIntelligencePipeline({
+    message: ctx.message,
+    history: ctx.history,
+    classification,
+    excludePropertyIds,
   });
 
   const focus = ctx.classification.entities.investmentFocus;
-  const result = await searchPropertiesFromIntent(filters);
   let listings = result.listings;
-
   if (focus === "yield") {
     listings = sortAskListings(listings, "rentalYield", "desc");
   } else {
@@ -45,72 +44,29 @@ export async function handleInvestment(ctx: HandlerContext): Promise<AskEngineRe
   }
 
   logAsk({
-    event: "supabase_query_complete",
+    event: "intelligence_pipeline_complete",
     intent: "INVESTMENT",
     returnedCount: listings.length,
     isSimilar: result.isSimilar,
   });
 
-  const listingsContext = listings.length > 0 ? buildListingsContext(listings) : undefined;
-
-  let userMessage = ctx.message;
-  if (result.isSimilar && listings.length > 0) {
-    userMessage = `${ctx.message}\n\nNote: No exact budget/area match. Closest alternatives from database are provided.`;
+  const baseFields = classificationToResponseFields(ctx.classification);
+  if (baseFields.bedrooms == null && result.intent.bedrooms != null) {
+    baseFields.bedrooms = result.intent.bedrooms;
   }
-
-  const answer = await generateAreaIQResponse(INVESTMENT_PROMPT, userMessage, {
-    history: ctx.history,
-    memoryContext: memoryContext + propertyMemoryContext,
-    listingsContext,
-  });
-
-  const propertyRationales: Record<string, string> = {};
-  const byName = extractPropertyRationales(
-    answer,
-    listings.map((l) => l.name),
-  );
-  for (const listing of listings) {
-    if (byName[listing.name]) {
-      propertyRationales[listing.id] = byName[listing.name];
-    }
+  if (baseFields.budget == null && result.intent.budgetMax != null) {
+    baseFields.budget = result.intent.budgetMax;
   }
-
-  if (listings.length === 0) {
-    return {
-      intent: "INVESTMENT",
-      answer: `${answer}\n\n${NO_EXACT_MATCH_MESSAGE}`,
-      ...baseFields,
-      properties: [],
-      propertyRationales: {},
-      suggestions: [],
-      followUpQuestions: [
-        "Best investment under 1 crore",
-        "Highest rental yield properties",
-        "Tell me about Aerocity",
-      ],
-      stats: null,
-      searchedDatabase: true,
-      isSimilar: false,
-    };
-  }
-
-  const finalAnswer = result.isSimilar
-    ? `${NO_EXACT_MATCH_MESSAGE}\n\n${answer}`
-    : answer;
 
   return {
     intent: "INVESTMENT",
-    answer: finalAnswer,
+    answer: result.composed.markdown,
     ...baseFields,
     properties: listings,
-    propertyRationales,
-    suggestions: ["Higher Rental Yield", "Lowest Price", "Compare these", "Ready to Move"],
-    followUpQuestions: [
-      "Show cheaper options",
-      "Calculate EMI",
-      "Compare Aerocity vs New Chandigarh",
-    ],
-    stats: computeSearchStats(listings),
+    propertyRationales: result.composed.propertyRationales,
+    suggestions: result.composed.suggestions,
+    followUpQuestions: result.composed.followUpQuestions,
+    stats: listings.length ? computeSearchStats(listings) : null,
     searchedDatabase: true,
     isSimilar: result.isSimilar,
   };

@@ -3,8 +3,9 @@
 import { useCallback, useState } from "react";
 import type { ReactNode } from "react";
 import { useSavedProperty } from "@/lib/buyer/useSavedProperty";
+import { isReraApproved } from "@/lib/properties/reraStatus";
 import type { PropertyDetail } from "../data";
-import { formatPrice } from "../data";
+import { formatPropertyPrice } from "../data";
 import { useBookSiteVisit } from "./BookSiteVisitProvider";
 import {
   EMERALD,
@@ -45,7 +46,7 @@ export default function BookingCard({ property }: BookingCardProps) {
       <div className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:rounded-3xl">
         <div className="border-b border-neutral-100 p-5 sm:p-6">
           <p className="text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
-            {property.pricingDisplay?.primaryPriceLabel || formatPrice(property.price)}
+            {formatPropertyPrice(property)}
           </p>
           {property.pricingDisplay?.rateLabel || property.sizeLabel ? (
             <p className="mt-1 text-sm text-muted">
@@ -60,7 +61,7 @@ export default function BookingCard({ property }: BookingCardProps) {
                 AreaIQ Intelligence
               </span>
             )}
-            {property.reraVerified && (
+            {isReraApproved(property) && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
                 <ShieldIcon className="text-blue-600" />
                 RERA

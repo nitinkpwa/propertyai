@@ -124,7 +124,7 @@ export default function AnalyticsPanel({ analytics, leads, properties }: Props) 
       {properties.length > 0 ? (
         <section className={`${connectTokens.card} p-6`}>
           <h3 className="mb-4 font-bold text-heading-primary">Property Performance</h3>
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto lg:block">
             <table className="min-w-full text-left text-sm">
               <thead>
                 <tr className="border-b text-xs text-muted">
@@ -142,11 +142,49 @@ export default function AnalyticsPanel({ analytics, leads, properties }: Props) 
                     <td className="py-2 pr-4">{p.enquiry_count}</td>
                     <td className="py-2 pr-4">{p.visit_count}</td>
                     <td className="py-2 pr-4">{p.hot_leads}</td>
-                    <td className="py-2">{p.enquiry_count > 0 ? Math.round((p.visit_count / p.enquiry_count) * 100) : 0}%</td>
+                    <td className="py-2">
+                      {p.enquiry_count > 0
+                        ? Math.round((p.visit_count / p.enquiry_count) * 100)
+                        : 0}
+                      %
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="space-y-3 lg:hidden">
+            {properties.map((p) => (
+              <div
+                key={p.id}
+                className="rounded-xl border border-neutral-100 bg-neutral-50/80 p-4"
+              >
+                <p className="text-base font-semibold text-heading-primary">{p.title}</p>
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <dt className="text-xs text-muted">Enquiries</dt>
+                    <dd className="font-medium">{p.enquiry_count}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted">Visits</dt>
+                    <dd className="font-medium">{p.visit_count}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted">Hot leads</dt>
+                    <dd className="font-medium">{p.hot_leads}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-muted">Conversion</dt>
+                    <dd className="font-medium">
+                      {p.enquiry_count > 0
+                        ? Math.round((p.visit_count / p.enquiry_count) * 100)
+                        : 0}
+                      %
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            ))}
           </div>
         </section>
       ) : null}

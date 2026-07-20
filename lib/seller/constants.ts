@@ -155,9 +155,17 @@ export const POSSESSION_OPTIONS = ["Ready to Move", "Under Construction", "New L
 export const PAGE_SIZE = 8;
 
 export function formatPrice(p: number): string {
-  return p >= 10_000_000
-    ? `₹${(p / 10_000_000).toFixed(1)}Cr`
-    : `₹${(p / 100_000).toFixed(0)}L`;
+  if (!p || p <= 0) return "Price on Request";
+  // Guard: never show unit-rate-sized numbers as listing price
+  if (p < 100_000) return "Price on Request";
+  if (p >= 10_000_000) {
+    const cr = p / 10_000_000;
+    const label = cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "");
+    return `₹${label} Cr`;
+  }
+  const lakhs = p / 100_000;
+  const label = lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(1).replace(/\.0$/, "");
+  return `₹${label} L`;
 }
 
 export function formatDate(d: string): string {

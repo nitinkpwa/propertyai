@@ -14,6 +14,10 @@ const DEFAULT_SMART_ACTIONS = [
   "Generate investment report",
 ];
 
+/** Sections that duplicate property/area/builder cards or the primary reply */
+const DUPLICATE_SECTION_RE =
+  /^(summary|search summary|quick summary|matching properties|nearby alternatives|area analysis|builder analysis|investment analysis|investment brief|ranked recommendations|confidence score|source|overview)$/i;
+
 interface AskAssistantMessageProps {
   turn: AskTurn;
   onAction: (text: string) => void;
@@ -27,22 +31,28 @@ export function AskAssistantMessage({
 }: AskAssistantMessageProps) {
   const [expanded, setExpanded] = useState(false);
   const sections = turn.sections;
-  const hasSections = sections.length > 0;
   const hasListings = turn.listings.length > 0;
 
-  const summaryText = useMemo(() => {
-    if (hasSections) {
-      return sections[0]?.content?.slice(0, 280) ?? turn.headline;
-    }
-    const plain = (turn.aiContent ?? "")
-      .replace(/^##\s+.+\n?/gm, "")
-      .replace(/\*\*/g, "")
-      .trim();
-    return plain.slice(0, 320) || turn.headline;
-  }, [hasSections, sections, turn.aiContent, turn.headline]);
+  const primaryContent = useMemo(
+    () => buildPrimaryAdvisorContent(turn.aiContent, sections),
+    [turn.aiContent, sections],
+  );
 
-  const orderedSections = useMemo(() => orderInsightSections(sections), [sections]);
-  const visibleSections = expanded ? orderedSections : orderedSections.slice(0, 4);
+  /** Extra insight cards only when legacy multi-section reports remain — never the primary reply */
+  const insightSections = useMemo(() => {
+    const extras = sections.filter((s) => !DUPLICATE_SECTION_RE.test(s.title.trim()));
+    // If primary already contains the full answer, avoid re-showing the same blocks
+    if (!primaryContent || extras.length === 0) return [];
+    const primaryNorm = primaryContent.replace(/\s+/g, " ").slice(0, 200);
+    return orderInsightSections(
+      extras.filter((s) => {
+        const body = s.content.replace(/\s+/g, " ");
+        return body.length > 40 && !primaryNorm.includes(body.slice(0, 80));
+      }),
+    );
+  }, [sections, primaryContent]);
+
+  const visibleInsights = expanded ? insightSections : insightSections.slice(0, 4);
 
   const actions =
     turn.quickActions.length > 0
@@ -58,15 +68,15 @@ export function AskAssistantMessage({
     matchCount === 1 ? "1 Matching Property" : `${matchCount} Properties Found`;
 
   return (
-    <div className="flex items-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-400">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-[10px] font-bold text-white shadow-sm">
+    <div className="flex items-start gap-3">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-xs font-bold text-white shadow-sm">
         IQ
       </div>
 
       <div className="min-w-0 flex-1 space-y-3">
-        <div className="rounded-2xl rounded-tl-md border border-neutral-200/80 bg-white px-4 py-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)] sm:px-5">
+        <div className="rounded-[1.25rem] rounded-bl-md border border-neutral-200/80 bg-white px-4 py-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)] sm:px-5">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">
               {turn.intent}
             </span>
             {turn.isSimilar ? (
@@ -115,18 +125,13 @@ export function AskAssistantMessage({
             </div>
           ) : null}
 
-          {/* Quick Summary */}
-          <div className="mt-3 rounded-xl border border-emerald-100/80 bg-emerald-50/40 px-3.5 py-3">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
-              Quick summary
-            </p>
-            <p className="mt-1 text-sm leading-relaxed text-body">
-              {summaryText}
-              {summaryText.length >= 280 ? "…" : ""}
-            </p>
-          </div>
+          {/* Single primary conversational response — complements cards, never duplicates them */}
+          {primaryContent ? (
+            <div className="mt-3 text-sm leading-relaxed text-body">
+              <AskMarkdown content={primaryContent} />
+            </div>
+          ) : null}
 
-          {/* Best Match Properties — section header (not clickable) */}
           {hasListings ? (
             <section
               className="mt-5 w-full animate-in fade-in zoom-in-[0.98] duration-[250ms]"
@@ -176,36 +181,27 @@ export function AskAssistantMessage({
             </section>
           ) : null}
 
-          {/* Top Recommendations → What to Watch → other insights */}
-          {hasSections ? (
+          {visibleInsights.length > 0 ? (
             <div className={`grid gap-4 sm:grid-cols-2 ${hasListings ? "mt-5" : "mt-4"}`}>
-              {visibleSections.map((section) => (
+              {visibleInsights.map((section) => (
                 <InsightDetails
                   key={section.title}
                   title={section.title}
-                  initiallyOpen={section.title.toLowerCase().includes("top recommendation")}
+                  initiallyOpen={section.title.toLowerCase().includes("recommendation")}
                 >
                   <AskMarkdown content={section.content} />
                 </InsightDetails>
               ))}
             </div>
-          ) : turn.aiContent ? (
-            <div
-              className={`max-h-48 overflow-y-auto rounded-xl border border-neutral-100 bg-neutral-50/40 px-3 py-3 ${
-                hasListings ? "mt-5" : "mt-4"
-              }`}
-            >
-              <AskMarkdown content={turn.aiContent} />
-            </div>
           ) : null}
 
-          {hasSections && sections.length > 4 ? (
+          {insightSections.length > 4 ? (
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
               className="mt-2 text-xs font-semibold text-emerald-700 hover:underline"
             >
-              {expanded ? "Show fewer insights" : `Show all ${sections.length} insights`}
+              {expanded ? "Show fewer insights" : `Show all ${insightSections.length} insights`}
             </button>
           ) : null}
         </div>
@@ -238,6 +234,41 @@ export function AskAssistantMessage({
       </div>
     </div>
   );
+}
+
+/**
+ * One primary advisor reply. Prefer the full conversational answer;
+ * for legacy multi-section reports, stitch Recommendation / Summary once.
+ */
+function buildPrimaryAdvisorContent(
+  aiContent: string | null | undefined,
+  sections: AskSection[],
+): string {
+  const raw = (aiContent ?? "").trim();
+  if (!raw) return "";
+
+  const hasReportHeadings = /^##\s+/m.test(raw);
+  if (!hasReportHeadings || sections.length === 0) {
+    return stripReportScaffolding(raw);
+  }
+
+  const preferred =
+    sections.find((s) => /recommendation|verdict|brief/i.test(s.title)) ??
+    sections.find((s) => /summary/i.test(s.title)) ??
+    sections[0];
+
+  if (preferred?.content) {
+    return preferred.content.trim();
+  }
+
+  return stripReportScaffolding(raw);
+}
+
+function stripReportScaffolding(markdown: string): string {
+  return markdown
+    .replace(/^##\s+(Summary|Search Summary|Matching Properties|Nearby Alternatives|Area Analysis|Builder Analysis|Investment Analysis|Confidence Score|Source)\s*$/gim, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function InsightDetails({
@@ -278,9 +309,9 @@ function orderInsightSections(sections: AskSection[]): AskSection[] {
 
 function sectionPriority(title: string): number {
   const t = title.toLowerCase();
-  if (t.includes("top recommendation")) return 0;
-  if (t.includes("what to watch")) return 1;
-  if (t.includes("summary") || t.includes("verdict")) return 2;
+  if (t.includes("recommendation") || t.includes("verdict")) return 0;
+  if (t.includes("what to watch") || t.includes("trade-off")) return 1;
+  if (t.includes("pros") || t.includes("cons")) return 2;
   return 3;
 }
 

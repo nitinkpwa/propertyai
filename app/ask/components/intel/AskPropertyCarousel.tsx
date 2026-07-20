@@ -9,12 +9,7 @@ import { useSavedPropertyToggle } from "@/lib/buyer/useSavedProperty";
 import type { ListingProperty } from "@/lib/properties/types";
 
 import { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
-
-function formatPrice(price: number): string {
-  if (price >= 10_000_000) return `₹${(price / 10_000_000).toFixed(2)} Cr`;
-  if (price >= 100_000) return `₹${Math.round(price / 100_000)} L`;
-  return `₹${price.toLocaleString("en-IN")}`;
-}
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 function ScorePill({ label, value }: { label: string; value: number | null }) {
   if (value === null) return null;
@@ -59,7 +54,6 @@ export function AskPropertyCarousel({
       <div className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-1 pb-2 touch-pan-x scroll-smooth scrollbar-thin">
         {listings.map((p) => {
           const href = p.href ?? `/property/${p.id}`;
-          const psf = p.area > 0 ? Math.round(p.price / p.area) : null;
           const saved = isSaved(p.id);
           return (
             <article
@@ -81,9 +75,12 @@ export function AskPropertyCarousel({
                   </div>
                 )}
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2">
-                  <p className="text-sm font-bold text-white line-clamp-1">{formatPrice(p.price)}</p>
-                  {psf ? (
-                    <p className="text-[10px] text-white/80">₹{psf.toLocaleString("en-IN")}/sq ft</p>
+                  <p className="text-sm font-bold text-white line-clamp-1">
+                    {p.priceLabel || (p.price > 0 ? formatInrAmount(p.price) : "Price on Request")}
+                  </p>
+                  {/* Unit rate only for plots on cards; flats show total only */}
+                  {p.rateLabel && p.areaUnit === "sqyd" ? (
+                    <p className="text-[10px] text-white/80">{p.rateLabel}</p>
                   ) : null}
                 </div>
               </Link>

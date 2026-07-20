@@ -1,9 +1,15 @@
 /**
  * Multi-unit pricing + plot size range helpers for AreaIQ listings.
  * Never show ₹0 or concatenated plot sizes (e.g. 100150).
+ *
+ * Single entry point for buyer-facing price: `formatPropertyPrice(property)`.
  */
 
-import type { PropertyStructuredMeta } from "./nearbyPlacesMeta";
+import {
+  emptyPropertyStructuredMeta,
+  extractPropertyMeta,
+  type PropertyStructuredMeta,
+} from "./nearbyPlacesMeta";
 
 export type PlotSizeUnit = "Sq Ft" | "Sq Yard" | "Acre" | "";
 
@@ -51,31 +57,63 @@ function parseNumber(raw: unknown): number | null {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+/**
+ * Indian market-value formatter for totals only.
+ * 39,00,000 → ₹39 L | 72,50,000 → ₹72.5 L | 1,21,80,000 → ₹1.22 Cr
+ * Never use this for unit rates (5800 / sq ft).
+ */
 export function formatInrAmount(price: number): string {
+  if (!price || price <= 0) return "Price on Request";
   if (price >= 10_000_000) {
     const cr = price / 10_000_000;
-    return `₹${cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "")} Cr`;
+    const label =
+      cr % 1 === 0
+        ? cr.toFixed(0)
+        : cr.toFixed(2).replace(/\.?0+$/, "");
+    return `₹${label} Cr`;
   }
   if (price >= 100_000) {
     const lakhs = price / 100_000;
-    return `₹${lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(2).replace(/\.?0+$/, "")} Lakhs`;
+    const label =
+      lakhs % 1 === 0
+        ? lakhs.toFixed(0)
+        : lakhs.toFixed(1).replace(/\.0$/, "");
+    return `₹${label} L`;
   }
+  // Sub-lakh totals are unusual for Tricity listings — still format, never show raw rate style
   return `₹${Math.round(price).toLocaleString("en-IN")}`;
 }
 
-/** Format compact L/Cr for “Starting From”. */
+/** True when a stored "price" is actually a unit rate (e.g. 5800), not market value. */
+export function looksLikeUnitRateNotTotal(
+  price: number | null | undefined,
+  pricePerSqft: number | null | undefined,
+  pricePerSqyd: number | null | undefined,
+): boolean {
+  if (!price || price <= 0) return false;
+  if (pricePerSqft && pricePerSqft > 0 && Math.abs(price - pricePerSqft) < 1) return true;
+  if (pricePerSqyd && pricePerSqyd > 0 && Math.abs(price - pricePerSqyd) < 1) return true;
+  // Unit rates sit well below ₹1L; Tricity property totals rarely do
+  if (price < 100_000 && ((pricePerSqft && pricePerSqft > 0) || (pricePerSqyd && pricePerSqyd > 0))) {
+    return true;
+  }
+  return false;
+}
+
+/** Compact starting price for plots — e.g. "Starting ₹92 L". */
 export function formatStartingFrom(price: number): string {
+  if (!price || price <= 0) return "Price on Request";
   if (price >= 10_000_000) {
     const cr = price / 10_000_000;
     const label = cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "");
-    return `Starting From ₹${label} Cr`;
+    return `Starting ₹${label} Cr`;
   }
   if (price >= 100_000) {
     const lakhs = price / 100_000;
     const label = lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(1).replace(/\.0$/, "");
-    return `Starting From ₹${label} Lakhs`;
+    return `Starting ₹${label} L`;
   }
-  return `Starting From ${formatInrAmount(price)}`;
+  return `Starting ${formatInrAmount(price)}`;
 }
 
 function normalizeUnit(raw: string | undefined | null): PlotSizeUnit {
@@ -285,6 +323,10 @@ export function normalizePricing(input: PricingInput): NormalizedPricing {
     parseNumber(meta?.pricing.currentPrice) ||
     parseNumber(input.dbPrice);
 
+  // Reject totals that are clearly unit rates saved into the price column (e.g. 5800)
+  // — we'll recalculate from rate × area below.
+  // (pricePerSqft / pricePerSqyd may not be final yet; re-check after rates resolve)
+
   // Plot sizes from dedicated fields or legacy plotArea / structured
   const minFromMeta = parseNumber(
     (meta?.specs as { minPlotSize?: string } | undefined)?.minPlotSize || getSf("minPlotSize"),
@@ -355,18 +397,68 @@ export function normalizePricing(input: PricingInput): NormalizedPricing {
     };
   }
 
-  // Estimated starting price: rate × min plot (do not overwrite total)
+  // Prefer super area → carpet → built-up → DB area_sqft
+  const superArea = parseNumber(
+    (meta?.specs as { superArea?: string } | undefined)?.superArea || getSf("superArea"),
+  );
+  const carpetArea = parseNumber(
+    (meta?.specs as { carpetArea?: string } | undefined)?.carpetArea || getSf("carpetArea"),
+  );
+  const builtUpArea = parseNumber(
+    (meta?.specs as { builtUpArea?: string } | undefined)?.builtUpArea || getSf("builtUpArea"),
+  );
+  const rawArea =
+    superArea ||
+    carpetArea ||
+    builtUpArea ||
+    (input.dbAreaSqft &&
+    input.dbAreaSqft > 0 &&
+    !looksLikeConcatenatedRange(input.dbAreaSqft)
+      ? input.dbAreaSqft
+      : null);
+  const areaSqft = rawArea;
+
+  const isPlot =
+    /plot/.test(sub) ||
+    Boolean(pricePerSqyd && plot.min) ||
+    Boolean(pricePerAcre && plot.min && plot.unit === "Acre");
+
+  if (looksLikeUnitRateNotTotal(totalPrice, pricePerSqft, pricePerSqyd)) {
+    totalPrice = null;
+  }
+
+  // Auto-calculate total when missing (never leave buyers with ₹0 if rates exist)
   let estimatedStartingPrice: number | null = null;
   let estimatedStartingLabel: string | null = null;
-  if (!totalPrice && plot.min) {
-    if (pricePerSqyd && (plot.unit === "Sq Yard" || /plot/.test(sub))) {
-      estimatedStartingPrice = pricePerSqyd * plot.min;
+
+  if (!totalPrice) {
+    if (!isPlot && pricePerSqft && areaSqft) {
+      // Apartments / villas: price_per_sqft × super/carpet area
+      totalPrice = Math.round(pricePerSqft * areaSqft);
+    } else if (pricePerSqyd && plot.min && plot.min > 0) {
+      // Plots: price_per_sqyard × minimum_plot_size
+      estimatedStartingPrice = Math.round(pricePerSqyd * plot.min);
+      totalPrice = estimatedStartingPrice;
       estimatedStartingLabel = formatStartingFrom(estimatedStartingPrice);
-    } else if (pricePerSqft && (plot.unit === "Sq Ft" || !plot.unit)) {
-      estimatedStartingPrice = pricePerSqft * plot.min;
+    } else if (pricePerSqft && plot.min && plot.min > 0) {
+      estimatedStartingPrice = Math.round(pricePerSqft * plot.min);
+      totalPrice = estimatedStartingPrice;
       estimatedStartingLabel = formatStartingFrom(estimatedStartingPrice);
-    } else if (pricePerAcre && plot.unit === "Acre") {
-      estimatedStartingPrice = pricePerAcre * plot.min;
+    } else if (pricePerAcre && plot.min && plot.min > 0) {
+      estimatedStartingPrice = Math.round(pricePerAcre * plot.min);
+      totalPrice = estimatedStartingPrice;
+      estimatedStartingLabel = formatStartingFrom(estimatedStartingPrice);
+    }
+  } else if (isPlot && plot.min && (pricePerSqyd || pricePerSqft || pricePerAcre)) {
+    // Keep starting label for plots even when a total exists
+    if (pricePerSqyd) {
+      estimatedStartingPrice = Math.round(pricePerSqyd * plot.min);
+    } else if (pricePerSqft) {
+      estimatedStartingPrice = Math.round(pricePerSqft * plot.min);
+    } else if (pricePerAcre) {
+      estimatedStartingPrice = Math.round(pricePerAcre * plot.min);
+    }
+    if (estimatedStartingPrice) {
       estimatedStartingLabel = formatStartingFrom(estimatedStartingPrice);
     }
   }
@@ -379,54 +471,51 @@ export function normalizePricing(input: PricingInput): NormalizedPricing {
   });
 
   // For plots, never derive fake PPSF from price/area when we have per-yard
-  if (/plot/.test(sub) && pricePerSqyd) {
+  if (isPlot && pricePerSqyd) {
     // keep pricePerSqft only if explicitly set as sqft rate
-  } else if (!pricePerSqft && totalPrice && input.dbAreaSqft && input.dbAreaSqft > 0) {
-    if (!looksLikeConcatenatedRange(input.dbAreaSqft)) {
-      pricePerSqft = Math.round(totalPrice / input.dbAreaSqft);
-    }
+  } else if (!pricePerSqft && totalPrice && areaSqft) {
+    pricePerSqft = Math.round(totalPrice / areaSqft);
   }
 
-  const rateLabel = rateLabelFor(preferredUnit, {
-    pricePerSqft,
-    pricePerSqyd,
-    pricePerAcre,
-    totalPrice,
-  });
-
+  // Buyer-facing labels
+  // Apartments/villas: ₹1.22 Cr · ₹5,800 / sq ft · 2100 sq ft
+  // Plots: Starting ₹92 L · ₹92,000 / Sq Yard · 100–150 Sq Yard
   let primaryPriceLabel = "Price on Request";
-  if (preferredUnit === "total" && totalPrice) {
-    primaryPriceLabel = formatInrAmount(totalPrice);
-  } else if (preferredUnit === "sqyd" && pricePerSqyd) {
-    primaryPriceLabel = `₹${Math.round(pricePerSqyd).toLocaleString("en-IN")} / Sq Yard`;
-  } else if (preferredUnit === "sqft" && pricePerSqft) {
-    primaryPriceLabel = `₹${Math.round(pricePerSqft).toLocaleString("en-IN")} / Sq Ft`;
-  } else if (preferredUnit === "acre" && pricePerAcre) {
-    primaryPriceLabel = `${formatInrAmount(pricePerAcre)} / Acre`;
-  } else if (totalPrice) {
-    primaryPriceLabel = formatInrAmount(totalPrice);
-  } else if (estimatedStartingLabel) {
-    primaryPriceLabel = estimatedStartingLabel;
-  } else if (rateLabel) {
-    primaryPriceLabel = rateLabel;
-  }
-
-  // Secondary rate line when primary is total or starting-from
   let secondaryRate: string | null = null;
-  if (
-    (preferredUnit === "total" || primaryPriceLabel.startsWith("Starting From")) &&
-    rateLabel &&
-    rateLabel !== primaryPriceLabel
-  ) {
-    secondaryRate = rateLabel;
-  } else if (preferredUnit !== "total" && totalPrice) {
-    secondaryRate = formatInrAmount(totalPrice);
-  } else if (
-    preferredUnit === "sqyd" &&
-    estimatedStartingLabel &&
-    primaryPriceLabel !== estimatedStartingLabel
-  ) {
-    secondaryRate = estimatedStartingLabel;
+  let sizeLabel: string | null = plot.label || null;
+
+  if (isPlot) {
+    const start = estimatedStartingPrice ?? totalPrice;
+    if (start && start > 0) {
+      primaryPriceLabel = estimatedStartingLabel || formatStartingFrom(start);
+    } else {
+      primaryPriceLabel = "Price on Request";
+    }
+    if (pricePerSqyd) {
+      secondaryRate = `₹${Math.round(pricePerSqyd).toLocaleString("en-IN")} / Sq Yard`;
+    } else if (pricePerSqft) {
+      secondaryRate = `₹${Math.round(pricePerSqft).toLocaleString("en-IN")} / sq ft`;
+    } else if (pricePerAcre) {
+      secondaryRate = `${formatInrAmount(pricePerAcre)} / Acre`;
+    }
+    sizeLabel = plot.label || null;
+  } else if (totalPrice && totalPrice > 0) {
+    // Flats / villas / commercial — ALWAYS show market value, never unit rate as headline
+    primaryPriceLabel = formatInrAmount(totalPrice);
+    if (pricePerSqft) {
+      secondaryRate = `₹${Math.round(pricePerSqft).toLocaleString("en-IN")} / sq ft`;
+    }
+    sizeLabel = areaSqft
+      ? `${areaSqft.toLocaleString("en-IN")} sq ft`
+      : plot.label || null;
+  } else {
+    // Never promote a bare unit rate to the primary listing price
+    primaryPriceLabel = "Price on Request";
+    if (pricePerSqft) {
+      secondaryRate = `₹${Math.round(pricePerSqft).toLocaleString("en-IN")} / sq ft`;
+    } else if (pricePerSqyd) {
+      secondaryRate = `₹${Math.round(pricePerSqyd).toLocaleString("en-IN")} / Sq Yard`;
+    }
   }
 
   return {
@@ -443,8 +532,8 @@ export function normalizePricing(input: PricingInput): NormalizedPricing {
     estimatedStartingLabel,
     primaryPriceLabel,
     rateLabel: secondaryRate,
-    sizeLabel: plot.label || null,
-    preferredUnit,
+    sizeLabel,
+    preferredUnit: isPlot ? (pricePerSqyd ? "sqyd" : preferredUnit) : totalPrice ? "total" : preferredUnit,
   };
 }
 
@@ -535,4 +624,304 @@ export function extractPlotSizeFromText(text: string): {
   }
 
   return empty;
+}
+
+/** Flexible property-like input for the single pricing utility. */
+export interface DisplayPriceInput {
+  price?: number | null;
+  calculated_price?: number | null;
+  calculatedPrice?: number | null;
+  area?: number | null;
+  area_sqft?: number | null;
+  super_area?: number | null;
+  superArea?: number | null;
+  carpet_area?: number | null;
+  carpetArea?: number | null;
+  price_per_sqft?: number | null;
+  pricePerSqft?: number | null;
+  pricePerSqFt?: number | null;
+  price_per_sqyard?: number | null;
+  pricePerSqyd?: number | null;
+  pricePerYard?: number | null;
+  minimum_plot_size?: number | null;
+  minPlotSize?: number | null;
+  maxPlotSize?: number | null;
+  sub_type?: string | null;
+  propertyType?: string | null;
+  propertyTypeLabel?: string | null;
+  meta?: PropertyStructuredMeta | null;
+  nearby_places?: unknown;
+  structuredMeta?: PropertyStructuredMeta | null;
+  pricingDisplay?: Partial<NormalizedPricing> | null;
+}
+
+export interface FormattedPropertyPrice {
+  /** Market value headline — ₹1.22 Cr or Starting ₹92 L. Never a bare unit rate. */
+  displayPrice: string;
+  /** Unit rate for detail pages — ₹5,800 / sq ft or ₹92,000 / Sq Yard */
+  unitPrice: string | null;
+  /** Plot starting line (same as displayPrice for plots); null for flats */
+  startingPrice: string | null;
+  /** Numeric total for filters / EMI / sort */
+  numericPrice: number;
+  sizeLabel: string | null;
+  isPlot: boolean;
+  pricePerSqft: number | null;
+  pricePerSqyd: number | null;
+  area: number | null;
+  minPlotSize: number | null;
+  maxPlotSize: number | null;
+  normalized: NormalizedPricing;
+}
+
+/** @deprecated Prefer FormattedPropertyPrice / formatPropertyPrice */
+export interface DisplayPriceResult {
+  price: number;
+  calculatedPrice: number;
+  pricePerSqft: number | null;
+  pricePerSqyd: number | null;
+  area: number | null;
+  minPlotSize: number | null;
+  maxPlotSize: number | null;
+  isPlot: boolean;
+  hasPrice: boolean;
+  primaryLabel: string;
+  rateLabel: string | null;
+  sizeLabel: string | null;
+  normalized: NormalizedPricing;
+}
+
+/**
+ * Centralized pricing formatter — use on admin, cards, search, compare, seller, detail.
+ *
+ * Flat / Villa / House / Commercial:
+ *   numericPrice = price_per_sqft × super_area (or carpet/area)
+ *   displayPrice = "₹1.22 Cr"  (never "₹5,800")
+ *   unitPrice    = "₹5,800 / sq ft" (details only)
+ *
+ * Plot:
+ *   numericPrice = price_per_sqyard × minimum_plot_size
+ *   displayPrice = "Starting ₹92 L"
+ *   unitPrice    = "₹92,000 / Sq Yard"
+ */
+export function formatPropertyPrice(property: DisplayPriceInput): FormattedPropertyPrice {
+  const meta =
+    property.meta ??
+    property.structuredMeta ??
+    extractPropertyMeta(property.nearby_places ?? null);
+
+  const storedCalculated =
+    positiveNumber(property.calculated_price) ??
+    positiveNumber(property.calculatedPrice);
+
+  const pricePerSqft =
+    positiveNumber(property.price_per_sqft) ??
+    positiveNumber(property.pricePerSqft) ??
+    positiveNumber(property.pricePerSqFt) ??
+    positiveNumber(property.pricingDisplay?.pricePerSqft);
+
+  const pricePerSqyd =
+    positiveNumber(property.price_per_sqyard) ??
+    positiveNumber(property.pricePerSqyd) ??
+    positiveNumber(property.pricePerYard) ??
+    positiveNumber(property.pricingDisplay?.pricePerSqyd);
+
+  let explicitPrice =
+    positiveNumber(property.price) ??
+    positiveNumber(property.pricingDisplay?.totalPrice);
+
+  // If DB price is actually the unit rate (common import bug), ignore it
+  if (looksLikeUnitRateNotTotal(explicitPrice, pricePerSqft, pricePerSqyd)) {
+    explicitPrice = null;
+  }
+  if (looksLikeUnitRateNotTotal(storedCalculated, pricePerSqft, pricePerSqyd)) {
+    // fall through to rate × area
+  }
+
+  const area =
+    positiveNumber(property.super_area) ??
+    positiveNumber(property.superArea) ??
+    positiveNumber(property.carpet_area) ??
+    positiveNumber(property.carpetArea) ??
+    positiveNumber(property.area) ??
+    positiveNumber(property.area_sqft) ??
+    positiveNumber(meta?.specs?.superArea) ??
+    positiveNumber(meta?.specs?.carpetArea) ??
+    positiveNumber(meta?.specs?.builtUpArea) ??
+    null;
+
+  const minPlotSize =
+    positiveNumber(property.minimum_plot_size) ??
+    positiveNumber(property.minPlotSize) ??
+    positiveNumber(property.pricingDisplay?.minPlotSize);
+
+  const maxPlotSize =
+    positiveNumber(property.maxPlotSize) ??
+    positiveNumber(property.pricingDisplay?.maxPlotSize);
+
+  const safeStored =
+    storedCalculated &&
+    !looksLikeUnitRateNotTotal(storedCalculated, pricePerSqft, pricePerSqyd)
+      ? storedCalculated
+      : null;
+
+  const baseMeta = meta ?? emptyPropertyStructuredMeta();
+  const mergedMeta: PropertyStructuredMeta = {
+    ...baseMeta,
+    pricing: {
+      ...baseMeta.pricing,
+      ...(pricePerSqft != null ? { pricePerSqft: String(pricePerSqft) } : {}),
+      ...(pricePerSqyd != null ? { pricePerSqyd: String(pricePerSqyd) } : {}),
+      ...(explicitPrice != null
+        ? { totalPrice: String(explicitPrice), currentPrice: String(explicitPrice) }
+        : safeStored != null
+          ? { totalPrice: String(safeStored), currentPrice: String(safeStored) }
+          : {}),
+    } as PropertyStructuredMeta["pricing"],
+    specs: {
+      ...baseMeta.specs,
+      ...(area != null && !baseMeta.specs.superArea && !baseMeta.specs.carpetArea
+        ? { superArea: String(area) }
+        : {}),
+      ...(minPlotSize != null ? { minPlotSize: String(minPlotSize) } : {}),
+      ...(maxPlotSize != null ? { maxPlotSize: String(maxPlotSize) } : {}),
+    } as PropertyStructuredMeta["specs"],
+  };
+
+  const subType = property.sub_type ?? property.propertyType ?? null;
+  const normalized = normalizePricing({
+    dbPrice: explicitPrice ?? safeStored,
+    dbAreaSqft: area,
+    subType,
+    propertyTypeLabel: property.propertyTypeLabel ?? property.propertyType ?? subType,
+    meta: mergedMeta,
+  });
+
+  const isPlot =
+    /plot/i.test(String(subType || "")) ||
+    normalized.preferredUnit === "sqyd" ||
+    Boolean(normalized.pricePerSqyd && normalized.minPlotSize);
+
+  let numericPrice = 0;
+  if (explicitPrice && explicitPrice > 0) {
+    numericPrice = explicitPrice;
+  } else if (safeStored && safeStored > 0) {
+    numericPrice = safeStored;
+  } else if (
+    !isPlot &&
+    normalized.pricePerSqft &&
+    normalized.pricePerSqft > 0 &&
+    area &&
+    area > 0
+  ) {
+    numericPrice = Math.round(normalized.pricePerSqft * area);
+  } else if (
+    normalized.pricePerSqyd &&
+    normalized.pricePerSqyd > 0 &&
+    normalized.minPlotSize &&
+    normalized.minPlotSize > 0
+  ) {
+    numericPrice = Math.round(normalized.pricePerSqyd * normalized.minPlotSize);
+  } else if (normalized.totalPrice && normalized.totalPrice > 0) {
+    numericPrice = normalized.totalPrice;
+  } else if (normalized.estimatedStartingPrice && normalized.estimatedStartingPrice > 0) {
+    numericPrice = normalized.estimatedStartingPrice;
+  }
+
+  // Guard: never treat a unit-rate-sized number as the displayed market value
+  if (looksLikeUnitRateNotTotal(numericPrice, normalized.pricePerSqft, normalized.pricePerSqyd)) {
+    if (
+      !isPlot &&
+      normalized.pricePerSqft &&
+      area &&
+      area > 0
+    ) {
+      numericPrice = Math.round(normalized.pricePerSqft * area);
+    } else if (normalized.pricePerSqyd && normalized.minPlotSize) {
+      numericPrice = Math.round(normalized.pricePerSqyd * normalized.minPlotSize);
+    } else {
+      numericPrice = 0;
+    }
+  }
+
+  const hasPrice = numericPrice > 0;
+
+  let displayPrice = "Price on Request";
+  let startingPrice: string | null = null;
+  let unitPrice: string | null = null;
+
+  if (isPlot) {
+    if (hasPrice) {
+      displayPrice = formatStartingFrom(numericPrice);
+      startingPrice = displayPrice;
+    }
+    if (normalized.pricePerSqyd) {
+      unitPrice = `₹${Math.round(normalized.pricePerSqyd).toLocaleString("en-IN")} / Sq Yard`;
+    } else if (normalized.pricePerSqft) {
+      unitPrice = `₹${Math.round(normalized.pricePerSqft).toLocaleString("en-IN")} / sq ft`;
+    }
+  } else if (hasPrice) {
+    displayPrice = formatInrAmount(numericPrice);
+    if (normalized.pricePerSqft) {
+      unitPrice = `₹${Math.round(normalized.pricePerSqft).toLocaleString("en-IN")} / sq ft`;
+    }
+  }
+
+  const sizeLabel = isPlot
+    ? normalized.sizeLabel || normalized.plotSizeLabel || null
+    : area
+      ? `${area.toLocaleString("en-IN")} sq ft`
+      : normalized.sizeLabel;
+
+  const synced: NormalizedPricing = {
+    ...normalized,
+    totalPrice: hasPrice ? numericPrice : null,
+    estimatedStartingPrice: isPlot && hasPrice ? numericPrice : normalized.estimatedStartingPrice,
+    estimatedStartingLabel: startingPrice,
+    primaryPriceLabel: displayPrice,
+    rateLabel: unitPrice,
+    sizeLabel,
+    preferredUnit: isPlot ? "sqyd" : hasPrice ? "total" : normalized.preferredUnit,
+  };
+
+  return {
+    displayPrice,
+    unitPrice,
+    startingPrice,
+    numericPrice: hasPrice ? numericPrice : 0,
+    sizeLabel,
+    isPlot,
+    pricePerSqft: synced.pricePerSqft,
+    pricePerSqyd: synced.pricePerSqyd,
+    area: area ?? synced.minPlotSize,
+    minPlotSize: synced.minPlotSize,
+    maxPlotSize: synced.maxPlotSize,
+    normalized: synced,
+  };
+}
+
+/**
+ * @deprecated Use `formatPropertyPrice` — kept for existing call sites.
+ */
+export function calculateDisplayPrice(property: DisplayPriceInput): DisplayPriceResult {
+  const formatted = formatPropertyPrice(property);
+  return {
+    price: formatted.numericPrice,
+    calculatedPrice: formatted.numericPrice,
+    pricePerSqft: formatted.pricePerSqft,
+    pricePerSqyd: formatted.pricePerSqyd,
+    area: formatted.area,
+    minPlotSize: formatted.minPlotSize,
+    maxPlotSize: formatted.maxPlotSize,
+    isPlot: formatted.isPlot,
+    hasPrice: formatted.numericPrice > 0,
+    primaryLabel: formatted.displayPrice,
+    rateLabel: formatted.unitPrice,
+    sizeLabel: formatted.sizeLabel,
+    normalized: formatted.normalized,
+  };
+}
+
+function positiveNumber(raw: unknown): number | null {
+  return parseNumber(raw);
 }

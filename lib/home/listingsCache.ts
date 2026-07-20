@@ -1,4 +1,5 @@
-import { fetchListingProperties } from "@/lib/properties/queries";
+import { getLiveProperties } from "@/lib/properties/getLiveProperties";
+import { mapPropertyRowToListing } from "@/lib/properties/queries";
 import type { ListingProperty } from "@/lib/properties/types";
 
 /** In-flight / short-TTL cache so homepage sections share one listings fetch. */
@@ -15,11 +16,11 @@ export function getCachedListingProperties(): Promise<ListingProperty[]> {
   }
 
   if (!inflight) {
-    inflight = fetchListingProperties()
+    inflight = getLiveProperties({ includeSeller: true })
       .then((rows) => {
-        cached = rows;
+        cached = rows.map((row) => mapPropertyRowToListing(row));
         cachedAt = Date.now();
-        return rows;
+        return cached;
       })
       .finally(() => {
         inflight = null;

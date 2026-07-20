@@ -68,12 +68,13 @@ export default function EMIIntelligence({
   }, [plotMode, minSize, maxSize, hasRange]);
 
   // Always EMI on purchase value — never on per-unit rate alone
+  // property.price is already from calculateDisplayPrice at map time
   const propertyValue = useMemo(() => {
     if (plotMode && ratePerUnit > 0 && selectedSize > 0) {
       return ratePerUnit * selectedSize;
     }
-    if (pd?.totalPrice && pd.totalPrice > 0) return pd.totalPrice;
     if (property.price > 0) return property.price;
+    if (pd?.totalPrice && pd.totalPrice > 0) return pd.totalPrice;
     if (pd?.estimatedStartingPrice && pd.estimatedStartingPrice > 0) {
       return pd.estimatedStartingPrice;
     }

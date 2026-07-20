@@ -4,6 +4,7 @@
 
 import {
   applyNormalizedPricingToMeta,
+  formatPropertyPrice,
   normalizePricing,
 } from "@/lib/properties/pricingDisplay";
 import {
@@ -26,6 +27,7 @@ export interface NormalizeResult {
   id: string;
   changed: boolean;
   price: number | null;
+  calculated_price: number | null;
   area_sqft: number | null;
   nearby_places: unknown;
   primaryPriceLabel: string;
@@ -97,28 +99,38 @@ export function normalizePropertyPricingRow(row: LegacyPropertyRow): NormalizeRe
     area_sqft = normalized.minPlotSize;
   }
 
-  // Do not invent total price from estimate — only keep real totals
+  const priced = formatPropertyPrice({
+    price: row.price,
+    area_sqft: area_sqft,
+    sub_type: row.sub_type,
+    meta: nextMeta,
+    nearby_places,
+  });
+
+  // Persist market total; never keep a unit-rate value in price
+  const calculated_price = priced.numericPrice > 0 ? priced.numericPrice : null;
   const price =
-    normalized.totalPrice != null
-      ? normalized.totalPrice
-      : row.price && row.price > 0
-        ? row.price
-        : null;
+    row.price && row.price >= 100_000
+      ? row.price
+      : calculated_price;
 
   const before = JSON.stringify(row.nearby_places ?? null);
   const after = JSON.stringify(nearby_places);
+  const priorCalculated = (row as { calculated_price?: number | null }).calculated_price ?? null;
   const changed =
     before !== after ||
     (row.area_sqft ?? null) !== (area_sqft ?? null) ||
-    (row.price ?? null) !== (price ?? null);
+    (row.price ?? null) !== (price ?? null) ||
+    priorCalculated !== calculated_price;
 
   return {
     id: row.id,
     changed,
     price,
+    calculated_price,
     area_sqft,
     nearby_places,
-    primaryPriceLabel: normalized.primaryPriceLabel,
-    plotSizeLabel: normalized.plotSizeLabel,
+    primaryPriceLabel: priced.displayPrice || normalized.primaryPriceLabel,
+    plotSizeLabel: priced.sizeLabel || normalized.plotSizeLabel,
   };
 }

@@ -58,28 +58,36 @@ export default function PipelinePanel({ leads, onRefresh }: Props) {
         <h2 className={connectTokens.heading}>Lead Pipeline</h2>
         <p className={connectTokens.subheading}>Drag leads between stages — timeline updates automatically</p>
       </div>
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="-mx-1 flex gap-3 overflow-x-auto scroll-touch pb-4 snap-x snap-mandatory [-webkit-overflow-scrolling:touch]">
         {PIPELINE_STAGES.map((stage) => (
           <div
             key={stage.id}
-            className="w-64 shrink-0 rounded-2xl border border-neutral-200 bg-neutral-50/50"
+            className="w-[min(280px,78vw)] shrink-0 snap-start rounded-2xl border border-neutral-200 bg-neutral-50/50 lg:w-64"
             onDragOver={(e) => e.preventDefault()}
             onDrop={() => handleDrop(stage.id)}
           >
-            <div className={`rounded-t-2xl px-3 py-2 text-xs font-bold ring-1 ring-inset ${stage.color}`}>
+            <div className={`rounded-t-2xl px-3 py-2.5 text-xs font-bold ring-1 ring-inset ${stage.color}`}>
               {stage.label} ({columns[stage.id]?.length ?? 0})
             </div>
-            <div className="space-y-2 p-2 min-h-[200px]">
+            <div className="min-h-[200px] space-y-2 p-2">
               {(columns[stage.id] ?? []).map((lead) => (
                 <div
                   key={lead.id}
                   draggable
                   onDragStart={() => setDragging(lead.id)}
-                  className={`${connectTokens.card} cursor-grab p-3 active:cursor-grabbing`}
+                  className={`${connectTokens.card} cursor-grab p-3 active:cursor-grabbing active:scale-[0.98]`}
                 >
-                  <p className="text-sm font-semibold text-heading-primary">{lead.full_name ?? "Buyer"}</p>
-                  <p className="mt-0.5 truncate text-xs text-muted">{lead.property_title}</p>
-                  <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${lead.lead_temperature === "hot" ? "bg-rose-100 text-rose-700" : "bg-neutral-100 text-body"}`}>
+                  <p className="text-base font-semibold text-heading-primary lg:text-sm">
+                    {lead.full_name ?? "Buyer"}
+                  </p>
+                  <p className="mt-0.5 truncate text-sm text-muted lg:text-xs">{lead.property_title}</p>
+                  <span
+                    className={`mt-2 inline-block rounded-full px-2 py-1 text-xs font-bold uppercase ${
+                      lead.lead_temperature === "hot"
+                        ? "bg-rose-100 text-rose-700"
+                        : "bg-neutral-100 text-body"
+                    }`}
+                  >
                     {lead.lead_temperature}
                   </span>
                 </div>

@@ -7,6 +7,7 @@ import AuthSessionHandler from "@/components/auth/AuthSessionHandler";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { ProgressiveProfileProvider } from "@/components/buyer/ProgressiveProfileProvider";
 import BrandJsonLd from "@/components/seo/BrandJsonLd";
+import MainContent from "@/components/layout/MainContent";
 import { BRAND } from "@/lib/brand";
 
 const geistSans = Geist({
@@ -106,7 +107,7 @@ export default function RootLayout({
           <AuthSessionHandler />
           <ProgressiveProfileProvider>
             <NavbarWrapper />
-            {children}
+            <MainContent>{children}</MainContent>
           </ProgressiveProfileProvider>
         </AuthProvider>
       </body>

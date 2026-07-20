@@ -74,14 +74,14 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
     <div className="shrink-0 border-t border-neutral-200/80 bg-white/95 px-3 pt-3 backdrop-blur-md sm:px-5 sm:pt-3.5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
       <div className="mx-auto w-full max-w-[1100px]">
         {recentSearches.length > 0 ? (
-          <div className="mb-2.5 flex flex-wrap gap-1.5">
+          <div className="mb-2.5 flex gap-2 overflow-x-auto scroll-touch pb-1 sm:flex-wrap sm:overflow-visible">
             {recentSearches.slice(0, 5).map((search) => (
               <button
                 key={search}
                 type="button"
                 onClick={() => onSubmit(search)}
                 disabled={loading}
-                className="max-w-full rounded-full border border-neutral-200 bg-neutral-50 px-3 py-1 text-[11px] font-medium text-body hover:border-emerald-200 hover:bg-emerald-50 disabled:opacity-50"
+                className="shrink-0 rounded-full border border-neutral-200 bg-neutral-50 px-3.5 py-2 text-sm font-medium text-body hover:border-emerald-200 hover:bg-emerald-50 disabled:opacity-50"
               >
                 {search.length > 32 ? `${search.slice(0, 31)}…` : search}
               </button>
@@ -194,13 +194,13 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
             placeholder="Ask anything — properties, areas, EMI, builders…"
             disabled={loading}
             rows={1}
-            className="max-h-36 min-h-[44px] flex-1 resize-none bg-transparent py-2.5 text-sm text-heading-primary outline-none placeholder:text-placeholder disabled:opacity-60"
+            className="max-h-36 min-h-[48px] flex-1 resize-none bg-transparent py-3 text-base text-heading-primary outline-none placeholder:text-placeholder disabled:opacity-60"
           />
 
           <button
             type="submit"
             disabled={loading || !query.trim()}
-            className="mb-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-[0_2px_10px_rgba(74, 170, 39,0.35)] transition-all hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-45"
+            className="mb-0.5 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-white shadow-[0_2px_10px_var(--brand-shadow)] transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-45"
             aria-label="Send"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

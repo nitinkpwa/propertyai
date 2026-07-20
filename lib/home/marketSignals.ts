@@ -6,6 +6,7 @@ import type {
 } from "./types";
 
 function formatPriceShort(price: number): string {
+  if (!price || price <= 0) return "Price on Request";
   if (price >= 10_000_000) {
     const cr = price / 10_000_000;
     return `₹${cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(1)} Cr`;

@@ -1,7 +1,10 @@
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
 import { mapPropertyRowToCardProps, mapPropertyRowToListing } from "@/lib/properties/queries";
 import type { ListingProperty } from "@/lib/properties/types";
-import { PROPERTIES_CARD_SELECT } from "@/lib/seller/propertySchema";
+import {
+  PROPERTIES_CARD_SELECT,
+  PROPERTIES_CARD_SELECT_CORE,
+} from "@/lib/seller/propertySchema";
 import { supabase, type Property } from "@/lib/supabase";
 import type { AskSearchResult, PropertySearchFilters } from "./types";
 
@@ -18,9 +21,27 @@ type PropertyRow = Omit<Property, "contact_name" | "contact_phone"> & {
   seller?: { full_name?: string | null } | null;
 };
 
-const SELECT = `${PROPERTIES_CARD_SELECT}, seller:profiles!properties_seller_id_fkey(full_name)`;
+const SELECT_WITH_CALC = `${PROPERTIES_CARD_SELECT}, seller:profiles!properties_seller_id_fkey(full_name)`;
+const SELECT_CORE = `${PROPERTIES_CARD_SELECT_CORE}, seller:profiles!properties_seller_id_fkey(full_name)`;
+let askSelect = SELECT_WITH_CALC;
 
 const RESULT_LIMIT = 50;
+
+async function selectLiveProperties(
+  build: (select: string) => PromiseLike<{
+    data: unknown;
+    error: { message: string } | null;
+  }>,
+  label: string,
+) {
+  let { data, error } = await build(askSelect);
+  if (error && /calculated_price/i.test(error.message)) {
+    console.warn(`${label}: retrying without calculated_price`);
+    askSelect = SELECT_CORE;
+    ({ data, error } = await build(askSelect));
+  }
+  return { data, error };
+}
 
 function mapRows(rows: PropertyRow[]): { cards: PropertyCardProps[]; listings: ListingProperty[] } {
   return {
@@ -76,36 +97,35 @@ function scoreProperty(row: PropertyRow, filters: PropertySearchFilters): number
 }
 
 async function runQuery(filters: PropertySearchFilters, options: QueryOptions) {
-  let query = supabase
-    .from("properties")
-    .select(SELECT)
-    .eq("status", "active")
-    .is("deleted_at", null);
+  const build = (select: string) => {
+    let query = supabase
+      .from("properties")
+      .select(select)
+      .eq("status", "active")
+      .is("deleted_at", null);
 
-  if (filters.listingType) {
-    query = query.eq("type", filters.listingType);
-  }
+    if (filters.listingType) {
+      query = query.eq("type", filters.listingType);
+    }
 
-  if (options.strict) {
-    if (filters.maxPrice !== null) query = query.lte("price", filters.maxPrice);
+    // Exact constraints always — never silently widen BHK/type.
+    if (filters.maxPrice !== null) {
+      query = query.lte(
+        "price",
+        options.strict ? filters.maxPrice : Math.round(filters.maxPrice * 1.15),
+      );
+    }
     if (filters.minPrice !== null) query = query.gte("price", filters.minPrice);
     if (filters.bhk !== null) query = query.eq("bedrooms", filters.bhk);
     if (filters.subType) query = query.eq("sub_type", filters.subType);
     if (filters.city) query = query.ilike("city", `%${filters.city}%`);
-  } else {
-    if (filters.maxPrice !== null) {
-      query = query.lte("price", Math.round(filters.maxPrice * 1.25));
-    }
-    if (filters.bhk !== null) {
-      query = query.gte("bedrooms", Math.max(1, filters.bhk - 1)).lte("bedrooms", filters.bhk + 1);
-    }
-    if (filters.subType) query = query.eq("sub_type", filters.subType);
-    if (filters.city) query = query.ilike("city", `%${filters.city}%`);
-  }
 
-  const { data, error } = await query
-    .order("created_at", { ascending: false })
-    .limit(options.strict ? RESULT_LIMIT * 2 : RESULT_LIMIT * 3);
+    return query
+      .order("created_at", { ascending: false })
+      .limit(options.strict ? RESULT_LIMIT * 2 : RESULT_LIMIT * 3);
+  };
+
+  const { data, error } = await selectLiveProperties(build, "searchPropertiesFromIntent");
 
   if (error) {
     console.error("searchPropertiesFromIntent:", error.message);
@@ -127,48 +147,44 @@ async function runQuery(filters: PropertySearchFilters, options: QueryOptions) {
   return rows.slice(0, RESULT_LIMIT);
 }
 
+/**
+ * Labeled alternatives only — NEVER relax BHK as a silent "match".
+ * Prefer same city + budget with different configuration; never dump random listings.
+ */
 async function fetchFallbackProperties(filters: PropertySearchFilters): Promise<{
   rows: PropertyRow[];
   reason: string;
 }> {
-  if (filters.city) {
-    const cityRows = await runQuery({ ...filters, locality: null }, { strict: false });
-    if (cityRows.length > 0) {
+  // Same city + budget, exclude requested BHK (explicit alternatives)
+  if (filters.city || filters.maxPrice != null) {
+    const { data, error } = await selectLiveProperties(async (select) => {
+      let query = supabase
+        .from("properties")
+        .select(select)
+        .eq("status", "active")
+        .is("deleted_at", null);
+
+      if (filters.listingType) query = query.eq("type", filters.listingType);
+      if (filters.maxPrice != null) query = query.lte("price", filters.maxPrice);
+      if (filters.minPrice != null) query = query.gte("price", filters.minPrice);
+      if (filters.city) query = query.ilike("city", `%${filters.city}%`);
+      if (filters.bhk != null) query = query.neq("bedrooms", filters.bhk);
+
+      return query.order("created_at", { ascending: false }).limit(RESULT_LIMIT);
+    }, "fetchFallbackProperties");
+
+    if (!error && Array.isArray(data) && data.length) {
       return {
-        rows: cityRows,
-        reason: `same city (${filters.city}) with slightly relaxed budget or configuration`,
+        rows: data as unknown as PropertyRow[],
+        reason:
+          "No exact match exists. Nearby alternatives in the same market (different configuration).",
       };
     }
-  }
-
-  if (filters.subType) {
-    const typeRows = await runQuery(
-      { ...filters, city: null, locality: null, bhk: null },
-      { strict: false },
-    );
-    if (typeRows.length > 0) {
-      return {
-        rows: typeRows,
-        reason: `similar ${filters.subType.replace(/_/g, " ")} listings across Tricity`,
-      };
-    }
-  }
-
-  const { data, error } = await supabase
-    .from("properties")
-    .select(SELECT)
-    .eq("status", "active").is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(RESULT_LIMIT);
-
-  if (error) {
-    console.error("searchPropertiesFromIntent fallback:", error.message);
-    return { rows: [], reason: "active listings in our database" };
   }
 
   return {
-    rows: (data as unknown as PropertyRow[]) ?? [],
-    reason: "recently added active listings",
+    rows: [],
+    reason: "No exact match and no nearby alternatives in the verified database.",
   };
 }
 
@@ -235,15 +251,20 @@ export async function searchPropertiesByBuilder(
     builder: builderName,
   };
 
-  const { data, error } = await supabase
-    .from("properties")
-    .select(SELECT)
-    .eq("status", "active").is("deleted_at", null)
-    .or(
-      `contact_name.ilike.%${builderName}%,description.ilike.%${builderName}%,title.ilike.%${builderName}%`,
-    )
-    .order("created_at", { ascending: false })
-    .limit(RESULT_LIMIT);
+  const { data, error } = await selectLiveProperties(
+    (select) =>
+      supabase
+        .from("properties")
+        .select(select)
+        .eq("status", "active")
+        .is("deleted_at", null)
+        .or(
+          `contact_name.ilike.%${builderName}%,description.ilike.%${builderName}%,title.ilike.%${builderName}%`,
+        )
+        .order("created_at", { ascending: false })
+        .limit(RESULT_LIMIT),
+    "searchPropertiesByBuilder",
+  );
 
   if (error) {
     console.error("searchPropertiesByBuilder:", error.message);
@@ -286,15 +307,20 @@ export async function searchPropertiesByLocality(
     builder: null,
   };
 
-  const { data, error } = await supabase
-    .from("properties")
-    .select(SELECT)
-    .eq("status", "active").is("deleted_at", null)
-    .or(
-      `location.ilike.%${locality}%,title.ilike.%${locality}%,city.ilike.%${locality}%,sector.ilike.%${locality}%`,
-    )
-    .order("created_at", { ascending: false })
-    .limit(RESULT_LIMIT);
+  const { data, error } = await selectLiveProperties(
+    (select) =>
+      supabase
+        .from("properties")
+        .select(select)
+        .eq("status", "active")
+        .is("deleted_at", null)
+        .or(
+          `location.ilike.%${locality}%,title.ilike.%${locality}%,city.ilike.%${locality}%,sector.ilike.%${locality}%`,
+        )
+        .order("created_at", { ascending: false })
+        .limit(RESULT_LIMIT),
+    "searchPropertiesByLocality",
+  );
 
   if (error) {
     console.error("searchPropertiesByLocality:", error.message);
@@ -337,15 +363,20 @@ export async function searchPropertiesByName(
     builder: null,
   };
 
-  const { data, error } = await supabase
-    .from("properties")
-    .select(SELECT)
-    .eq("status", "active").is("deleted_at", null)
-    .or(
-      `title.ilike.%${name}%,project_name.ilike.%${name}%,description.ilike.%${name}%,location.ilike.%${name}%`,
-    )
-    .order("created_at", { ascending: false })
-    .limit(RESULT_LIMIT);
+  const { data, error } = await selectLiveProperties(
+    (select) =>
+      supabase
+        .from("properties")
+        .select(select)
+        .eq("status", "active")
+        .is("deleted_at", null)
+        .or(
+          `title.ilike.%${name}%,project_name.ilike.%${name}%,description.ilike.%${name}%,location.ilike.%${name}%`,
+        )
+        .order("created_at", { ascending: false })
+        .limit(RESULT_LIMIT),
+    "searchPropertiesByName",
+  );
 
   if (error) {
     console.error("searchPropertiesByName:", error.message);
@@ -386,12 +417,17 @@ export async function searchPropertiesByName(
 export async function searchPropertyById(
   id: string,
 ): Promise<ListingProperty | null> {
-  const { data, error } = await supabase
-    .from("properties")
-    .select(SELECT)
-    .eq("id", id)
-    .eq("status", "active").is("deleted_at", null)
-    .maybeSingle();
+  const { data, error } = await selectLiveProperties(
+    (select) =>
+      supabase
+        .from("properties")
+        .select(select)
+        .eq("id", id)
+        .eq("status", "active")
+        .is("deleted_at", null)
+        .maybeSingle(),
+    "searchPropertyById",
+  );
 
   if (error || !data) {
     if (error) console.error("searchPropertyById:", error.message);

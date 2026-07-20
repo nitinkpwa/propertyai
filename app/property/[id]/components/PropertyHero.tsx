@@ -6,8 +6,9 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { buildLoginUrlWithIntent, clearPendingAuthIntent } from "@/lib/auth/pendingIntent";
 import { addComparedProperty } from "@/lib/buyer/queries";
 import { useSavedProperty } from "@/lib/buyer/useSavedProperty";
+import { isReraApproved } from "@/lib/properties/reraStatus";
 import type { PropertyDetail } from "../data";
-import { formatPrice } from "../data";
+import { formatPropertyPrice } from "../data";
 import { useBookSiteVisit } from "./BookSiteVisitProvider";
 import PropertyGallery from "./PropertyGallery";
 import {
@@ -120,7 +121,7 @@ export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
                   AreaIQ Intelligence
                 </span>
               )}
-              {property.reraVerified && (
+              {isReraApproved(property) && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
                   <ShieldIcon className="text-blue-600" />
                   RERA
@@ -131,7 +132,7 @@ export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
               </span>
             </div>
 
-            <h1 className="mt-3 text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl lg:text-4xl">
+            <h1 className="mt-3 text-[28px] font-bold tracking-tight text-heading-primary sm:text-3xl lg:text-4xl">
               {property.name}
             </h1>
             <p className="mt-1.5 flex items-center gap-1.5 text-sm text-muted sm:text-base">
@@ -143,7 +144,7 @@ export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
 
             <div className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <p className="text-3xl font-bold tracking-tight text-heading-primary sm:text-4xl">
-                {property.pricingDisplay?.primaryPriceLabel || formatPrice(property.price)}
+                {formatPropertyPrice(property)}
               </p>
               <p className="text-sm text-muted">
                 {[
@@ -173,7 +174,7 @@ export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
           </div>
         ) : null}
 
-        <div className="mt-6 flex flex-wrap gap-2.5">
+        <div className="mt-6 hidden flex-wrap gap-2.5 lg:flex">
           <button
             type="button"
             onClick={requestBookVisit}

@@ -2,8 +2,9 @@
 
 import { useCallback, useState, type ReactNode } from "react";
 import { useSavedProperty } from "@/lib/buyer/useSavedProperty";
+import { isReraApproved } from "@/lib/properties/reraStatus";
 import type { PropertyDetail } from "../data";
-import { formatPrice } from "../data";
+import { formatPropertyPrice } from "../data";
 import { useBookSiteVisit } from "./BookSiteVisitProvider";
 import PropertyAskPanel from "./PropertyAskPanel";
 import {
@@ -49,7 +50,7 @@ export default function ReportSidebar({ property }: ReportSidebarProps) {
       <div className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
         <div className="border-b border-neutral-100 p-5">
           <p className="text-2xl font-bold tracking-tight text-heading-primary">
-            {property.pricingDisplay?.primaryPriceLabel || formatPrice(property.price)}
+            {formatPropertyPrice(property)}
           </p>
           {property.pricingDisplay?.rateLabel || property.sizeLabel ? (
             <p className="mt-1 text-sm text-muted">
@@ -63,7 +64,7 @@ export default function ReportSidebar({ property }: ReportSidebarProps) {
                 AreaIQ Intelligence
               </span>
             )}
-            {property.reraVerified && (
+            {isReraApproved(property) && (
               <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
                 <ShieldIcon className="text-blue-600" />
                 RERA

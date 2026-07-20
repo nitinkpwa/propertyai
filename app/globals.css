@@ -23,6 +23,25 @@
   --brand-shadow: rgba(74, 170, 39, 0.35);
   --brand-shadow-soft: rgba(74, 170, 39, 0.18);
 
+  /* 8px spacing grid */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* Touch / chrome */
+  --touch-min: 44px;
+  --btn-h: 48px;
+  --input-h: 52px;
+  --topbar-h: 64px;
+  --bottomnav-h: 64px;
+  --motion-page: 200ms;
+
   /* Remap legacy emerald scale to AreaIQ brand */
   --emerald-50: #f3faef;
   --emerald-100: #e4f5dc;
@@ -38,6 +57,13 @@
 }
 
 @theme inline {
+  /* Custom breakpoints: xs 0 | sm 480 | md 768 | lg 1024 | xl 1440 */
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1440px;
+  --breakpoint-2xl: 1440px;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-heading-primary: var(--text-heading-primary);
@@ -71,18 +97,39 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
+
+  --spacing-safe-b: env(safe-area-inset-bottom);
+  --spacing-safe-t: env(safe-area-inset-top);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Prevent horizontal scroll / layout break below 430px */
+html {
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
 }
 
 @keyframes fade-up {
   from {
     opacity: 0;
     transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -100,12 +147,49 @@ body {
   }
 }
 
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes image-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .animate-fade-up {
   animation: fade-up 0.7s ease-out both;
 }
 
+.animate-page-enter {
+  animation: page-enter var(--motion-page) ease-out both;
+}
+
 .animate-pulse-slow {
   animation: pulse-slow 4s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(229, 229, 229, 0.55) 0%,
+    rgba(245, 245, 245, 0.95) 50%,
+    rgba(229, 229, 229, 0.55) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.animate-image-fade {
+  animation: image-fade 0.35s ease-out both;
 }
 
 /* Premium typography lighting — soft separation, never heavy black outlines */
@@ -120,3 +204,33 @@ body {
 .text-shadow-brand {
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.18);
 }
+
+/* Safe area helpers */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.mb-nav {
+  margin-bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom));
+}
+
+.pb-nav {
+  padding-bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom) + 1rem);
+}
+
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Tables: never force page-level horizontal scroll on mobile */
+@media (max-width: 1023px) {
+  .table-scroll-guard {
+    overflow-x: hidden;
+  }
+}
+

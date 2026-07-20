@@ -1,125 +1,61 @@
 import { computeSearchStats } from "../../responses";
-import { searchPropertiesFromIntent } from "../../search";
+import { runIntelligencePipeline } from "../../intelligence";
 import type { AskEngineResponse, HandlerContext } from "../types";
 import { classificationToResponseFields } from "../types";
-import { entitiesToFilters } from "../classifier";
-import { buildMemoryContext, buildPropertyMemoryContext, wantsAlternativeProperties } from "../memory";
+import { wantsAlternativeProperties } from "../memory";
 import { logAsk } from "../logger";
-import { extractPropertyRationales } from "../../markdown";
-import {
-  buildListingsContext,
-  generatePropertySearchSummary,
-} from "../openai";
-import { NO_EXACT_MATCH_MESSAGE } from "../prompts";
-
-const SEARCH_SUGGESTIONS = [
-  "Compare these",
-  "Ready to Move",
-  "Higher Rental Yield",
-  "Lowest Price",
-  "Investment Only",
-];
-
-const SEARCH_FOLLOW_UPS = [
-  "Show cheaper options",
-  "Show nearby projects",
-  "Ready to move",
-  "Calculate EMI",
-];
-
-function mapRationalesToIds(
-  listings: Array<{ id: string; name: string }>,
-  answer: string,
-): Record<string, string> {
-  const byName = extractPropertyRationales(
-    answer,
-    listings.map((l) => l.name),
-  );
-  const result: Record<string, string> = {};
-  for (const listing of listings) {
-    if (byName[listing.name]) {
-      result[listing.id] = byName[listing.name];
-    }
-  }
-  return result;
-}
 
 export async function handlePropertySearch(
   ctx: HandlerContext,
 ): Promise<AskEngineResponse> {
-  const filters = entitiesToFilters(ctx.classification.entities);
-  const memoryContext = buildMemoryContext(ctx.classification);
-  const profileContext = ctx.buyerProfileContext ?? "";
   const wantsAlternative = wantsAlternativeProperties(ctx.message);
-  if (wantsAlternative && ctx.excludePropertyIds?.length) {
-    filters.excludePropertyIds = ctx.excludePropertyIds;
-  }
-  const propertyMemoryContext = buildPropertyMemoryContext(
-    ctx.excludePropertyIds ?? [],
-    wantsAlternative,
-  );
+  const excludePropertyIds =
+    wantsAlternative && ctx.excludePropertyIds?.length
+      ? ctx.excludePropertyIds
+      : undefined;
 
   logAsk({
-    event: "supabase_query_start",
+    event: "intelligence_pipeline_start",
     intent: "PROPERTY_SEARCH",
-    filters,
   });
 
-  const result = await searchPropertiesFromIntent(filters);
-  const listings = result.listings;
+  const result = await runIntelligencePipeline({
+    message: ctx.message,
+    history: ctx.history,
+    classification: ctx.classification,
+    excludePropertyIds,
+  });
 
   logAsk({
-    event: "supabase_query_complete",
+    event: "intelligence_pipeline_complete",
     intent: "PROPERTY_SEARCH",
-    exactCount: result.totalExact,
-    returnedCount: listings.length,
+    exactCount: result.bundle.search.exactCount,
+    returnedCount: result.listings.length,
     isSimilar: result.isSimilar,
   });
 
   const baseFields = classificationToResponseFields(ctx.classification);
 
-  if (listings.length === 0) {
-    return {
-      intent: "PROPERTY_SEARCH",
-      answer: `${NO_EXACT_MATCH_MESSAGE}\n\nTry adjusting your budget, BHK, or area. I can also analyze a specific locality or suggest investment options.`,
-      ...baseFields,
-      properties: [],
-      propertyRationales: {},
-      suggestions: [],
-      followUpQuestions: [
-        "Show properties in Mohali",
-        "Flats under 1 crore",
-        "Tell me about Aerocity",
-      ],
-      stats: null,
-      searchedDatabase: true,
-      isSimilar: false,
-    };
+  // Prefer structured intent bedrooms/budget when classifier missed them
+  if (baseFields.bedrooms == null && result.intent.bedrooms != null) {
+    baseFields.bedrooms = result.intent.bedrooms;
   }
-
-  const listingsContext = buildListingsContext(listings);
-  const aiSummary = await generatePropertySearchSummary(
-    ctx.message,
-    listingsContext,
-    !result.isSimilar,
-    ctx.history,
-    memoryContext + propertyMemoryContext + profileContext,
-  );
-
-  let answer = aiSummary;
-  if (result.isSimilar) {
-    answer = `${NO_EXACT_MATCH_MESSAGE}\n\nHere are the closest matching properties from our database:\n\n${aiSummary}`;
+  if (baseFields.budget == null && result.intent.budgetMax != null) {
+    baseFields.budget = result.intent.budgetMax;
+  }
+  if (baseFields.location == null && result.intent.city != null) {
+    baseFields.location = result.intent.city;
   }
 
   return {
     intent: "PROPERTY_SEARCH",
-    answer,
+    answer: result.composed.markdown,
     ...baseFields,
-    properties: listings,
-    propertyRationales: mapRationalesToIds(listings, answer),
-    suggestions: SEARCH_SUGGESTIONS,
-    followUpQuestions: SEARCH_FOLLOW_UPS,
-    stats: computeSearchStats(listings),
+    properties: result.listings,
+    propertyRationales: result.composed.propertyRationales,
+    suggestions: result.composed.suggestions,
+    followUpQuestions: result.composed.followUpQuestions,
+    stats: result.listings.length ? computeSearchStats(result.listings) : null,
     searchedDatabase: true,
     isSimilar: result.isSimilar,
   };

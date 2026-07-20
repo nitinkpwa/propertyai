@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { buyerTokens } from "@/lib/buyer/design";
+import { ui } from "@/lib/design/tokens";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "disabled";
 type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonBaseProps {
@@ -11,27 +11,32 @@ interface ButtonBaseProps {
   size?: ButtonSize;
   loading?: boolean;
   loadingText?: string;
+  fullWidth?: boolean;
   className?: string;
   children: React.ReactNode;
 }
 
 const VARIANTS: Record<ButtonVariant, string> = {
-  primary: buyerTokens.btnPrimary,
-  secondary: buyerTokens.btnSecondary,
-  ghost: buyerTokens.btnGhost,
-  danger:
-    "inline-flex items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-600 transition-all hover:bg-rose-100 active:scale-[0.98] disabled:opacity-60",
+  primary: `${ui.btnBase} ${ui.btnPrimary}`,
+  secondary: `${ui.btnBase} ${ui.btnSecondary}`,
+  ghost: `${ui.btnBase} ${ui.btnGhost}`,
+  danger: `${ui.btnBase} ${ui.btnDanger}`,
+  disabled: `${ui.btnBase} ${ui.btnDisabled}`,
 };
 
 const SIZES: Record<ButtonSize, string> = {
-  sm: "px-3 py-2 text-xs",
+  sm: "min-h-11 px-3 text-sm",
   md: "",
-  lg: "px-6 py-3 text-base",
+  lg: "min-h-14 px-6 text-base",
 };
 
-function Spinner() {
+function LoadingDots() {
   return (
-    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+    <span className="inline-flex gap-1" aria-hidden>
+      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-80" />
+      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-60 [animation-delay:120ms]" />
+      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current opacity-40 [animation-delay:240ms]" />
+    </span>
   );
 }
 
@@ -40,21 +45,23 @@ export function Button({
   size = "md",
   loading,
   loadingText,
+  fullWidth,
   className = "",
   children,
   type = "button",
   ...props
 }: ButtonBaseProps & React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  const widthClass = fullWidth ? "!w-full" : "";
   return (
     <button
       type={type}
-      disabled={loading || props.disabled}
-      className={`${VARIANTS[variant]} ${SIZES[size]} ${className}`}
+      disabled={loading || props.disabled || variant === "disabled"}
+      className={`${VARIANTS[variant]} ${SIZES[size]} ${widthClass} ${className}`}
       {...props}
     >
       {loading ? (
         <>
-          <Spinner />
+          <LoadingDots />
           {loadingText ?? children}
         </>
       ) : (
@@ -68,11 +75,16 @@ export function ButtonLink({
   href,
   variant = "primary",
   size = "md",
+  fullWidth,
   className = "",
   children,
 }: ButtonBaseProps & { href: string }) {
+  const widthClass = fullWidth ? "!w-full" : "";
   return (
-    <Link href={href} className={`${VARIANTS[variant]} ${SIZES[size]} ${className}`}>
+    <Link
+      href={href}
+      className={`${VARIANTS[variant]} ${SIZES[size]} ${widthClass} ${className}`}
+    >
       {children}
     </Link>
   );

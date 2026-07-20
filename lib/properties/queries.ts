@@ -12,9 +12,10 @@ import {
   buildAiSummaryFromSources,
   buildPropertyIntelligenceBundle,
 } from "@/lib/properties/intelligenceBundle";
-import { normalizePricing } from "@/lib/properties/pricingDisplay";
-import { PROPERTIES_CARD_SELECT } from "@/lib/seller/propertySchema";
+import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
+import { isReraApproved } from "@/lib/properties/reraStatus";
 import { supabase, type Property } from "@/lib/supabase";
+import { getLiveProperties } from "./getLiveProperties";
 import type {
   Amenity,
   ListingProperty,
@@ -26,6 +27,7 @@ import type {
 type PropertyRow = Omit<Property, "contact_name" | "contact_phone"> & {
   contact_name?: string | null;
   contact_phone?: string | null;
+  calculated_price?: number | null;
   growth_score?: number | null;
   rental_yield?: number | null;
   ai_verified?: boolean | null;
@@ -42,11 +44,6 @@ type PropertyRow = Omit<Property, "contact_name" | "contact_phone"> & {
   deleted_at?: string | null;
   seller?: { full_name?: string | null } | null;
 };
-
-function isReraVerified(row: PropertyRow): boolean {
-  if (typeof row.rera_verified === "boolean") return row.rera_verified;
-  return Boolean(row.rera_number?.trim());
-}
 
 const GALLERY_GRADIENTS = [
   "from-emerald-600/80 via-emerald-500/60 to-teal-400/50",
@@ -94,9 +91,6 @@ const SUB_TYPE_LABELS: Record<string, string> = {
   warehouse: "Warehouse",
   coworking: "Co-working Space",
 };
-
-/** Narrow select for hot listing paths — avoids pulling unused / private columns. */
-const ACTIVE_LISTINGS_SELECT = `${PROPERTIES_CARD_SELECT}, seller:profiles!properties_seller_id_fkey(full_name)`;
 
 const PROPERTY_PHOTOS_BUCKET = "property-photos";
 
@@ -270,7 +264,7 @@ function buildAiSummary(
 
   const pros = [
     `Located in ${row.city} — ${row.location}`,
-    isReraVerified(row) ? "RERA verified listing" : null,
+    isReraApproved(row) ? "RERA verified listing" : null,
     intelligenceReport?.rentalYield.available
       ? `Estimated rental yield ${intelligenceReport.rentalYield.displayValue}`
       : null,
@@ -301,7 +295,14 @@ function buildNearbyPlaces(row: PropertyRow): NearbyPlace[] {
 
 function buildFloorPlans(row: PropertyRow): FloorPlan[] {
   const bedrooms = row.bedrooms ?? 0;
-  const area = row.area_sqft ?? 0;
+  const priced = formatPropertyPrice({
+    price: row.price,
+    calculated_price: row.calculated_price,
+    area_sqft: row.area_sqft,
+    sub_type: row.sub_type,
+    nearby_places: row.nearby_places,
+  });
+  const area = priced.area ?? row.area_sqft ?? 0;
   const label =
     bedrooms > 0 ? `${bedrooms} BHK` : SUB_TYPE_LABELS[row.sub_type] ?? "Unit";
 
@@ -309,7 +310,7 @@ function buildFloorPlans(row: PropertyRow): FloorPlan[] {
     {
       bhk: (bedrooms || 1) as FloorPlan["bhk"],
       area,
-      price: row.price,
+      price: priced.numericPrice,
       label,
     },
   ];
@@ -328,23 +329,36 @@ function buildBuilderInfo(row: PropertyRow): BuilderInfo {
 export function mapPropertyRowToListing(row: PropertyRow): ListingProperty {
   const amenities = normalizeAmenities(row.amenities);
   const possession = mapPossession(row.possession);
+  const priced = formatPropertyPrice({
+    price: row.price,
+    calculated_price: row.calculated_price,
+    area_sqft: row.area_sqft,
+    sub_type: row.sub_type,
+    nearby_places: row.nearby_places,
+  });
 
   return {
     id: row.id,
     name: row.title,
     location: row.location,
     city: row.city,
-    price: row.price,
+    price: priced.numericPrice,
+    priceLabel: priced.displayPrice,
+    rateLabel: priced.isPlot ? priced.unitPrice : null,
+    sizeLabel: priced.sizeLabel,
     builderName: getBuilderName(row),
     bhk: row.bedrooms ?? 0,
-    area: row.area_sqft ?? 0,
-    areaUnit: row.sub_type === "plot" ? "sqft" : "sqft",
+    area:
+      priced.isPlot && priced.minPlotSize
+        ? priced.minPlotSize
+        : priced.area ?? row.area_sqft ?? 0,
+    areaUnit: priced.isPlot && priced.normalized.plotSizeUnit === "Sq Yard" ? "sqyd" : "sqft",
     growthScore: getGrowthScore(row),
     rentalYield: getRentalYield(row),
     imageUrl: resolvePhotoUrl(row.photos?.[0] ?? "") ?? null,
     imageAlt: row.title,
     aiVerified: Boolean(row.ai_verified),
-    reraVerified: isReraVerified(row),
+    reraVerified: isReraApproved(row),
     propertyType: mapPropertyType(row.sub_type),
     listingType: mapListingType(row.type),
     possession,
@@ -360,6 +374,9 @@ export function mapPropertyRowToCardProps(row: PropertyRow): PropertyCardProps {
     location: listing.location,
     city: listing.city,
     price: listing.price,
+    priceLabel: listing.priceLabel,
+    rateLabel: listing.rateLabel,
+    sizeLabel: listing.sizeLabel,
     builderName: listing.builderName,
     bhk: listing.bhk,
     area: listing.area,
@@ -390,22 +407,25 @@ export function mapPropertyRowToDetail(
   const city = row.city?.trim() || "Tricity";
   const location = row.location?.trim() || "Location not specified";
 
-  const pricingDisplay = normalizePricing({
-    dbPrice: row.price,
-    dbAreaSqft: row.area_sqft,
-    subType: row.sub_type,
+  const priced = formatPropertyPrice({
+    price: row.price,
+    calculated_price: row.calculated_price,
+    area_sqft: row.area_sqft,
+    sub_type: row.sub_type,
     propertyTypeLabel: SUB_TYPE_LABELS[row.sub_type] ?? row.sub_type,
     meta: structuredMeta,
+    nearby_places: row.nearby_places,
   });
+  const pricingDisplay = priced.normalized;
 
-  const price = pricingDisplay.totalPrice ?? 0;
-  const pricePerSqFt = pricingDisplay.pricePerSqft ?? 0;
+  const price = priced.numericPrice;
+  const pricePerSqFt = priced.pricePerSqft ?? 0;
   const area =
-    pricingDisplay.minPlotSize && row.sub_type === "plot"
-      ? pricingDisplay.minPlotSize
+    priced.isPlot && priced.minPlotSize
+      ? priced.minPlotSize
       : row.area_sqft && row.area_sqft < 50_000
         ? row.area_sqft
-        : pricingDisplay.minPlotSize ?? 0;
+        : priced.minPlotSize ?? 0;
 
   const phone = row.contact_phone?.trim() ?? "";
   const whatsapp = phone.replace(/\D/g, "");
@@ -438,7 +458,7 @@ export function mapPropertyRowToDetail(
     location,
     builderName: builder.name,
     amenities,
-    reraVerified: isReraVerified(row),
+    reraVerified: isReraApproved(row),
     aiVerified: Boolean(row.ai_verified),
     report: intelligenceReport,
     meta: structuredMeta,
@@ -475,7 +495,7 @@ export function mapPropertyRowToDetail(
     propertyType: SUB_TYPE_LABELS[row.sub_type] ?? "Property",
     bhk: (bedrooms || 1) as PropertyDetail["bhk"],
     area,
-    sizeLabel: pricingDisplay.sizeLabel || "",
+    sizeLabel: priced.sizeLabel || pricingDisplay.sizeLabel || "",
     status: statusLabel,
     possession: formatPossessionLabel(possession),
     configuration:
@@ -494,7 +514,7 @@ export function mapPropertyRowToDetail(
     furnishing: row.furnishing?.trim() || "Contact for details",
     description: compiledDescription,
     aiVerified: Boolean(row.ai_verified),
-    reraVerified: isReraVerified(row),
+    reraVerified: isReraApproved(row),
     images: buildGalleryImages(row.photos),
     amenities,
     intelligenceReport,
@@ -509,44 +529,10 @@ export function mapPropertyRowToDetail(
   };
 }
 
+/** Public catalog — shared with Home, Ask, recommendations via getLiveProperties(). */
 export async function fetchListingProperties(): Promise<ListingProperty[]> {
-  console.log("[fetchListingProperties] query", {
-    select: ACTIVE_LISTINGS_SELECT,
-    where: { status: "active", deleted_at: null },
-  });
-
-  const { data, error } = await supabase
-    .from("properties")
-    .select(ACTIVE_LISTINGS_SELECT)
-    .eq("status", "active")
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("[fetchListingProperties] failed", {
-      message: error.message,
-      code: error.code,
-      details: error.details,
-      hint: error.hint,
-      why:
-        "Public catalog requires status=active and deleted_at IS NULL. " +
-        "If the select lists missing columns (e.g. growth_score), PostgREST returns zero rows.",
-    });
-    return [];
-  }
-
-  const rows = (data as PropertyRow[] | null) ?? [];
-  console.log("[fetchListingProperties] ok", {
-    count: rows.length,
-    ids: rows.map((r) => r.id),
-  });
-  if (rows.length === 0) {
-    console.warn(
-      "[fetchListingProperties] zero rows — no active non-deleted properties visible under RLS, or catalog is empty.",
-    );
-  }
-
-  return rows.map(mapPropertyRowToListing);
+  const rows = await getLiveProperties({ includeSeller: true });
+  return rows.map((row) => mapPropertyRowToListing(row as PropertyRow));
 }
 
 export async function fetchSimilarListingProperties(
@@ -554,25 +540,13 @@ export async function fetchSimilarListingProperties(
   excludeId: string,
   limit = 4,
 ): Promise<PropertyCardProps[]> {
-  const { data, error } = await supabase
-    .from("properties")
-    .select(ACTIVE_LISTINGS_SELECT)
-    .eq("status", "active")
-    .is("deleted_at", null)
-    .eq("city", city)
-    .neq("id", excludeId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    console.error("[fetchSimilarListingProperties] failed", {
-      message: error.message,
-      code: error.code,
-    });
-    return [];
-  }
-
-  return (data as PropertyRow[] | null)?.map(mapPropertyRowToCardProps) ?? [];
+  const rows = await getLiveProperties({
+    includeSeller: true,
+    city,
+    excludeId,
+    limit,
+  });
+  return rows.map((row) => mapPropertyRowToCardProps(row as PropertyRow));
 }
 
 export function extractBuilderOptions(properties: ListingProperty[]): string[] {

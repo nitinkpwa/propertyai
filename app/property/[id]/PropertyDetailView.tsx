@@ -16,12 +16,31 @@ import LocationSection from "./components/LocationSection";
 import PendingActionResume from "./components/PendingActionResume";
 import PriceAnalysis from "./components/PriceAnalysis";
 import ProjectTimeline from "./components/ProjectTimeline";
+import MobileActionBar from "./components/MobileActionBar";
+import MobileDetailExtras from "./components/MobileDetailExtras";
 import PropertyAskPanel from "./components/PropertyAskPanel";
 import PropertyHero from "./components/PropertyHero";
 import Recommendations from "./components/Recommendations";
 import RentalIntelligence from "./components/RentalIntelligence";
 import ReportSidebar from "./components/ReportSidebar";
 import SimilarSales from "./components/SimilarSales";
+import { Accordion, AccordionItem } from "@/components/ui/Accordion";
+
+function AccordionWrap({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Accordion>
+      <AccordionItem title={title} defaultOpen={false}>
+        <div className="-mx-1">{children}</div>
+      </AccordionItem>
+    </Accordion>
+  );
+}
 
 interface PropertyDetailViewProps {
   property: PropertyDetail;
@@ -50,11 +69,11 @@ export default function PropertyDetailView({ property }: PropertyDetailViewProps
       builderName={property.builder.name}
     >
       <PendingActionResume propertyId={property.id} onAskAi={focusAsk} />
-      <div className="min-h-screen bg-[linear-gradient(180deg,#f8faf9_0%,#f5f5f5_40%,#fafafa_100%)] pt-16">
-        <div className="border-b border-neutral-200/80 bg-white/80 backdrop-blur-md">
+      <div className="min-h-screen bg-[linear-gradient(180deg,#f8faf9_0%,#f5f5f5_40%,#fafafa_100%)] pt-16 pb-[7.5rem] lg:pb-0">
+        <div className="hidden border-b border-neutral-200/80 bg-white/80 backdrop-blur-md sm:block">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
                 AreaIQ Intelligence Report
               </p>
               <p className="text-sm font-medium text-heading-primary line-clamp-1">
@@ -67,10 +86,12 @@ export default function PropertyDetailView({ property }: PropertyDetailViewProps
           </div>
         </div>
 
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_380px] lg:gap-10 xl:grid-cols-[1fr_400px]">
-            <div className="min-w-0 space-y-6 sm:space-y-8">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px] lg:gap-10 xl:grid-cols-[1fr_400px]">
+            <div className="min-w-0 space-y-5 sm:space-y-8 animate-page-enter">
               <PropertyHero property={property} onAskAi={focusAsk} />
+
+              <MobileDetailExtras property={property} />
 
               <div className="space-y-6 lg:hidden" ref={askRef}>
                 <PropertyAskPanel property={property} compact />
@@ -87,10 +108,22 @@ export default function PropertyDetailView({ property }: PropertyDetailViewProps
                     currentPrice={property.price}
                   />
                   <RentalIntelligence data={bundle.rental} />
-                  <EMIIntelligence
-                    property={property}
-                    expectedMonthlyRent={bundle.rental.expectedMonthlyRent}
-                  />
+                  <div className="lg:contents">
+                    <div className="lg:hidden">
+                      <AccordionWrap title="EMI Calculator">
+                        <EMIIntelligence
+                          property={property}
+                          expectedMonthlyRent={bundle.rental.expectedMonthlyRent}
+                        />
+                      </AccordionWrap>
+                    </div>
+                    <div className="hidden lg:block">
+                      <EMIIntelligence
+                        property={property}
+                        expectedMonthlyRent={bundle.rental.expectedMonthlyRent}
+                      />
+                    </div>
+                  </div>
                   <AreaIntelligenceReportSection data={bundle.area} />
                   <BuilderIntelligence data={bundle.builder} />
                   <SimilarSales data={bundle.similarSales} />
@@ -136,6 +169,8 @@ export default function PropertyDetailView({ property }: PropertyDetailViewProps
             </p>
           </div>
         </footer>
+
+        <MobileActionBar property={property} />
       </div>
     </BookSiteVisitProvider>
   );

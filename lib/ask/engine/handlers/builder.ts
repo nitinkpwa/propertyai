@@ -11,12 +11,12 @@ export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineRespo
   const baseFields = classificationToResponseFields(ctx.classification);
   const memoryContext = buildMemoryContext(ctx.classification);
 
-  const answer = await generateAreaIQResponse(BUILDER_PROMPT, ctx.message, {
-    history: ctx.history,
-    memoryContext,
-  });
-
   if (!builderName) {
+    const answer = await generateAreaIQResponse(BUILDER_PROMPT, ctx.message, {
+      history: ctx.history,
+      memoryContext,
+    });
+
     return {
       intent: "BUILDER",
       answer,
@@ -51,6 +51,15 @@ export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineRespo
     returnedCount: listings.length,
   });
 
+  const listingsContext =
+    listings.length > 0 ? buildListingsContext(listings) : undefined;
+
+  const answer = await generateAreaIQResponse(BUILDER_PROMPT, ctx.message, {
+    history: ctx.history,
+    memoryContext,
+    listingsContext,
+  });
+
   if (listings.length === 0) {
     return {
       intent: "BUILDER",
@@ -71,15 +80,9 @@ export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineRespo
     };
   }
 
-  const enrichedAnswer = await generateAreaIQResponse(BUILDER_PROMPT, ctx.message, {
-    history: ctx.history,
-    memoryContext,
-    listingsContext: buildListingsContext(listings),
-  });
-
   return {
     intent: "BUILDER",
-    answer: enrichedAnswer,
+    answer,
     ...baseFields,
     builder: builderName,
     properties: listings,

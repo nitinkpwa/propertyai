@@ -37,9 +37,16 @@ export function formatBudget(min: number | null, max: number | null): string {
 }
 
 export function formatPrice(price: number): string {
-  if (price >= 10_000_000) return `₹${(price / 10_000_000).toFixed(2)} Cr`;
-  if (price >= 100_000) return `₹${(price / 100_000).toFixed(1)} L`;
-  return `₹${price.toLocaleString("en-IN")}`;
+  if (!price || price <= 0) return "Price on Request";
+  if (price < 100_000) return "Price on Request";
+  if (price >= 10_000_000) {
+    const cr = price / 10_000_000;
+    const label = cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "");
+    return `₹${label} Cr`;
+  }
+  const lakhs = price / 100_000;
+  const label = lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(1).replace(/\.0$/, "");
+  return `₹${label} L`;
 }
 
 export function getGreeting(): string {

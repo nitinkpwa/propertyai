@@ -5,6 +5,8 @@ import {
   extractNearbyPlacesList,
   extractPropertyMeta,
 } from "@/lib/properties/nearbyPlacesMeta";
+import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
+import { normalizeReraNumberForStorage } from "@/lib/properties/reraStatus";
 import {
   PROPERTY_STATUS,
   PROPERTY_STATUS_DEFAULT_CREATE,
@@ -446,13 +448,24 @@ export function formToPayload(
   const featured =
     form.featured_image?.trim() || photos[0] || null;
 
+  const formPrice = parseFloat(form.price) || 0;
+  const areaSqft = parseFloat(form.area_sqft) || null;
+  const priced = formatPropertyPrice({
+    price: formPrice,
+    area_sqft: areaSqft,
+    sub_type: form.sub_type,
+    nearby_places: options?.existingNearbyPlaces ?? null,
+  });
+  const price = formPrice >= 100_000 ? formPrice : priced.numericPrice || 0;
+
   return {
     title: form.title.trim(),
     description: form.description || null,
     type: form.type,
     sub_type: form.sub_type,
-    price: parseFloat(form.price),
-    area_sqft: parseFloat(form.area_sqft) || null,
+    price,
+    calculated_price: priced.numericPrice > 0 ? priced.numericPrice : null,
+    area_sqft: areaSqft,
     bedrooms: parseInt(form.bedrooms, 10) || null,
     bathrooms: parseInt(form.bathrooms, 10) || null,
     location: form.location.trim(),
@@ -470,7 +483,7 @@ export function formToPayload(
     furnishing: form.furnishing || null,
     parking: form.parking || null,
     facing: form.facing || null,
-    rera_number: form.rera_number || null,
+    rera_number: normalizeReraNumberForStorage(form.rera_number),
     possession: form.possession || null,
     featured_image: featured,
     nearby_places: buildSellerNearbyPlaces(

@@ -8,6 +8,7 @@ import { useSavedPropertyToggle } from "@/lib/buyer/useSavedProperty";
 import { addComparedProperty } from "@/lib/buyer/queries";
 import { formatPriceShort } from "@/lib/home/marketSignals";
 import type { IntelligencePropertyCardModel } from "@/lib/home/types";
+import { isReraApproved } from "@/lib/properties/reraStatus";
 import { IQ_GREEN } from "./theme";
 
 type Props = {
@@ -57,9 +58,9 @@ export default function IntelligencePropertyCard({ property }: Props) {
           </div>
         )}
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-          {property.reraVerified ? (
+          {isReraApproved(property) ? (
             <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700">
-              Legal verified
+              RERA
             </span>
           ) : null}
           {property.aiVerified ? (

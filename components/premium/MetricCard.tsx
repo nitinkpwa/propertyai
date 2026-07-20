@@ -35,7 +35,7 @@ export default function MetricCard({
     </>
   );
 
-  const className = `group rounded-2xl border bg-gradient-to-br p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${ACCENTS[accent]}`;
+  const className = `group min-w-[140px] shrink-0 snap-start rounded-2xl border bg-gradient-to-br p-4 shadow-sm transition-all active:scale-[0.99] sm:min-w-0 sm:p-5 lg:hover:-translate-y-0.5 lg:hover:shadow-md ${ACCENTS[accent]}`;
 
   if (href) {
     return (

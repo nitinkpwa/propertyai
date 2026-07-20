@@ -60,8 +60,15 @@ export const lbl: CSSProperties = {
 };
 
 export function formatPrice(price: number): string {
-  if (price >= 10000000) return `₹${(price / 10000000).toFixed(1)}Cr`;
-  return `₹${(price / 100000).toFixed(0)}L`;
+  if (!price || price <= 0) return "Price on Request";
+  // Never show unit-rate-sized values as market price on admin surfaces
+  if (price < 100_000) return "Price on Request";
+  if (price >= 10_000_000) {
+    const cr = price / 10_000_000;
+    return `₹${cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "")} Cr`;
+  }
+  const lakhs = price / 100_000;
+  return `₹${lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(1).replace(/\.0$/, "")} L`;
 }
 
 export function formatDate(d: string): string {

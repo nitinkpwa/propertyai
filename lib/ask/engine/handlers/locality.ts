@@ -11,12 +11,12 @@ export async function handleLocality(ctx: HandlerContext): Promise<AskEngineResp
   const searchTerm = resolveLocalitySearchTerm(ctx.classification);
   const memoryContext = buildMemoryContext(ctx.classification);
 
-  const answer = await generateAreaIQResponse(LOCALITY_PROMPT, ctx.message, {
-    history: ctx.history,
-    memoryContext,
-  });
-
   if (!searchTerm) {
+    const answer = await generateAreaIQResponse(LOCALITY_PROMPT, ctx.message, {
+      history: ctx.history,
+      memoryContext,
+    });
+
     return {
       intent: "LOCALITY",
       answer,
@@ -55,7 +55,7 @@ export async function handleLocality(ctx: HandlerContext): Promise<AskEngineResp
   const listingsContext =
     listings.length > 0 ? buildListingsContext(listings) : undefined;
 
-  const enrichedAnswer = await generateAreaIQResponse(LOCALITY_PROMPT, ctx.message, {
+  const answer = await generateAreaIQResponse(LOCALITY_PROMPT, ctx.message, {
     history: ctx.history,
     memoryContext,
     listingsContext,
@@ -63,7 +63,7 @@ export async function handleLocality(ctx: HandlerContext): Promise<AskEngineResp
 
   return {
     intent: "LOCALITY",
-    answer: enrichedAnswer,
+    answer,
     ...baseFields,
     properties: listings,
     propertyRationales: {},

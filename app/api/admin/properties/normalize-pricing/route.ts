@@ -34,6 +34,7 @@ export async function POST() {
       .from("properties")
       .update({
         price: result.price,
+        calculated_price: result.calculated_price,
         area_sqft: result.area_sqft,
         nearby_places: result.nearby_places,
         updated_at: new Date().toISOString(),

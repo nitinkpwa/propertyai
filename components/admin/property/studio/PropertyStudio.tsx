@@ -236,9 +236,10 @@ export default function PropertyStudio({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 lg:space-y-6">
+      {/* Mode switch + step chrome */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex rounded-2xl border border-neutral-200 bg-white/90 p-1 shadow-sm backdrop-blur">
+        <div className="inline-flex w-full rounded-2xl border border-neutral-200 bg-white/90 p-1 shadow-sm backdrop-blur sm:w-auto">
           <button
             type="button"
             onClick={() => {
@@ -246,9 +247,9 @@ export default function PropertyStudio({
               if (!importResult) setStage("import");
               else setStage("review");
             }}
-            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+            className={`min-h-11 flex-1 rounded-xl px-4 text-sm font-semibold transition sm:flex-none sm:py-2 ${
               mode === "ai_import"
-                ? "bg-emerald-500 text-white shadow-sm"
+                ? "bg-brand text-white shadow-sm"
                 : "text-body hover:bg-neutral-50"
             }`}
           >
@@ -257,9 +258,9 @@ export default function PropertyStudio({
           <button
             type="button"
             onClick={() => setMode("manual")}
-            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+            className={`min-h-11 flex-1 rounded-xl px-4 text-sm font-semibold transition sm:flex-none sm:py-2 ${
               mode === "manual"
-                ? "bg-emerald-500 text-white shadow-sm"
+                ? "bg-brand text-white shadow-sm"
                 : "text-body hover:bg-neutral-50"
             }`}
           >
@@ -269,11 +270,33 @@ export default function PropertyStudio({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-xl border border-neutral-200 px-3 py-2 text-xs font-medium text-body hover:bg-neutral-50"
+          className="hidden min-h-11 rounded-xl border border-neutral-200 px-3 text-sm font-medium text-body hover:bg-neutral-50 sm:inline-flex sm:items-center"
         >
           Cancel
         </button>
       </div>
+
+      {mode === "ai_import" ? (
+        <div className="flex items-center gap-2 lg:hidden" aria-label="AI import steps">
+          {(["import", "progress", "review"] as const).map((s, i) => {
+            const active =
+              stage === s ||
+              (stage === "progress" && s === "progress") ||
+              (stage === "review" && i <= 2 && s !== "import");
+            const done =
+              (stage === "progress" && s === "import") ||
+              (stage === "review" && s !== "review");
+            return (
+              <div
+                key={s}
+                className={`h-1.5 flex-1 rounded-full ${
+                  stage === s ? "bg-brand" : done ? "bg-brand/40" : "bg-neutral-200"
+                } ${active && stage === s ? "ring-2 ring-brand/20" : ""}`}
+              />
+            );
+          })}
+        </div>
+      ) : null}
 
       {message && mode === "ai_import" && stage === "import" ? (
         <div

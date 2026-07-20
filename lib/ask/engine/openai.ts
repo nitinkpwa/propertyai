@@ -22,6 +22,7 @@ import {
   UNKNOWN_CLARIFICATION_PROMPT,
   AI_UNAVAILABLE_MESSAGE,
 } from "./prompts";
+import { detectConversationLanguage, languageInstruction } from "../language";
 import { logAsk } from "./logger";
 
 export class AskAIError extends Error {
@@ -83,10 +84,16 @@ export async function completeText(
     history?: ConversationMessage[];
     extraContext?: string;
     maxTokens?: number;
+    temperature?: number;
   } = {},
 ): Promise<string> {
   const openai = getOpenAIClient();
-  const { history = [], extraContext, maxTokens = 1600 } = options;
+  const {
+    history = [],
+    extraContext,
+    maxTokens = 1600,
+    temperature = 0.65,
+  } = options;
 
   const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
     { role: "system", content: system + (extraContext ?? "") },
@@ -97,7 +104,7 @@ export async function completeText(
   try {
     const response = await openai.chat.completions.create({
       model: OPENAI_MODEL,
-      temperature: 0.65,
+      temperature,
       max_tokens: maxTokens,
       messages,
     });
@@ -195,16 +202,22 @@ export async function generateAreaIQResponse(
     maxTokens?: number;
   } = {},
 ): Promise<string> {
+  const responseLanguage = detectConversationLanguage(
+    userMessage,
+    options.history ?? [],
+  );
   const extraContext = [
     options.memoryContext ?? "",
     options.propertyContext ?? "",
     options.listingsContext ?? "",
+    `\n\n${languageInstruction(responseLanguage)}`,
   ].join("");
 
   return completeText(`${AREA_IQ_SYSTEM_PROMPT}\n\n${taskPrompt}`, userMessage, {
     history: options.history,
     extraContext,
-    maxTokens: options.maxTokens,
+    maxTokens: options.maxTokens ?? 550,
+    temperature: 0.55,
   });
 }
 

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { formatPrice } from "@/lib/admin/constants";
 import type { AdminPropertyEmbed } from "@/lib/admin/leads/types";
+import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
 
 export default function AdminPropertyMiniGrid({
   properties,
@@ -21,9 +21,12 @@ export default function AdminPropertyMiniGrid({
           <p className="mt-1 text-sm text-muted">
             {[property.location, property.city].filter(Boolean).join(", ") || "—"}
           </p>
-          {property.price != null ? (
-            <p className="mt-2 text-sm font-semibold text-emerald-700">{formatPrice(property.price)}</p>
-          ) : null}
+          <p className="mt-2 text-sm font-semibold text-emerald-700">
+            {formatPropertyPrice({
+              price: property.price,
+              sub_type: property.sub_type,
+            }).displayPrice}
+          </p>
         </Link>
       ))}
     </div>

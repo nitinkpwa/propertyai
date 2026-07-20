@@ -345,26 +345,23 @@ export async function fetchRecommendedPropertyCards(
   preferredLocations: string[] = [],
   limit = 4,
 ) {
-  let query = supabase
-    .from("properties")
-    .select(`${PROPERTIES_CARD_SELECT}, seller:profiles!properties_seller_id_fkey(full_name)`)
-    .eq("status", "active")
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  const { getLiveProperties } = await import("@/lib/properties/getLiveProperties");
+  const city =
+    preferredLocations.length === 1 ? preferredLocations[0] : undefined;
+  let rows = await getLiveProperties({
+    includeSeller: true,
+    limit: preferredLocations.length > 1 ? limit * 4 : limit,
+    city,
+  });
 
-  if (preferredLocations.length > 0) {
-    query = query.in("city", preferredLocations);
+  if (preferredLocations.length > 1) {
+    const allowed = new Set(preferredLocations.map((c) => c.toLowerCase()));
+    rows = rows
+      .filter((r) => allowed.has((r.city || "").toLowerCase()))
+      .slice(0, limit);
   }
 
-  const { data, error } = await query;
-
-  if (error) {
-    console.error("fetchRecommendedPropertyCards:", error.message);
-    return [];
-  }
-
-  return ((data as unknown as PropertyRow[]) ?? []).map(rowToCard);
+  return rows.map((row) => rowToCard(row as PropertyRow));
 }
 
 export async function fetchSiteVisits(userId: string): Promise<SiteVisitRow[]> {

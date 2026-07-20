@@ -11,7 +11,12 @@ import {
   extractPropertyMeta,
   type PropertyStructuredMeta,
 } from "@/lib/properties/nearbyPlacesMeta";
-import { normalizePricing } from "@/lib/properties/pricingDisplay";
+import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
+import {
+  getReraStatus,
+  isReraApproved,
+  normalizeReraNumberForStorage,
+} from "@/lib/properties/reraStatus";
 import type { MarketContext } from "@/lib/intelligence/types";
 import {
   PROPERTY_STATUS,
@@ -23,6 +28,20 @@ import {
   type AdminPropertyFormSource,
   type AdminPropertyFormState,
 } from "./types";
+
+function resolveFormReraNumber(form: AdminPropertyFormState): string | null {
+  const fromField = normalizeReraNumberForStorage(form.rera_number);
+  if (fromField) return fromField;
+
+  // Persist RERA accepted via AI import even if the text field was left blank.
+  return normalizeReraNumberForStorage(
+    getReraStatus({
+      nearby_places: {
+        meta: { importKnowledge: form.importKnowledge ?? null },
+      },
+    }).number,
+  );
+}
 
 const EMPTY_MARKET: MarketContext = {
   city: "",
@@ -124,7 +143,8 @@ export function adminRowToForm(row: AdminPropertyFormSource): AdminPropertyFormS
     furnishing: row.furnishing || "",
     parking: row.parking || "",
     facing: row.facing || "",
-    rera_number: row.rera_number || "",
+    // Prefer column; hydrate from import meta so CMS shows what buyers will see.
+    rera_number: getReraStatus(row).number || row.rera_number || "",
     possession: row.possession || "",
     featured_image: row.featured_image || "",
     connect_partner_id: row.connect_partner_id || "",
@@ -157,7 +177,7 @@ export function formToDbPayload(
   );
   const places = form.nearbyPlaces.length ? form.nearbyPlaces : buildPlacesFromLocation(form);
 
-  const price =
+  const formPrice =
     parseFloat(form.price) ||
     parseFloat(form.pricing.totalPrice) ||
     parseFloat(form.pricing.currentPrice) ||
@@ -182,11 +202,28 @@ export function formToDbPayload(
         ? carpet
         : parseFloat(form.area_sqft) || null;
 
+  const priced = formatPropertyPrice({
+    price: formPrice,
+    area_sqft: areaSqft,
+    superArea: parseFloat(form.specs.superArea || "") || null,
+    carpetArea: parseFloat(form.specs.carpetArea || "") || null,
+    pricePerSqft: parseFloat(form.pricing.pricePerSqft) || null,
+    pricePerSqyd: parseFloat(form.pricing.pricePerSqyd || "") || null,
+    minPlotSize: parseFloat(form.specs.minPlotSize || "") || null,
+    maxPlotSize: parseFloat(form.specs.maxPlotSize || "") || null,
+    sub_type: form.sub_type,
+    meta,
+  });
+
+  // Prefer explicit market total (≥ ₹1L); never persist a unit rate as price
+  const price = formPrice >= 100_000 ? formPrice : priced.numericPrice || 0;
+
   return {
     title: form.title,
     type: form.type,
     sub_type: form.sub_type,
     price,
+    calculated_price: priced.numericPrice > 0 ? priced.numericPrice : null,
     area_sqft: areaSqft,
     bedrooms: parseInt(form.bedrooms, 10) || null,
     bathrooms: parseInt(form.bathrooms, 10) || null,
@@ -206,7 +243,7 @@ export function formToDbPayload(
     furnishing: form.furnishing,
     parking: form.parking || form.pricing.parking,
     facing: form.facing,
-    rera_number: form.rera_number,
+    rera_number: resolveFormReraNumber(form),
     possession: form.possession || form.basic.propertyStatus,
     featured_image: form.featured_image || form.photos[0] || null,
     nearby_places: buildNearbyPlacesPayload(places, meta),
@@ -259,14 +296,25 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
   const bedrooms = parseInt(form.bedrooms, 10) || 0;
   const compiled = getCompiled(form);
   const metaPreview = buildFactualMetaFromForm(form, form.aiIntelligence);
-  const pricingDisplay = normalizePricing({
-    dbPrice: parseFloat(form.price) || parseFloat(form.pricing.totalPrice) || parseFloat(form.pricing.currentPrice) || 0,
-    dbAreaSqft: parseFloat(form.area_sqft) || parseFloat(form.specs.carpetArea) || null,
-    subType: form.sub_type,
+  const priced = formatPropertyPrice({
+    price:
+      parseFloat(form.price) ||
+      parseFloat(form.pricing.totalPrice) ||
+      parseFloat(form.pricing.currentPrice) ||
+      0,
+    area_sqft: parseFloat(form.area_sqft) || parseFloat(form.specs.carpetArea) || null,
+    superArea: parseFloat(form.specs.superArea || "") || null,
+    carpetArea: parseFloat(form.specs.carpetArea || "") || null,
+    pricePerSqft: parseFloat(form.pricing.pricePerSqft) || null,
+    pricePerSqyd: parseFloat(form.pricing.pricePerSqyd || "") || null,
+    minPlotSize: parseFloat(form.specs.minPlotSize || "") || null,
+    maxPlotSize: parseFloat(form.specs.maxPlotSize || "") || null,
+    sub_type: form.sub_type,
     propertyTypeLabel: form.basic.configuration || form.sub_type,
     meta: metaPreview,
   });
-  const price = pricingDisplay.totalPrice ?? 0;
+  const pricingDisplay = priced.normalized;
+  const price = priced.numericPrice;
   const area =
     form.sub_type === "plot"
       ? pricingDisplay.minPlotSize ?? 0
@@ -338,7 +386,7 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
     location,
     builderName,
     amenities: form.amenities,
-    reraVerified: Boolean(form.rera_number),
+    reraVerified: isReraApproved({ rera_number: resolveFormReraNumber(form) }),
     aiVerified: (form.aiIntelligence?.confidence ?? 0) >= 70,
     report: null,
     meta,
@@ -379,7 +427,7 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
     furnishing: form.furnishing || "—",
     description: compiled.propertySummary || form.title,
     aiVerified: (form.aiIntelligence?.confidence ?? 0) >= 70,
-    reraVerified: Boolean(form.rera_number),
+    reraVerified: isReraApproved({ rera_number: resolveFormReraNumber(form) }),
     images,
     amenities: form.amenities,
     intelligenceBundle,

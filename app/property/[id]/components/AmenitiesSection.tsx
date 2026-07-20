@@ -48,16 +48,17 @@ export default function AmenitiesSection({ amenities }: AmenitiesSectionProps) {
         title="Amenities"
         subtitle="AreaIQ-detected and listing-verified lifestyle features"
       />
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
+      {/* Mobile: horizontal chips · Desktop: grid cards */}
+      <div className="-mx-1 flex gap-2 overflow-x-auto scroll-touch px-1 pb-1 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0">
         {sorted.map((amenity) => (
           <div
             key={amenity}
-            className="group flex flex-col items-center rounded-2xl border border-neutral-100 bg-neutral-50/50 px-3 py-5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-200/60 hover:bg-emerald-50/40 hover:shadow-[0_4px_16px_rgba(34,197,94,0.08)] sm:px-4 sm:py-6"
+            className="flex shrink-0 items-center gap-2 rounded-full border border-neutral-100 bg-neutral-50/80 px-3.5 py-2.5 lg:flex-col lg:items-center lg:rounded-2xl lg:px-4 lg:py-6 lg:text-center lg:transition-all lg:hover:-translate-y-0.5 lg:hover:border-emerald-200/60 lg:hover:bg-emerald-50/40"
           >
-            <span className="text-2xl transition-transform duration-200 group-hover:scale-110 sm:text-3xl">
-              {getAmenityIcon(amenity)}
+            <span className="text-lg lg:text-3xl">{getAmenityIcon(amenity)}</span>
+            <span className="whitespace-nowrap text-sm font-semibold text-body lg:mt-2.5 lg:whitespace-normal lg:text-sm">
+              {amenity}
             </span>
-            <span className="mt-2.5 text-xs font-semibold text-body sm:text-sm">{amenity}</span>
           </div>
         ))}
       </div>

@@ -1,3 +1,4 @@
+import { isReraApproved } from "@/lib/properties/reraStatus";
 import type { AdminPropertyFormState } from "../types";
 import {
   AI_PIPELINE_VERSION,
@@ -230,7 +231,10 @@ function computeScores(form: AdminPropertyFormState) {
   return { base, growth, demand, investment, rentalYield: Math.round(rentalYield * 10) / 10 };
 }
 
-function compileOutputs(agents: Partial<Record<AIAgentId, AIAgentOutput>>): Record<string, string> {
+function compileOutputs(
+  agents: Partial<Record<AIAgentId, AIAgentOutput>>,
+  form: AdminPropertyFormState,
+): Record<string, string> {
   const get = (agent: AIAgentId, key: string): string => {
     const val = agents[agent]?.outputs[key];
     if (val == null) return "";
@@ -240,7 +244,7 @@ function compileOutputs(agents: Partial<Record<AIAgentId, AIAgentOutput>>): Reco
   const investment = agents.investment?.outputs;
   const pros = [
     `Prime location in ${get("area_intelligence", "areaSummary").split("—")[0] || "the area"}`,
-    get("builder_intelligence", "builderReputationSummary").includes("RERA") ? "RERA registered" : null,
+    isReraApproved({ rera_number: form.rera_number }) ? "RERA registered" : null,
     get("photo_vision", "visualHighlights"),
   ].filter(Boolean);
 
@@ -312,7 +316,7 @@ export function runPropertyIntelligencePipeline(form: AdminPropertyFormState): P
     lastUpdated: now,
     confidence,
     agents,
-    compiled: compileOutputs(agents),
+    compiled: compileOutputs(agents, form),
   };
 }
 

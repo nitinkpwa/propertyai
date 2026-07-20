@@ -3,16 +3,32 @@
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import Navbar from "./Navbar";
+import PublicBottomNav from "@/components/layout/PublicBottomNav";
+import { isPortalPath } from "@/lib/design/bottomNav";
 
 function NavbarWrapperInner() {
   const pathname = usePathname();
 
-  // Home uses HomeNavbar. Everywhere else gets the global AreaIQ navbar (single logo).
+  // Home uses HomeNavbar.
   if (pathname === "/") {
-    return null;
+    return <PublicBottomNav />;
   }
 
-  return <Navbar />;
+  // Portal routes: hide global navbar on mobile (shells own chrome); keep on desktop.
+  if (isPortalPath(pathname)) {
+    return (
+      <div className="hidden lg:block">
+        <Navbar />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Navbar />
+      <PublicBottomNav />
+    </>
+  );
 }
 
 export default function NavbarWrapper() {

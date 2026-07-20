@@ -3,6 +3,7 @@ import type { AreaIntelligenceReport } from "@/lib/intelligence/types";
 import type { PropertyStructuredMeta } from "@/lib/properties/nearbyPlacesMeta";
 import {
   formatInrAmount,
+  formatPropertyPrice as formatPropertyPriceParts,
   type NormalizedPricing,
 } from "@/lib/properties/pricingDisplay";
 
@@ -261,7 +262,20 @@ export function formatPrice(price: number): string {
   return formatInrAmount(price);
 }
 
-/** Buyer-facing primary price line from normalized pricing. */
-export function formatPropertyPrice(property: Pick<PropertyDetail, "pricingDisplay" | "price">): string {
-  return property.pricingDisplay?.primaryPriceLabel || formatPrice(property.price);
+/** Buyer-facing primary market-value line (never a bare unit rate). */
+export function formatPropertyPrice(
+  property: Pick<PropertyDetail, "pricingDisplay" | "price" | "propertyType" | "area" | "sizeLabel">,
+): string {
+  if (
+    property.pricingDisplay?.primaryPriceLabel &&
+    !/\/\s*sq/i.test(property.pricingDisplay.primaryPriceLabel)
+  ) {
+    return property.pricingDisplay.primaryPriceLabel;
+  }
+  return formatPropertyPriceParts({
+    price: property.price,
+    pricingDisplay: property.pricingDisplay,
+    propertyType: property.propertyType,
+    area: property.area,
+  }).displayPrice;
 }

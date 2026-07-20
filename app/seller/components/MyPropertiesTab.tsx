@@ -13,9 +13,9 @@ import {
   btnPrimary,
   btnSecondary,
   formatDate,
-  formatPrice,
   inp,
 } from "@/lib/seller/constants";
+import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
 import DeletePropertyModal from "./DeletePropertyModal";
 
 interface Props {
@@ -251,7 +251,15 @@ export default function MyPropertiesTab({
                     {badge}
                   </span>
                 </div>
-                <p className="mt-2 text-base font-bold text-emerald-600">{formatPrice(prop.price)}</p>
+                <p className="mt-2 text-base font-bold text-emerald-600">
+                  {formatPropertyPrice({
+                    price: prop.price,
+                    calculated_price: prop.calculated_price,
+                    area_sqft: prop.area_sqft,
+                    sub_type: prop.sub_type,
+                    nearby_places: prop.nearby_places,
+                  }).displayPrice}
+                </p>
                 <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted">
                   <span>👁 {prop.view_count} views</span>
                   <span>📩 {prop.lead_count} leads</span>

@@ -1,8 +1,9 @@
 "use client";
 
-import { formatPrice } from "@/app/property/[id]/data";
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
 import Badge from "@/components/ui/Badge";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
+import { isReraApproved } from "@/lib/properties/reraStatus";
 
 type ComparedCard = PropertyCardProps & { compareRowId: string };
 
@@ -29,7 +30,12 @@ export default function CompareTable({ items }: CompareTableProps) {
     render: (p: ComparedCard) => string;
     bestIdx?: number | null;
   }[] = [
-    { label: "Price", render: (p) => formatPrice(p.price), bestIdx: priceBest },
+    {
+      label: "Price",
+      render: (p) =>
+        p.priceLabel || (p.price > 0 ? formatInrAmount(p.price) : "Price on Request"),
+      bestIdx: priceBest,
+    },
     { label: "Location", render: (p) => `${p.location}${p.city ? `, ${p.city}` : ""}` },
     { label: "Builder", render: (p) => p.builderName ?? "—" },
     { label: "BHK", render: (p) => `${p.bhk} BHK` },
@@ -37,7 +43,10 @@ export default function CompareTable({ items }: CompareTableProps) {
     { label: "Growth Score", render: (p) => (p.growthScore !== null ? `${p.growthScore}/100` : "N/A"), bestIdx: growthBest },
     { label: "Rental Yield", render: (p) => (p.rentalYield !== null ? `${p.rentalYield}%` : "N/A"), bestIdx: yieldBest },
     { label: "AreaIQ Intelligence", render: (p) => (p.aiVerified ? "Yes ✓" : "No") },
-    { label: "RERA Verified", render: (p) => (p.reraVerified ? "Yes ✓" : "No") },
+    {
+      label: "RERA Verified",
+      render: (p) => (isReraApproved(p) ? "Yes ✓" : "No"),
+    },
   ];
 
   return (

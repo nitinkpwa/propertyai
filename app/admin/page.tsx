@@ -17,6 +17,7 @@ import AdminProfileCard, {
   AdminPropertySellerInline,
 } from "@/components/admin/AdminProfileCard";
 import BuyerProfileGrid from "@/components/crm/BuyerProfileGrid";
+import DataCard, { ResponsiveDataView } from "@/components/ui/DataCard";
 import { isAdminRole } from "@/lib/auth/admin";
 import { signInWithEmailPassword } from "@/lib/auth/credentials";
 import { getAuthErrorMessage } from "@/lib/auth/errors";
@@ -29,6 +30,7 @@ import {
   formatDateTime,
   formatPrice,
 } from "@/lib/admin/constants";
+import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
 import {
   approveProperty,
   buildBuilderRows,
@@ -100,11 +102,11 @@ function StatCard({
   value: number;
 }) {
   return (
-    <div className="group rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
-      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-50 text-lg group-hover:bg-emerald-50">
+    <div className="group min-w-[148px] shrink-0 snap-start rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm transition-all active:scale-[0.99] lg:min-w-0 lg:hover:-translate-y-0.5 lg:hover:shadow-md sm:p-5">
+      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-neutral-50 text-lg lg:group-hover:bg-emerald-50">
         {icon}
       </div>
-      <p className="text-3xl font-bold tracking-tight text-heading-primary">{value}</p>
+      <p className="text-2xl font-bold tracking-tight text-heading-primary lg:text-3xl">{value}</p>
       <p className="mt-1 text-sm font-medium text-body">{label}</p>
     </div>
   );
@@ -491,8 +493,10 @@ function AdminPageInner() {
 
       {tab === "dashboard" && stats ? (
         <div>
-          <h1 className="mb-6 text-2xl font-bold tracking-tight text-heading-primary">Dashboard Overview</h1>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <h1 className="mb-6 text-[28px] font-bold tracking-tight text-heading-primary lg:text-2xl">
+            Dashboard Overview
+          </h1>
+          <div className="-mx-4 flex gap-3 overflow-x-auto scroll-touch px-4 pb-1 snap-x snap-mandatory lg:mx-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0 xl:grid-cols-3 lg:snap-none">
             <StatCard icon="🏠" label="Total Properties" value={stats.totalProperties} />
             <StatCard icon="⏳" label="Pending Properties" value={stats.pendingProperties} />
             <StatCard icon="✅" label="Approved Properties" value={stats.approvedProperties} />
@@ -574,71 +578,159 @@ function AdminPageInner() {
               <option value="rented">Rented</option>
             </select>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="border-b border-neutral-200 bg-neutral-50">
-                  <tr>
-                    {["Property", "Type", "Price", "City", "Seller", "Connect Partner", "Status", "Date", "Actions"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label">
-                        {h}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredProperties.map((prop) => (
-                    <tr key={prop.id} className="border-b border-neutral-100 hover:bg-neutral-50/50">
-                      <td className="px-4 py-3">
-                        <p className="font-medium text-heading-primary">{prop.title}</p>
-                        <p className="text-xs text-muted">{prop.sub_type}</p>
-                      </td>
-                      <td className="px-4 py-3 capitalize text-body">{prop.type}</td>
-                      <td className="px-4 py-3 font-semibold text-emerald-700">{formatPrice(prop.price)}</td>
-                      <td className="px-4 py-3 text-body">{prop.city}</td>
-                      <td className="px-4 py-3">
-                        <AdminPropertySellerInline property={prop} lookup={profileLookup} />
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="space-y-1">
-                          {prop.connect_partner?.company_name ? (
-                            <p className="text-xs font-medium text-emerald-700">
-                              {prop.connect_partner.company_name}
-                            </p>
-                          ) : null}
-                          <ConnectPartnerAssignSelect
-                            propertyId={prop.id}
-                            currentPartnerId={prop.connect_partner_id}
-                            onAssigned={loadAll}
-                          />
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(prop.status)}`}>
-                          {PROPERTY_STATUS_LABELS[prop.status as keyof typeof PROPERTY_STATUS_LABELS] ?? prop.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-muted">{formatDate(prop.created_at)}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-wrap gap-1">
-                          <Link href={`/admin/properties/${prop.id}`} className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100">CMS</Link>
-                          <button type="button" onClick={() => startEdit(prop)} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium hover:bg-neutral-50">Edit</button>
-                          <button type="button" onClick={async () => {
-                            const result = await updatePropertyStatus(prop.id, prop.status === "active" ? "paused" : "active");
-                            if (!result.ok) {
-                              window.alert(result.error ?? "Could not update status");
-                              return;
-                            }
-                            await loadAll();
-                          }} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium hover:bg-neutral-50">{prop.status === "active" ? "Pause" : "Activate"}</button>
-                          <button type="button" onClick={async () => { if (confirm("Delete this property?")) { await deleteProperty(prop.id); await loadAll(); } }} className="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600">Delete</button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm lg:border">
+            <ResponsiveDataView
+              table={
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="border-b border-neutral-200 bg-neutral-50">
+                      <tr>
+                        {["Property", "Type", "Price", "City", "Seller", "Connect Partner", "Status", "Date", "Actions"].map((h) => (
+                          <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredProperties.map((prop) => (
+                        <tr key={prop.id} className="border-b border-neutral-100 hover:bg-neutral-50/50">
+                          <td className="px-4 py-3">
+                            <p className="font-medium text-heading-primary">{prop.title}</p>
+                            <p className="text-xs text-muted">{prop.sub_type}</p>
+                          </td>
+                          <td className="px-4 py-3 capitalize text-body">{prop.type}</td>
+                          <td className="px-4 py-3 font-semibold text-emerald-700">
+                            {formatPropertyPrice({
+                              price: prop.price,
+                              calculated_price: prop.calculated_price,
+                              area_sqft: prop.area_sqft,
+                              sub_type: prop.sub_type,
+                              nearby_places: (prop as { nearby_places?: unknown }).nearby_places,
+                            }).displayPrice}
+                          </td>
+                          <td className="px-4 py-3 text-body">{prop.city}</td>
+                          <td className="px-4 py-3">
+                            <AdminPropertySellerInline property={prop} lookup={profileLookup} />
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="space-y-1">
+                              {prop.connect_partner?.company_name ? (
+                                <p className="text-xs font-medium text-emerald-700">
+                                  {prop.connect_partner.company_name}
+                                </p>
+                              ) : null}
+                              <ConnectPartnerAssignSelect
+                                propertyId={prop.id}
+                                currentPartnerId={prop.connect_partner_id}
+                                onAssigned={loadAll}
+                              />
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(prop.status)}`}>
+                              {PROPERTY_STATUS_LABELS[prop.status as keyof typeof PROPERTY_STATUS_LABELS] ?? prop.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-muted">{formatDate(prop.created_at)}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-wrap gap-1">
+                              <Link href={`/admin/properties/${prop.id}`} className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100">CMS</Link>
+                              <button type="button" onClick={() => startEdit(prop)} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium hover:bg-neutral-50">Edit</button>
+                              <button type="button" onClick={async () => {
+                                const result = await updatePropertyStatus(prop.id, prop.status === "active" ? "paused" : "active");
+                                if (!result.ok) {
+                                  window.alert(result.error ?? "Could not update status");
+                                  return;
+                                }
+                                await loadAll();
+                              }} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium hover:bg-neutral-50">{prop.status === "active" ? "Pause" : "Activate"}</button>
+                              <button type="button" onClick={async () => { if (confirm("Delete this property?")) { await deleteProperty(prop.id); await loadAll(); } }} className="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-600">Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              }
+              cards={
+                <div className="space-y-3 p-3 sm:p-4">
+                  {filteredProperties.map((prop) => {
+                    const priceLabel = formatPropertyPrice({
+                      price: prop.price,
+                      calculated_price: prop.calculated_price,
+                      area_sqft: prop.area_sqft,
+                      sub_type: prop.sub_type,
+                      nearby_places: (prop as { nearby_places?: unknown }).nearby_places,
+                    }).displayPrice;
+                    return (
+                      <DataCard
+                        key={prop.id}
+                        title={prop.title}
+                        subtitle={`${prop.city} · ${prop.type}`}
+                        badges={
+                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(prop.status)}`}>
+                            {PROPERTY_STATUS_LABELS[prop.status as keyof typeof PROPERTY_STATUS_LABELS] ?? prop.status}
+                          </span>
+                        }
+                        meta={[
+                          { label: "Price", value: priceLabel },
+                          { label: "Listed", value: formatDate(prop.created_at) },
+                        ]}
+                        expandedContent={
+                          <div className="space-y-2">
+                            <ConnectPartnerAssignSelect
+                              propertyId={prop.id}
+                              currentPartnerId={prop.connect_partner_id}
+                              onAssigned={loadAll}
+                            />
+                          </div>
+                        }
+                        actions={[
+                          {
+                            id: "cms",
+                            label: "Open CMS",
+                            onClick: () => router.push(`/admin/properties/${prop.id}`),
+                          },
+                          {
+                            id: "edit",
+                            label: "Edit",
+                            onClick: () => startEdit(prop),
+                          },
+                          {
+                            id: "toggle",
+                            label: prop.status === "active" ? "Pause" : "Activate",
+                            onClick: async () => {
+                              const result = await updatePropertyStatus(
+                                prop.id,
+                                prop.status === "active" ? "paused" : "active",
+                              );
+                              if (!result.ok) {
+                                window.alert(result.error ?? "Could not update status");
+                                return;
+                              }
+                              await loadAll();
+                            },
+                          },
+                          {
+                            id: "delete",
+                            label: "Delete",
+                            danger: true,
+                            onClick: async () => {
+                              if (confirm("Delete this property?")) {
+                                await deleteProperty(prop.id);
+                                await loadAll();
+                              }
+                            },
+                          },
+                        ]}
+                      />
+                    );
+                  })}
+                </div>
+              }
+            />
             {filteredProperties.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted">No properties found</p>
             ) : null}
@@ -663,7 +755,14 @@ function AdminPageInner() {
                   <div className="border-b border-neutral-100 px-5 py-4">
                     <p className="font-semibold text-heading-primary">{prop.title}</p>
                     <p className="mt-1 text-sm text-muted">
-                      {prop.city} · {formatPrice(prop.price)}
+                      {prop.city} ·{" "}
+                      {formatPropertyPrice({
+                        price: prop.price,
+                        calculated_price: prop.calculated_price,
+                        area_sqft: prop.area_sqft,
+                        sub_type: prop.sub_type,
+                        nearby_places: (prop as { nearby_places?: unknown }).nearby_places,
+                      }).displayPrice}
                       {prop.connect_partner?.company_name ? (
                         <span className="ml-2 text-emerald-700">
                           · {prop.connect_partner.company_name}

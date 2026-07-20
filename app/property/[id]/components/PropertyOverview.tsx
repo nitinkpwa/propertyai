@@ -1,5 +1,5 @@
 import type { PropertyDetail } from "../data";
-import { formatPrice } from "../data";
+import { formatPrice, formatPropertyPrice } from "../data";
 import { MapPinIcon, SectionCard, SectionTitle } from "./shared";
 
 interface PropertyOverviewProps {
@@ -21,7 +21,7 @@ export default function PropertyOverview({ property }: PropertyOverviewProps) {
     { label: "Builder", value: property.builder.name },
     { label: "Project", value: property.project },
     { label: "Location", value: `${property.location}, ${property.city}` },
-    { label: "Price", value: pd?.primaryPriceLabel || formatPrice(property.price) },
+    { label: "Price", value: formatPropertyPrice(property) },
     ...(rateSpec ? [rateSpec] : []),
     ...(property.sizeLabel ? [{ label: "Plot Size", value: property.sizeLabel }] : []),
     { label: "Possession", value: property.possession },

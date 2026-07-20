@@ -1,9 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import type { SellerTab } from "@/lib/seller/types";
 import { getInitials } from "@/lib/seller/constants";
+import BottomNav from "@/components/layout/BottomNav";
+import MobileTopBar from "@/components/layout/MobileTopBar";
+import MenuSheet from "@/components/layout/MenuSheet";
+import { SELLER_BOTTOM_NAV, type BottomNavItem } from "@/lib/design/bottomNav";
 
 const SIDEBAR_ITEMS: Array<{ key: SellerTab; label: string; icon: string }> = [
   { key: "home", label: "Dashboard", icon: "🏠" },
@@ -41,13 +44,30 @@ export default function SellerShell({
   onAddProperty,
   children,
 }: SellerShellProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [tabletOpen, setTabletOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleNav = (key: SellerTab) => {
     if (key === "add") onAddProperty();
     else onTabChange(key);
-    setMobileOpen(false);
+    setTabletOpen(false);
   };
+
+  const handleBottomSelect = (item: BottomNavItem) => {
+    if (item.tab === "add") {
+      onAddProperty();
+      return;
+    }
+    if (item.tab) onTabChange(item.tab as SellerTab);
+  };
+
+  const activeBottomId =
+    SELLER_BOTTOM_NAV.find((i) => i.tab === tab)?.id ??
+    (tab === "add" ? "add" : "home");
+
+  const bottomItems = SELLER_BOTTOM_NAV.map((item) =>
+    item.id === "leads" && newLeads > 0 ? { ...item, badge: newLeads } : item,
+  );
 
   const sidebar = (
     <nav className="flex flex-1 flex-col gap-1 p-3">
@@ -76,7 +96,7 @@ export default function SellerShell({
             </span>
             <span className="flex-1">{item.label}</span>
             {badge > 0 ? (
-              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-[10px] font-bold text-white">
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-emerald-500 px-1.5 text-xs font-bold text-white">
                 {badge}
               </span>
             ) : null}
@@ -87,13 +107,22 @@ export default function SellerShell({
   );
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] pt-16">
-      <header className="sticky top-16 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#FAFAFA] lg:pt-16">
+      <MobileTopBar
+        title="Seller"
+        onNotifications={() => onTabChange("notifications")}
+        notificationCount={unreadNotifications}
+        onProfile={() => onTabChange("profile")}
+        onMenu={() => setMenuOpen(true)}
+        searchHref="/seller?tab=listings"
+      />
+
+      <header className="sticky top-16 z-30 hidden border-b border-neutral-200 bg-white/95 backdrop-blur-xl md:block">
         <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6 lg:pl-[17.5rem] lg:pr-8">
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setMobileOpen(true)}
+              onClick={() => setTabletOpen(true)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 text-body lg:hidden"
               aria-label="Open menu"
             >
@@ -158,17 +187,17 @@ export default function SellerShell({
           {sidebar}
         </aside>
 
-        {mobileOpen ? (
+        {tabletOpen ? (
           <>
             <div
               className="fixed inset-0 z-40 bg-neutral-900/20 backdrop-blur-sm lg:hidden"
-              onClick={() => setMobileOpen(false)}
+              onClick={() => setTabletOpen(false)}
               aria-hidden
             />
             <aside className="fixed bottom-0 left-0 top-0 z-50 flex w-[min(280px,88vw)] flex-col bg-white shadow-xl lg:hidden">
               <div className="flex h-16 items-center justify-between border-b border-neutral-100 px-4">
                 <span className="font-semibold text-heading-primary">Menu</span>
-                <button type="button" onClick={() => setMobileOpen(false)} className="text-muted">
+                <button type="button" onClick={() => setTabletOpen(false)} className="text-muted">
                   ✕
                 </button>
               </div>
@@ -186,10 +215,49 @@ export default function SellerShell({
           </>
         ) : null}
 
-        <main className="min-h-[calc(100vh-4rem)] flex-1 px-4 py-6 sm:px-6 lg:ml-64 lg:px-8 lg:py-8">
-          <div className="mx-auto max-w-6xl">{children}</div>
+        <main className="min-h-[calc(100vh-4rem)] flex-1 px-4 py-6 pb-nav sm:px-6 lg:ml-64 lg:px-8 lg:py-8 lg:pb-8">
+          <div className="mx-auto max-w-6xl animate-page-enter">{children}</div>
         </main>
       </div>
+
+      {/* FAB Add Property — mobile */}
+      <button
+        type="button"
+        onClick={onAddProperty}
+        className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-lg shadow-[var(--brand-shadow)] active:scale-95 lg:hidden"
+        aria-label="Add property"
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25">
+          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      <BottomNav
+        items={bottomItems}
+        activeId={activeBottomId}
+        onItemSelect={handleBottomSelect}
+      />
+
+      <MenuSheet
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        title="More"
+        items={[
+          { id: "visits", label: "Site Visits", icon: "📅" },
+          { id: "analytics", label: "Analytics", icon: "📈" },
+          {
+            id: "notifications",
+            label: "Notifications",
+            icon: "🔔",
+            badge: unreadNotifications || undefined,
+          },
+          { id: "__logout", label: "Logout", danger: true },
+        ]}
+        onSelect={(id) => {
+          if (id === "__logout") onLogout();
+          else handleNav(id as SellerTab);
+        }}
+      />
     </div>
   );
 }

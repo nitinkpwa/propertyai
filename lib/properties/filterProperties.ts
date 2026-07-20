@@ -224,7 +224,8 @@ export function buildSupabasePropertyQuery<
     next = next.eq("ai_verified", true);
   }
   if (filters.reraVerified) {
-    next = next.eq("rera_verified", true);
+    // Live schema has rera_number only — rera_verified column does not exist.
+    next = next.not("rera_number", "is", null).neq("rera_number", "");
   }
   if (filters.minGrowthScore != null) {
     next = next.gte("growth_score", filters.minGrowthScore);

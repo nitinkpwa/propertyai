@@ -1,4 +1,13 @@
-type BadgeVariant = "default" | "success" | "warning" | "error" | "info" | "neutral";
+type BadgeVariant =
+  | "default"
+  | "success"
+  | "warning"
+  | "error"
+  | "info"
+  | "neutral"
+  | "rera"
+  | "verified"
+  | "featured";
 
 const VARIANTS: Record<BadgeVariant, string> = {
   default: "bg-emerald-50 text-emerald-700 ring-emerald-200/80",
@@ -7,6 +16,9 @@ const VARIANTS: Record<BadgeVariant, string> = {
   error: "bg-rose-50 text-rose-700 ring-rose-200/80",
   info: "bg-blue-50 text-blue-700 ring-blue-200/80",
   neutral: "bg-neutral-100 text-body ring-neutral-200/80",
+  rera: "bg-sky-50 text-sky-800 ring-sky-200/80",
+  verified: "bg-emerald-50 text-emerald-800 ring-emerald-200/80",
+  featured: "bg-amber-50 text-amber-800 ring-amber-200/80",
 };
 
 interface BadgeProps {
@@ -18,7 +30,7 @@ interface BadgeProps {
 export default function Badge({ children, variant = "default", className = "" }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${VARIANTS[variant]} ${className}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${VARIANTS[variant]} ${className}`}
     >
       {children}
     </span>

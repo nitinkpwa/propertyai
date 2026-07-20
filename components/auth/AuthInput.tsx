@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
+import { ui } from "@/lib/design/tokens";
 
-interface AuthInputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string | null;
 }
@@ -39,37 +39,48 @@ export default function AuthInput({
   error,
   type = "text",
   className = "",
+  id,
+  placeholder = " ",
   ...props
 }: AuthInputProps) {
   const [visible, setVisible] = useState(false);
+  const autoId = useId();
+  const inputId = id ?? autoId;
   const isPassword = type === "password";
   const inputType = isPassword && visible ? "text" : type;
 
   return (
     <div className="mb-4">
-      <label className="mb-2 block text-sm font-medium text-label">
-        {label}
-      </label>
       <div className="relative">
         <input
+          id={inputId}
           type={inputType}
-          className={`w-full rounded-xl border bg-neutral-50 px-4 py-3 text-sm text-input outline-none transition-all placeholder:text-placeholder focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 ${
-            error ? "border-rose-300" : "border-neutral-200"
+          placeholder={placeholder}
+          aria-invalid={Boolean(error)}
+          className={`${ui.input} ${
+            error ? "border-rose-300 focus:border-rose-400 focus:ring-rose-500/10" : ""
           } ${isPassword ? "pr-12" : ""} ${className}`}
           {...props}
         />
+        <label htmlFor={inputId} className={ui.labelFloat}>
+          {label}
+        </label>
         {isPassword ? (
           <button
             type="button"
             onClick={() => setVisible((value) => !value)}
-            className="absolute inset-y-0 right-0 inline-flex w-11 items-center justify-center text-placeholder transition-colors hover:text-body"
+            className="absolute inset-y-0 right-0 inline-flex w-12 items-center justify-center text-placeholder transition-colors hover:text-body"
             aria-label={visible ? "Hide password" : "Show password"}
           >
             <EyeIcon open={visible} />
           </button>
         ) : null}
       </div>
-      {error ? <p className="mt-1.5 text-xs font-medium text-rose-600">{error}</p> : null}
+      {error ? (
+        <p className="mt-1.5 text-xs font-medium text-rose-600" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -116,7 +116,13 @@ export function mapExtractionToForm(
   form.featured_image = photos[0] || "";
   form.builder_name = fields.builder || fields.developer;
   form.facing = fields.facing;
-  form.rera_number = fields.rera || (fields.reraStatus ? `RERA ${fields.reraStatus}` : "");
+  form.rera_number =
+    fields.rera ||
+    (fields.reraStatus
+      ? fields.reraStatus.toLowerCase().startsWith("rera")
+        ? fields.reraStatus
+        : `RERA ${fields.reraStatus}`
+      : "");
   form.possession = fields.possession || fields.launchStatus;
   form.parking = fields.parking === "Yes" ? "Available" : form.parking;
 

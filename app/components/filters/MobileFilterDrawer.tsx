@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState } from "react";
+import BottomSheet from "@/components/ui/BottomSheet";
+import { Button } from "@/components/ui/Button";
 import PropertyFiltersPanel from "./PropertyFiltersPanel";
 import type { PropertyFilterState } from "@/lib/properties/types";
 
@@ -10,6 +12,7 @@ interface MobileFilterDrawerProps {
   activeCount: number;
   onChange: (filters: PropertyFilterState) => void;
   onClose: () => void;
+  onReset?: () => void;
   builderOptions?: string[];
 }
 
@@ -19,77 +22,89 @@ export default function MobileFilterDrawer({
   activeCount,
   onChange,
   onClose,
+  onReset,
   builderOptions = [],
 }: MobileFilterDrawerProps) {
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [open]);
+  return (
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title="Filters"
+      description={
+        activeCount > 0
+          ? `${activeCount} active filter${activeCount === 1 ? "" : "s"}`
+          : "Refine your search"
+      }
+      tall
+      footer={
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="secondary"
+            fullWidth
+            onClick={() => {
+              onReset?.();
+            }}
+          >
+            Reset
+          </Button>
+          <Button type="button" fullWidth onClick={onClose}>
+            Apply
+          </Button>
+        </div>
+      }
+    >
+      <PropertyFiltersPanel
+        filters={filters}
+        onChange={onChange}
+        builderOptions={builderOptions}
+      />
+    </BottomSheet>
+  );
+}
 
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
+/** Standalone trigger used by PropertyFilters */
+export function MobileFilterTrigger({
+  activeCount,
+  filters,
+  onChange,
+  onClearAll,
+  builderOptions = [],
+}: {
+  activeCount: number;
+  filters: PropertyFilterState;
+  onChange: (filters: PropertyFilterState) => void;
+  onClearAll?: () => void;
+  builderOptions?: string[];
+}) {
+  const [open, setOpen] = useState(false);
 
   return (
     <>
-      <div
-        className={`fixed inset-0 z-40 bg-neutral-900/25 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
-          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={onClose}
-        aria-hidden={!open}
-      />
-
-      <aside
-        className={`fixed inset-y-0 right-0 z-50 flex w-[min(420px,100vw)] flex-col bg-white shadow-[-12px_0_40px_rgba(0,0,0,0.08)] transition-transform duration-300 ease-out lg:hidden ${
-          open ? "translate-x-0" : "translate-x-full"
-        }`}
-        aria-hidden={!open}
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-sm font-semibold text-body shadow-sm lg:hidden"
       >
-        <div className="flex items-center justify-between border-b border-neutral-100 px-5 py-4">
-          <div>
-            <h2 className="text-base font-semibold text-heading-primary">Filters</h2>
-            {activeCount > 0 && (
-              <p className="text-xs text-muted">
-                {activeCount} active filter{activeCount === 1 ? "" : "s"}
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-neutral-100"
-            aria-label="Close filters"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-5 py-6">
-          <PropertyFiltersPanel
-            filters={filters}
-            onChange={onChange}
-            builderOptions={builderOptions}
-          />
-        </div>
-
-        <div className="border-t border-neutral-100 p-5">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex w-full items-center justify-center rounded-full px-4 py-3 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.35)]"
-            style={{ backgroundColor: "#4AAA27" }}
-          >
-            Show Results
-          </button>
-        </div>
-      </aside>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+          <path d="M4 6h16M7 12h10M10 18h4" strokeLinecap="round" />
+        </svg>
+        Filters
+        {activeCount > 0 ? (
+          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand px-1.5 text-xs font-bold text-white">
+            {activeCount}
+          </span>
+        ) : null}
+      </button>
+      <MobileFilterDrawer
+        open={open}
+        filters={filters}
+        activeCount={activeCount}
+        onChange={onChange}
+        onClose={() => setOpen(false)}
+        onReset={onClearAll}
+        builderOptions={builderOptions}
+      />
     </>
   );
 }

@@ -1,5 +1,6 @@
 import type { SiteVisitRow } from "@/lib/buyer/types";
 import { buildPropertyChecklist } from "@/lib/crm/visitWorkflow";
+import { isReraApproved } from "@/lib/properties/reraStatus";
 
 export interface VisitAssistantPhase {
   phase: "before" | "during" | "after";
@@ -109,13 +110,13 @@ export function buildBeforeVisitContext(visit: SiteVisitRow & {
     ? visit.checklist
     : buildPropertyChecklist({
         propertyType: prop?.type,
-        hasRera: Boolean(prop?.rera_number),
+        hasRera: isReraApproved(prop),
         hasParking: Boolean(prop?.parking),
       });
 
   const pros: string[] = [];
   const cons: string[] = [];
-  if (prop?.rera_number) pros.push("RERA registered project");
+  if (isReraApproved(prop)) pros.push("RERA registered project");
   else cons.push("Verify RERA registration on site");
   if (prop?.amenities && prop.amenities.length > 3) pros.push(`${prop.amenities.length} amenities listed`);
   if (prop?.parking) pros.push(`Parking: ${prop.parking}`);

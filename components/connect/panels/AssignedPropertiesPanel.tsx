@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { ConnectPartnerPropertyRow } from "@/lib/connect/partners/types";
-import { connectTokens, formatPrice } from "@/lib/connect/design";
+import { connectTokens } from "@/lib/connect/design";
 import ConnectEmptyModule from "@/app/connect/components/ConnectEmptyModule";
+import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
 
 interface Props {
   properties: ConnectPartnerPropertyRow[];
@@ -75,7 +76,15 @@ export default function AssignedPropertiesPanel({ properties, onRefresh }: Props
                   </div>
                   <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-body">{p.status}</span>
                 </div>
-                <p className="mt-2 text-lg font-bold text-emerald-700">{formatPrice(p.price)}</p>
+                <p className="mt-2 text-lg font-bold text-emerald-700">
+                  {formatPropertyPrice({
+                    price: p.price,
+                    calculated_price: (p as { calculated_price?: number | null }).calculated_price,
+                    area_sqft: p.area_sqft,
+                    sub_type: p.sub_type,
+                    nearby_places: (p as { nearby_places?: unknown }).nearby_places,
+                  }).displayPrice}
+                </p>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                   <div className="rounded-lg bg-neutral-50 p-2"><p className="text-muted">Enquiries</p><p className="font-bold text-heading-secondary">{p.enquiry_count}</p></div>
                   <div className="rounded-lg bg-neutral-50 p-2"><p className="text-muted">Visits</p><p className="font-bold text-heading-secondary">{p.visit_count}</p></div>
