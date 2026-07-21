@@ -396,6 +396,7 @@ export function mapPropertyRowToDetail(
   similarProperties: PropertyCardProps[] = [],
   intelligenceReport: AreaIntelligenceReport | null = null,
   marketContext?: MarketContext | null,
+  analytics?: import("@/lib/analytics").PropertyAnalyticsReport | null,
 ): PropertyDetail {
   const possession = mapPossession(row.possession);
   const bedrooms = row.bedrooms ?? 0;
@@ -465,6 +466,7 @@ export function mapPropertyRowToDetail(
     market,
     similarProperties: similarProperties ?? [],
     nearbyPlaces,
+    analytics: analytics ?? null,
   });
 
   const fallbackSummary = buildAiSummary(row, intelligenceReport);

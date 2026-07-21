@@ -75,7 +75,11 @@ export function sectionsToPlainText(sections: AskSection[]): string {
 }
 
 export function getTypingStatus(phase: "understanding" | "searching" | "responding"): string {
-  if (phase === "understanding") return "Analyzing your intent";
-  if (phase === "searching") return "Querying AreaIQ database";
-  return "Generating intelligence report";
+  if (phase === "understanding") {
+    return "I'm comparing projects around your preferred location.";
+  }
+  if (phase === "searching") {
+    return "Checking builder credibility and live listings…";
+  }
+  return "Looking beyond the advertised price…";
 }

@@ -10,15 +10,16 @@ import {
 import type { PropertyContext } from "@/lib/ask/client";
 import type { AskChatMessage } from "@/lib/ask/conversations/types";
 import { pairMessages, turnFromMessage } from "../../lib/turnFromMessage";
+import { AskAdvisorLoading } from "../loading/AskAdvisorLoading";
 import { AskAssistantMessage } from "./AskAssistantMessage";
 import { AskEmptyState } from "./AskEmptyState";
-import { AskTypingIndicator } from "./AskTypingIndicator";
 
 interface AskChatThreadProps {
   messages: AskChatMessage[];
   propertyContext: PropertyContext | null;
   loading: boolean;
-  typingStatus: string;
+  /** @deprecated cosmetic status is owned by AskAdvisorLoading */
+  typingStatus?: string;
   /** @deprecated kept for call-site compat; scroll is owned by this thread */
   messagesEndRef?: RefObject<HTMLDivElement | null>;
   onFollowUp: (text: string) => void;
@@ -30,7 +31,6 @@ export function AskChatThread({
   messages,
   propertyContext,
   loading,
-  typingStatus,
   onFollowUp,
   onOpenIntel,
   onScrollElevated,
@@ -63,7 +63,7 @@ export function AskChatThread({
     lastScrollTopRef.current = el.scrollTop;
   };
 
-  // New user turn / AI cycle starts → re-enable and scroll once to typing bubble top
+  // New user turn / AI cycle starts → keep the advisor loader fully in view
   useEffect(() => {
     if (!loading) {
       didScrollTypingRef.current = false;
@@ -74,13 +74,24 @@ export function AskChatThread({
     expectAssistantScrollRef.current = true;
     didScrollTypingRef.current = false;
 
-    const id = window.requestAnimationFrame(() => {
+    const scrollToLoader = () => {
+      if (!autoScrollEnabledRef.current) return;
+      scrollAnchorToStart(typingAnchorRef.current);
+    };
+
+    const raf = window.requestAnimationFrame(() => {
       if (didScrollTypingRef.current) return;
       didScrollTypingRef.current = true;
-      scrollAnchorToStart(typingAnchorRef.current);
+      scrollToLoader();
     });
 
-    return () => window.cancelAnimationFrame(id);
+    // Layout settles as the rich loader mounts — nudge once more so it isn't half-clipped
+    const settle = window.setTimeout(scrollToLoader, 120);
+
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.clearTimeout(settle);
+    };
   }, [loading, scrollAnchorToStart]);
 
   // Brand-new assistant message → scroll once to its TOP (never to the bottom)
@@ -179,8 +190,8 @@ export function AskChatThread({
         })}
 
         {loading ? (
-          <div ref={typingAnchorRef} className="scroll-mt-3">
-            <AskTypingIndicator status={typingStatus} />
+          <div ref={typingAnchorRef} className="scroll-mt-4">
+            <AskAdvisorLoading active={loading} />
           </div>
         ) : null}
       </div>

@@ -71,6 +71,20 @@ export interface IntentClassification {
   investmentPurpose: InvestmentPurpose | null;
 }
 
+export interface PropertyAnalyticsContext {
+  currentPsf: number | null;
+  areaAveragePsf: number | null;
+  differencePercent: number | null;
+  marketPosition: string | null;
+  priceConfidence: number | null;
+  investmentScore: number | null;
+  investmentConfidence: number | null;
+  fairValueExpected: number | null;
+  growthRange: string | null;
+  comparableCount: number;
+  priceOpinion: string | null;
+}
+
 export interface PropertyContext {
   id: string;
   name: string;
@@ -84,6 +98,8 @@ export interface PropertyContext {
   rentalYield: number | null;
   possession: string;
   propertyType: string;
+  /** Verified Analytics Engine metrics — explain these, never invent replacements */
+  analytics?: PropertyAnalyticsContext | null;
 }
 
 export interface AskEngineResponse {

@@ -11,6 +11,7 @@ import type {
   ConnectPartnerAnalytics,
   ConnectPartnerBuyerRow,
   ConnectPartnerListRow,
+  ConnectPartnerPropertyRow,
 } from "@/lib/connect/partners/types";
 
 const PARTNER_SELECT = "*";
@@ -315,38 +316,105 @@ export async function fetchPartnerSiteVisits(
   });
 }
 
+/** Matches live `properties` columns selected for Connect partner dashboards. */
+type PartnerPropertyDbRow = {
+  id: string;
+  title: string | null;
+  city: string | null;
+  location: string | null;
+  price: number | null;
+  calculated_price?: number | null;
+  area_sqft: number | null;
+  status: string | null;
+  type: string | null;
+  sub_type: string | null;
+  photos: string[] | null;
+  nearby_places: unknown | null;
+  created_at: string | null;
+  updated_at: string | null;
+};
+
+function toNumberOrNull(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (value == null || value === "") return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
+function toPartnerPropertyDbRow(raw: Record<string, unknown>): PartnerPropertyDbRow {
+  const photos = raw.photos;
+  return {
+    id: String(raw.id ?? ""),
+    title: typeof raw.title === "string" ? raw.title : null,
+    city: typeof raw.city === "string" ? raw.city : null,
+    location: typeof raw.location === "string" ? raw.location : null,
+    price: toNumberOrNull(raw.price),
+    calculated_price: toNumberOrNull(raw.calculated_price),
+    area_sqft: toNumberOrNull(raw.area_sqft),
+    status: typeof raw.status === "string" ? raw.status : null,
+    type: typeof raw.type === "string" ? raw.type : null,
+    sub_type: typeof raw.sub_type === "string" ? raw.sub_type : null,
+    photos: Array.isArray(photos)
+      ? photos.filter((p): p is string => typeof p === "string")
+      : null,
+    nearby_places: raw.nearby_places ?? null,
+    created_at: typeof raw.created_at === "string" ? raw.created_at : null,
+    updated_at: typeof raw.updated_at === "string" ? raw.updated_at : null,
+  };
+}
+
 export async function fetchPartnerProperties(
   supabase: SupabaseClient,
   partnerId: string,
   partnerProfileId?: string | null,
-) {
-  let query = supabase
-    .from("properties")
-    .select(
-      "id, title, city, location, price, status, type, sub_type, photos, created_at, updated_at",
-    )
-    .is("deleted_at", null)
-    .order("updated_at", { ascending: false });
+): Promise<ConnectPartnerPropertyRow[]> {
+  // Official schema column is `area_sqft` (not built_up_area / carpet_area).
+  const SELECT_FULL =
+    "id, title, city, location, price, calculated_price, area_sqft, status, type, sub_type, photos, nearby_places, created_at, updated_at";
+  const SELECT_CORE =
+    "id, title, city, location, price, area_sqft, status, type, sub_type, photos, nearby_places, created_at, updated_at";
 
-  if (partnerProfileId) {
-    query = query.or(
-      `connect_partner_id.eq.${partnerId},assigned_connect_id.eq.${partnerProfileId}`,
-    );
-  } else {
-    query = query.eq("connect_partner_id", partnerId);
+  const runQuery = async (select: string) => {
+    let q = supabase
+      .from("properties")
+      .select(select)
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false });
+
+    if (partnerProfileId) {
+      q = q.or(
+        `connect_partner_id.eq.${partnerId},assigned_connect_id.eq.${partnerProfileId}`,
+      );
+    } else {
+      q = q.eq("connect_partner_id", partnerId);
+    }
+
+    return q;
+  };
+
+  let { data, error } = await runQuery(SELECT_FULL);
+
+  if (error && /calculated_price/i.test(error.message ?? "")) {
+    console.warn("fetchPartnerProperties: calculated_price missing — retrying without it");
+    ({ data, error } = await runQuery(SELECT_CORE));
   }
-
-  const { data, error } = await query;
 
   if (error) {
     console.error("fetchPartnerProperties:", error.message);
     return [];
   }
 
-  const properties = data ?? [];
+  const rawRows: unknown[] = Array.isArray(data) ? data : [];
+  const properties = rawRows
+    .filter(
+      (row): row is Record<string, unknown> =>
+        typeof row === "object" && row !== null && !Array.isArray(row),
+    )
+    .map(toPartnerPropertyDbRow)
+    .filter((row) => Boolean(row.id));
   if (properties.length === 0) return [];
 
-  const propertyIds = properties.map((p) => p.id as string);
+  const propertyIds = properties.map((p) => p.id);
 
   const [inquiriesRes, visitsRes, viewsRes] = await Promise.all([
     supabase
@@ -389,13 +457,25 @@ export async function fetchPartnerProperties(
     viewCounts[pid] = (viewCounts[pid] ?? 0) + 1;
   }
 
-  return properties.map((p) => ({
-    ...p,
-    photos: p.photos as string[] | null,
-    enquiry_count: enquiryCounts[p.id as string] ?? 0,
-    visit_count: visitCounts[p.id as string] ?? 0,
-    hot_leads: hotLeadsByProperty[p.id as string] ?? 0,
-    view_count: viewCounts[p.id as string] ?? 0,
+  return properties.map((p): ConnectPartnerPropertyRow => ({
+    id: p.id,
+    title: p.title ?? "",
+    city: p.city ?? "",
+    location: p.location ?? null,
+    price: p.price ?? 0,
+    calculated_price: p.calculated_price ?? null,
+    area_sqft: p.area_sqft,
+    status: p.status ?? "active",
+    type: p.type ?? null,
+    sub_type: p.sub_type ?? null,
+    photos: p.photos ?? null,
+    nearby_places: p.nearby_places ?? null,
+    created_at: p.created_at ?? "",
+    updated_at: p.updated_at ?? "",
+    enquiry_count: enquiryCounts[p.id] ?? 0,
+    visit_count: visitCounts[p.id] ?? 0,
+    hot_leads: hotLeadsByProperty[p.id] ?? 0,
+    view_count: viewCounts[p.id] ?? 0,
   }));
 }
 

@@ -41,25 +41,45 @@ export type ScoreMetric = {
   value: number | null;
   displayValue: string;
   available: boolean;
+  /** 0–100 confidence when available */
+  confidence?: number | null;
+  confidenceLabel?: string | null;
+  basedOn?: string | null;
 };
 
-export type MarketPosition = "Undervalued" | "Fair Value" | "Overpriced" | "Unknown";
+export type MarketPosition =
+  | "Undervalued"
+  | "Fair Value"
+  | "Fairly Priced"
+  | "Overpriced"
+  | "Unknown"
+  | "Insufficient verified data";
 
 export interface PriceAnalysisData {
   currentPrice: number;
   pricePerSqFt: number;
   averageAreaPrice: number | null;
   averagePsf: number | null;
+  medianPsf: number | null;
   lowestPrice: number | null;
   highestPrice: number | null;
   lowestPsf: number | null;
   highestPsf: number | null;
+  differencePercent: number | null;
+  priceRankLabel: string | null;
   priceTrendPercent: number | null;
   marketPosition: MarketPosition;
   fairValuePsf: number | null;
   fairValueEstimate: number | null;
+  fairValueLow: number | null;
+  fairValueHigh: number | null;
   aiOpinion: string;
   comparableCount: number;
+  confidence: number | null;
+  confidenceLabel: string;
+  basedOn: string;
+  available: boolean;
+  unavailableMessage: string | null;
 }
 
 export interface AppreciationScenario {

@@ -30,23 +30,36 @@ function ScoreChip({
   label,
   value,
   available,
+  displayValue,
 }: {
   label: string;
   value: number | null;
   available: boolean;
+  displayValue?: string;
 }) {
   const tone = available && value !== null ? scoreTone(value) : scoreTone(0);
   return (
     <div
-      className={`min-w-[104px] rounded-xl border px-3 py-2.5 ${
+      className={`min-w-[104px] max-w-[140px] rounded-xl border px-3 py-2.5 ${
         available ? `${tone.bg} border-transparent` : "border-neutral-200 bg-neutral-50"
       }`}
     >
       <p className="text-[10px] font-semibold uppercase tracking-wider text-label">{label}</p>
-      <p className={`mt-0.5 text-lg font-bold tabular-nums ${available ? tone.text : "text-muted"}`}>
-        {available && value !== null ? value : "—"}
-        {available ? <span className="text-xs font-medium text-muted">/100</span> : null}
-      </p>
+      {(available && value !== null) ||
+      (available && displayValue && (displayValue.includes("%–") || displayValue.includes("%-"))) ? (
+        <p className={`mt-0.5 text-lg font-bold tabular-nums ${tone.text}`}>
+          {displayValue && (displayValue.includes("%–") || displayValue.includes("%-"))
+            ? displayValue
+            : value}
+          {value !== null && !(displayValue?.includes("%")) ? (
+            <span className="text-xs font-medium text-muted">/100</span>
+          ) : null}
+        </p>
+      ) : (
+        <p className="mt-0.5 text-[11px] font-semibold leading-snug text-muted">
+          Insufficient verified data
+        </p>
+      )}
     </div>
   );
 }
@@ -168,9 +181,18 @@ export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
             <ScoreChip label="Investment" value={scores.investment.value} available={scores.investment.available} />
             <ScoreChip label="Builder" value={scores.builder.value} available={scores.builder.available} />
             <ScoreChip label="Rental" value={scores.rental.value} available={scores.rental.available} />
-            <ScoreChip label="Appreciation" value={scores.futureGrowth.value} available={scores.futureGrowth.available} />
+            <ScoreChip
+              label="Appreciation"
+              value={scores.futureGrowth.value}
+              available={scores.futureGrowth.available}
+              displayValue={scores.futureGrowth.displayValue}
+            />
             <ScoreChip label="Demand" value={scores.demand.value} available={scores.demand.available} />
-            <ScoreChip label="Availability" value={scores.availability.value} available={scores.availability.available} />
+            <ScoreChip
+              label="Liquidity"
+              value={scores.liquidity.value}
+              available={scores.liquidity.available}
+            />
           </div>
         ) : null}
 

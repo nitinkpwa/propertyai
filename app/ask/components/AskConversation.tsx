@@ -3,6 +3,7 @@
 import type { ListingProperty } from "@/lib/properties/types";
 import type { AskSearchStats, AskSection, AskTurn } from "@/lib/ask/types";
 import { formatPriceShort } from "@/lib/ask/responses";
+import { AskAdvisorLoading } from "./loading/AskAdvisorLoading";
 import { AskResultsGrid } from "./AskResultsSection";
 
 function escapeHtml(text: string) {
@@ -308,24 +309,10 @@ export function AskChipRow({
 }
 
 interface AskLoadingCardProps {
-  status: string;
+  status?: string;
 }
 
-export function AskLoadingCard({ status }: AskLoadingCardProps) {
-  return (
-    <div className="rounded-2xl border border-neutral-200 bg-white px-5 py-5 shadow-sm">
-      <div className="flex items-center gap-3 text-sm text-body">
-        <span className="inline-flex gap-1" aria-hidden>
-          {[0, 1, 2].map((dot) => (
-            <span
-              key={dot}
-              className="h-1.5 w-1.5 animate-bounce rounded-full bg-emerald-500"
-              style={{ animationDelay: `${dot * 0.15}s` }}
-            />
-          ))}
-        </span>
-        <span>{status}</span>
-      </div>
-    </div>
-  );
+/** Legacy wrapper — uses the premium advisor loading experience. */
+export function AskLoadingCard(_props: AskLoadingCardProps) {
+  return <AskAdvisorLoading active />;
 }

@@ -68,16 +68,24 @@ export interface ConnectPartnerBuyerRow {
   last_email_at?: string | null;
 }
 
+/**
+ * Assigned Connect Partner listing row.
+ * Field names match live `properties` columns selected in fetchPartnerProperties
+ * (`area_sqft` is the real DB column — not built_up_area / carpet_area).
+ */
 export interface ConnectPartnerPropertyRow {
   id: string;
   title: string;
   city: string;
   location: string | null;
   price: number;
+  calculated_price: number | null;
+  area_sqft: number | null;
   status: string;
   type: string | null;
   sub_type: string | null;
   photos: string[] | null;
+  nearby_places: unknown | null;
   created_at: string;
   updated_at: string;
   enquiry_count: number;

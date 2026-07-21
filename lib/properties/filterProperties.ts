@@ -192,6 +192,8 @@ export function buildSupabasePropertyQuery<
     lte: (column: string, value: unknown) => T;
     in: (column: string, values: unknown[]) => T;
     contains: (column: string, value: unknown) => T;
+    not: (column: string, operator: string, value: unknown) => T;
+    neq: (column: string, value: unknown) => T;
   },
 >(query: T, filters: SupabasePropertyFilters): T {
   let next = query;

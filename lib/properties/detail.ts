@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { runPropertyAnalytics } from "@/lib/analytics";
 import { areaIntelligenceService } from "@/lib/intelligence/AreaIntelligenceService";
 import { fetchMarketContext } from "@/lib/intelligence/data/marketContext";
 import {
@@ -59,13 +60,20 @@ async function fetchPropertyDetailByIdUncached(
     }
 
     const row = data as unknown as Parameters<typeof mapPropertyRowToDetail>[0];
-    const [similar, intelligenceReport, marketContext] = await Promise.all([
+    const [similar, intelligenceReport, marketContext, analytics] = await Promise.all([
       fetchSimilarListingProperties(row.city, row.id, 6),
       areaIntelligenceService.generateReport(row.id),
       fetchMarketContext(row.city, row.location, row.id),
+      runPropertyAnalytics(row.id),
     ]);
 
-    return mapPropertyRowToDetail(row, similar, intelligenceReport, marketContext);
+    return mapPropertyRowToDetail(
+      row,
+      similar,
+      intelligenceReport,
+      marketContext,
+      analytics,
+    );
   } catch (error) {
     console.error("Failed to fetch property detail:", error);
     return null;

@@ -15,6 +15,11 @@ import type {
   SimilarSalesData,
 } from "@/app/property/[id]/data";
 import { formatPrice } from "@/app/property/[id]/data";
+import type { PropertyAnalyticsReport } from "@/lib/analytics/types";
+import {
+  INSUFFICIENT_DATA,
+  WAITING_MARKET_DATA,
+} from "@/lib/analytics/types";
 import type { AreaIntelligenceReport, MarketContext, MarketListing } from "@/lib/intelligence/types";
 import { UNAVAILABLE_MESSAGE } from "@/lib/intelligence/types";
 import { pricePerSqft } from "@/lib/intelligence/utils";
@@ -39,23 +44,59 @@ type BundleInput = {
   market: MarketContext;
   similarProperties: PropertyCardProps[];
   nearbyPlaces?: { name: string; distance: string; type: string }[];
+  /** Verified Analytics Engine output — preferred over heuristics */
+  analytics?: PropertyAnalyticsReport | null;
 };
 
 function metric(
   label: string,
   value: number | null,
-  suffix = "",
+  opts?: {
+    suffix?: string;
+    confidence?: number | null;
+    basedOn?: string | null;
+  },
 ): ScoreMetric {
   if (value === null || Number.isNaN(value)) {
-    return { label, value: null, displayValue: "—", available: false };
+    return {
+      label,
+      value: null,
+      displayValue: INSUFFICIENT_DATA,
+      available: false,
+      confidence: null,
+      confidenceLabel: null,
+      basedOn: opts?.basedOn ?? null,
+    };
   }
   const rounded = Math.round(Math.min(100, Math.max(0, value)));
+  const suffix = opts?.suffix ?? "";
   return {
     label,
     value: rounded,
     displayValue: suffix ? `${rounded}${suffix}` : String(rounded),
     available: true,
+    confidence: opts?.confidence ?? null,
+    confidenceLabel:
+      opts?.confidence != null ? `${Math.round(opts.confidence)}%` : null,
+    basedOn: opts?.basedOn ?? null,
   };
+}
+
+function scoredToMetric(
+  label: string,
+  scored: {
+    available: boolean;
+    score: number | null;
+    confidence: { value: number | null; basedOn: string };
+  },
+): ScoreMetric {
+  if (!scored.available || scored.score == null) {
+    return metric(label, null, { basedOn: scored.confidence.basedOn });
+  }
+  return metric(label, scored.score, {
+    confidence: scored.confidence.value,
+    basedOn: scored.confidence.basedOn,
+  });
 }
 
 function numFromMetric(m: { available: boolean; value: number | string | null } | undefined): number | null {
@@ -117,121 +158,191 @@ function connectivityNumeric(report: AreaIntelligenceReport | null): number | nu
 }
 
 function buildScores(input: BundleInput): PropertyIntelligenceBundle["scores"] {
-  const { report, amenities, reraVerified, market, status } = input;
-  const investment = numFromMetric(report?.investmentScore);
-  const growth = numFromMetric(report?.growthScore);
-  const rentalRaw = numFromMetric(report?.rentalYield);
-  const rentalScore =
-    rentalRaw !== null ? Math.min(100, Math.round(rentalRaw * 12)) : null;
-  const demand = numFromMetric(report?.demandIndex);
-  const builder = builderNumericScore(report);
-  const connectivity = connectivityNumeric(report);
-  const legal = reraVerified ? 82 : report?.builderAnalysis.reraCompliance.available ? 68 : null;
-  const amenityScore =
-    amenities.length > 0 ? Math.min(100, 35 + amenities.length * 8) : null;
-  const location =
-    growth !== null || demand !== null
-      ? Math.round(((growth ?? 50) * 0.6 + (demand ?? 50) * 0.4))
-      : null;
-  const liquidity =
-    market.totalListings > 0
-      ? Math.min(100, 40 + Math.min(40, market.totalListings * 2) + (market.newListings90d > 0 ? 10 : 0))
-      : null;
-  const areaIqParts = [investment, growth, rentalScore, builder, connectivity].filter(
-    (v): v is number => v !== null,
-  );
-  const areaIq =
-    areaIqParts.length > 0
-      ? Math.round(areaIqParts.reduce((a, b) => a + b, 0) / areaIqParts.length)
-      : null;
+  const analytics = input.analytics;
+  const report = input.report;
 
-  const availabilityScore =
-    status.toLowerCase().includes("available") || status === "active" ? 88 : 55;
+  if (analytics) {
+    const rentalRaw = numFromMetric(report?.rentalYield);
+    const rentalScore =
+      rentalRaw !== null ? Math.min(100, Math.round(rentalRaw * 12)) : null;
+    const demand = numFromMetric(report?.demandIndex);
+    const locationFactor = analytics.investment.factors.find((f) => f.key === "location");
+    const amenityFactor = analytics.investment.factors.find((f) => f.key === "amenities");
+    const connectivityFactor = analytics.investment.factors.find(
+      (f) => f.key === "connectivity",
+    );
 
+    const investment = scoredToMetric("Investment", analytics.investment);
+    const builder = scoredToMetric("Builder", analytics.builder);
+    const liquidity = scoredToMetric("Liquidity", analytics.liquidity);
+    const legal =
+      analytics.legal.available && analytics.legal.score != null
+        ? metric("Legal", analytics.legal.score, {
+            confidence: analytics.legal.confidence.value,
+            basedOn: analytics.legal.confidence.basedOn,
+          })
+        : metric("Legal", null, { basedOn: analytics.legal.message });
+
+    const futureGrowth: ScoreMetric =
+      analytics.growth.available && analytics.growth.rangeLabel
+        ? {
+            label: "Future Growth",
+            value: null,
+            displayValue: analytics.growth.rangeLabel,
+            available: true,
+            confidence: analytics.growth.confidence.value,
+            confidenceLabel: analytics.growth.confidence.displayValue,
+            basedOn: analytics.growth.confidence.basedOn,
+          }
+        : metric("Future Growth", null, {
+            basedOn: analytics.growth.confidence.basedOn,
+          });
+
+    const parts = [
+      investment.value,
+      builder.value,
+      liquidity.value,
+      legal.value,
+      locationFactor?.score ?? null,
+    ].filter((v): v is number => v !== null);
+
+    const areaIq =
+      parts.length >= 2
+        ? metric(
+            "AreaIQ Score",
+            Math.round(parts.reduce((a, b) => a + b, 0) / parts.length),
+            {
+              confidence: analytics.price.confidence.value,
+              basedOn: analytics.price.confidence.basedOn,
+            },
+          )
+        : metric("AreaIQ Score", null, { basedOn: WAITING_MARKET_DATA });
+
+    return {
+      areaIq,
+      investment,
+      rental: metric("Rental", rentalScore, {
+        basedOn: rentalScore != null ? "Derived from verified rent comps" : "Insufficient rent comps",
+      }),
+      builder,
+      legal,
+      location: metric("Location", locationFactor?.score ?? null, {
+        basedOn: locationFactor?.available
+          ? "Comparable locality density"
+          : INSUFFICIENT_DATA,
+      }),
+      amenities: metric("Amenities", amenityFactor?.score ?? null, {
+        basedOn:
+          amenityFactor?.available ? "Listed amenities count" : INSUFFICIENT_DATA,
+      }),
+      connectivity: metric("Connectivity", connectivityFactor?.score ?? null, {
+        basedOn: connectivityFactor?.available
+          ? "Nearby places on listing"
+          : INSUFFICIENT_DATA,
+      }),
+      liquidity,
+      futureGrowth,
+      demand: metric("Demand", demand, {
+        basedOn: demand != null ? "Views vs market average" : INSUFFICIENT_DATA,
+      }),
+      availability: metric("Availability", null, {
+        basedOn: "Availability score requires verified inventory velocity data",
+      }),
+    };
+  }
+
+  // No analytics payload — never invent scores
   return {
-    areaIq: metric("AreaIQ Score", areaIq),
-    investment: metric("Investment", investment),
-    rental: metric("Rental", rentalScore),
-    builder: metric("Builder", builder),
-    legal: metric("Legal", legal),
-    location: metric("Location", location),
-    amenities: metric("Amenities", amenityScore),
-    connectivity: metric("Connectivity", connectivity),
-    liquidity: metric("Liquidity", liquidity),
-    futureGrowth: metric("Future Growth", growth),
-    demand: metric("Demand", demand),
-    availability: metric("Availability", availabilityScore),
+    areaIq: metric("AreaIQ Score", null, { basedOn: WAITING_MARKET_DATA }),
+    investment: metric("Investment", null, { basedOn: WAITING_MARKET_DATA }),
+    rental: metric("Rental", null, { basedOn: WAITING_MARKET_DATA }),
+    builder: metric("Builder", null, { basedOn: WAITING_MARKET_DATA }),
+    legal: metric("Legal", null, { basedOn: WAITING_MARKET_DATA }),
+    location: metric("Location", null, { basedOn: WAITING_MARKET_DATA }),
+    amenities: metric("Amenities", null, { basedOn: WAITING_MARKET_DATA }),
+    connectivity: metric("Connectivity", null, { basedOn: WAITING_MARKET_DATA }),
+    liquidity: metric("Liquidity", null, { basedOn: WAITING_MARKET_DATA }),
+    futureGrowth: metric("Future Growth", null, { basedOn: WAITING_MARKET_DATA }),
+    demand: metric("Demand", null, { basedOn: WAITING_MARKET_DATA }),
+    availability: metric("Availability", null, { basedOn: WAITING_MARKET_DATA }),
   };
 }
 
 function buildPriceAnalysis(input: BundleInput): PriceAnalysisData {
-  const { price, pricePerSqFt, area, market, meta, report } = input;
-  const buyListings = market.listings.filter((l) => l.type === "buy" && l.price > 0);
-  const prices = buyListings.map((l) => l.price);
-  const psfs = buyListings
-    .map((l) => pricePerSqft(l.price, l.areaSqft))
-    .filter((v): v is number => v !== null);
+  const { price, pricePerSqFt, analytics } = input;
 
-  const averageAreaPrice =
-    prices.length > 0 ? Math.round(prices.reduce((a, b) => a + b, 0) / prices.length) : null;
-  const averagePsf = market.medianPricePerSqft;
-  const lowestPrice = prices.length ? Math.min(...prices) : null;
-  const highestPrice = prices.length ? Math.max(...prices) : null;
-  const lowestPsf = psfs.length ? Math.min(...psfs) : null;
-  const highestPsf = psfs.length ? Math.max(...psfs) : null;
+  if (analytics) {
+    const p = analytics.price;
+    const fv = analytics.fairValue;
+    const position: MarketPosition = p.available
+      ? p.marketPosition === "Fairly Priced"
+        ? "Fairly Priced"
+        : p.marketPosition === "Undervalued"
+          ? "Undervalued"
+          : p.marketPosition === "Overpriced"
+            ? "Overpriced"
+            : "Insufficient verified data"
+      : "Insufficient verified data";
 
-  let priceTrendPercent: number | null = null;
-  if (
-    market.recentMedianPricePerSqft !== null &&
-    market.olderMedianPricePerSqft !== null &&
-    market.olderMedianPricePerSqft > 0
-  ) {
-    priceTrendPercent =
-      ((market.recentMedianPricePerSqft - market.olderMedianPricePerSqft) /
-        market.olderMedianPricePerSqft) *
-      100;
+    const trend =
+      analytics.priceTrend.available && analytics.priceTrend.points.length >= 2
+        ? analytics.priceTrend.points[analytics.priceTrend.points.length - 1]?.growthPercent
+        : null;
+
+    return {
+      currentPrice: p.currentTotalPrice ?? price,
+      pricePerSqFt: p.currentPricePerSqft ?? pricePerSqFt,
+      averageAreaPrice: fv.expected,
+      averagePsf: p.averagePsf,
+      medianPsf: p.medianPsf,
+      lowestPrice: p.lowestPsf != null && input.area > 0 ? Math.round(p.lowestPsf * input.area) : null,
+      highestPrice:
+        p.highestPsf != null && input.area > 0 ? Math.round(p.highestPsf * input.area) : null,
+      lowestPsf: p.lowestPsf,
+      highestPsf: p.highestPsf,
+      differencePercent: p.differencePercent,
+      priceRankLabel: p.priceRankLabel,
+      priceTrendPercent: trend,
+      marketPosition: position,
+      fairValuePsf: fv.averagePsf,
+      fairValueEstimate: fv.expected,
+      fairValueLow: fv.low,
+      fairValueHigh: fv.high,
+      aiOpinion: analytics.priceOpinion,
+      comparableCount: p.comparableCount,
+      confidence: p.confidence.value,
+      confidenceLabel: p.confidence.displayValue,
+      basedOn: p.confidence.basedOn,
+      available: p.available,
+      unavailableMessage: p.available ? null : p.message,
+    };
   }
-
-  const fairValuePsf = averagePsf;
-  const fairValueEstimate =
-    fairValuePsf !== null && area > 0 ? Math.round(fairValuePsf * area) : averageAreaPrice;
-
-  let marketPosition: MarketPosition = "Unknown";
-  if (fairValuePsf !== null && pricePerSqFt > 0) {
-    const delta = (pricePerSqFt - fairValuePsf) / fairValuePsf;
-    if (delta <= -0.08) marketPosition = "Undervalued";
-    else if (delta >= 0.08) marketPosition = "Overpriced";
-    else marketPosition = "Fair Value";
-  }
-
-  const compiled = meta?.ai?.compiled ?? {};
-  const aiOpinion =
-    compiled.priceAnalysis ||
-    compiled.marketPosition ||
-    (marketPosition === "Undervalued"
-      ? "Listing price sits below area median — potential negotiation headroom for buyers."
-      : marketPosition === "Overpriced"
-        ? "Listing price is above area median — verify amenities and location premium before paying up."
-        : marketPosition === "Fair Value"
-          ? "Pricing aligns with comparable active listings in this locality."
-          : UNAVAILABLE_MESSAGE);
 
   return {
     currentPrice: price,
     pricePerSqFt,
-    averageAreaPrice,
-    averagePsf,
-    lowestPrice,
-    highestPrice,
-    lowestPsf,
-    highestPsf,
-    priceTrendPercent:
-      priceTrendPercent !== null ? Math.round(priceTrendPercent * 10) / 10 : null,
-    marketPosition,
-    fairValuePsf,
-    fairValueEstimate,
-    aiOpinion,
-    comparableCount: report?.marketSnapshot.comparableListings ?? buyListings.length,
+    averageAreaPrice: null,
+    averagePsf: null,
+    medianPsf: null,
+    lowestPrice: null,
+    highestPrice: null,
+    lowestPsf: null,
+    highestPsf: null,
+    differencePercent: null,
+    priceRankLabel: null,
+    priceTrendPercent: null,
+    marketPosition: "Insufficient verified data",
+    fairValuePsf: null,
+    fairValueEstimate: null,
+    fairValueLow: null,
+    fairValueHigh: null,
+    aiOpinion: INSUFFICIENT_DATA,
+    comparableCount: 0,
+    confidence: null,
+    confidenceLabel: INSUFFICIENT_DATA,
+    basedOn: WAITING_MARKET_DATA,
+    available: false,
+    unavailableMessage: WAITING_MARKET_DATA,
   };
 }
 
@@ -240,27 +351,30 @@ function projectValue(price: number, annualRate: number, years: number): number 
 }
 
 function buildAppreciation(input: BundleInput): AppreciationData {
-  const { price, meta, report } = input;
-  const compiled = meta?.ai?.compiled ?? {};
-  const fromMeta = parsePercent(meta?.pricing.expectedAppreciation);
-  const fromCompiled = parsePercent(compiled.capitalAppreciation);
-  const growth = numFromMetric(report?.growthScore);
+  const { price, analytics } = input;
 
-  let baseAnnual = fromMeta ?? fromCompiled;
-  if (baseAnnual !== null && baseAnnual > 40) {
-    // Treat multi-year totals (e.g. "24%") as ~3y if large
-    baseAnnual = Math.round((baseAnnual / 3) * 10) / 10;
-  }
-  if (baseAnnual === null && growth !== null) {
-    baseAnnual = Math.round((4 + (growth / 100) * 8) * 10) / 10;
+  // Only project when Analytics Engine produced a verified growth RANGE
+  if (!analytics?.growth.available || analytics.growth.lowPercent == null) {
+    return {
+      scenarios: [],
+      assumptions: [
+        INSUFFICIENT_DATA,
+        "AreaIQ does not invent appreciation percentages without verified market signals.",
+      ],
+      expectedGrowthLabel: INSUFFICIENT_DATA,
+      baseAnnualRate: null,
+    };
   }
 
-  const balanced = baseAnnual ?? 6;
+  const low = analytics.growth.lowPercent;
+  const high = analytics.growth.highPercent ?? low + 2;
+  const balanced = Math.round(((low + high) / 2) * 10) / 10;
+
   const scenarios = (
     [
-      ["Conservative", balanced * 0.7],
+      ["Conservative", low],
       ["Balanced", balanced],
-      ["Aggressive", balanced * 1.35],
+      ["Aggressive", high],
     ] as const
   ).map(([label, rate]) => ({
     label,
@@ -272,32 +386,24 @@ function buildAppreciation(input: BundleInput): AppreciationData {
 
   const assumptions = [
     "Scenarios compound annually from the current listed price.",
-    baseAnnual !== null
-      ? `Balanced rate derived from ${fromMeta || fromCompiled ? "listing/AI appreciation input" : "AreaIQ growth score"} (~${balanced}% p.a.).`
-      : "Insufficient appreciation signal — showing illustrative mid-market rates.",
-    "Actual returns depend on micro-location, delivery, interest rates, and local supply.",
-    compiled.futureGrowth ? `Outlook: ${compiled.futureGrowth}` : "Infrastructure and demand shifts can accelerate or slow appreciation.",
-  ].filter(Boolean);
+    `Expected growth range from Analytics Engine: ${analytics.growth.rangeLabel}.`,
+    ...analytics.growth.signals.map((s) => `Signal: ${s}`),
+    `Confidence ${analytics.growth.confidence.displayValue} — ${analytics.growth.confidence.basedOn}.`,
+  ];
 
   return {
     scenarios: scenarios as AppreciationData["scenarios"],
     assumptions,
-    expectedGrowthLabel:
-      compiled.capitalAppreciation ||
-      meta?.pricing.expectedAppreciation ||
-      (baseAnnual !== null ? `~${balanced}% p.a. (balanced)` : "Estimate pending"),
-    baseAnnualRate: baseAnnual,
+    expectedGrowthLabel: analytics.growth.rangeLabel ?? INSUFFICIENT_DATA,
+    baseAnnualRate: balanced,
   };
 }
 
 function buildRental(input: BundleInput): RentalIntelData {
-  const { price, meta, report } = input;
-  const compiled = meta?.ai?.compiled ?? {};
-  const fromMeta = parseMoney(meta?.pricing.rentalEstimate);
+  const { price, report } = input;
   const yieldPct = numFromMetric(report?.rentalYield);
   const expectedMonthlyRent =
-    fromMeta ??
-    (yieldPct !== null && price > 0 ? Math.round((price * (yieldPct / 100)) / 12) : null);
+    yieldPct !== null && price > 0 ? Math.round((price * (yieldPct / 100)) / 12) : null;
   const annualIncome = expectedMonthlyRent !== null ? expectedMonthlyRent * 12 : null;
   const computedYield =
     yieldPct ??
@@ -307,76 +413,79 @@ function buildRental(input: BundleInput): RentalIntelData {
 
   const demand = numFromMetric(report?.demandIndex);
   const demandLabel =
-    demand === null ? "Demand data pending" : demand >= 70 ? "High" : demand >= 45 ? "Moderate" : "Soft";
-  const occupancyLabel =
-    demand === null ? "—" : demand >= 70 ? "Strong (~90%+)" : demand >= 45 ? "Stable (~80%)" : "Variable";
+    demand === null
+      ? INSUFFICIENT_DATA
+      : demand >= 70
+        ? "High"
+        : demand >= 45
+          ? "Moderate"
+          : "Soft";
+  // Never invent occupancy percentages
+  const occupancyLabel = INSUFFICIENT_DATA;
 
-  // Rough EMI proxy for cash flow (20y @ 8.5%, 20% down)
-  let cashFlowEstimate: number | null = null;
-  if (expectedMonthlyRent !== null && price > 0) {
-    const loan = price * 0.8;
-    const r = 0.085 / 12;
-    const n = 20 * 12;
-    const emi = (loan * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
-    cashFlowEstimate = Math.round(expectedMonthlyRent - emi);
-  }
-
-  const available = expectedMonthlyRent !== null || computedYield !== null;
+  const available = yieldPct !== null;
 
   return {
-    expectedMonthlyRent,
-    annualIncome,
-    yieldPercent: computedYield,
+    expectedMonthlyRent: available ? expectedMonthlyRent : null,
+    annualIncome: available ? annualIncome : null,
+    yieldPercent: available ? computedYield : null,
     occupancyLabel,
     demandLabel,
-    cashFlowEstimate,
+    cashFlowEstimate: null,
     roiLabel:
       computedYield !== null
-        ? `${computedYield}% gross yield`
-        : "ROI pending more rental comps",
-    aiOpinion:
-      compiled.rentalAnalysis ||
-      (available
-        ? "Rental figures are estimates from AreaIQ comps and listing inputs — validate with local brokers."
-        : UNAVAILABLE_MESSAGE),
+        ? `${computedYield}% gross yield (from verified rent comps)`
+        : INSUFFICIENT_DATA,
+    aiOpinion: available
+      ? `Gross yield ${computedYield}% is calculated from verified rent comps versus listed price. Occupancy is not estimated without lease data.`
+      : INSUFFICIENT_DATA,
     available,
   };
 }
 
 function buildBuilder(input: BundleInput): BuilderIntelData {
-  const { builderName, report, meta, reraVerified } = input;
-  const compiled = meta?.ai?.compiled ?? {};
+  const { builderName, report, reraVerified, analytics } = input;
   const analysis = report?.builderAnalysis;
-  const rating = builderNumericScore(report);
   const listingCount = numFromMetric(analysis?.listingCount);
-  const activeCities = numFromMetric(analysis?.activeCities);
+
+  if (analytics) {
+    return {
+      name: builderName,
+      overallRating: analytics.builder.available ? analytics.builder.score : null,
+      projectsDelivered: listingCount,
+      activeProjects: null,
+      deliveryRecord: analytics.builder.available
+        ? `Builder score ${analytics.builder.score}/100 — ${analytics.builder.confidence.basedOn}`
+        : INSUFFICIENT_DATA,
+      constructionQuality: INSUFFICIENT_DATA,
+      legalIssues: analytics.legal.message || INSUFFICIENT_DATA,
+      customerReviews: INSUFFICIENT_DATA,
+      financialStability: INSUFFICIENT_DATA,
+      averageDeliveryDelay: INSUFFICIENT_DATA,
+      summary: analytics.builder.available
+        ? `Verified builder score ${analytics.builder.score}/100 (confidence ${analytics.builder.confidence.displayValue}).`
+        : INSUFFICIENT_DATA,
+      reraCompliance: reraVerified
+        ? "RERA indicated on listing"
+        : analysis?.reraCompliance.displayValue || INSUFFICIENT_DATA,
+    };
+  }
 
   return {
     name: builderName,
-    overallRating: rating,
+    overallRating: null,
     projectsDelivered: listingCount,
-    activeProjects: listingCount !== null ? Math.max(1, Math.round(listingCount * 0.4)) : null,
-    deliveryRecord:
-      rating !== null && rating >= 70
-        ? "Generally reliable based on listing footprint"
-        : rating !== null
-          ? "Mixed signal — verify delivery history"
-          : "Delivery record not available",
-    constructionQuality: meta?.specs.constructionQuality || "Not assessed from listing facts",
-    legalIssues: reraVerified
-      ? "RERA verified on this listing"
-      : analysis?.reraCompliance.displayValue || "Legal diligence recommended",
-    customerReviews: "Aggregated public reviews not linked yet",
-    financialStability:
-      activeCities !== null && activeCities >= 2
-        ? "Multi-city presence suggests operational scale"
-        : "Financial stability not independently verified",
-    averageDeliveryDelay: "Not available from current data sources",
-    summary:
-      compiled.builderReputationSummary ||
-      report?.builderReputation.displayValue ||
-      `${builderName} — review RERA status and past deliveries before booking.`,
-    reraCompliance: analysis?.reraCompliance.displayValue || (reraVerified ? "RERA listed" : "Unknown"),
+    activeProjects: null,
+    deliveryRecord: INSUFFICIENT_DATA,
+    constructionQuality: INSUFFICIENT_DATA,
+    legalIssues: INSUFFICIENT_DATA,
+    customerReviews: INSUFFICIENT_DATA,
+    financialStability: INSUFFICIENT_DATA,
+    averageDeliveryDelay: INSUFFICIENT_DATA,
+    summary: INSUFFICIENT_DATA,
+    reraCompliance: reraVerified
+      ? "RERA indicated on listing"
+      : analysis?.reraCompliance.displayValue || INSUFFICIENT_DATA,
   };
 }
 
@@ -760,7 +869,10 @@ export function buildAiSummaryFromSources(
     bullets.push("Market position: undervalued vs area comps");
   } else if (bundle?.priceAnalysis.marketPosition === "Overpriced") {
     bullets.push("Market position: above area comps — negotiate");
-  } else if (bundle?.priceAnalysis.marketPosition === "Fair Value") {
+  } else if (
+    bundle?.priceAnalysis.marketPosition === "Fair Value" ||
+    bundle?.priceAnalysis.marketPosition === "Fairly Priced"
+  ) {
     bullets.push("Priced near fair value for the locality");
   }
   if (bundle?.scores.liquidity.available && (bundle.scores.liquidity.value ?? 0) >= 65) {
@@ -773,8 +885,8 @@ export function buildAiSummaryFromSources(
     summary,
     pros: pros.length ? pros : fallback.pros,
     cons: cons.length ? cons : fallback.cons,
+    // Never prefer admin-pipeline invented scores over Analytics Engine
     investmentScore:
-      parsePercent(compiled.investmentScore) ??
       bundle?.scores.investment.value ??
       fallback.investmentScore,
     riskLevel: fallback.riskLevel,

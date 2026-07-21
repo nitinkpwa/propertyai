@@ -79,10 +79,10 @@ export default function AssignedPropertiesPanel({ properties, onRefresh }: Props
                 <p className="mt-2 text-lg font-bold text-emerald-700">
                   {formatPropertyPrice({
                     price: p.price,
-                    calculated_price: (p as { calculated_price?: number | null }).calculated_price,
+                    calculated_price: p.calculated_price,
                     area_sqft: p.area_sqft,
                     sub_type: p.sub_type,
-                    nearby_places: (p as { nearby_places?: unknown }).nearby_places,
+                    nearby_places: p.nearby_places,
                   }).displayPrice}
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">

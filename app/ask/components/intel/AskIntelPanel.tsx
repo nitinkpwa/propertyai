@@ -3,6 +3,7 @@
 import type { PropertyContext } from "@/lib/ask/client";
 import type { AskChatMessage } from "@/lib/ask/conversations/types";
 import { turnFromMessage } from "../../lib/turnFromMessage";
+import { LoadingSidebar } from "../loading/LoadingSidebar";
 import { AskIntelArea } from "./AskIntelArea";
 import { AskIntelBuilder } from "./AskIntelBuilder";
 import { AskIntelCompare } from "./AskIntelCompare";
@@ -90,7 +91,11 @@ export function AskIntelPanel({
             Dynamic intelligence
           </p>
           <p className="text-sm font-bold text-heading-primary">
-            {loading ? "Analyzing…" : intent ? intentLabel(intent) : "Market pulse"}
+            {loading
+              ? "Researching with you"
+              : intent
+                ? intentLabel(intent)
+                : "Market pulse"}
           </p>
         </div>
         {onClose ? (
@@ -108,13 +113,7 @@ export function AskIntelPanel({
       </div>
 
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        {loading ? (
-          <div className="space-y-3">
-            <div className="h-28 animate-pulse rounded-2xl bg-neutral-100" />
-            <div className="h-40 animate-pulse rounded-2xl bg-neutral-100" />
-            <div className="h-32 animate-pulse rounded-2xl bg-neutral-100" />
-          </div>
-        ) : null}
+        {loading ? <LoadingSidebar active /> : null}
 
         {!loading && propertyContext && !latestAssistant ? (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4">

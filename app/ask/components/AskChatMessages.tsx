@@ -8,6 +8,7 @@ import {
   AskResponseCard,
   AskUserQueryCard,
 } from "./AskConversation";
+import { AskAdvisorLoading } from "./loading/AskAdvisorLoading";
 import type { AskTurn } from "@/lib/ask/types";
 
 function formatInline(text: string) {
@@ -142,22 +143,7 @@ export function AskChatMessages({
           </div>
         ))}
 
-        {loading ? (
-          <div className="rounded-2xl border border-neutral-200 bg-white px-5 py-4 shadow-sm">
-            <div className="flex items-center gap-3 text-sm text-body">
-              <span className="inline-flex gap-1" aria-hidden>
-                {[0, 1, 2].map((dot) => (
-                  <span
-                    key={dot}
-                    className="h-1.5 w-1.5 animate-bounce rounded-full bg-emerald-500"
-                    style={{ animationDelay: `${dot * 0.15}s` }}
-                  />
-                ))}
-              </span>
-              <span>{typingStatus}</span>
-            </div>
-          </div>
-        ) : null}
+        {loading ? <AskAdvisorLoading active /> : null}
 
         <div ref={messagesEndRef} />
       </div>

@@ -11,11 +11,31 @@ export default function AppreciationPrediction({
   data,
   currentPrice,
 }: AppreciationPredictionProps) {
+  if (!data.scenarios.length || data.baseAnnualRate == null) {
+    return (
+      <SectionCard>
+        <SectionTitle
+          title="Appreciation Prediction"
+          subtitle="Verified growth signals required"
+        />
+        <div className="rounded-2xl border border-dashed border-neutral-200 bg-neutral-50/80 px-5 py-8 text-center">
+          <p className="text-sm font-semibold text-heading-primary">
+            {data.expectedGrowthLabel || "Insufficient verified data"}
+          </p>
+          <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-muted">
+            AreaIQ does not invent appreciation percentages. Growth ranges appear only when price
+            trend and infrastructure signals are verified.
+          </p>
+        </div>
+      </SectionCard>
+    );
+  }
+
   return (
     <SectionCard>
       <SectionTitle
         title="Appreciation Prediction"
-        subtitle={`Expected growth: ${data.expectedGrowthLabel}`}
+        subtitle={`Expected growth range: ${data.expectedGrowthLabel}`}
       />
 
       <div className="mb-4 rounded-xl border border-neutral-100 bg-neutral-50/80 px-4 py-3 text-sm text-body">
