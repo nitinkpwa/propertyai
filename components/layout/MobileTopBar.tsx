@@ -37,7 +37,7 @@ export default function MobileTopBar({
     <header
       className={`${
         sticky ? "sticky top-0 z-30" : ""
-      } flex h-16 items-center gap-2 border-b border-neutral-200/80 bg-white/95 px-3 backdrop-blur-xl pt-safe md:hidden ${className}`}
+      } flex min-h-16 items-center gap-2 border-b border-neutral-200/80 bg-white/95 px-3 backdrop-blur-xl pt-safe md:hidden ${className}`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
         {showLogo ? (

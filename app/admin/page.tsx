@@ -12,6 +12,7 @@ import AdminConnectPanel from "@/components/admin/connect/AdminConnectPanel";
 import ConnectPartnerAssignSelect from "@/components/admin/connect/ConnectPartnerAssignSelect";
 import PropertyStudio from "@/components/admin/property/studio/PropertyStudio";
 import AdminCrmPanel from "@/components/crm/AdminCrmPanel";
+import AdminBroadcastPanel from "@/components/admin/AdminBroadcastPanel";
 import AdminProfileCard, {
   AdminProfileInline,
   AdminPropertySellerInline,
@@ -313,6 +314,7 @@ function AdminPageInner() {
     { key: "visits", label: "Site Visits", icon: "📅", count: siteVisits.length },
     { key: "chats", label: "Intelligence Sessions", icon: "🤖", count: conversations.length },
     { key: "analytics", label: "Analytics", icon: "📈" },
+    { key: "broadcasts", label: "Broadcasts", icon: "📢" },
     { key: "add", label: editId ? "Edit Property" : "AI Property Studio", icon: "✨" },
     { key: "bulk", label: "Bulk Import", icon: "📋" },
     { key: "settings", label: "Settings", icon: "⚙️" },
@@ -986,6 +988,8 @@ function AdminPageInner() {
           </div>
         </div>
       ) : null}
+
+      {tab === "broadcasts" ? <AdminBroadcastPanel /> : null}
 
       {tab === "settings" ? (
         <div>

@@ -355,12 +355,12 @@ export default function PropertyCard({
                 Rental Yield
               </p>
               <p className="mt-1 text-lg font-bold tabular-nums text-heading-primary">
-                {rentalYield !== null
+                {typeof rentalYield === "number"
                   ? `${rentalYield % 1 === 0 ? rentalYield.toFixed(0) : rentalYield.toFixed(1)}%`
                   : "N/A"}
               </p>
               <p className="mt-2 text-xs font-medium text-muted">
-                {rentalYield !== null ? "AreaIQ calculated" : "Insufficient data"}
+                {typeof rentalYield === "number" ? "AreaIQ calculated" : "Insufficient data"}
               </p>
             </div>
           </div>

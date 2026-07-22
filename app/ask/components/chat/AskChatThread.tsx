@@ -167,7 +167,7 @@ export function AskChatThread({
             <div key={pair.user?.id ?? pair.assistant?.id ?? index} className="space-y-4">
               {pair.user ? (
                 <div className="flex justify-end">
-                  <div className="max-w-[min(88%,36rem)] rounded-[1.25rem] rounded-br-md bg-brand px-4 py-3 text-base leading-relaxed text-white shadow-sm">
+                  <div className="max-w-[min(88%,36rem)] rounded-[1.35rem] rounded-br-md bg-brand px-4 py-3 text-base leading-relaxed text-white shadow-sm">
                     {pair.user.content}
                   </div>
                 </div>

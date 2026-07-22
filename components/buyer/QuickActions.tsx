@@ -14,16 +14,20 @@ const ACTIONS = [
 export default function QuickActions() {
   return (
     <section aria-label="Quick actions">
-      <h2 className="mb-4 text-lg font-bold text-heading-primary">Quick Actions</h2>
+      <h2 className="mb-4 text-lg font-bold text-heading-primary">Quick actions</h2>
       <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
         {ACTIONS.map((action) => (
           <Link
             key={action.href}
             href={action.href}
-            className="group flex flex-col items-center rounded-2xl border border-neutral-200/80 bg-white p-3 text-center shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md sm:p-4"
+            className="group flex min-h-12 flex-col items-center justify-center rounded-2xl border border-neutral-200/80 bg-white p-3 text-center shadow-sm transition-all active:scale-[0.97] hover:border-emerald-200 hover:shadow-md lg:hover:-translate-y-0.5 sm:p-4"
           >
-            <span className="text-xl transition group-hover:scale-110 sm:text-2xl">{action.icon}</span>
-            <span className="mt-2 text-xs font-semibold text-heading-primary sm:text-sm">{action.label}</span>
+            <span className="text-xl transition group-hover:scale-110 sm:text-2xl" aria-hidden>
+              {action.icon}
+            </span>
+            <span className="mt-2 text-xs font-semibold text-heading-primary sm:text-sm">
+              {action.label}
+            </span>
             <span className="mt-0.5 hidden text-[10px] text-muted sm:block">{action.desc}</span>
           </Link>
         ))}

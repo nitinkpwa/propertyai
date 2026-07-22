@@ -33,6 +33,7 @@ export default function SavedPropertiesPage() {
   const { user } = useAuth();
   const [items, setItems] = useState<SavedCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [collection, setCollection] = useState<CollectionId>("all");
   const [sort, setSort] = useState<SortOption>("newest");
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -41,11 +42,22 @@ export default function SavedPropertiesPage() {
   const [noteDraft, setNoteDraft] = useState("");
 
   useEffect(() => {
-    if (!user) return;
-    fetchSavedPropertyCards(user.id).then((data) => {
-      setItems(data);
+    if (!user) {
       setLoading(false);
-    });
+      return;
+    }
+    setLoading(true);
+    setLoadError(null);
+    fetchSavedPropertyCards(user.id)
+      .then((data) => {
+        setItems(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => {
+        setItems([]);
+        setLoading(false);
+        setLoadError("Unable to load saved properties. Check your connection and try again.");
+      });
   }, [user]);
 
   const filteredItems = useMemo(() => {
@@ -108,15 +120,21 @@ export default function SavedPropertiesPage() {
         }
       />
 
+      {loadError ? (
+        <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          {loadError}
+        </div>
+      ) : null}
+
       {items.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <div className="-mx-1 flex gap-2 overflow-x-auto scroll-touch px-1 pb-1">
             {COLLECTION_PRESETS.map((col) => (
               <button
                 key={col.id}
                 type="button"
                 onClick={() => setCollection(col.id)}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                className={`min-h-12 shrink-0 rounded-full px-4 py-2.5 text-sm font-semibold transition active:scale-[0.98] ${
                   collection === col.id
                     ? "bg-emerald-600 text-white shadow-sm"
                     : "bg-neutral-100 text-body hover:bg-neutral-200"
@@ -129,7 +147,7 @@ export default function SavedPropertiesPage() {
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortOption)}
-            className="ml-auto rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-body"
+            className="min-h-12 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm font-medium text-body sm:ml-auto sm:w-auto"
             aria-label="Sort saved properties"
           >
             <option value="newest">Newest first</option>

@@ -39,9 +39,17 @@ export default function CompareTable({ items }: CompareTableProps) {
     { label: "Location", render: (p) => `${p.location}${p.city ? `, ${p.city}` : ""}` },
     { label: "Builder", render: (p) => p.builderName ?? "—" },
     { label: "BHK", render: (p) => `${p.bhk} BHK` },
-    { label: "Area", render: (p) => `${p.area.toLocaleString("en-IN")} sq ft` },
-    { label: "Growth Score", render: (p) => (p.growthScore !== null ? `${p.growthScore}/100` : "N/A"), bestIdx: growthBest },
-    { label: "Rental Yield", render: (p) => (p.rentalYield !== null ? `${p.rentalYield}%` : "N/A"), bestIdx: yieldBest },
+    { label: "Area", render: (p) => `${typeof p.area === "number" ? p.area.toLocaleString("en-IN") : "—"} sq ft` },
+    {
+      label: "Growth Score",
+      render: (p) => (typeof p.growthScore === "number" ? `${p.growthScore}/100` : "N/A"),
+      bestIdx: growthBest,
+    },
+    {
+      label: "Rental Yield",
+      render: (p) => (typeof p.rentalYield === "number" ? `${p.rentalYield}%` : "N/A"),
+      bestIdx: yieldBest,
+    },
     { label: "AreaIQ Intelligence", render: (p) => (p.aiVerified ? "Yes ✓" : "No") },
     {
       label: "RERA Verified",
@@ -55,7 +63,7 @@ export default function CompareTable({ items }: CompareTableProps) {
         <p className="text-sm font-bold text-heading-primary">Professional Comparison</p>
         <p className="text-xs text-muted">Best values highlighted in green</p>
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto scroll-touch">
         <table className="min-w-full text-left text-sm">
           <thead>
             <tr className="border-b border-neutral-100">

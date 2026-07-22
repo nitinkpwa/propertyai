@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BUYER_BOTTOM_NAV } from "@/lib/design/bottomNav";
 import BottomNav from "@/components/layout/BottomNav";
@@ -19,20 +18,15 @@ export default function MobileBottomNav() {
       return pathname === item.href || pathname.startsWith(`${item.href}/`);
     })?.id ?? (pathname.startsWith("/buyer/notifications") ? "profile" : undefined);
 
-  const items = BUYER_BOTTOM_NAV.map((item) =>
-    item.id === "profile" && unreadCount > 0
-      ? { ...item, badge: unreadCount }
-      : item,
-  );
+  const items = BUYER_BOTTOM_NAV.map((item) => {
+    if (item.id === "profile" && unreadCount > 0) {
+      return { ...item, badge: unreadCount };
+    }
+    if (item.id === "visits" && pathname.startsWith("/buyer/site-visits")) {
+      return item;
+    }
+    return item;
+  });
 
   return <BottomNav items={items} activeId={activeId} />;
-}
-
-/** Optional compact link used in older layouts */
-export function BuyerBrowseLink() {
-  return (
-    <Link href="/properties" className="text-xs font-semibold text-emerald-600">
-      Browse
-    </Link>
-  );
 }

@@ -159,7 +159,17 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
     }
   }, [visit.id, visit.status]);
 
-  const checklist = Array.isArray(visit.checklist) ? visit.checklist : [];
+  const checklist = Array.isArray(visit.checklist)
+    ? visit.checklist
+        .map((item) =>
+          typeof item === "string"
+            ? item
+            : typeof item === "object" && item && "text" in item
+              ? String((item as { text: unknown }).text)
+              : null,
+        )
+        .filter((item): item is string => Boolean(item?.trim()))
+    : [];
   const isUpcoming =
     visit.status === "pending_approval" || isApprovedVisitStatus(visit.status);
 
@@ -184,6 +194,8 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
   const mapsQuery = encodeURIComponent(
     `${visit.property?.location ?? ""}${visit.property?.city ? `, ${visit.property.city}` : ""}`,
   );
+  const calendarDate = (visit.visit_date ?? "").replace(/-/g, "");
+  const hasCalendarDate = Boolean(calendarDate);
 
   return (
     <article className="overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-sm transition hover:shadow-md">
@@ -233,18 +245,20 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
                 href={`https://www.google.com/maps/search/?api=1&query=${mapsQuery}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-body transition hover:bg-neutral-50"
+                className="inline-flex min-h-12 items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-body transition active:scale-[0.98] hover:bg-neutral-50"
               >
-                🗺️ Route Map
+                Route Map
               </a>
-              <a
-                href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Site Visit: ${visit.property?.title ?? "Property"}`)}&dates=${visit.visit_date.replace(/-/g, "")}/${visit.visit_date.replace(/-/g, "")}&details=${encodeURIComponent(`Visit at ${visit.property?.location ?? ""}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-semibold text-body transition hover:bg-neutral-50"
-              >
-                📆 Add to Calendar
-              </a>
+              {hasCalendarDate ? (
+                <a
+                  href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Site Visit: ${visit.property?.title ?? "Property"}`)}&dates=${calendarDate}/${calendarDate}&details=${encodeURIComponent(`Visit at ${visit.property?.location ?? ""}`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-12 items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-body transition active:scale-[0.98] hover:bg-neutral-50"
+                >
+                  Add to Calendar
+                </a>
+              ) : null}
             </div>
           </>
         ) : null}
@@ -291,9 +305,9 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
           <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
             <p className="text-sm font-semibold text-emerald-900">🤖 AI Visit Checklist</p>
             <ul className="mt-2 space-y-1.5">
-              {checklist.map((item) => (
-                <li key={item} className="flex items-center gap-2 text-sm text-body">
-                  <span className="text-emerald-500">☐</span> {item}
+              {checklist.map((item, index) => (
+                <li key={`${item}-${index}`} className="flex items-center gap-2 text-sm text-body">
+                  <span className="text-emerald-500" aria-hidden>☐</span> {item}
                 </li>
               ))}
             </ul>
@@ -330,16 +344,27 @@ export default function SiteVisitsPage() {
   const { user } = useAuth();
   const [visits, setVisits] = useState<SiteVisitRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const load = () => {
-      fetchSiteVisits(user.id).then((data) => {
-        setVisits(data);
-        setLoading(false);
-      });
+      fetchSiteVisits(user.id)
+        .then((data) => {
+          setVisits(Array.isArray(data) ? data : []);
+          setLoading(false);
+          setLoadError(null);
+        })
+        .catch(() => {
+          setVisits([]);
+          setLoading(false);
+          setLoadError("Unable to load site visits. Pull to refresh or try again.");
+        });
     };
 
     load();
@@ -378,14 +403,20 @@ export default function SiteVisitsPage() {
         }
       />
 
+      {loadError ? (
+        <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          {loadError}
+        </div>
+      ) : null}
+
       {visits.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
+        <div className="-mx-1 flex gap-2 overflow-x-auto scroll-touch px-1 pb-1">
           {VISIT_STATUS_FILTERS.map((f) => (
             <button
               key={f.value}
               type="button"
               onClick={() => setStatusFilter(f.value)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+              className={`min-h-12 shrink-0 rounded-full border px-4 py-2.5 text-sm font-semibold transition active:scale-[0.98] ${
                 statusFilter === f.value
                   ? "border-emerald-500 bg-emerald-50 text-emerald-800"
                   : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"

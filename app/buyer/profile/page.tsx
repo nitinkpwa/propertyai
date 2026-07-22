@@ -27,10 +27,12 @@ import {
 } from "@/lib/buyer/profileFields";
 import { updateBuyerProfile } from "@/lib/buyer/queries";
 import { patchBuyerProfile } from "@/lib/buyer/profilePatch";
+import { useToast } from "@/components/ui/Toast";
 
 export default function BuyerProfilePage() {
   const { profile, refreshProfile } = useAuth();
   const { completeness, openModal } = useProgressiveProfile();
+  const { showToast } = useToast();
   const [fullName, setFullName] = useState("");
   const [mobile, setMobile] = useState("");
   const [city, setCity] = useState("");
@@ -53,8 +55,10 @@ export default function BuyerProfilePage() {
       setFullName(profile.full_name ?? "");
       setMobile(profile.phone ?? "");
       setCity(profile.city ?? "");
-      setPreferredLocations(profile.preferred_locations ?? []);
-      setPreferredTypes(profile.preferred_property_types ?? []);
+      setPreferredLocations(Array.isArray(profile.preferred_locations) ? profile.preferred_locations : []);
+      setPreferredTypes(
+        Array.isArray(profile.preferred_property_types) ? profile.preferred_property_types : [],
+      );
       setBuyingPurpose(profile.buying_purpose ?? "");
       setBuyingTimeline(profile.buying_timeline ?? "");
       setLoanStatus(profile.loan_status ?? "");
@@ -118,9 +122,11 @@ export default function BuyerProfilePage() {
 
     if (basicResult.error || extendedResult.error) {
       setError(getAuthErrorMessage(new Error(basicResult.error ?? extendedResult.error ?? "Save failed")));
+      showToast("Couldn’t save profile", "error");
     } else {
       await refreshProfile();
       setSuccess("Profile updated successfully.");
+      showToast("Profile saved", "success");
     }
 
     setSaving(false);

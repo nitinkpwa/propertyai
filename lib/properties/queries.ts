@@ -94,6 +94,24 @@ const SUB_TYPE_LABELS: Record<string, string> = {
 
 const PROPERTY_PHOTOS_BUCKET = "property-photos";
 
+function isAllowedNextImageHost(url: string): boolean {
+  try {
+    if (url.startsWith("/") || url.startsWith("blob:")) return true;
+    const host = new URL(url).hostname;
+    const supabaseHost = (() => {
+      try {
+        const env = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        return env ? new URL(env).hostname : "hydrtiwdtptwoxoywavd.supabase.co";
+      } catch {
+        return "hydrtiwdtptwoxoywavd.supabase.co";
+      }
+    })();
+    return host === supabaseHost;
+  } catch {
+    return false;
+  }
+}
+
 function resolvePhotoUrl(photo: string): string | null {
   const value = photo?.trim();
   if (!value) return null;
@@ -104,6 +122,10 @@ function resolvePhotoUrl(photo: string): string | null {
     value.startsWith("blob:") ||
     value.startsWith("/")
   ) {
+    // Only return remote URLs Next/Image can optimize; unknown hosts crash PropertyCard.
+    if (value.startsWith("http://") || value.startsWith("https://")) {
+      return isAllowedNextImageHost(value) ? value : null;
+    }
     return value;
   }
 

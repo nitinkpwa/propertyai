@@ -6,6 +6,7 @@ import NavbarWrapper from "./components/NavbarWrapper";
 import AuthSessionHandler from "@/components/auth/AuthSessionHandler";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { ProgressiveProfileProvider } from "@/components/buyer/ProgressiveProfileProvider";
+import { ToastProvider } from "@/components/ui/Toast";
 import BrandJsonLd from "@/components/seo/BrandJsonLd";
 import MainContent from "@/components/layout/MainContent";
 import { BRAND } from "@/lib/brand";
@@ -84,6 +85,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#4AAA27",
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -106,8 +110,10 @@ export default function RootLayout({
         <AuthProvider>
           <AuthSessionHandler />
           <ProgressiveProfileProvider>
-            <NavbarWrapper />
-            <MainContent>{children}</MainContent>
+            <ToastProvider>
+              <NavbarWrapper />
+              <MainContent>{children}</MainContent>
+            </ToastProvider>
           </ProgressiveProfileProvider>
         </AuthProvider>
       </body>

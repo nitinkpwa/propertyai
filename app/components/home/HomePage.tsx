@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import HomeHero from "./HomeHero";
 import HomeNavbar from "./HomeNavbar";
+import NotificationBar from "@/components/notifications/NotificationBar";
+import WelcomeTribute from "@/components/tribute/WelcomeTribute";
 
 const PopularAIQuestions = dynamic(() => import("./sections/PopularAIQuestions"));
 const MarketIntelligenceSection = dynamic(() => import("./sections/MarketIntelligenceSection"));
@@ -19,7 +21,9 @@ const StickyAskBar = dynamic(() => import("./StickyAskBar"), { ssr: false });
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white font-sans text-body">
+      <WelcomeTribute />
       <HomeNavbar />
+      <NotificationBar variant="fixed" />
       <main>
         <HomeHero />
         <PopularAIQuestions />

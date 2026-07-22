@@ -15,12 +15,14 @@ interface BuyerSidebarProps {
   mobileOpen: boolean;
   onCloseMobile: () => void;
   onLogout: () => void;
+  /** desktop = fixed left rail; drawer = fills MobileDrawer panel */
+  variant?: "desktop" | "drawer";
 }
 
 function NavIcon({ icon }: { icon: (typeof BUYER_NAV)[number]["icon"] }) {
   const props = {
-    width: 18,
-    height: 18,
+    width: 20,
+    height: 20,
     viewBox: "0 0 24 24",
     fill: "none" as const,
     stroke: "currentColor",
@@ -85,9 +87,9 @@ function NavIcon({ icon }: { icon: (typeof BUYER_NAV)[number]["icon"] }) {
 
 export default function BuyerSidebar({
   fullName,
-  mobileOpen,
   onCloseMobile,
   onLogout,
+  variant = "desktop",
 }: BuyerSidebarProps) {
   const pathname = usePathname();
   const initials = getInitials(fullName);
@@ -96,33 +98,51 @@ export default function BuyerSidebar({
   const { user } = useAuth();
   const { unreadCount } = useBuyerNotifications(user?.id);
 
+  const isDrawer = variant === "drawer";
+
   return (
     <aside
-      className={`fixed bottom-0 left-0 top-16 z-40 flex w-64 flex-col border-r border-neutral-200/80 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.04)] transition-transform duration-300 lg:translate-x-0 ${
-        mobileOpen ? "translate-x-0" : "-translate-x-full"
-      }`}
+      className={
+        isDrawer
+          ? "flex h-full w-full flex-col bg-white"
+          : "fixed bottom-0 left-0 top-chrome z-40 flex w-64 flex-col border-r border-neutral-200/80 bg-white shadow-[4px_0_24px_rgba(0,0,0,0.04)]"
+      }
     >
-      <div className="border-b border-neutral-100 p-5">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">
-          Buyer Portal
-        </p>
-        <div className="mt-3 flex items-center gap-3">
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-bold text-white shadow-[0_2px_8px_rgba(74,170,39,0.35)]"
-            style={{ backgroundColor: EMERALD }}
-          >
-            {initials || "B"}
-          </div>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-heading-primary">
-              {fullName ?? "Buyer"}
-            </p>
-            <p className="text-xs text-muted">Your workspace</p>
+      <div className="flex items-start justify-between gap-3 border-b border-neutral-100 p-5">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">
+            Buyer Portal
+          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <div
+              className="flex h-12 w-12 items-center justify-center rounded-2xl text-sm font-bold text-white shadow-[0_2px_8px_rgba(74,170,39,0.35)]"
+              style={{ backgroundColor: EMERALD }}
+            >
+              {initials || "B"}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-heading-primary">
+                {fullName ?? "Buyer"}
+              </p>
+              <p className="text-xs text-muted">Your workspace</p>
+            </div>
           </div>
         </div>
+        {isDrawer ? (
+          <button
+            type="button"
+            onClick={onCloseMobile}
+            className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-body transition active:scale-[0.98] hover:bg-neutral-50"
+            aria-label="Close menu"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+            </svg>
+          </button>
+        ) : null}
       </div>
 
-      <nav className="flex-1 space-y-0.5 overflow-y-auto p-3" aria-label="Buyer dashboard">
+      <nav className="flex-1 space-y-1 overflow-y-auto scroll-touch p-3" aria-label="Buyer dashboard">
         {BUYER_NAV.map((item) => {
           const active = isBuyerNavActive(item.href, pathname);
           const showBadge = item.icon === "bell" && unreadCount > 0;
@@ -131,9 +151,9 @@ export default function BuyerSidebar({
               key={item.href}
               href={item.href}
               onClick={onCloseMobile}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+              className={`flex min-h-12 items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium transition-all duration-200 active:scale-[0.99] ${
                 active
-                  ? "bg-emerald-50 text-emerald-800 shadow-[inset_0_0_0_1px_rgba(74, 170, 39,0.15)]"
+                  ? "bg-emerald-50 text-emerald-800 shadow-[inset_0_0_0_1px_rgba(74,170,39,0.15)]"
                   : "text-body hover:bg-neutral-50 hover:text-heading-primary"
               }`}
             >
@@ -155,8 +175,11 @@ export default function BuyerSidebar({
         {profileCtx && completeness < 100 ? (
           <button
             type="button"
-            onClick={() => profileCtx.openModal()}
-            className="flex w-full items-center gap-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-left ring-1 ring-emerald-100 transition hover:bg-emerald-100/80"
+            onClick={() => {
+              profileCtx.openModal();
+              onCloseMobile();
+            }}
+            className="flex min-h-12 w-full items-center gap-3 rounded-2xl bg-emerald-50 px-3 py-3 text-left ring-1 ring-emerald-100 transition active:scale-[0.99] hover:bg-emerald-100/80"
           >
             <ProfileCompletionRing percent={completeness} size="sm" showLabel={false} />
             <div>
@@ -168,14 +191,14 @@ export default function BuyerSidebar({
         <Link
           href="/properties"
           onClick={onCloseMobile}
-          className="flex items-center justify-center rounded-xl border border-neutral-200 px-3 py-2.5 text-sm font-semibold text-body transition-all hover:bg-neutral-50"
+          className="flex min-h-12 items-center justify-center rounded-2xl border border-neutral-200 px-3 py-3 text-sm font-semibold text-body transition-all active:scale-[0.99] hover:bg-neutral-50"
         >
           Browse Properties
         </Link>
         <button
           type="button"
           onClick={onLogout}
-          className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-rose-600 transition-all hover:bg-rose-50"
+          className="flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl px-3 py-3 text-sm font-semibold text-rose-600 transition-all active:scale-[0.99] hover:bg-rose-50"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" strokeLinecap="round" strokeLinejoin="round" />

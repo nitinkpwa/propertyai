@@ -106,13 +106,19 @@ export function buildBeforeVisitContext(visit: SiteVisitRow & {
     nearby.push("Schools within 2 km", "Hospitals within 3 km", "Metro connectivity", "Market & daily needs");
   }
 
-  const checklist = visit.checklist?.length
+  const rawChecklist = Array.isArray(visit.checklist)
     ? visit.checklist
-    : buildPropertyChecklist({
-        propertyType: prop?.type,
-        hasRera: isReraApproved(prop),
-        hasParking: Boolean(prop?.parking),
-      });
+        .map((item) => (typeof item === "string" ? item : typeof item === "object" && item && "text" in item ? String((item as { text: unknown }).text) : null))
+        .filter((item): item is string => Boolean(item?.trim()))
+    : [];
+  const checklist =
+    rawChecklist.length > 0
+      ? rawChecklist
+      : buildPropertyChecklist({
+          propertyType: prop?.type,
+          hasRera: isReraApproved(prop),
+          hasParking: Boolean(prop?.parking),
+        });
 
   const pros: string[] = [];
   const cons: string[] = [];

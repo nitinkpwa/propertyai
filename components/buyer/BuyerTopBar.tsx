@@ -14,7 +14,7 @@ export default function BuyerTopBar({
   subtitle,
 }: BuyerTopBarProps) {
   return (
-    <header className="sticky top-16 z-30 hidden items-center justify-between gap-4 border-b border-neutral-200/80 bg-white/95 px-6 py-3 backdrop-blur-xl lg:flex">
+    <header className="sticky-below-nav z-30 hidden items-center justify-between gap-4 border-b border-neutral-200/80 bg-white/95 px-6 py-3 backdrop-blur-xl lg:flex">
       <div className="min-w-0">
         <p className="text-sm font-semibold text-heading-primary">{title}</p>
         {subtitle ? <p className="text-xs text-muted">{subtitle}</p> : null}

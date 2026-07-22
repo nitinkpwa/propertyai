@@ -12,6 +12,7 @@ export type AdminTab =
   | "visits"
   | "chats"
   | "analytics"
+  | "broadcasts"
   | "settings"
   | "add"
   | "bulk";

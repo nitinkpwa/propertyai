@@ -49,7 +49,8 @@ export function sellerCanSeeBuyerContact(_status: VisitStatus | string): boolean
   return true;
 }
 
-export function formatVisitStatusLabel(status: string): string {
+export function formatVisitStatusLabel(status?: string | null): string {
+  if (!status || typeof status !== "string") return "Unknown";
   return VISIT_STATUS_LABELS[status as VisitStatus] ?? status.replace(/_/g, " ");
 }
 

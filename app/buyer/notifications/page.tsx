@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
   getNotificationIcon,
@@ -16,13 +16,16 @@ import Card from "@/components/ui/Card";
 
 export default function NotificationsPage() {
   const { user } = useAuth();
-  const { notifications, unreadCount, loading, markRead, markAllRead } = useBuyerNotifications(user?.id);
-  const [browserPermission, setBrowserPermission] = useState<NotificationPermission>(() => {
+  const { notifications, unreadCount, loading, error, markRead, markAllRead, refresh } =
+    useBuyerNotifications(user?.id);
+  const [browserPermission, setBrowserPermission] =
+    useState<NotificationPermission>("default");
+
+  useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
-      return Notification.permission;
+      setBrowserPermission(Notification.permission);
     }
-    return "default";
-  });
+  }, []);
 
   const handleEnableBrowser = async () => {
     const perm = await requestBrowserNotificationPermission();
@@ -41,21 +44,34 @@ export default function NotificationsPage() {
         description={`${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`}
         action={
           unreadCount > 0 ? (
-            <Button variant="ghost" size="sm" onClick={() => markAllRead()}>
+            <Button variant="ghost" size="sm" onClick={() => markAllRead()} className="min-h-12">
               Mark all read
             </Button>
           ) : undefined
         }
       />
 
+      {error ? (
+        <Card padding="sm" className="border-rose-100 bg-rose-50/60">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-rose-800">{error}</p>
+            <Button variant="secondary" size="sm" onClick={() => refresh()} className="min-h-12">
+              Retry
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
       {browserPermission !== "granted" ? (
         <Card padding="sm" className="border-amber-100 bg-amber-50/50">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-semibold text-amber-900">Enable browser notifications</p>
-              <p className="text-xs text-amber-700">Get instant alerts for visit approvals and price updates</p>
+              <p className="text-xs text-amber-700">
+                Get instant alerts for visit approvals and price updates
+              </p>
             </div>
-            <Button variant="secondary" size="sm" onClick={handleEnableBrowser}>
+            <Button variant="secondary" size="sm" onClick={handleEnableBrowser} className="min-h-12 shrink-0">
               Enable
             </Button>
           </div>
@@ -89,30 +105,36 @@ export default function NotificationsPage() {
                     onClick={() => {
                       if (!n.read_at) markRead(n.id);
                     }}
-                    className={`flex w-full gap-4 rounded-2xl border p-4 text-left transition hover:shadow-sm ${
+                    className={`flex w-full min-h-12 gap-4 rounded-2xl border p-4 text-left transition active:scale-[0.99] hover:shadow-sm ${
                       !n.read_at
                         ? "border-emerald-200 bg-emerald-50/40"
                         : "border-neutral-200/80 bg-white"
                     }`}
                   >
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-neutral-50 text-lg">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-neutral-50 text-lg">
                       {getNotificationIcon(n.type)}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="font-semibold text-heading-primary">{n.title}</p>
+                        <p className="font-semibold text-heading-primary">
+                          {typeof n.title === "string" ? n.title : "Notification"}
+                        </p>
                         {!n.read_at ? (
                           <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
                         ) : null}
                       </div>
-                      <p className="mt-1 text-sm text-body">{n.message}</p>
+                      <p className="mt-1 text-sm text-body">
+                        {typeof n.message === "string" ? n.message : ""}
+                      </p>
                       <p className="mt-2 text-xs text-muted">
-                        {new Date(n.created_at).toLocaleString("en-IN", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          day: "numeric",
-                          month: "short",
-                        })}
+                        {n.created_at
+                          ? new Date(n.created_at).toLocaleString("en-IN", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              day: "numeric",
+                              month: "short",
+                            })
+                          : ""}
                       </p>
                     </div>
                   </button>

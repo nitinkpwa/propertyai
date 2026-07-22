@@ -14,21 +14,40 @@ const POLL_INTERVAL_MS = 60_000;
 export function useBuyerNotifications(userId: string | undefined) {
   const [notifications, setNotifications] = useState<CrmNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Boolean(userId));
+  const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!userId) return;
-    const [items, count] = await Promise.all([
-      fetchUserNotifications(userId, 50),
-      fetchUnreadNotificationCount(userId),
-    ]);
-    setNotifications(items);
-    setUnreadCount(count);
-    setLoading(false);
+    if (!userId) {
+      setNotifications([]);
+      setUnreadCount(0);
+      setLoading(false);
+      setError(null);
+      return;
+    }
+    try {
+      setError(null);
+      const [items, count] = await Promise.all([
+        fetchUserNotifications(userId, 50),
+        fetchUnreadNotificationCount(userId),
+      ]);
+      setNotifications(Array.isArray(items) ? items : []);
+      setUnreadCount(typeof count === "number" ? count : 0);
+    } catch {
+      setError("Unable to load notifications right now.");
+      setNotifications([]);
+      setUnreadCount(0);
+    } finally {
+      setLoading(false);
+    }
   }, [userId]);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     const timer = window.setTimeout(() => {
       void refresh();
     }, 0);
@@ -64,7 +83,7 @@ export function useBuyerNotifications(userId: string | undefined) {
     }
   }, [userId]);
 
-  return { notifications, unreadCount, loading, refresh, markRead, markAllRead };
+  return { notifications, unreadCount, loading, error, refresh, markRead, markAllRead };
 }
 
 export function requestBrowserNotificationPermission(): Promise<NotificationPermission> {

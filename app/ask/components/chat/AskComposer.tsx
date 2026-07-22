@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const QUICK_TYPES = ["Apartment", "Villa", "Plot", "Builder Floor"] as const;
 
@@ -15,7 +15,26 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
   const [budgetLakh, setBudgetLakh] = useState(80);
   const [showTools, setShowTools] = useState(false);
   const [propertyType, setPropertyType] = useState<string | null>(null);
+  const [keyboardPad, setKeyboardPad] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const sync = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setKeyboardPad(inset > 40 ? inset : 0);
+    };
+
+    sync();
+    vv.addEventListener("resize", sync);
+    vv.addEventListener("scroll", sync);
+    return () => {
+      vv.removeEventListener("resize", sync);
+      vv.removeEventListener("scroll", sync);
+    };
+  }, []);
 
   const handleSubmit = () => {
     let text = query.trim();
@@ -47,13 +66,15 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
               lang: string;
             };
           }).SpeechRecognition ||
-          (window as unknown as { webkitSpeechRecognition?: new () => {
-            start: () => void;
-            onresult: ((e: { results: { [i: number]: { [j: number]: { transcript: string } } } }) => void) | null;
-            continuous: boolean;
-            interimResults: boolean;
-            lang: string;
-          } }).webkitSpeechRecognition
+          (window as unknown as {
+            webkitSpeechRecognition?: new () => {
+              start: () => void;
+              onresult: ((e: { results: { [i: number]: { [j: number]: { transcript: string } } } }) => void) | null;
+              continuous: boolean;
+              interimResults: boolean;
+              lang: string;
+            };
+          }).webkitSpeechRecognition
         : undefined;
 
     if (!SpeechRecognition) {
@@ -71,19 +92,24 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
   };
 
   return (
-    <div className="shrink-0 border-t border-neutral-200/80 bg-white/95 px-3 pt-3 backdrop-blur-md sm:px-5 sm:pt-3.5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+    <div
+      className="shrink-0 border-t border-neutral-200/80 bg-white/95 px-3 pt-3 backdrop-blur-md sm:px-5 sm:pt-3.5"
+      style={{
+        paddingBottom: `max(0.75rem, calc(env(safe-area-inset-bottom) + ${keyboardPad}px))`,
+      }}
+    >
       <div className="mx-auto w-full max-w-[1100px]">
         {recentSearches.length > 0 ? (
-          <div className="mb-2.5 flex gap-2 overflow-x-auto scroll-touch pb-1 sm:flex-wrap sm:overflow-visible">
+          <div className="mb-2.5 flex gap-2 overflow-x-auto scroll-touch pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {recentSearches.slice(0, 5).map((search) => (
               <button
                 key={search}
                 type="button"
                 onClick={() => onSubmit(search)}
                 disabled={loading}
-                className="shrink-0 rounded-full border border-neutral-200 bg-neutral-50 px-3.5 py-2 text-sm font-medium text-body hover:border-emerald-200 hover:bg-emerald-50 disabled:opacity-50"
+                className="min-h-10 shrink-0 rounded-full border border-neutral-200 bg-neutral-50 px-3.5 py-2 text-sm font-medium text-body transition active:scale-[0.98] hover:border-emerald-200 hover:bg-emerald-50 disabled:opacity-50"
               >
-                {search.length > 32 ? `${search.slice(0, 31)}…` : search}
+                {search.length > 28 ? `${search.slice(0, 27)}…` : search}
               </button>
             ))}
           </div>
@@ -97,7 +123,7 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
                   key={t}
                   type="button"
                   onClick={() => setPropertyType((prev) => (prev === t ? null : t))}
-                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${
+                  className={`min-h-10 rounded-full px-3 py-2 text-[11px] font-semibold transition-colors active:scale-[0.98] ${
                     propertyType === t
                       ? "bg-emerald-500 text-white"
                       : "bg-white text-body ring-1 ring-neutral-200"
@@ -135,7 +161,7 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
             <button
               type="button"
               onClick={() => setShowTools((v) => !v)}
-              className={`rounded-xl p-2 transition-colors ${
+              className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors active:scale-[0.96] ${
                 showTools ? "bg-emerald-50 text-emerald-700" : "text-muted hover:bg-neutral-100"
               }`}
               aria-label="Tools"
@@ -148,7 +174,7 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="rounded-xl p-2 text-muted hover:bg-neutral-100"
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-muted transition active:scale-[0.96] hover:bg-neutral-100"
               aria-label="Upload image"
               title="Attach image context"
             >
@@ -172,7 +198,7 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
             <button
               type="button"
               onClick={startVoice}
-              className="rounded-xl p-2 text-muted hover:bg-neutral-100"
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-muted transition active:scale-[0.96] hover:bg-neutral-100"
               aria-label="Voice input"
               title="Voice input"
             >

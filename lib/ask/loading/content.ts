@@ -106,6 +106,14 @@ export const PROPERTY_INTELLIGENCE_TIPS: string[] = [
 ];
 
 export const THINKING_STATUS_MESSAGES: string[] = [
+  "Searching live properties…",
+  "Checking builder credibility…",
+  "Calculating investment score…",
+  "Reading RERA information…",
+  "Comparing nearby projects…",
+  "Analysing price trends…",
+  "Estimating appreciation…",
+  "Looking for better alternatives…",
   "I'm comparing projects around your preferred location.",
   "Checking builder credibility against delivery history…",
   "Looking beyond the advertised price…",
@@ -150,6 +158,18 @@ export const THINKING_STATUS_MESSAGES: string[] = [
   "Balancing commute, community, and capital growth…",
   "Preparing a clear recommendation — not a random shortlist…",
   "Double-checking that the budget still fits after extras…",
+];
+
+/** Featured rotating research cards shown while AI thinks (3–4s cadence). */
+export const THINKING_RESEARCH_CARDS: { title: string; detail: string }[] = [
+  { title: "Searching live properties…", detail: "Scanning AreaIQ inventory that matches your brief." },
+  { title: "Checking builder credibility…", detail: "Reviewing delivery history and reputation signals." },
+  { title: "Calculating investment score…", detail: "Weighing appreciation, yield, and exit liquidity." },
+  { title: "Reading RERA information…", detail: "Looking for registration and compliance cues." },
+  { title: "Comparing nearby projects…", detail: "Benchmarking value against local comps." },
+  { title: "Analysing price trends…", detail: "Reading recent movement in this corridor." },
+  { title: "Estimating appreciation…", detail: "Modelling mid-term upside with infrastructure context." },
+  { title: "Looking for better alternatives…", detail: "Finding stronger options you may have missed." },
 ];
 
 export const DID_YOU_KNOW: string[] = [
@@ -285,7 +305,8 @@ export const TIMELINE_STEPS: TimelineStepDef[] = [
 /** Milliseconds between timeline step advances (range mid-point ~1.6s). */
 export const TIMELINE_STEP_MS = 1600;
 export const TIP_ROTATE_MS = 4000;
-export const THINKING_ROTATE_MS = 2800;
+export const THINKING_ROTATE_MS = 3500;
+export const THINKING_CARD_ROTATE_MS = 3500;
 export const DID_YOU_KNOW_ROTATE_MS = 6000;
 export const FACT_ROTATE_MS = 5500;
 export const LONG_WAIT_MS = 5000;

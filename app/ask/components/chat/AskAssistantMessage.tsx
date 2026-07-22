@@ -74,7 +74,7 @@ export function AskAssistantMessage({
       </div>
 
       <div className="min-w-0 flex-1 space-y-3">
-        <div className="rounded-[1.25rem] rounded-bl-md border border-neutral-200/80 bg-white px-4 py-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)] sm:px-5">
+        <div className="rounded-[1.35rem] rounded-bl-md border border-neutral-200/80 bg-white px-4 py-4 shadow-[0_2px_16px_rgba(0,0,0,0.04)] sm:px-5">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">
               {turn.intent}

@@ -9,6 +9,7 @@ import { AskChatThread } from "./components/chat/AskChatThread";
 import { AskComposer } from "./components/chat/AskComposer";
 import { AskCopilotSidebar } from "./components/sidebar/AskCopilotSidebar";
 import { getLatestAssistantMessage } from "./lib/turnFromMessage";
+import NotificationBar from "@/components/notifications/NotificationBar";
 
 const AskIntelPanel = dynamic(
   () => import("./components/intel/AskIntelPanel").then((m) => m.AskIntelPanel),
@@ -86,7 +87,7 @@ function AskPageContent() {
 
   if (authLoading || !hydrated) {
     return (
-      <div className="fixed inset-0 flex flex-col bg-[#F7F9F8] pt-16" aria-busy="true" aria-label="Loading chat">
+      <div className="fixed inset-0 flex flex-col bg-[#F7F9F8] pt-0 lg:pt-chrome" aria-busy="true" aria-label="Loading chat">
         <div className="flex-1 space-y-4 px-4 py-6">
           <div className="ml-auto h-14 w-3/4 animate-shimmer rounded-2xl rounded-br-md" />
           <div className="h-24 w-4/5 animate-shimmer rounded-2xl rounded-bl-md" />
@@ -97,10 +98,10 @@ function AskPageContent() {
   }
 
   return (
-    <div className="fixed inset-0 flex overflow-hidden bg-white pt-16">
+    <div className="fixed inset-0 flex overflow-hidden bg-white pt-0 lg:pt-chrome">
       {sidebarOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-40 bg-neutral-950/55 lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden
         />
@@ -108,7 +109,7 @@ function AskPageContent() {
 
       {intelOpen ? (
         <div
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-40 bg-neutral-950/55 lg:hidden"
           onClick={() => setIntelOpen(false)}
           aria-hidden
         />
@@ -116,7 +117,7 @@ function AskPageContent() {
 
       {/* Left sidebar — drawer <1024px, fixed column on desktop */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 flex w-[min(100%,300px)] transform flex-col pt-16 transition-transform duration-300 ease-out lg:static lg:z-0 lg:h-full lg:w-[300px] lg:shrink-0 lg:translate-x-0 lg:pt-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(100%,300px)] transform flex-col pt-0 transition-transform duration-300 ease-out lg:static lg:z-0 lg:h-full lg:w-[300px] lg:shrink-0 lg:translate-x-0 lg:pt-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -136,7 +137,7 @@ function AskPageContent() {
       {/* Center chat — fills remaining width/height */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#fafbfa_100%)]">
         <header
-          className={`z-10 flex shrink-0 items-center gap-2 border-b border-neutral-200/80 bg-white/95 px-3 py-2.5 backdrop-blur-md transition-shadow duration-200 sm:px-4 ${
+          className={`z-10 flex shrink-0 items-center gap-2 border-b border-neutral-200/80 bg-white/95 px-3 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur-md transition-shadow duration-200 sm:px-4 lg:pt-2.5 ${
             headerElevated ? "shadow-[0_4px_16px_rgba(0,0,0,0.06)]" : "shadow-none"
           }`}
         >
@@ -172,6 +173,10 @@ function AskPageContent() {
               : ""}
           </button>
         </header>
+
+        <div className="shrink-0 lg:hidden">
+          <NotificationBar variant="inline" />
+        </div>
 
         <AskChatThread
           messages={messages}
@@ -236,7 +241,7 @@ export default function AskPage() {
   return (
     <Suspense
       fallback={
-        <div className="fixed inset-0 flex items-center justify-center bg-[#F7F9F8] pt-16">
+        <div className="fixed inset-0 flex items-center justify-center bg-[#F7F9F8] pt-0 lg:pt-chrome">
           <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
         </div>
       }

@@ -39,6 +39,7 @@
   --btn-h: 48px;
   --input-h: 52px;
   --topbar-h: 64px;
+  --smart-bar-h: 0px;
   --bottomnav-h: 64px;
   --motion-page: 200ms;
 
@@ -222,9 +223,37 @@ html {
   padding-bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom) + 1rem);
 }
 
+/* Chrome stack: navbar + optional smart notification bar */
+.pt-chrome {
+  padding-top: calc(var(--topbar-h) + var(--smart-bar-h, 0px));
+}
+
+.top-chrome {
+  top: calc(var(--topbar-h) + var(--smart-bar-h, 0px));
+}
+
+.sticky-below-nav {
+  position: sticky;
+  top: calc(var(--topbar-h) + var(--smart-bar-h, 0px));
+}
+
 .scroll-touch {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
+}
+
+/* Prefer dynamic viewport for mobile chrome (keyboard / browser UI) */
+.min-h-dvh {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Press feedback utility for haptic-ready taps */
+.tap-press {
+  transition: transform 160ms ease, opacity 160ms ease;
+}
+.tap-press:active {
+  transform: scale(0.97);
 }
 
 /* Tables: never force page-level horizontal scroll on mobile */

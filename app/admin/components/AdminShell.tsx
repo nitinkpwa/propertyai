@@ -6,6 +6,7 @@ import type { AdminTab } from "@/lib/admin/types";
 import BottomNav from "@/components/layout/BottomNav";
 import MobileTopBar from "@/components/layout/MobileTopBar";
 import MenuSheet from "@/components/layout/MenuSheet";
+import NotificationBar from "@/components/notifications/NotificationBar";
 import { ADMIN_BOTTOM_NAV, type BottomNavItem } from "@/lib/design/bottomNav";
 
 export interface AdminNavItem {
@@ -92,7 +93,7 @@ export default function AdminShell({
   );
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] lg:pt-16">
+    <div className="min-h-screen bg-[#FAFAFA] lg:pt-chrome">
       {/* Mobile top bar */}
       <MobileTopBar
         title="Admin"
@@ -102,8 +103,12 @@ export default function AdminShell({
         profileHref="/admin?tab=settings"
       />
 
+      <div className="lg:hidden">
+        <NotificationBar variant="sticky" />
+      </div>
+
       {/* Desktop/tablet secondary header */}
-      <header className="sticky top-16 z-30 hidden border-b border-neutral-200 bg-white/95 backdrop-blur-xl md:block">
+      <header className="sticky-below-nav z-30 hidden border-b border-neutral-200 bg-white/95 backdrop-blur-xl md:block">
         <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6 lg:pl-[17.5rem] lg:pr-8">
           <div className="flex items-center gap-3">
             <button
@@ -138,7 +143,7 @@ export default function AdminShell({
       </header>
 
       <div className="flex">
-        <aside className="fixed bottom-0 left-0 top-[7.5rem] hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
+        <aside className="fixed bottom-0 left-0 top-[calc(7.5rem+var(--smart-bar-h,0px))] hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
           <div className="border-b border-neutral-100 px-4 py-4">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">
               Admin Portal

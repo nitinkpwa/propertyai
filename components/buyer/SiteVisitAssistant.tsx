@@ -71,8 +71,26 @@ export default function SiteVisitAssistant({ visit, onContextSaved }: Props) {
 
   const [phase, setPhase] = useState<Phase>(defaultPhase);
   const [during, setDuring] = useState<DuringVisitContext>(() => {
-    const saved = visit.during_visit_notes?.during as DuringVisitContext | undefined;
-    return saved ?? buildDefaultDuringVisitContext();
+    const defaults = buildDefaultDuringVisitContext();
+    const saved = visit.during_visit_notes?.during as Partial<DuringVisitContext> | undefined;
+    if (!saved || typeof saved !== "object") return defaults;
+    return {
+      ...defaults,
+      ...saved,
+      checklistProgress: {
+        ...defaults.checklistProgress,
+        ...(saved.checklistProgress && typeof saved.checklistProgress === "object"
+          ? saved.checklistProgress
+          : {}),
+      },
+      ratings: {
+        ...defaults.ratings,
+        ...(saved.ratings && typeof saved.ratings === "object" ? saved.ratings : {}),
+      },
+      notes: typeof saved.notes === "string" ? saved.notes : defaults.notes,
+      voiceNoteUrls: Array.isArray(saved.voiceNoteUrls) ? saved.voiceNoteUrls : defaults.voiceNoteUrls,
+      photoUrls: Array.isArray(saved.photoUrls) ? saved.photoUrls : defaults.photoUrls,
+    };
   });
   const [saving, setSaving] = useState(false);
 

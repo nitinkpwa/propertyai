@@ -390,7 +390,8 @@ export async function updateBuyerProfile(
   return { error: result.error };
 }
 
-export function formatVisitTime(time: string): string {
+export function formatVisitTime(time?: string | null): string {
+  if (!time || typeof time !== "string") return "—";
   const [hours, minutes] = time.split(":");
   const hour = Number(hours);
   if (Number.isNaN(hour)) return time;
@@ -399,8 +400,11 @@ export function formatVisitTime(time: string): string {
   return `${h}:${minutes ?? "00"} ${ampm}`;
 }
 
-export function formatVisitDate(date: string): string {
-  return new Date(`${date}T00:00:00`).toLocaleDateString("en-IN", {
+export function formatVisitDate(date?: string | null): string {
+  if (!date || typeof date !== "string") return "—";
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString("en-IN", {
     weekday: "short",
     day: "numeric",
     month: "short",

@@ -43,10 +43,14 @@ export default function UpcomingVisitsPanel({ visits }: UpcomingVisitsPanelProps
           >
             <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-white text-center shadow-sm ring-1 ring-neutral-100">
               <span className="text-[10px] font-bold uppercase text-emerald-600">
-                {new Date(`${visit.visit_date}T00:00:00`).toLocaleDateString("en-IN", { month: "short" })}
+                {visit.visit_date
+                  ? new Date(`${visit.visit_date}T00:00:00`).toLocaleDateString("en-IN", { month: "short" })
+                  : "—"}
               </span>
               <span className="text-lg font-bold leading-none text-heading-primary">
-                {new Date(`${visit.visit_date}T00:00:00`).getDate()}
+                {visit.visit_date
+                  ? new Date(`${visit.visit_date}T00:00:00`).getDate()
+                  : "—"}
               </span>
             </div>
             <div className="min-w-0 flex-1">
