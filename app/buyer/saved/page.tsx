@@ -25,12 +25,15 @@ import {
   removeSavedProperty,
   removeSavedPropertyByPropertyId,
 } from "@/lib/buyer/queries";
+import { addCompareId } from "@/lib/buyer/compareStore";
+import { useToast } from "@/components/ui/Toast";
 import EmptyState from "../components/EmptyState";
 
 type SavedCard = PropertyCardProps & { savedRowId: string };
 
 export default function SavedPropertiesPage() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [items, setItems] = useState<SavedCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -89,7 +92,19 @@ export default function SavedPropertiesPage() {
   const handleAddToCompare = async (propertyId: string) => {
     if (!user) return;
     setAddingCompareId(propertyId);
-    await addComparedProperty(user.id, propertyId);
+    const result = addCompareId(propertyId);
+    if (!result.ok) {
+      showToast("Compare up to 4 properties — remove one first", "info");
+      setAddingCompareId(null);
+      return;
+    }
+    const ok = await addComparedProperty(user.id, propertyId);
+    if (!ok) {
+      // keep local selection; toast failure
+      showToast("Couldn't add to compare. Please try again.", "error");
+    } else {
+      showToast("Added to compare", "success");
+    }
     setAddingCompareId(null);
   };
 

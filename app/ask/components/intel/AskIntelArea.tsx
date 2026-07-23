@@ -1,6 +1,7 @@
 "use client";
 
 import type { AskSearchStats } from "@/lib/ask/types";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 interface AskIntelAreaProps {
   areaName: string | null;
@@ -76,7 +77,5 @@ export function AskIntelArea({ areaName, stats, summary, onAction }: AskIntelAre
 }
 
 function formatShort(price: number): string {
-  if (price >= 10_000_000) return `₹${(price / 10_000_000).toFixed(2)} Cr`;
-  if (price >= 100_000) return `₹${Math.round(price / 100_000)} L`;
-  return `₹${Math.round(price).toLocaleString("en-IN")}`;
+  return formatInrAmount(price);
 }

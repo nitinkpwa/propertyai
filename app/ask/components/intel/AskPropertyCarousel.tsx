@@ -2,10 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { addComparedProperty } from "@/lib/buyer/queries";
 import { useSavedPropertyToggle } from "@/lib/buyer/useSavedProperty";
+import { useComparedPropertyToggle } from "@/lib/buyer/useComparedProperty";
 import type { ListingProperty } from "@/lib/properties/types";
 
 import { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
@@ -36,9 +34,8 @@ export function AskPropertyCarousel({
   onAskAbout,
   hideHeader = false,
 }: AskPropertyCarouselProps) {
-  const router = useRouter();
-  const { user } = useAuth();
   const { isSaved, handleFavoriteToggle } = useSavedPropertyToggle();
+  const { isCompared, handleCompareToggle } = useComparedPropertyToggle();
 
   if (listings.length === 0) return null;
 
@@ -145,17 +142,17 @@ export function AskPropertyCarousel({
                   </button>
                   <button
                     type="button"
-                    onClick={async () => {
-                      if (!user) {
-                        router.push(`/login?redirect=${encodeURIComponent("/buyer/compare")}`);
-                        return;
-                      }
-                      await addComparedProperty(user.id, p.id);
-                      router.push("/buyer/compare");
+                    onClick={() => {
+                      const next = !isCompared(p.id);
+                      void handleCompareToggle(p.id, next);
                     }}
-                    className="rounded-lg border border-neutral-200 py-1.5 text-[11px] font-semibold text-body"
+                    className={`rounded-lg border py-1.5 text-[11px] font-semibold ${
+                      isCompared(p.id)
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                        : "border-neutral-200 text-body"
+                    }`}
                   >
-                    Compare
+                    {isCompared(p.id) ? "Added" : "Compare"}
                   </button>
                 </div>
               </div>

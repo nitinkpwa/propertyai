@@ -3,6 +3,7 @@ import {
   PROPERTY_STATUS_LABELS,
   type PropertyStatus,
 } from "@/lib/properties/status";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import type { PropertyListingStatus } from "./types";
 
 export { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
@@ -158,14 +159,7 @@ export function formatPrice(p: number): string {
   if (!p || p <= 0) return "Price on Request";
   // Guard: never show unit-rate-sized numbers as listing price
   if (p < 100_000) return "Price on Request";
-  if (p >= 10_000_000) {
-    const cr = p / 10_000_000;
-    const label = cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "");
-    return `₹${label} Cr`;
-  }
-  const lakhs = p / 100_000;
-  const label = lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(1).replace(/\.0$/, "");
-  return `₹${label} L`;
+  return formatInrAmount(p);
 }
 
 export function formatDate(d: string): string {

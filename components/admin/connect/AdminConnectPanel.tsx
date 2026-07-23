@@ -15,6 +15,7 @@ import type {
   ConnectPartnerListRow,
   ConnectPartnerStatus,
 } from "@/lib/connect/partners/types";
+import { formatBudgetRange } from "@/lib/properties/pricingDisplay";
 
 const SUB_TABS: { key: AdminConnectTab; label: string; icon: string }[] = [
   { key: "partners", label: "Partners", icon: "🤝" },
@@ -35,11 +36,7 @@ function formatDate(iso: string | null): string {
 
 function formatBudget(min: number | null, max: number | null): string {
   if (!min && !max) return "—";
-  const fmt = (n: number) =>
-    n >= 10000000 ? `₹${(n / 10000000).toFixed(1)} Cr` : `₹${(n / 100000).toFixed(0)} L`;
-  if (min && max) return `${fmt(min)} – ${fmt(max)}`;
-  if (max) return `Up to ${fmt(max)}`;
-  return fmt(min!);
+  return formatBudgetRange(min, max) || "—";
 }
 
 function PartnerProfileView({

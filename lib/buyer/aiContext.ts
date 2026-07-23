@@ -1,4 +1,5 @@
 import type { Profile } from "@/lib/supabase";
+import { formatBudgetRange } from "@/lib/properties/pricingDisplay";
 import {
   labelForLoan,
   labelForPurpose,
@@ -14,15 +15,8 @@ export function buildBuyerProfileContext(profile: Partial<Profile> | null | unde
     parts.push(`Buying purpose: ${labelForPurpose(profile.buying_purpose)}`);
   }
   if (profile.budget_min != null || profile.budget_max != null) {
-    const fmt = (n: number) =>
-      n >= 10_000_000 ? `₹${(n / 10_000_000).toFixed(1)} Cr` : `₹${(n / 100_000).toFixed(0)} L`;
-    if (profile.budget_min != null && profile.budget_max != null) {
-      parts.push(`Budget: ${fmt(profile.budget_min)} – ${fmt(profile.budget_max)}`);
-    } else if (profile.budget_max != null) {
-      parts.push(`Budget: up to ${fmt(profile.budget_max)}`);
-    } else if (profile.budget_min != null) {
-      parts.push(`Budget: from ${fmt(profile.budget_min)}`);
-    }
+    const label = formatBudgetRange(profile.budget_min, profile.budget_max);
+    if (label) parts.push(`Budget: ${label}`);
   }
   if (profile.buying_timeline) {
     parts.push(`Timeline: ${labelForTimeline(profile.buying_timeline)}`);

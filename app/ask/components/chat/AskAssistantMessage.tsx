@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode, type SyntheticEvent } from "react";
 import type { AskSection, AskTurn } from "@/lib/ask/types";
 import { AskPropertyCarousel } from "../intel/AskPropertyCarousel";
 import { AskMarkdown } from "../shared/AskMarkdown";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 const DEFAULT_SMART_ACTIONS = [
   "Compare with nearby projects",
@@ -335,7 +336,5 @@ function HouseIcon({ className }: { className?: string }) {
 }
 
 function formatShort(price: number): string {
-  if (price >= 10_000_000) return `₹${(price / 10_000_000).toFixed(2)} Cr`;
-  if (price >= 100_000) return `₹${Math.round(price / 100_000)} L`;
-  return `₹${Math.round(price).toLocaleString("en-IN")}`;
+  return formatInrAmount(price);
 }

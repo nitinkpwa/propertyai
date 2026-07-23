@@ -1,3 +1,5 @@
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
+
 interface PriceProps {
   value: string | number;
   /** Smaller caption under price e.g. "onwards" */
@@ -14,7 +16,7 @@ const SIZES = {
 } as const;
 
 export default function Price({ value, suffix, size = "lg", className = "" }: PriceProps) {
-  const display = typeof value === "number" ? formatInr(value) : value;
+  const display = typeof value === "number" ? formatInrAmount(value) : value;
 
   return (
     <div className={`leading-none ${className}`}>
@@ -22,10 +24,4 @@ export default function Price({ value, suffix, size = "lg", className = "" }: Pr
       {suffix ? <span className="ml-1.5 text-sm font-medium text-muted">{suffix}</span> : null}
     </div>
   );
-}
-
-function formatInr(n: number) {
-  if (n >= 10_000_000) return `₹${(n / 10_000_000).toFixed(2)} Cr`;
-  if (n >= 100_000) return `₹${(n / 100_000).toFixed(2)} L`;
-  return `₹${n.toLocaleString("en-IN")}`;
 }

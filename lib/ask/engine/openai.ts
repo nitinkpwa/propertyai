@@ -5,6 +5,7 @@ import {
   toOpenAIMessages,
 } from "../openai-client";
 import type { ConversationMessage } from "../types";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import {
   AREA_IQ_SYSTEM_PROMPT,
   BUILDER_PROMPT,
@@ -150,7 +151,7 @@ export function buildListingsContext(
   const rows = listings
     .slice(0, 10)
     .map((p) => {
-      const priceLakh = Math.round(p.price / 100_000);
+      const priceLabel = formatInrAmount(p.price);
       const sqft =
         p.area && p.area > 0
           ? ` | ₹${Math.round(p.price / p.area).toLocaleString("en-IN")}/sqft`
@@ -161,7 +162,7 @@ export function buildListingsContext(
         p.growthScore !== null ? `Score ${p.growthScore}/100` : "Score N/A";
       const yieldText =
         p.rentalYield !== null ? `Yield ${p.rentalYield}%` : "Yield N/A";
-      return `- ${id}${p.name} | ${p.location} | ₹${priceLakh}L | ${p.bhk} BHK${sqft} | ${score} | ${yieldText}${builder}`;
+      return `- ${id}${p.name} | ${p.location} | ${priceLabel} | ${p.bhk} BHK${sqft} | ${score} | ${yieldText}${builder}`;
     })
     .join("\n");
 
@@ -182,11 +183,11 @@ export function buildSinglePropertyContext(property: {
   possession: string;
   propertyType: string;
 }): string {
-  const priceLakh = Math.round(property.price / 100_000);
+  const priceLabel = formatInrAmount(property.price);
   const pricePerSqft =
     property.area > 0 ? Math.round(property.price / property.area) : null;
 
-  return `\n\nPROPERTY IN DATABASE — USE THESE FACTS:\n- ID: ${property.id}\n- Name: ${property.name}\n- Location: ${property.location}, ${property.city}\n- Price: ₹${priceLakh} lakh${pricePerSqft ? ` (₹${pricePerSqft.toLocaleString("en-IN")}/sqft)` : ""}\n- ${property.bhk} BHK | ${property.area} sqft\n- Builder: ${property.builderName}\n- Possession: ${property.possession}\n- Type: ${property.propertyType}\n- AreaIQ Score: ${property.growthScore !== null ? `${property.growthScore}/100` : "N/A"}\n- Rental Yield: ${property.rentalYield !== null ? `${property.rentalYield}%` : "N/A"}`;
+  return `\n\nPROPERTY IN DATABASE — USE THESE FACTS:\n- ID: ${property.id}\n- Name: ${property.name}\n- Location: ${property.location}, ${property.city}\n- Price: ${priceLabel}${pricePerSqft ? ` (₹${pricePerSqft.toLocaleString("en-IN")}/sqft)` : ""}\n- ${property.bhk} BHK | ${property.area} sqft\n- Builder: ${property.builderName}\n- Possession: ${property.possession}\n- Type: ${property.propertyType}\n- AreaIQ Score: ${property.growthScore !== null ? `${property.growthScore}/100` : "N/A"}\n- Rental Yield: ${property.rentalYield !== null ? `${property.rentalYield}%` : "N/A"}`;
 }
 
 export { parseMarkdownSections, extractPropertyRationales } from "../markdown";

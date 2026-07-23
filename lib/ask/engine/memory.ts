@@ -1,10 +1,11 @@
 import type { IntentClassification, PropertyContext } from "./types";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 export function buildMemoryContext(classification: IntentClassification): string {
   const parts: string[] = [];
 
   if (classification.budget) {
-    parts.push(`Budget: ₹${Math.round(classification.budget / 100_000)} lakh`);
+    parts.push(`Budget: ${formatInrAmount(classification.budget)}`);
   }
   if (classification.bedrooms) {
     parts.push(`BHK: ${classification.bedrooms}`);
@@ -34,7 +35,7 @@ export function buildMemoryContext(classification: IntentClassification): string
 }
 
 export function buildPropertyPageContext(property: PropertyContext): string {
-  const priceLakh = Math.round(property.price / 100_000);
+  const priceLabel = formatInrAmount(property.price);
   const a = property.analytics;
   const psf =
     a?.currentPsf ??
@@ -64,7 +65,7 @@ Never invent replacement percentages or scores.`;
 - ID: ${property.id}
 - Name: ${property.name}
 - Location: ${property.location}, ${property.city}
-- Price: ₹${priceLakh} lakh${psf ? ` (₹${psf.toLocaleString("en-IN")}/sqft)` : ""}
+- Price: ${priceLabel}${psf ? ` (₹${psf.toLocaleString("en-IN")}/sqft)` : ""}
 - Configuration: ${property.bhk} BHK | ${property.area} sqft
 - Builder: ${property.builderName}
 - Possession: ${property.possession}

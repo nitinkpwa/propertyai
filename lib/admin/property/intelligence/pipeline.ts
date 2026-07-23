@@ -1,4 +1,5 @@
 import { isReraApproved } from "@/lib/properties/reraStatus";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import type { AdminPropertyFormState } from "../types";
 import {
   AI_PIPELINE_VERSION,
@@ -8,9 +9,7 @@ import {
 } from "./types";
 
 function formatPrice(value: number): string {
-  if (value >= 10_000_000) return `₹${(value / 10_000_000).toFixed(2)} Cr`;
-  if (value >= 100_000) return `₹${(value / 100_000).toFixed(0)} L`;
-  return `₹${value.toLocaleString("en-IN")}`;
+  return formatInrAmount(value);
 }
 
 function agentOutput(

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 interface AskIntelInvestmentProps {
   defaultPrice?: number | null;
@@ -16,9 +17,7 @@ function calcEmi(principal: number, annualRate: number, years: number): number {
 }
 
 function formatINR(n: number): string {
-  if (n >= 10_000_000) return `₹${(n / 10_000_000).toFixed(2)} Cr`;
-  if (n >= 100_000) return `₹${(n / 100_000).toFixed(1)} L`;
-  return `₹${Math.round(n).toLocaleString("en-IN")}`;
+  return formatInrAmount(n);
 }
 
 export function AskIntelInvestment({

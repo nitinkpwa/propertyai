@@ -17,6 +17,7 @@ import {
   labelForTimeline,
 } from "@/lib/buyer/profileFields";
 import { patchBuyerProfile } from "@/lib/buyer/profilePatch";
+import { formatBudgetRange } from "@/lib/properties/pricingDisplay";
 import type { Profile } from "@/lib/supabase";
 
 const TOTAL_STEPS = 6;
@@ -82,11 +83,7 @@ function formatBudgetInput(value: number | null | undefined): string {
 
 function formatBudgetDisplay(min?: number | null, max?: number | null): string {
   if (min == null && max == null) return "Not set";
-  const fmt = (n: number) =>
-    n >= 10_000_000 ? `₹${(n / 10_000_000).toFixed(1)} Cr` : `₹${(n / 100_000).toFixed(0)} L`;
-  if (min != null && max != null) return `${fmt(min)} – ${fmt(max)}`;
-  if (max != null) return `Up to ${fmt(max)}`;
-  return min != null ? `From ${fmt(min)}` : "Not set";
+  return formatBudgetRange(min, max) || "Not set";
 }
 
 function getInitialStep(profile: Partial<Profile> | null | undefined): number {

@@ -1,4 +1,5 @@
 import type { AskEngineIntent } from "@/lib/ask/engine/types";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 interface TitleInput {
   userMessage: string;
@@ -10,11 +11,7 @@ interface TitleInput {
 }
 
 function formatBudgetLakh(budget: number): string {
-  if (budget >= 10_000_000) {
-    const cr = budget / 10_000_000;
-    return `₹${cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(1)}Cr`;
-  }
-  return `₹${Math.round(budget / 100_000)}L`;
+  return formatInrAmount(budget).replace(/\s/g, "");
 }
 
 function truncate(text: string, max = 48): string {

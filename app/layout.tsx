@@ -6,6 +6,7 @@ import NavbarWrapper from "./components/NavbarWrapper";
 import AuthSessionHandler from "@/components/auth/AuthSessionHandler";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { ProgressiveProfileProvider } from "@/components/buyer/ProgressiveProfileProvider";
+import CompareQueueBar from "@/components/buyer/CompareQueueBar";
 import { ToastProvider } from "@/components/ui/Toast";
 import BrandJsonLd from "@/components/seo/BrandJsonLd";
 import MainContent from "@/components/layout/MainContent";
@@ -117,6 +118,7 @@ export default function RootLayout({
               <ToastProvider>
                 <NavbarWrapper />
                 <MainContent>{children}</MainContent>
+                <CompareQueueBar />
               </ToastProvider>
             </ProgressiveProfileProvider>
           </AuthProvider>

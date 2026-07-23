@@ -102,8 +102,8 @@ export default function BuyerCrmPage() {
 
   const journeySteps = JOURNEY_STAGES.map((stage, idx) => ({
     label: stage.label,
-    done: currentStageIdx >= 0 ? idx <= currentStageIdx : idx === 0,
-    active: currentStageIdx === idx,
+    done: currentStageIdx >= 0 ? idx < currentStageIdx : false,
+    active: currentStageIdx >= 0 ? currentStageIdx === idx : idx === 0,
   }));
 
   const nextAction = getNextAction(currentStatus, enquiries.length, visitCount);
@@ -163,7 +163,7 @@ export default function BuyerCrmPage() {
               </p>
             </div>
           </div>
-          <div className="mt-6">
+          <div className="mt-6 overflow-hidden">
             <StepProgress steps={journeySteps} />
           </div>
         </Card>

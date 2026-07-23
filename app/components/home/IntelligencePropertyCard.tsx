@@ -2,10 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth/AuthProvider";
 import { useSavedPropertyToggle } from "@/lib/buyer/useSavedProperty";
-import { addComparedProperty } from "@/lib/buyer/queries";
+import { useComparedProperty } from "@/lib/buyer/useComparedProperty";
 import { formatPriceShort } from "@/lib/home/marketSignals";
 import type { IntelligencePropertyCardModel } from "@/lib/home/types";
 import { isReraApproved } from "@/lib/properties/reraStatus";
@@ -16,9 +14,8 @@ type Props = {
 };
 
 export default function IntelligencePropertyCard({ property }: Props) {
-  const router = useRouter();
-  const { user } = useAuth();
   const { isSaved, handleFavoriteToggle } = useSavedPropertyToggle();
+  const { compared, addAndGo, busy } = useComparedProperty(property.id);
   const saved = isSaved(property.id);
 
   const onSave = async () => {
@@ -26,14 +23,7 @@ export default function IntelligencePropertyCard({ property }: Props) {
   };
 
   const onCompare = async () => {
-    if (!user) {
-      router.push(
-        `/login?redirect=${encodeURIComponent(`/buyer/compare`)}`,
-      );
-      return;
-    }
-    await addComparedProperty(user.id, property.id);
-    router.push("/buyer/compare");
+    await addAndGo();
   };
 
   return (
@@ -127,9 +117,14 @@ export default function IntelligencePropertyCard({ property }: Props) {
           <button
             type="button"
             onClick={onCompare}
-            className="inline-flex min-h-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-label hover:bg-neutral-50"
+            disabled={busy}
+            className={`inline-flex min-h-10 items-center justify-center rounded-xl border text-xs font-semibold disabled:opacity-60 ${
+              compared
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-neutral-200 bg-white text-label hover:bg-neutral-50"
+            }`}
           >
-            Compare
+            {busy ? "…" : compared ? "In Compare" : "Compare"}
           </button>
           <button
             type="button"

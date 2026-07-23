@@ -2,6 +2,7 @@
 
 import PropertyCard, { type PropertyCardProps } from "@/app/components/PropertyCard";
 import { useSavedPropertyToggle } from "@/lib/buyer/useSavedProperty";
+import { useComparedPropertyToggle } from "@/lib/buyer/useComparedProperty";
 
 interface PropertyCardsGridProps {
   properties: PropertyCardProps[];
@@ -20,6 +21,7 @@ export default function PropertyCardsGrid({
   columns = "3",
 }: PropertyCardsGridProps) {
   const { isSaved, handleFavoriteToggle } = useSavedPropertyToggle();
+  const { isCompared, handleCompareToggle } = useComparedPropertyToggle();
 
   return (
     <div className={`grid gap-5 md:gap-6 ${COLUMN_CLASS[columns]}`}>
@@ -28,7 +30,11 @@ export default function PropertyCardsGrid({
           key={property.id}
           {...property}
           isFavorite={isSaved(property.id)}
+          isCompared={isCompared(property.id)}
           onFavoriteToggle={handleFavoriteToggle}
+          onCompareToggle={(id, compared) => {
+            void handleCompareToggle(id, compared);
+          }}
         />
       ))}
     </div>

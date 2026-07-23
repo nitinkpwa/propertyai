@@ -1,11 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { buildLoginUrlWithIntent, clearPendingAuthIntent } from "@/lib/auth/pendingIntent";
-import { addComparedProperty } from "@/lib/buyer/queries";
 import { useSavedProperty } from "@/lib/buyer/useSavedProperty";
+import { useComparedProperty } from "@/lib/buyer/useComparedProperty";
 import { isReraApproved } from "@/lib/properties/reraStatus";
 import type { PropertyDetail } from "../data";
 import { formatPropertyPrice } from "../data";
@@ -65,13 +62,12 @@ function ScoreChip({
 }
 
 export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
-  const router = useRouter();
-  const { user } = useAuth();
   const { saved, toggle, saving } = useSavedProperty(property.id);
+  const { compared, addAndGo, busy: comparing } = useComparedProperty(
+    property.id,
+  );
   const { requestBookVisit } = useBookSiteVisit();
   const [shared, setShared] = useState(false);
-  const [comparing, setComparing] = useState(false);
-  const [compared, setCompared] = useState(false);
 
   const scores = property.intelligenceBundle?.scores;
 
@@ -92,32 +88,17 @@ export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
   }, [property.name]);
 
   const handleCompare = useCallback(async () => {
-    if (!user) {
-      router.push(
-        buildLoginUrlWithIntent({
-          action: "compare",
-          propertyId: property.id,
-          returnUrl: `${window.location.pathname}${window.location.search}`,
-        }),
-      );
-      return;
-    }
-    setComparing(true);
-    const ok = await addComparedProperty(user.id, property.id);
-    setComparing(false);
-    if (ok) {
-      clearPendingAuthIntent();
-      setCompared(true);
-      router.push("/buyer/compare");
-    }
-  }, [user, property.id, router]);
+    await addAndGo();
+  }, [addAndGo]);
 
   const scrollToAsk = useCallback(() => {
     if (onAskAi) {
       onAskAi();
       return;
     }
-    document.getElementById("property-ask-panel")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    document
+      .getElementById("property-ask-panel")
+      ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [onAskAi]);
 
   return (
@@ -178,7 +159,11 @@ export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
         {scores ? (
           <div className="mt-5 flex gap-2 overflow-x-auto pb-1 scrollbar-thin sm:flex-wrap sm:overflow-visible">
             <ScoreChip label="AreaIQ" value={scores.areaIq.value} available={scores.areaIq.available} />
-            <ScoreChip label="Investment" value={scores.investment.value} available={scores.investment.available} />
+            <ScoreChip
+              label="Investment"
+              value={scores.investment.value}
+              available={scores.investment.available}
+            />
             <ScoreChip label="Builder" value={scores.builder.value} available={scores.builder.available} />
             <ScoreChip label="Rental" value={scores.rental.value} available={scores.rental.available} />
             <ScoreChip
@@ -217,9 +202,14 @@ export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
             type="button"
             onClick={handleCompare}
             disabled={comparing}
-            className="inline-flex items-center justify-center rounded-xl border border-neutral-200 px-4 py-3 text-sm font-semibold text-body transition-all hover:bg-neutral-50 active:scale-[0.98] disabled:opacity-60"
+            aria-pressed={compared}
+            className={`inline-flex items-center justify-center rounded-xl border px-4 py-3 text-sm font-semibold transition-all active:scale-[0.98] disabled:opacity-60 ${
+              compared
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-neutral-200 text-body hover:bg-neutral-50"
+            }`}
           >
-            {comparing ? "Adding…" : compared ? "In Compare" : "Compare"}
+            {comparing ? "Updating…" : compared ? "In Compare" : "Compare"}
           </button>
           <button
             type="button"

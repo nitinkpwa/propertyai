@@ -7,13 +7,12 @@ import FadeIn from "./FadeIn";
 import SectionHeader from "./SectionHeader";
 import { INVESTMENT_TOOLS } from "./data";
 import { IQ_GREEN } from "./theme";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 type CalcTab = "emi" | "roi" | "rental" | "afford";
 
 function formatINR(n: number): string {
-  if (n >= 10000000) return `₹${(n / 10000000).toFixed(2)} Cr`;
-  if (n >= 100000) return `₹${(n / 100000).toFixed(2)} L`;
-  return `₹${Math.round(n).toLocaleString("en-IN")}`;
+  return formatInrAmount(n);
 }
 
 export default function InvestmentCalculators() {

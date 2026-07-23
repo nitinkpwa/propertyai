@@ -1,3 +1,5 @@
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
+
 /**
  * Client-side streaming helper for the legacy SSE endpoint POST /api/ask.
  * The Ask page uses POST /api/ask/query (structured engine) instead.
@@ -72,7 +74,7 @@ export function buildListingsContext(
     .slice(0, 8)
     .map(
       (p) =>
-        `- ${p.name} | ${p.location} | ₹${Math.round(p.price / 100_000)}L | ${p.bhk} BHK | Score ${p.growthScore} | Yield ${p.rentalYield}%`,
+        `- ${p.name} | ${p.location} | ${formatInrAmount(p.price)} | ${p.bhk} BHK | Score ${p.growthScore} | Yield ${p.rentalYield}%`,
     )
     .join("\n");
 

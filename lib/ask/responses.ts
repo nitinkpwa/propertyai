@@ -1,4 +1,5 @@
 import type { ListingProperty } from "@/lib/properties/types";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import type { AskSearchResult, AskSearchStats, AskSection } from "./types";
 
 export function computeSearchStats(listings: ListingProperty[]): AskSearchStats | null {
@@ -23,11 +24,7 @@ export function computeSearchStats(listings: ListingProperty[]): AskSearchStats 
 }
 
 export function formatPriceShort(price: number): string {
-  if (price >= 10_000_000) {
-    const cr = price / 10_000_000;
-    return `₹${cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(1)} crore`;
-  }
-  return `₹${Math.round(price / 100_000)} lakh`;
+  return formatInrAmount(price);
 }
 
 export function buildSearchHeadline(result: AskSearchResult, stats: AskSearchStats | null): string {

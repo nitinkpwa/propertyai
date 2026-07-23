@@ -5,6 +5,7 @@ import { fetchAdminBuyerJourney } from "@/lib/crm/queries";
 import type { AdminBuyerJourney } from "@/lib/crm/types";
 import ActivityTimeline from "@/components/crm/ActivityTimeline";
 import LeadStatusBadge from "@/components/crm/LeadStatusBadge";
+import { formatBudgetRange } from "@/lib/properties/pricingDisplay";
 
 interface AdminBuyerJourneyPanelProps {
   buyerId: string;
@@ -13,11 +14,7 @@ interface AdminBuyerJourneyPanelProps {
 
 function formatBudget(min?: number | null, max?: number | null): string {
   if (min == null && max == null) return "Not set";
-  const fmt = (n: number) =>
-    n >= 10_000_000 ? `₹${(n / 10_000_000).toFixed(1)} Cr` : `₹${(n / 100_000).toFixed(0)} L`;
-  if (min != null && max != null) return `${fmt(min)} – ${fmt(max)}`;
-  if (max != null) return `Up to ${fmt(max)}`;
-  return min != null ? `From ${fmt(min)}` : "Not set";
+  return formatBudgetRange(min, max) || "Not set";
 }
 
 export default function AdminBuyerJourneyPanel({

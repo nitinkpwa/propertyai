@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import { isReraApproved } from "@/lib/properties/reraStatus";
+import { useComparedProperty } from "@/lib/buyer/useComparedProperty";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Badge from "@/components/ui/Badge";
 import Price from "@/components/ui/Price";
@@ -135,7 +136,13 @@ export default function PropertyCard({
   const isControlled = onFavoriteToggle !== undefined;
   const [internalFavorite, setInternalFavorite] = useState(isFavoriteProp);
   const isFavorite = isControlled ? isFavoriteProp : internalFavorite;
-  const [isCompared, setIsCompared] = useState(isComparedProp);
+  const {
+    compared: storeCompared,
+    toggle: toggleCompare,
+    busy: compareBusy,
+  } = useComparedProperty(id);
+  const isCompareControlled = onCompareToggle !== undefined;
+  const isCompared = isCompareControlled ? isComparedProp : storeCompared;
   const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
@@ -172,14 +179,19 @@ export default function PropertyCard({
   );
 
   const handleCompare = useCallback(
-    (e?: React.MouseEvent) => {
+    async (e?: React.MouseEvent) => {
       e?.preventDefault();
       e?.stopPropagation();
-      const next = !isCompared;
-      setIsCompared(next);
-      onCompareToggle?.(id, next);
+      if (compareBusy) return;
+
+      if (isCompareControlled) {
+        onCompareToggle?.(id, !isCompared);
+        return;
+      }
+
+      await toggleCompare();
     },
-    [id, isCompared, onCompareToggle],
+    [id, isCompared, isCompareControlled, onCompareToggle, toggleCompare, compareBusy],
   );
 
   const handleViewDetails = useCallback(

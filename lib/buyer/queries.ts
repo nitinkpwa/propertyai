@@ -192,6 +192,23 @@ export async function removeSavedProperty(rowId: string): Promise<boolean> {
   return true;
 }
 
+export async function fetchComparedPropertyIds(userId: string): Promise<string[]> {
+  const { data, error } = await supabase
+    .from("compared_properties")
+    .select("property_id")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("fetchComparedPropertyIds:", error.message);
+    return [];
+  }
+
+  return (data ?? [])
+    .map((row) => row.property_id as string)
+    .filter(Boolean);
+}
+
 export async function fetchComparedPropertyCards(userId: string) {
   const { data, error } = await supabase
     .from("compared_properties")
@@ -218,6 +235,23 @@ export async function removeComparedProperty(rowId: string): Promise<boolean> {
   return true;
 }
 
+export async function removeComparedPropertyByPropertyId(
+  userId: string,
+  propertyId: string,
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("compared_properties")
+    .delete()
+    .eq("user_id", userId)
+    .eq("property_id", propertyId);
+
+  if (error) {
+    console.error("removeComparedPropertyByPropertyId:", error.message);
+    return false;
+  }
+  return true;
+}
+
 export async function addComparedProperty(
   userId: string,
   propertyId: string,
@@ -237,6 +271,57 @@ export async function addComparedProperty(
     title: "Property added to compare",
     propertyId,
   });
+
+  return true;
+}
+
+/** Replace remote compare set with the given property IDs (capped). */
+export async function syncComparedProperties(
+  userId: string,
+  propertyIds: string[],
+): Promise<boolean> {
+  const unique = Array.from(new Set(propertyIds.filter(Boolean)));
+
+  const { data: existing, error: fetchError } = await supabase
+    .from("compared_properties")
+    .select("id, property_id")
+    .eq("user_id", userId);
+
+  if (fetchError) {
+    console.error("syncComparedProperties fetch:", fetchError.message);
+    return false;
+  }
+
+  const rows = existing ?? [];
+  const remoteIds = new Set(rows.map((r) => r.property_id as string));
+  const desired = new Set(unique);
+
+  const toDelete = rows
+    .filter((r) => !desired.has(r.property_id as string))
+    .map((r) => r.id as string);
+
+  if (toDelete.length > 0) {
+    const { error } = await supabase
+      .from("compared_properties")
+      .delete()
+      .in("id", toDelete);
+    if (error) {
+      console.error("syncComparedProperties delete:", error.message);
+      return false;
+    }
+  }
+
+  const toAdd = unique.filter((id) => !remoteIds.has(id));
+  if (toAdd.length > 0) {
+    const { error } = await supabase.from("compared_properties").upsert(
+      toAdd.map((property_id) => ({ user_id: userId, property_id })),
+      { onConflict: "user_id,property_id" },
+    );
+    if (error) {
+      console.error("syncComparedProperties upsert:", error.message);
+      return false;
+    }
+  }
 
   return true;
 }

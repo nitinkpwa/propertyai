@@ -1,5 +1,6 @@
 import type { SiteVisitRow } from "@/lib/buyer/types";
 import { buildPropertyChecklist } from "@/lib/crm/visitWorkflow";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import { isReraApproved } from "@/lib/properties/reraStatus";
 
 export interface VisitAssistantPhase {
@@ -129,7 +130,7 @@ export function buildBeforeVisitContext(visit: SiteVisitRow & {
   else cons.push("Confirm parking allocation");
   if (visit.builder_name) pros.push(`Builder: ${visit.builder_name}`);
 
-  const priceStr = prop?.price ? `₹${(prop.price / 100000).toFixed(1)}L` : "market rate";
+  const priceStr = prop?.price ? formatInrAmount(prop.price) : "market rate";
   const marketPriceNote = `Compare ${priceStr} with 2-3 similar projects in ${prop?.city ?? "the area"} before deciding.`;
 
   return {

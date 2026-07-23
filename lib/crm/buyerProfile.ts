@@ -8,6 +8,7 @@ import {
   labelForTimeline,
 } from "@/lib/buyer/profileFields";
 import { calculateLeadScore } from "@/lib/crm/leadScore";
+import { formatBudgetRange } from "@/lib/properties/pricingDisplay";
 import { PROFILE_EMBED_SELECT } from "@/lib/profiles/schema";
 import { supabase as browserSupabase } from "@/lib/supabase";
 
@@ -84,17 +85,7 @@ export interface BuyerProfileForCRM {
   familySizeLabel: string;
 }
 
-export function formatBudgetForCRM(
-  min?: number | null,
-  max?: number | null,
-): string {
-  if (min == null && max == null) return "";
-  const fmt = (n: number) =>
-    n >= 10_000_000 ? `₹${(n / 10_000_000).toFixed(1)} Cr` : `₹${(n / 100_000).toFixed(0)} L`;
-  if (min != null && max != null) return `${fmt(min)} – ${fmt(max)}`;
-  if (max != null) return `Up to ${fmt(max)}`;
-  return min != null ? `From ${fmt(min)}` : "";
-}
+export const formatBudgetForCRM = formatBudgetRange;
 
 export function getBuyerProfileForCRM(
   raw: Partial<Profile> | Record<string, unknown> | null | undefined,

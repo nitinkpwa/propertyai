@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 export { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
 
@@ -63,12 +64,7 @@ export function formatPrice(price: number): string {
   if (!price || price <= 0) return "Price on Request";
   // Never show unit-rate-sized values as market price on admin surfaces
   if (price < 100_000) return "Price on Request";
-  if (price >= 10_000_000) {
-    const cr = price / 10_000_000;
-    return `₹${cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "")} Cr`;
-  }
-  const lakhs = price / 100_000;
-  return `₹${lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(1).replace(/\.0$/, "")} L`;
+  return formatInrAmount(price);
 }
 
 export function formatDate(d: string): string {

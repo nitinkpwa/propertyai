@@ -59,29 +59,32 @@ function parseNumber(raw: unknown): number | null {
 
 /**
  * Indian market-value formatter for totals only.
- * 39,00,000 → ₹39 L | 72,50,000 → ₹72.5 L | 1,21,80,000 → ₹1.22 Cr
+ * Always exactly two decimal places: ₹92.00 L | ₹1.10 Cr | ₹2.45 Cr
  * Never use this for unit rates (5800 / sq ft).
  */
 export function formatInrAmount(price: number): string {
   if (!price || price <= 0) return "Price on Request";
   if (price >= 10_000_000) {
-    const cr = price / 10_000_000;
-    const label =
-      cr % 1 === 0
-        ? cr.toFixed(0)
-        : cr.toFixed(2).replace(/\.?0+$/, "");
-    return `₹${label} Cr`;
+    return `₹${(price / 10_000_000).toFixed(2)} Cr`;
   }
   if (price >= 100_000) {
-    const lakhs = price / 100_000;
-    const label =
-      lakhs % 1 === 0
-        ? lakhs.toFixed(0)
-        : lakhs.toFixed(1).replace(/\.0$/, "");
-    return `₹${label} L`;
+    return `₹${(price / 100_000).toFixed(2)} L`;
   }
   // Sub-lakh totals are unusual for Tricity listings — still format, never show raw rate style
   return `₹${Math.round(price).toLocaleString("en-IN")}`;
+}
+
+/** Budget range for CRM / profile chips — uses the same compact INR rules. */
+export function formatBudgetRange(
+  min?: number | null,
+  max?: number | null,
+): string {
+  if (min == null && max == null) return "";
+  if (min != null && max != null) {
+    return `${formatInrAmount(min)} – ${formatInrAmount(max)}`;
+  }
+  if (max != null) return `Up to ${formatInrAmount(max)}`;
+  return `From ${formatInrAmount(min!)}`;
 }
 
 /** True when a stored "price" is actually a unit rate (e.g. 5800), not market value. */
@@ -100,20 +103,12 @@ export function looksLikeUnitRateNotTotal(
   return false;
 }
 
-/** Compact starting price for plots — e.g. "Starting ₹92 L". */
+/** Compact starting price for plots — e.g. "Starting ₹92.00 L". */
 export function formatStartingFrom(price: number): string {
   if (!price || price <= 0) return "Price on Request";
-  if (price >= 10_000_000) {
-    const cr = price / 10_000_000;
-    const label = cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "");
-    return `Starting ₹${label} Cr`;
-  }
-  if (price >= 100_000) {
-    const lakhs = price / 100_000;
-    const label = lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(1).replace(/\.0$/, "");
-    return `Starting ₹${label} L`;
-  }
-  return `Starting ${formatInrAmount(price)}`;
+  const amount = formatInrAmount(price);
+  if (amount === "Price on Request") return amount;
+  return `Starting ${amount}`;
 }
 
 function normalizeUnit(raw: string | undefined | null): PlotSizeUnit {

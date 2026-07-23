@@ -8,6 +8,7 @@ import {
   type PendingAuthAction,
 } from "@/lib/auth/pendingIntent";
 import { addComparedProperty, toggleSavedProperty } from "@/lib/buyer/queries";
+import { addCompareId } from "@/lib/buyer/compareStore";
 
 interface Props {
   propertyId: string;
@@ -44,6 +45,7 @@ export default function PendingActionResume({ propertyId, onAskAi }: Props) {
             );
             break;
           case "compare":
+            addCompareId(propertyId);
             await addComparedProperty(user.id, propertyId);
             clearPendingAuthIntent();
             window.location.assign("/buyer/compare");

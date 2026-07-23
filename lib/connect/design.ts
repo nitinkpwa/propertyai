@@ -1,4 +1,5 @@
 import { text } from "@/lib/design/text";
+import { formatBudgetRange, formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 /** Design tokens for Connect Partner Portal */
 export const connectTokens = {
@@ -29,24 +30,13 @@ export const PIPELINE_STAGES = [
 
 export function formatBudget(min: number | null, max: number | null): string {
   if (!min && !max) return "—";
-  const fmt = (n: number) =>
-    n >= 10_000_000 ? `₹${(n / 10_000_000).toFixed(1)} Cr` : `₹${(n / 100_000).toFixed(0)} L`;
-  if (min && max) return `${fmt(min)} – ${fmt(max)}`;
-  if (max) return `Up to ${fmt(max)}`;
-  return fmt(min!);
+  return formatBudgetRange(min, max) || "—";
 }
 
 export function formatPrice(price: number): string {
   if (!price || price <= 0) return "Price on Request";
   if (price < 100_000) return "Price on Request";
-  if (price >= 10_000_000) {
-    const cr = price / 10_000_000;
-    const label = cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(2).replace(/\.?0+$/, "");
-    return `₹${label} Cr`;
-  }
-  const lakhs = price / 100_000;
-  const label = lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(1).replace(/\.0$/, "");
-  return `₹${label} L`;
+  return formatInrAmount(price);
 }
 
 export function getGreeting(): string {

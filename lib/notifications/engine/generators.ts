@@ -8,6 +8,7 @@ import type { CrmNotification } from "@/lib/crm/types";
 import type { SiteVisitRow } from "@/lib/buyer/types";
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
 import type { Profile } from "@/lib/supabase";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -18,15 +19,7 @@ function formatCount(n: number): string {
 }
 
 function formatPriceShort(price: number): string {
-  if (price >= 10_000_000) {
-    const cr = price / 10_000_000;
-    return `₹${cr % 1 === 0 ? cr.toFixed(0) : cr.toFixed(1)} Cr`;
-  }
-  if (price >= 100_000) {
-    const lakhs = price / 100_000;
-    return `₹${lakhs % 1 === 0 ? lakhs.toFixed(0) : lakhs.toFixed(1)} L`;
-  }
-  return `₹${Math.round(price).toLocaleString("en-IN")}`;
+  return formatInrAmount(price);
 }
 
 function pass(n: IntelligenceNotification): IntelligenceNotification | null {

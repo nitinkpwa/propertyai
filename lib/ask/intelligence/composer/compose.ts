@@ -6,11 +6,10 @@ import { formatBuilderForComposer } from "../builder/service";
 import { formatInvestmentForComposer } from "../investment/service";
 import type { ComposedAnswer, IntelligenceBundle, RankedListing } from "../types";
 import { ANSWER_COMPOSER_SYSTEM, buildComposerUserPayload } from "./prompts";
+import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 function formatPrice(n: number): string {
-  if (n >= 10_000_000) return `₹${(n / 10_000_000).toFixed(2)} Cr`;
-  if (n >= 100_000) return `₹${(n / 100_000).toFixed(1)} L`;
-  return `₹${n.toLocaleString("en-IN")}`;
+  return formatInrAmount(n);
 }
 
 function formatListingsBlock(rows: RankedListing[], label: string): string {
