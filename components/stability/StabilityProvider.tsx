@@ -2,14 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { runVersionGuard, logger, isFatalAuthError } from "@/lib/stability";
-import { supabase } from "@/lib/supabase/client";
+import { recoverSessionOnWake } from "@/lib/auth/sessionRecovery";
+import {
+  runVersionGuard,
+  logger,
+  APP_VERSION,
+} from "@/lib/stability";
+import { isStaleAssetError, recoverFromStaleAssets } from "@/lib/stability/chunkRecovery";
 
 const WAKE_THRESHOLD_MS = 30 * 60_000; // 30 minutes backgrounded
 
 /**
  * Production stability shell:
  * - Deploy version mismatch → purge AreaIQ caches + reload once
+ * - Stale chunk / dynamic import failures → recover once
  * - Offline / online banner
  * - Session refresh after long sleep
  * - Global crash / unhandledrejection logging
@@ -28,13 +34,17 @@ export default function StabilityProvider({
     let cancelled = false;
 
     (async () => {
-      const result = await runVersionGuard();
-      if (cancelled) return;
-      if (result.status === "upgraded" && result.reloading) {
-        // Hard reload in progress — don't mount children mid-wipe
-        return;
+      try {
+        const result = await runVersionGuard();
+        if (cancelled) return;
+        if (result.status === "upgraded" && result.reloading) {
+          // Hard reload in progress — don't mount children mid-wipe
+          return;
+        }
+      } catch (err) {
+        logger.error("version", "Version guard failed — continuing", err);
       }
-      setReady(true);
+      if (!cancelled) setReady(true);
     })();
 
     return () => {
@@ -73,32 +83,22 @@ export default function StabilityProvider({
 
       logger.info("session", `Tab woke after ${Math.round(slept / 60_000)}m — refreshing session`);
 
-      try {
-        const { data, error } = await supabase.auth.refreshSession();
-        if (error) {
-          if (isFatalAuthError(error.message)) {
-            logger.error("session", "Fatal auth on wake — signing out", error.message);
-            await supabase.auth.signOut({ scope: "local" });
-            const protectedPath =
-              pathname.startsWith("/buyer") ||
-              pathname.startsWith("/seller") ||
-              pathname.startsWith("/admin") ||
-              pathname.startsWith("/connect/dashboard") ||
-              pathname.startsWith("/builder") ||
-              pathname.startsWith("/profile");
-            if (protectedPath) {
-              router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
-            }
-            return;
-          }
-          logger.warn("session", "refreshSession soft failure", error.message);
-          return;
+      const result = await recoverSessionOnWake();
+      if (result.fatal) {
+        const protectedPath =
+          pathname.startsWith("/buyer") ||
+          pathname.startsWith("/seller") ||
+          pathname.startsWith("/admin") ||
+          pathname.startsWith("/connect/dashboard") ||
+          pathname.startsWith("/builder") ||
+          pathname.startsWith("/profile");
+        if (protectedPath) {
+          router.replace(`/login?redirect=${encodeURIComponent(pathname)}`);
         }
-        if (data.session) {
-          router.refresh();
-        }
-      } catch (err) {
-        logger.error("session", "Wake recovery failed", err);
+        return;
+      }
+      if (result.ok) {
+        router.refresh();
       }
     };
 
@@ -106,9 +106,17 @@ export default function StabilityProvider({
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, [ready, pathname, router]);
 
-  // Global error / rejection logging (dev verbose; prod errors only via logger)
+  // Global error / rejection logging + stale-asset recovery
   useEffect(() => {
     if (!ready) return;
+
+    if (process.env.NODE_ENV === "development") {
+      logger.info("stability", "Ready", {
+        appVersion: APP_VERSION,
+        route: pathname,
+        online: navigator.onLine,
+      });
+    }
 
     const onError = (event: ErrorEvent) => {
       logger.error("runtime", event.message || "Unhandled error", {
@@ -116,6 +124,11 @@ export default function StabilityProvider({
         lineno: event.lineno,
         colno: event.colno,
       });
+
+      if (isStaleAssetError(event.error ?? event.message)) {
+        event.preventDefault();
+        void recoverFromStaleAssets(event.message || "window.error");
+      }
     };
 
     const onRejection = (event: PromiseRejectionEvent) => {
@@ -128,8 +141,9 @@ export default function StabilityProvider({
             : "Unhandled promise rejection";
       logger.error("runtime", message, reason);
 
-      if (isFatalAuthError(message)) {
-        void supabase.auth.signOut({ scope: "local" });
+      if (isStaleAssetError(reason ?? message)) {
+        event.preventDefault();
+        void recoverFromStaleAssets(message);
       }
     };
 
@@ -139,7 +153,7 @@ export default function StabilityProvider({
       window.removeEventListener("error", onError);
       window.removeEventListener("unhandledrejection", onRejection);
     };
-  }, [ready]);
+  }, [ready, pathname]);
 
   const retryOnline = useCallback(() => {
     if (navigator.onLine) {

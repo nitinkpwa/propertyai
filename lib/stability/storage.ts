@@ -1,4 +1,4 @@
-import { AREAIQ_STORAGE_PREFIX } from "./version";
+import { AREAIQ_STORAGE_PREFIX, APP_VERSION_STORAGE_KEY } from "./version";
 
 /** Known AreaIQ storage keys (for documentation + selective wipe). */
 export const AREAIQ_LOCAL_KEYS = [
@@ -16,6 +16,8 @@ export const AREAIQ_LOCAL_KEYS = [
   "areaiq-active-conversation-id",
   "areaiq_buyer_collections",
   "areaiq_buyer_saved_notes",
+  "areaiq_stability_v1_migrated",
+  "areaiq_chunk_recovery_v1",
 ] as const;
 
 export const AREAIQ_SESSION_KEYS = [
@@ -23,15 +25,20 @@ export const AREAIQ_SESSION_KEYS = [
   "areaiq_pending_auth_intent_v1",
   "areaiq_pricing_normalized_v1",
   "areaiq_version_reload_guard",
+  "areaiq_chunk_recovery_v1",
 ] as const;
 
-function isAreaIqKey(key: string): boolean {
+function isAreaIqCacheKey(key: string): boolean {
   return (
     key.startsWith(AREAIQ_STORAGE_PREFIX) ||
     key.startsWith("areaiq-") ||
-    key.startsWith("areaiq_") ||
-    key.startsWith("sb-") // stale supabase local leftovers if any
+    key.startsWith("areaiq_")
   );
+}
+
+/** Legacy supabase-js localStorage tokens — safe to drop; SSR auth uses cookies. */
+function isLegacySupabaseLocalKey(key: string): boolean {
+  return key.startsWith("sb-") && key.includes("auth");
 }
 
 function safeRemoveLocal(key: string) {
@@ -50,9 +57,21 @@ function safeRemoveSession(key: string) {
   }
 }
 
-/** Remove every AreaIQ-owned localStorage key (and leftover sb-*). */
-export function clearAreaIqLocalStorage(options?: { keepVersion?: boolean }) {
+export interface ClearLocalOptions {
+  keepVersion?: boolean;
+  /** When true (default on version upgrade), never touch auth cookies; only drop legacy sb-* local leftovers if keepAuth=false */
+  keepAuth?: boolean;
+}
+
+/**
+ * Remove AreaIQ-owned localStorage keys.
+ * By default keeps Supabase auth intact (cookies + optional local tokens).
+ */
+export function clearAreaIqLocalStorage(options?: ClearLocalOptions) {
   if (typeof window === "undefined") return;
+  const keepVersion = options?.keepVersion ?? false;
+  const keepAuth = options?.keepAuth ?? true;
+
   try {
     const keys: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
@@ -60,10 +79,19 @@ export function clearAreaIqLocalStorage(options?: { keepVersion?: boolean }) {
       if (key) keys.push(key);
     }
     for (const key of keys) {
-      if (options?.keepVersion && key === "areaiq_app_version") continue;
-      // Keep admin property drafts unless full wipe — drafts are long form work
+      if (keepVersion && key === APP_VERSION_STORAGE_KEY) continue;
+      // Keep admin property drafts — long-form work
       if (key.startsWith("areaiq-admin-property-draft")) continue;
-      if (isAreaIqKey(key) || AREAIQ_LOCAL_KEYS.includes(key as (typeof AREAIQ_LOCAL_KEYS)[number])) {
+
+      if (isLegacySupabaseLocalKey(key)) {
+        if (!keepAuth) safeRemoveLocal(key);
+        continue;
+      }
+
+      if (
+        isAreaIqCacheKey(key) ||
+        AREAIQ_LOCAL_KEYS.includes(key as (typeof AREAIQ_LOCAL_KEYS)[number])
+      ) {
         safeRemoveLocal(key);
       }
     }
@@ -83,7 +111,10 @@ export function clearAreaIqSessionStorage(options?: { keepReloadGuard?: boolean 
     }
     for (const key of keys) {
       if (options?.keepReloadGuard && key === "areaiq_version_reload_guard") continue;
-      if (isAreaIqKey(key) || AREAIQ_SESSION_KEYS.includes(key as (typeof AREAIQ_SESSION_KEYS)[number])) {
+      if (
+        isAreaIqCacheKey(key) ||
+        AREAIQ_SESSION_KEYS.includes(key as (typeof AREAIQ_SESSION_KEYS)[number])
+      ) {
         safeRemoveSession(key);
       }
     }
@@ -106,7 +137,12 @@ export async function unregisterServiceWorkers(): Promise<void> {
       const names = await caches.keys();
       await Promise.all(
         names
-          .filter((n) => n.toLowerCase().includes("areaiq") || n.toLowerCase().includes("next"))
+          .filter(
+            (n) =>
+              n.toLowerCase().includes("areaiq") ||
+              n.toLowerCase().includes("next") ||
+              n.toLowerCase().includes("workbox"),
+          )
           .map((n) => caches.delete(n)),
       );
     }
@@ -169,4 +205,66 @@ export function sanitizeAreaIqStorage() {
   } catch {
     /* ignore */
   }
+
+  // Drop orphaned legacy supabase-js local tokens (SSR uses cookies)
+  try {
+    const keys: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) keys.push(key);
+    }
+    for (const key of keys) {
+      if (isLegacySupabaseLocalKey(key)) {
+        safeRemoveLocal(key);
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Snapshot of browser storage keys for /debug (values redacted). */
+export function listStorageKeys(): {
+  local: string[];
+  session: string[];
+  cookieNames: string[];
+} {
+  const local: string[] = [];
+  const session: string[] = [];
+  const cookieNames: string[] = [];
+
+  if (typeof window === "undefined") {
+    return { local, session, cookieNames };
+  }
+
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key) local.push(key);
+    }
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key) session.push(key);
+    }
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    cookieNames.push(
+      ...document.cookie
+        .split(";")
+        .map((c) => c.trim().split("=")[0] ?? "")
+        .filter(Boolean),
+    );
+  } catch {
+    /* ignore */
+  }
+
+  return { local: local.sort(), session: session.sort(), cookieNames: cookieNames.sort() };
 }

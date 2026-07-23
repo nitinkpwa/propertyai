@@ -10,6 +10,7 @@ export {
   unregisterServiceWorkers,
   sanitizeAreaIqStorage,
   readJsonStorage,
+  listStorageKeys,
   AREAIQ_LOCAL_KEYS,
   AREAIQ_SESSION_KEYS,
 } from "./storage";
@@ -17,3 +18,5 @@ export { runVersionGuard } from "./versionGuard";
 export type { VersionCheckResult } from "./versionGuard";
 export { logger, isFatalAuthError } from "./logger";
 export { apiFetch } from "./fetch";
+export { isStaleAssetError, recoverFromStaleAssets } from "./chunkRecovery";
+export { readVersionedStorage, writeVersionedStorage } from "./persistSchema";

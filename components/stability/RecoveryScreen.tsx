@@ -1,8 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
-import { logger } from "@/lib/stability";
+import { useEffect, useState } from "react";
+import { APP_VERSION, logger } from "@/lib/stability";
+import { isStaleAssetError, recoverFromStaleAssets } from "@/lib/stability/chunkRecovery";
+import {
+  clearAreaIqLocalStorage,
+  clearAreaIqSessionStorage,
+  unregisterServiceWorkers,
+} from "@/lib/stability/storage";
 import ErrorState from "@/components/ui/ErrorState";
 
 interface RecoveryScreenProps {
@@ -13,7 +19,7 @@ interface RecoveryScreenProps {
 }
 
 /**
- * Premium recovery UI — Reload / Home / Retry.
+ * Premium recovery UI — Reload / Recover state / Home / Retry.
  */
 export default function RecoveryScreen({
   error,
@@ -21,14 +27,37 @@ export default function RecoveryScreen({
   title = "Something went wrong",
   description = "AreaIQ hit an unexpected error. You can reload this page or head home — your data is safe.",
 }: RecoveryScreenProps) {
+  const [recovering, setRecovering] = useState(false);
+
   useEffect(() => {
     if (error) {
       logger.error("recovery", error.message, { digest: error.digest, stack: error.stack });
+      if (isStaleAssetError(error)) {
+        void recoverFromStaleAssets(`recovery-screen:${error.message}`);
+      }
     }
   }, [error]);
 
   const reload = () => {
     if (typeof window !== "undefined") window.location.reload();
+  };
+
+  const recoverClientState = async () => {
+    if (typeof window === "undefined") return;
+    setRecovering(true);
+    try {
+      clearAreaIqLocalStorage({ keepAuth: true });
+      clearAreaIqSessionStorage();
+      await unregisterServiceWorkers();
+      try {
+        localStorage.setItem("areaiq_app_version", APP_VERSION);
+      } catch {
+        /* ignore */
+      }
+      window.location.href = "/";
+    } catch {
+      window.location.reload();
+    }
   };
 
   return (
@@ -41,6 +70,14 @@ export default function RecoveryScreen({
           className="inline-flex min-h-11 items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 text-sm font-semibold text-body transition hover:bg-neutral-50"
         >
           Reload page
+        </button>
+        <button
+          type="button"
+          disabled={recovering}
+          onClick={() => void recoverClientState()}
+          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-5 text-sm font-semibold text-amber-900 transition hover:bg-amber-100 disabled:opacity-60"
+        >
+          {recovering ? "Recovering…" : "Fix stale browser state"}
         </button>
         <Link
           href="/"

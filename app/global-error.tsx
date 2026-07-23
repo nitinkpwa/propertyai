@@ -13,6 +13,31 @@ export default function GlobalError({
     console.error("[AreaIQ:global]", error.message, error.digest);
   }, [error]);
 
+  const recover = () => {
+    try {
+      const keys: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) keys.push(key);
+      }
+      for (const key of keys) {
+        if (
+          key.startsWith("areaiq") ||
+          key.startsWith("areaiq-") ||
+          key.startsWith("areaiq_")
+        ) {
+          // Keep auth cookies; only drop AreaIQ local caches
+          if (key.startsWith("sb-")) continue;
+          localStorage.removeItem(key);
+        }
+      }
+      sessionStorage.clear();
+    } catch {
+      /* ignore */
+    }
+    window.location.href = "/";
+  };
+
   return (
     <html lang="en">
       <body
@@ -48,8 +73,8 @@ export default function GlobalError({
             AreaIQ needs a moment
           </h1>
           <p style={{ fontSize: 15, color: "#6b7280", margin: "0 0 1.5rem", lineHeight: 1.5 }}>
-            A critical error stopped the page from loading. Reload to recover — you will not lose
-            your account.
+            A critical error stopped the page from loading. Reload or recover client state — you
+            will not lose your account.
           </p>
           <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
             <button
@@ -84,20 +109,24 @@ export default function GlobalError({
             >
               Reload page
             </button>
-            <a
-              href="/"
+            <button
+              type="button"
+              onClick={recover}
               style={{
-                color: "#326f1a",
+                background: "#fffbeb",
+                color: "#92400e",
+                border: "1px solid #fde68a",
+                padding: "12px 20px",
+                borderRadius: 12,
                 fontSize: 14,
                 fontWeight: 600,
-                padding: "12px 12px",
-                textDecoration: "none",
+                cursor: "pointer",
               }}
             >
-              Go Home
-            </a>
+              Fix stale state
+            </button>
           </div>
-          {error.digest ? (
+          {error?.digest ? (
             <p style={{ marginTop: 24, fontSize: 11, color: "#9ca3af" }}>Ref: {error.digest}</p>
           ) : null}
         </div>

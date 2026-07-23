@@ -11,7 +11,8 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { fetchProfile, getDashboardPath } from "@/lib/auth/profile";
-import { isFatalAuthError, logger } from "@/lib/stability";
+import { bootstrapSession, recoverSessionOnWake } from "@/lib/auth/sessionRecovery";
+import { logger, APP_VERSION } from "@/lib/stability";
 import { supabase } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/supabase";
 
@@ -23,18 +24,11 @@ interface AuthContextValue {
   dashboardPath: string;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
+  /** Last bootstrap status for diagnostics */
+  sessionStatus: string;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
-
-function isMissingSessionError(error: { name?: string; message?: string } | null): boolean {
-  if (!error) return false;
-  return (
-    error.name === "AuthSessionMissingError" ||
-    error.message === "Auth session missing!" ||
-    (error.message?.toLowerCase().includes("auth session missing") ?? false)
-  );
-}
 
 function isProtectedPath(pathname: string): boolean {
   return (
@@ -47,11 +41,48 @@ function isProtectedPath(pathname: string): boolean {
   );
 }
 
+function logAuthDiagnostics(input: {
+  reason: string;
+  user: User | null;
+  session: Session | null;
+  profile: Profile | null;
+  status: string;
+}) {
+  if (process.env.NODE_ENV !== "development") return;
+  const jwtExp = (() => {
+    try {
+      const token = input.session?.access_token;
+      if (!token) return null;
+      const payload = JSON.parse(atob(token.split(".")[1] ?? "")) as { exp?: number };
+      return payload.exp ? new Date(payload.exp * 1000).toISOString() : null;
+    } catch {
+      return null;
+    }
+  })();
+
+  logger.info("auth", input.reason, {
+    status: input.status,
+    userId: input.user?.id ?? null,
+    role: input.profile?.role ?? null,
+    route: typeof window !== "undefined" ? window.location.pathname : null,
+    jwtExpiresAt: jwtExp,
+    sessionExpiresAt: input.session?.expires_at
+      ? new Date(input.session.expires_at * 1000).toISOString()
+      : null,
+    appVersion: APP_VERSION,
+    storedVersion:
+      typeof window !== "undefined"
+        ? localStorage.getItem("areaiq_app_version")
+        : null,
+  });
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [sessionStatus, setSessionStatus] = useState("booting");
   const router = useRouter();
 
   const clearAuthState = useCallback(() => {
@@ -69,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         /* ignore */
       }
       clearAuthState();
+      setSessionStatus("cleared");
       const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
       if (isProtectedPath(pathname)) {
         window.location.assign(`/login?redirect=${encodeURIComponent(pathname)}`);
@@ -98,37 +130,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
 
     const initialize = async () => {
-      const {
-        data: { user: initialUser },
-        error,
-      } = await supabase.auth.getUser();
+      try {
+        const result = await bootstrapSession();
+        if (!mounted) return;
 
-      if (error) {
-        if (isFatalAuthError(error.message)) {
-          if (mounted) await forceCleanLogout(error.message);
-          return;
+        setUser(result.user);
+        setSession(result.session);
+        setProfile(result.profile);
+        setSessionStatus(result.status);
+        setLoading(false);
+
+        logAuthDiagnostics({
+          reason: "initialize",
+          user: result.user,
+          session: result.session,
+          profile: result.profile,
+          status: result.status,
+        });
+
+        // Cleared on a protected route → soft redirect (never crash)
+        if (
+          result.status === "cleared" &&
+          typeof window !== "undefined" &&
+          isProtectedPath(window.location.pathname)
+        ) {
+          window.location.assign(
+            `/login?redirect=${encodeURIComponent(window.location.pathname)}`,
+          );
         }
-        if (!isMissingSessionError(error)) {
-          logger.error("auth", "Failed to restore session", error.message);
-        }
+      } catch (err) {
+        logger.error("auth", "Initialize failed — continuing anonymous", err);
+        if (!mounted) return;
+        clearAuthState();
+        setSessionStatus("error");
+        setLoading(false);
       }
-
-      const {
-        data: { session: initialSession },
-        error: sessionError,
-      } = await supabase.auth.getSession();
-
-      if (sessionError && isFatalAuthError(sessionError.message)) {
-        if (mounted) await forceCleanLogout(sessionError.message);
-        return;
-      }
-
-      if (!mounted) return;
-
-      setUser(initialUser ?? null);
-      setSession(initialSession);
-      await loadProfile(initialUser ?? null);
-      setLoading(false);
     };
 
     void initialize();
@@ -138,25 +174,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
       if (!mounted) return;
 
-      if (event === "TOKEN_REFRESHED" && !nextSession) {
-        await forceCleanLogout("TOKEN_REFRESHED with empty session");
-        return;
-      }
+      try {
+        if (event === "TOKEN_REFRESHED" && !nextSession) {
+          // One recovery attempt before logout
+          const wake = await recoverSessionOnWake();
+          if (!wake.ok || wake.fatal) {
+            await forceCleanLogout("TOKEN_REFRESHED with empty session");
+            return;
+          }
+          setSession(wake.session);
+          setUser(wake.session?.user ?? null);
+          await loadProfile(wake.session?.user ?? null);
+          setSessionStatus("recovered");
+          setLoading(false);
+          return;
+        }
 
-      if (event === "SIGNED_OUT") {
-        clearAuthState();
+        if (event === "SIGNED_OUT") {
+          clearAuthState();
+          setSessionStatus("signed_out");
+          setLoading(false);
+          router.refresh();
+          return;
+        }
+
+        setSession(nextSession);
+        setUser(nextSession?.user ?? null);
+        await loadProfile(nextSession?.user ?? null);
+        setSessionStatus(event.toLowerCase());
         setLoading(false);
-        router.refresh();
-        return;
-      }
 
-      setSession(nextSession);
-      setUser(nextSession?.user ?? null);
-      await loadProfile(nextSession?.user ?? null);
-      setLoading(false);
+        logAuthDiagnostics({
+          reason: `onAuthStateChange:${event}`,
+          user: nextSession?.user ?? null,
+          session: nextSession,
+          profile: null,
+          status: event,
+        });
 
-      if (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "TOKEN_REFRESHED") {
-        router.refresh();
+        if (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "TOKEN_REFRESHED") {
+          router.refresh();
+        }
+      } catch (err) {
+        logger.error("auth", `onAuthStateChange handler failed (${event})`, err);
+        setLoading(false);
       }
     });
 
@@ -181,6 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     clearAuthState();
+    setSessionStatus("signed_out");
     router.refresh();
   }, [clearAuthState, router]);
 
@@ -193,8 +255,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       dashboardPath: getDashboardPath(profile?.role),
       refreshProfile,
       signOut,
+      sessionStatus,
     }),
-    [user, profile, session, loading, refreshProfile, signOut],
+    [user, profile, session, loading, refreshProfile, signOut, sessionStatus],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -208,4 +271,8 @@ export function useAuth() {
   }
 
   return context;
+}
+
+export function useAuthOptional() {
+  return useContext(AuthContext);
 }

@@ -13,6 +13,7 @@ const PROTECTED_PREFIXES = [
   "/profile",
   "/connect/dashboard",
   "/admin",
+  "/debug",
 ];
 const AUTH_PAGES = ["/login", "/register", "/forgot-password", "/reset-password"];
 const CONNECT_AUTH_PAGES = ["/connect/login"];

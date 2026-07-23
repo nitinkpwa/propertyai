@@ -90,7 +90,8 @@ async function performUpgradeReload(previous: string | null): Promise<VersionChe
 
 /**
  * Compare deployed APP_VERSION with stored client version.
- * On mismatch (or first migration from pre-version clients): purge caches, unregister SWs, reload once.
+ * On mismatch (or first migration from pre-version clients):
+ * purge AreaIQ caches only (NOT auth cookies), unregister SWs, reload once.
  */
 export async function runVersionGuard(): Promise<VersionCheckResult> {
   if (typeof window === "undefined") return { status: "skipped" };
@@ -109,6 +110,8 @@ export async function runVersionGuard(): Promise<VersionCheckResult> {
     sanitizeAreaIqStorage();
     clearEphemeralLocal();
     clearAreaIqSessionStorage({ keepReloadGuard: true });
+    // Keep auth — only AreaIQ caches
+    clearAreaIqLocalStorage({ keepAuth: true });
     return performUpgradeReload(null);
   }
 
@@ -129,8 +132,8 @@ export async function runVersionGuard(): Promise<VersionCheckResult> {
     return { status: "ok", version: APP_VERSION };
   }
 
-  // Full version mismatch — wipe AreaIQ-owned storage (keep admin drafts)
-  clearAreaIqLocalStorage();
+  // Full version mismatch — wipe AreaIQ-owned storage, keep auth cookies
+  clearAreaIqLocalStorage({ keepAuth: true });
   clearAreaIqSessionStorage({ keepReloadGuard: true });
   return performUpgradeReload(stored);
 }

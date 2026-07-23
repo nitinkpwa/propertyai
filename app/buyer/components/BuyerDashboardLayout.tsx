@@ -9,6 +9,7 @@ import BuyerTopBar from "@/components/buyer/BuyerTopBar";
 import MobileTopBar from "@/components/layout/MobileTopBar";
 import MobileDrawer from "@/components/layout/MobileDrawer";
 import NotificationBar from "@/components/notifications/NotificationBar";
+import FeatureErrorBoundary from "@/components/stability/FeatureErrorBoundary";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { getDashboardPath } from "@/lib/auth/profile";
@@ -96,12 +97,18 @@ export default function BuyerDashboardLayout({
             searchHref="/properties"
             profileHref="/buyer/profile"
             onMenu={() => setMobileOpen(true)}
-            rightSlot={<NotificationBell />}
+            rightSlot={
+              <FeatureErrorBoundary name="Notifications" compact>
+                <NotificationBell />
+              </FeatureErrorBoundary>
+            }
           />
 
           {/* Smart bar — mobile/tablet under header; desktop provided by NavbarWrapper */}
           <div className="lg:hidden">
-            <NotificationBar variant="sticky" />
+            <FeatureErrorBoundary name="Intelligence bar" compact>
+              <NotificationBar variant="sticky" />
+            </FeatureErrorBoundary>
           </div>
 
           {/* Tablet chrome (md–lg) */}
@@ -122,7 +129,9 @@ export default function BuyerDashboardLayout({
               </p>
               <p className="truncate text-sm font-semibold text-heading-primary">{displayName}</p>
             </div>
-            <NotificationBell />
+            <FeatureErrorBoundary name="Notifications" compact>
+              <NotificationBell />
+            </FeatureErrorBoundary>
             <Link
               href="/properties"
               className="inline-flex min-h-12 items-center rounded-xl px-3 text-sm font-semibold text-emerald-600 active:scale-[0.98]"
@@ -132,10 +141,14 @@ export default function BuyerDashboardLayout({
           </div>
 
           <main className="flex-1 px-4 py-6 pb-nav sm:px-6 sm:py-8 lg:px-8 lg:py-10 lg:pb-10">
-            <div className="animate-page-enter mx-auto w-full max-w-6xl">{children}</div>
+            <div className="animate-page-enter mx-auto w-full max-w-6xl">
+              <FeatureErrorBoundary name="Buyer page">{children}</FeatureErrorBoundary>
+            </div>
           </main>
 
-          <MobileBottomNav />
+          <FeatureErrorBoundary name="Mobile nav" compact>
+            <MobileBottomNav />
+          </FeatureErrorBoundary>
         </div>
       </div>
     </div>

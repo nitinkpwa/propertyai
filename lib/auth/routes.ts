@@ -35,7 +35,12 @@ export function getUnauthorizedRedirect(
   if (!role) return "/login";
   if (isAdminRole(role)) return null;
 
-  if (pathname === "/admin" || pathname.startsWith("/admin/")) {
+  if (
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === "/debug" ||
+    pathname.startsWith("/debug/")
+  ) {
     return getDashboardPath(role);
   }
 

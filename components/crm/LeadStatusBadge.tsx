@@ -22,11 +22,13 @@ interface LeadStatusBadgeProps {
 }
 
 export default function LeadStatusBadge({ status, className = "" }: LeadStatusBadgeProps) {
+  const colors = STATUS_COLORS[status] ?? "bg-neutral-100 text-body ring-neutral-200";
+  const label = LEAD_STATUS_LABELS[status] ?? String(status ?? "Unknown");
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${STATUS_COLORS[status]} ${className}`}
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${colors} ${className}`}
     >
-      {LEAD_STATUS_LABELS[status]}
+      {label}
     </span>
   );
 }

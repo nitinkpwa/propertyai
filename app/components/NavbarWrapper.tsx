@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import Navbar from "./Navbar";
 import PublicBottomNav from "@/components/layout/PublicBottomNav";
 import NotificationBar from "@/components/notifications/NotificationBar";
+import FeatureErrorBoundary from "@/components/stability/FeatureErrorBoundary";
 import { isPortalPath } from "@/lib/design/bottomNav";
 
 function NavbarWrapperInner() {
@@ -20,7 +21,9 @@ function NavbarWrapperInner() {
     return (
       <div className="hidden lg:block">
         <Navbar />
-        <NotificationBar variant="fixed" />
+        <FeatureErrorBoundary name="Intelligence bar" compact>
+          <NotificationBar variant="fixed" />
+        </FeatureErrorBoundary>
       </div>
     );
   }
@@ -28,7 +31,9 @@ function NavbarWrapperInner() {
   return (
     <>
       <Navbar />
-      <NotificationBar variant="fixed" />
+      <FeatureErrorBoundary name="Intelligence bar" compact>
+        <NotificationBar variant="fixed" />
+      </FeatureErrorBoundary>
       <PublicBottomNav />
     </>
   );

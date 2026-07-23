@@ -1,23 +1,31 @@
 /** Client-side saved property collections (no DB schema change) */
 import type { CollectionId } from "./design";
+import { readVersionedStorage, writeVersionedStorage } from "@/lib/stability/persistSchema";
 
 const STORAGE_KEY = "areaiq_buyer_collections";
 const NOTES_KEY = "areaiq_buyer_saved_notes";
+const SCHEMA_VERSION = 1;
 
 type CollectionMap = Record<string, CollectionId>;
 
+function isCollectionMap(value: unknown): value is CollectionMap {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
 function readCollections(): CollectionMap {
   if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}") as CollectionMap;
-  } catch {
-    return {};
-  }
+  return readVersionedStorage(
+    localStorage,
+    STORAGE_KEY,
+    SCHEMA_VERSION,
+    {},
+    isCollectionMap,
+  );
 }
 
 function writeCollections(map: CollectionMap) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+  writeVersionedStorage(localStorage, STORAGE_KEY, SCHEMA_VERSION, map);
 }
 
 export function getPropertyCollection(propertyId: string): CollectionId {
@@ -45,18 +53,18 @@ export function filterByCollection(
 
 type NotesMap = Record<string, string>;
 
+function isNotesMap(value: unknown): value is NotesMap {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
 function readNotes(): NotesMap {
   if (typeof window === "undefined") return {};
-  try {
-    return JSON.parse(localStorage.getItem(NOTES_KEY) ?? "{}") as NotesMap;
-  } catch {
-    return {};
-  }
+  return readVersionedStorage(localStorage, NOTES_KEY, SCHEMA_VERSION, {}, isNotesMap);
 }
 
 function writeNotes(map: NotesMap) {
   if (typeof window === "undefined") return;
-  localStorage.setItem(NOTES_KEY, JSON.stringify(map));
+  writeVersionedStorage(localStorage, NOTES_KEY, SCHEMA_VERSION, map);
 }
 
 export function getSavedNote(propertyId: string): string {
