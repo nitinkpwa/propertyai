@@ -9,7 +9,9 @@ import {
   useMemo,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 import { fetchProfile, getDashboardPath } from "@/lib/auth/profile";
+import { isFatalAuthError, logger } from "@/lib/stability";
 import { supabase } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/supabase";
 
@@ -25,11 +27,57 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+function isMissingSessionError(error: { name?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  return (
+    error.name === "AuthSessionMissingError" ||
+    error.message === "Auth session missing!" ||
+    (error.message?.toLowerCase().includes("auth session missing") ?? false)
+  );
+}
+
+function isProtectedPath(pathname: string): boolean {
+  return (
+    pathname.startsWith("/buyer") ||
+    pathname.startsWith("/seller") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/connect/dashboard") ||
+    pathname.startsWith("/builder") ||
+    pathname.startsWith("/profile")
+  );
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  const clearAuthState = useCallback(() => {
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+  }, []);
+
+  const forceCleanLogout = useCallback(
+    async (reason: string) => {
+      logger.error("auth", `Clean logout: ${reason}`);
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        /* ignore */
+      }
+      clearAuthState();
+      const pathname = typeof window !== "undefined" ? window.location.pathname : "/";
+      if (isProtectedPath(pathname)) {
+        window.location.assign(`/login?redirect=${encodeURIComponent(pathname)}`);
+        return;
+      }
+      router.refresh();
+    },
+    [clearAuthState, router],
+  );
 
   const loadProfile = useCallback(async (nextUser: User | null) => {
     if (!nextUser) {
@@ -37,8 +85,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const nextProfile = await fetchProfile(nextUser.id);
-    setProfile(nextProfile);
+    try {
+      const nextProfile = await fetchProfile(nextUser.id);
+      setProfile(nextProfile);
+    } catch (err) {
+      logger.warn("auth", "Profile load failed", err);
+      setProfile(null);
+    }
   }, []);
 
   useEffect(() => {
@@ -50,22 +103,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error,
       } = await supabase.auth.getUser();
 
-      // Guests have no session — Supabase returns AuthSessionMissingError.
-      // Do not console.error that case: Next.js Dev Overlay treats it as a
-      // blocking Console Error and intercepts all clicks on /ask and elsewhere.
       if (error) {
-        const missingSession =
-          error.name === "AuthSessionMissingError" ||
-          error.message === "Auth session missing!" ||
-          error.message.toLowerCase().includes("auth session missing");
-        if (!missingSession) {
-          console.error("Failed to restore session:", error.message);
+        if (isFatalAuthError(error.message)) {
+          if (mounted) await forceCleanLogout(error.message);
+          return;
+        }
+        if (!isMissingSessionError(error)) {
+          logger.error("auth", "Failed to restore session", error.message);
         }
       }
 
       const {
         data: { session: initialSession },
+        error: sessionError,
       } = await supabase.auth.getSession();
+
+      if (sessionError && isFatalAuthError(sessionError.message)) {
+        if (mounted) await forceCleanLogout(sessionError.message);
+        return;
+      }
 
       if (!mounted) return;
 
@@ -75,18 +131,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     };
 
-    initialize();
+    void initialize();
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, nextSession) => {
+      if (!mounted) return;
+
+      if (event === "TOKEN_REFRESHED" && !nextSession) {
+        await forceCleanLogout("TOKEN_REFRESHED with empty session");
+        return;
+      }
+
+      if (event === "SIGNED_OUT") {
+        clearAuthState();
+        setLoading(false);
+        router.refresh();
+        return;
+      }
+
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
       await loadProfile(nextSession?.user ?? null);
       setLoading(false);
 
-      if (event === "SIGNED_OUT") {
-        setProfile(null);
+      if (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "TOKEN_REFRESHED") {
+        router.refresh();
       }
     });
 
@@ -94,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [loadProfile]);
+  }, [loadProfile, forceCleanLogout, clearAuthState, router]);
 
   const refreshProfile = useCallback(async () => {
     await loadProfile(user);
@@ -103,12 +173,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error("Sign out failed:", error.message);
+      logger.error("auth", "Sign out failed", error.message);
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        /* ignore */
+      }
     }
-    setSession(null);
-    setUser(null);
-    setProfile(null);
-  }, []);
+    clearAuthState();
+    router.refresh();
+  }, [clearAuthState, router]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

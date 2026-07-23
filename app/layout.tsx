@@ -9,7 +9,9 @@ import { ProgressiveProfileProvider } from "@/components/buyer/ProgressiveProfil
 import { ToastProvider } from "@/components/ui/Toast";
 import BrandJsonLd from "@/components/seo/BrandJsonLd";
 import MainContent from "@/components/layout/MainContent";
+import StabilityProvider from "@/components/stability/StabilityProvider";
 import { BRAND } from "@/lib/brand";
+import { APP_VERSION } from "@/lib/stability/version";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -80,6 +82,7 @@ export const metadata: Metadata = {
   },
   other: {
     "msapplication-TileColor": "#4AAA27",
+    "areaiq-app-version": APP_VERSION,
   },
 };
 
@@ -107,15 +110,17 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <BrandJsonLd />
-        <AuthProvider>
-          <AuthSessionHandler />
-          <ProgressiveProfileProvider>
-            <ToastProvider>
-              <NavbarWrapper />
-              <MainContent>{children}</MainContent>
-            </ToastProvider>
-          </ProgressiveProfileProvider>
-        </AuthProvider>
+        <StabilityProvider>
+          <AuthProvider>
+            <AuthSessionHandler />
+            <ProgressiveProfileProvider>
+              <ToastProvider>
+                <NavbarWrapper />
+                <MainContent>{children}</MainContent>
+              </ToastProvider>
+            </ProgressiveProfileProvider>
+          </AuthProvider>
+        </StabilityProvider>
       </body>
     </html>
   );

@@ -1,13 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import AuthButton from "@/components/auth/AuthButton";
-import AuthInput from "@/components/auth/AuthInput";
 import ConnectPartnerActivityTimeline from "@/components/admin/connect/ConnectPartnerActivityTimeline";
+import PartnerFormModal from "@/components/admin/connect/PartnerFormModal";
 import PartnerStatusBadge from "@/components/admin/connect/PartnerStatusBadge";
 import LeadTemperatureBadge from "@/components/premium/LeadTemperatureBadge";
 import { EMERALD } from "@/lib/connect/constants";
-import { CONNECT_CITIES } from "@/lib/connect/constants";
 import type {
   AdminConnectTab,
   ConnectPartner,
@@ -44,112 +42,6 @@ function formatBudget(min: number | null, max: number | null): string {
   return fmt(min!);
 }
 
-function CreatePartnerModal({
-  open,
-  onClose,
-  onCreated,
-}: {
-  open: boolean;
-  onClose: () => void;
-  onCreated: () => void;
-}) {
-  const [form, setForm] = useState({
-    companyName: "",
-    managerName: "",
-    phone: "",
-    email: "",
-    password: "",
-    address: "",
-    city: "",
-    gst: "",
-    rera: "",
-    logo: "",
-    notes: "",
-    status: "pending" as ConnectPartnerStatus,
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  if (!open) return null;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    const res = await fetch("/api/admin/connect/partners", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      setError(data.error ?? "Failed to create partner");
-      return;
-    }
-    onCreated();
-    onClose();
-  };
-
-  const selectClass =
-    "w-full rounded-xl border border-neutral-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100";
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/40 p-4 backdrop-blur-sm">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-heading-primary">Create Connect Partner</h2>
-          <button type="button" onClick={onClose} className="text-muted hover:text-body">
-            ✕
-          </button>
-        </div>
-
-        {error ? (
-          <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {error}
-          </div>
-        ) : null}
-
-        <form onSubmit={handleSubmit} className="space-y-1">
-          <AuthInput label="Company Name" value={form.companyName} onChange={(e) => setForm({ ...form, companyName: e.target.value })} required />
-          <AuthInput label="Manager Name" value={form.managerName} onChange={(e) => setForm({ ...form, managerName: e.target.value })} required />
-          <AuthInput label="Phone" type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
-          <AuthInput label="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required />
-          <AuthInput label="Password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} required />
-          <AuthInput label="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-          <div className="mb-4">
-            <label className="mb-1.5 block text-sm font-medium text-label">City</label>
-            <select className={selectClass} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}>
-              <option value="">Select city</option>
-              {CONNECT_CITIES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-          <AuthInput label="GST" value={form.gst} onChange={(e) => setForm({ ...form, gst: e.target.value })} />
-          <AuthInput label="RERA" value={form.rera} onChange={(e) => setForm({ ...form, rera: e.target.value })} />
-          <AuthInput label="Logo URL" value={form.logo} onChange={(e) => setForm({ ...form, logo: e.target.value })} />
-          <div className="mb-4">
-            <label className="mb-1.5 block text-sm font-medium text-label">Status</label>
-            <select className={selectClass} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as ConnectPartnerStatus })}>
-              <option value="pending">Pending</option>
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-          <AuthInput label="Notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-          <div className="pt-2">
-            <AuthButton type="submit" loading={loading} loadingText="Creating...">
-              Create Partner
-            </AuthButton>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 function PartnerProfileView({
   partner,
   buyers,
@@ -158,6 +50,7 @@ function PartnerProfileView({
   analytics,
   onBack,
   onRefresh,
+  onEdit,
 }: {
   partner: ConnectPartner;
   buyers: ConnectPartnerBuyerRow[];
@@ -166,6 +59,7 @@ function PartnerProfileView({
   analytics: ConnectPartnerAnalytics;
   onBack: () => void;
   onRefresh: () => void;
+  onEdit: () => void;
 }) {
   const [status, setStatus] = useState(partner.status);
   const [saving, setSaving] = useState(false);
@@ -207,17 +101,27 @@ function PartnerProfileView({
           </div>
           <div className="flex flex-col items-end gap-2">
             <PartnerStatusBadge status={status} />
-            <select
-              className="rounded-xl border border-neutral-200 px-3 py-2 text-sm"
-              value={status}
-              disabled={saving}
-              onChange={(e) => updateStatus(e.target.value as ConnectPartnerStatus)}
-            >
-              <option value="pending">Pending</option>
-              <option value="active">Active</option>
-              <option value="suspended">Suspended</option>
-              <option value="archived">Archived</option>
-            </select>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={onEdit}
+                className="rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-sm font-semibold text-body transition hover:bg-neutral-50"
+              >
+                Edit Builder
+              </button>
+              <select
+                className="rounded-xl border border-neutral-200 px-3 py-2 text-sm"
+                value={status}
+                disabled={saving}
+                onChange={(e) => updateStatus(e.target.value as ConnectPartnerStatus)}
+                aria-label="Partner status"
+              >
+                <option value="pending">Pending</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -308,6 +212,7 @@ export default function AdminConnectPanel() {
   const [searchQ, setSearchQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [showCreate, setShowCreate] = useState(false);
+  const [editingPartner, setEditingPartner] = useState<ConnectPartner | null>(null);
   const [selectedPartnerId, setSelectedPartnerId] = useState<string | null>(null);
   const [partnerDetail, setPartnerDetail] = useState<{
     partner: ConnectPartner;
@@ -379,19 +284,33 @@ export default function AdminConnectPanel() {
 
   if (selectedPartnerId && partnerDetail) {
     return (
-      <PartnerProfileView
-        partner={partnerDetail.partner}
-        buyers={partnerDetail.buyers}
-        properties={partnerDetail.properties}
-        activities={partnerDetail.activities}
-        analytics={partnerDetail.analytics}
-        onBack={() => {
-          setSelectedPartnerId(null);
-          setPartnerDetail(null);
-          loadPartners();
-        }}
-        onRefresh={() => loadPartnerDetail(selectedPartnerId)}
-      />
+      <>
+        <PartnerProfileView
+          partner={partnerDetail.partner}
+          buyers={partnerDetail.buyers}
+          properties={partnerDetail.properties}
+          activities={partnerDetail.activities}
+          analytics={partnerDetail.analytics}
+          onBack={() => {
+            setSelectedPartnerId(null);
+            setPartnerDetail(null);
+            loadPartners();
+          }}
+          onRefresh={() => loadPartnerDetail(selectedPartnerId)}
+          onEdit={() => setEditingPartner(partnerDetail.partner)}
+        />
+        <PartnerFormModal
+          open={Boolean(editingPartner)}
+          mode="edit"
+          partner={editingPartner}
+          onClose={() => setEditingPartner(null)}
+          onSaved={() => {
+            setEditingPartner(null);
+            if (selectedPartnerId) void loadPartnerDetail(selectedPartnerId);
+            void loadPartners();
+          }}
+        />
+      </>
     );
   }
 
@@ -408,7 +327,7 @@ export default function AdminConnectPanel() {
           className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm"
           style={{ backgroundColor: EMERALD }}
         >
-          + Create Partner
+          + Add Builder
         </button>
       </div>
 
@@ -537,11 +456,12 @@ export default function AdminConnectPanel() {
         <AdminConnectPropertiesTab partners={partners} />
       ) : null}
 
-      <CreatePartnerModal
+      <PartnerFormModal
         open={showCreate}
+        mode="create"
         onClose={() => setShowCreate(false)}
-        onCreated={() => {
-          loadPartners();
+        onSaved={() => {
+          void loadPartners();
           setShowCreate(false);
         }}
       />

@@ -13,8 +13,8 @@ export default function Error({
     <RecoveryScreen
       error={error}
       reset={reset}
-      title="Something went wrong"
-      description="Please try again. If the problem continues, reload the page or head home."
+      title="Property page error"
+      description="Try again or browse other listings. Your saved properties are unaffected."
     />
   );
 }

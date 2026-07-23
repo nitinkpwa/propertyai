@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createBroadcastNotification } from "@/lib/notifications/broadcasts";
 import {
   addStoredBroadcast,
@@ -28,6 +28,7 @@ const CATEGORIES: { value: LocalCategory; label: string }[] = [
 /**
  * Admin broadcast composer.
  * Local drafts stored in localStorage until site_announcements migration is applied.
+ * Hydration-safe: storage loaded after mount.
  */
 export default function AdminBroadcastPanel() {
   const [title, setTitle] = useState("");
@@ -36,10 +37,12 @@ export default function AdminBroadcastPanel() {
   const [category, setCategory] = useState<LocalCategory>("feature");
   const [audience, setAudience] =
     useState<AdminBroadcastInput["audience"]>("all");
-  const [items, setItems] = useState<IntelligenceNotification[]>(() =>
-    getStoredBroadcasts() as IntelligenceNotification[],
-  );
+  const [items, setItems] = useState<IntelligenceNotification[]>([]);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    setItems(getStoredBroadcasts() as IntelligenceNotification[]);
+  }, []);
 
   const unique = useMemo(() => {
     const map = new Map<string, IntelligenceNotification>();

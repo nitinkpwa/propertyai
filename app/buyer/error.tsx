@@ -1,6 +1,6 @@
 "use client";
 
-import ErrorState from "@/components/ui/ErrorState";
+import RecoveryScreen from "@/components/stability/RecoveryScreen";
 
 export default function BuyerError({
   error,
@@ -10,16 +10,11 @@ export default function BuyerError({
   reset: () => void;
 }) {
   return (
-    <div className="mx-auto max-w-lg py-10">
-      <ErrorState
-        title="This page hit a snag"
-        description={
-          error?.message
-            ? "We couldn't render this screen. Your data is safe — try again."
-            : "Something interrupted this buyer page. Try again in a moment."
-        }
-        onRetry={reset}
-      />
-    </div>
+    <RecoveryScreen
+      error={error}
+      reset={reset}
+      title="This page hit a snag"
+      description="We couldn't render this screen. Your data is safe — try again or head home."
+    />
   );
 }

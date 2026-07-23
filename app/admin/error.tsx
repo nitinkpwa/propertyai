@@ -13,8 +13,8 @@ export default function Error({
     <RecoveryScreen
       error={error}
       reset={reset}
-      title="Something went wrong"
-      description="Please try again. If the problem continues, reload the page or head home."
+      title="Admin panel error"
+      description="Try again or reload. Your drafts in local storage are kept unless a version upgrade cleared them."
     />
   );
 }

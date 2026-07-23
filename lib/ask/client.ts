@@ -2,6 +2,7 @@ import type { AskEngineIntent, AskEngineResponse, PropertyContext } from "./engi
 import type { ConversationMessage } from "./types";
 import { parseMarkdownSections } from "./markdown";
 import type { AskIntent, AskTurn } from "./types";
+import { apiFetch } from "@/lib/stability/fetch";
 
 export type { ConversationMessage, PropertyContext };
 
@@ -11,7 +12,7 @@ export async function queryAskEngine(
   propertyContext?: PropertyContext | null,
   excludePropertyIds: string[] = [],
 ): Promise<AskEngineResponse> {
-  const response = await fetch("/api/ask/query", {
+  const response = await apiFetch("/api/ask/query", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
