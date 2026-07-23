@@ -10,6 +10,7 @@ import {
   isPropertySaved,
   toggleSavedProperty,
 } from "@/lib/buyer/queries";
+import { invalidateBuyerNotifications } from "@/lib/buyer/notifications";
 
 export function useSavedPropertyToggle() {
   const router = useRouter();
@@ -61,6 +62,7 @@ export function useSavedPropertyToggle() {
         });
       } else if (favorited) {
         clearPendingAuthIntent();
+        invalidateBuyerNotifications(user.id);
         void profilePrompt?.promptIfNeeded("save_property");
       }
     },
@@ -127,6 +129,7 @@ export function useSavedProperty(propertyId: string) {
       setSaved(!next);
     } else if (next) {
       clearPendingAuthIntent();
+      invalidateBuyerNotifications(user.id);
       void profilePrompt?.promptIfNeeded("save_property");
     }
 

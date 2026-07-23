@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import NotificationBell from "@/components/buyer/NotificationBell";
+import NotificationBell, {
+  NotificationBellFallback,
+} from "@/components/buyer/NotificationBell";
 import MobileBottomNav from "@/components/buyer/MobileBottomNav";
 import BuyerTopBar from "@/components/buyer/BuyerTopBar";
 import MobileTopBar from "@/components/layout/MobileTopBar";
@@ -129,10 +131,11 @@ export default function BuyerDashboardLayout({
                     profileHref="/buyer/profile"
                     onMenu={() => setMobileOpen(true)}
                     rightSlot={
-                      <FeatureErrorBoundary name="Notifications" compact>
-                        <RenderProbe name="NotificationBell:mobile">
-                          <NotificationBell />
-                        </RenderProbe>
+                      <FeatureErrorBoundary
+                        name="Notifications"
+                        fallback={<NotificationBellFallback />}
+                      >
+                        <NotificationBell />
                       </FeatureErrorBoundary>
                     }
                   />
@@ -164,7 +167,10 @@ export default function BuyerDashboardLayout({
                   </p>
                   <p className="truncate text-sm font-semibold text-heading-primary">{displayName}</p>
                 </div>
-                <FeatureErrorBoundary name="Notifications" compact>
+                <FeatureErrorBoundary
+                  name="Notifications"
+                  fallback={<NotificationBellFallback />}
+                >
                   <NotificationBell />
                 </FeatureErrorBoundary>
                 <Link

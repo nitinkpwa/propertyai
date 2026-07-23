@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { invalidateBuyerNotifications } from "@/lib/buyer/notifications";
 import {
   devLogSiteVisit,
   mapSiteVisitError,
@@ -322,6 +323,7 @@ export default function SiteVisitModal({
           detail: { visitId: data.visitId, propertyId: normalizedId },
         }),
       );
+      invalidateBuyerNotifications(user.id);
 
       onSuccess?.();
       setSuccessVisitId(data.visitId ?? "pending");

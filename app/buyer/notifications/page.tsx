@@ -16,7 +16,7 @@ import Card from "@/components/ui/Card";
 
 export default function NotificationsPage() {
   const { user } = useAuth();
-  const { notifications, unreadCount, loading, error, markRead, markAllRead, refresh } =
+  const { notifications, unreadCount, loading, offline, markRead, markAllRead } =
     useBuyerNotifications(user?.id);
   const [browserPermission, setBrowserPermission] =
     useState<NotificationPermission>("default");
@@ -32,7 +32,7 @@ export default function NotificationsPage() {
     setBrowserPermission(perm);
   };
 
-  if (loading) return <PageSkeleton rows={5} />;
+  if (loading && notifications.length === 0) return <PageSkeleton rows={5} />;
 
   const groups = groupNotificationsByDate(notifications);
 
@@ -41,24 +41,28 @@ export default function NotificationsPage() {
       <PageHeader
         eyebrow="Stay Updated"
         title="Notifications"
-        description={`${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`}
+        description={
+          unreadCount > 0
+            ? `${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`
+            : "You're all caught up"
+        }
         action={
           unreadCount > 0 ? (
-            <Button variant="ghost" size="sm" onClick={() => markAllRead()} className="min-h-12">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void markAllRead()}
+              className="min-h-12"
+            >
               Mark all read
             </Button>
           ) : undefined
         }
       />
 
-      {error ? (
-        <Card padding="sm" className="border-rose-100 bg-rose-50/60">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-rose-800">{error}</p>
-            <Button variant="secondary" size="sm" onClick={() => refresh()} className="min-h-12">
-              Retry
-            </Button>
-          </div>
+      {offline ? (
+        <Card padding="sm" className="border-neutral-200 bg-neutral-50">
+          <p className="text-sm text-body">Offline · Showing last synced notifications</p>
         </Card>
       ) : null}
 
@@ -71,7 +75,12 @@ export default function NotificationsPage() {
                 Get instant alerts for visit approvals and price updates
               </p>
             </div>
-            <Button variant="secondary" size="sm" onClick={handleEnableBrowser} className="min-h-12 shrink-0">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => void handleEnableBrowser()}
+              className="min-h-12 shrink-0"
+            >
               Enable
             </Button>
           </div>
@@ -81,8 +90,8 @@ export default function NotificationsPage() {
       {notifications.length === 0 ? (
         <EmptyState
           icon="🔔"
-          title="No notifications yet"
-          description="You'll receive alerts when your site visit is approved, a builder replies, or new properties match your profile."
+          title="You're all caught up"
+          description="No new notifications yet. You'll hear from us when a visit is approved, a builder replies, or something matches your search."
           actionLabel="Browse Properties"
           tips={[
             "Book a site visit to get real-time status updates",
@@ -103,7 +112,7 @@ export default function NotificationsPage() {
                     key={n.id}
                     type="button"
                     onClick={() => {
-                      if (!n.read_at) markRead(n.id);
+                      if (!n.read_at) void markRead(n.id);
                     }}
                     className={`flex w-full min-h-12 gap-4 rounded-2xl border p-4 text-left transition active:scale-[0.99] hover:shadow-sm ${
                       !n.read_at

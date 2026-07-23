@@ -361,63 +361,133 @@ export async function fetchUserNotifications(
   userId: string,
   limit = 20,
 ): Promise<CrmNotification[]> {
-  const { data, error } = await supabase
-    .from("crm_notifications")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
+  if (!userId) return [];
+  const started = Date.now();
+  try {
+    const { data, error, status } = await supabase
+      .from("crm_notifications")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
-  if (error) {
-    console.error("fetchUserNotifications:", error.message);
+    if (error) {
+      const msg = error.message ?? "unknown";
+      const code = (error as { code?: string }).code ?? "";
+      console.error("[AreaIQ:notifications] SELECT failed", {
+        userId,
+        api: "crm_notifications.select",
+        status,
+        code,
+        message: msg,
+        durationMs: Date.now() - started,
+        rls: /policy|permission|rls|401|403/i.test(msg),
+        missingTable: /does not exist|schema cache/i.test(msg),
+        missingColumn: /column .* does not exist/i.test(msg),
+      });
+      return [];
+    }
+
+    const rows = Array.isArray(data) ? data : [];
+    console.info("[AreaIQ:notifications] SELECT ok", {
+      userId,
+      api: "crm_notifications.select",
+      status,
+      count: rows.length,
+      durationMs: Date.now() - started,
+    });
+    return rows as CrmNotification[];
+  } catch (err) {
+    console.error("[AreaIQ:notifications] SELECT threw", {
+      userId,
+      api: "crm_notifications.select",
+      message: err instanceof Error ? err.message : String(err),
+      durationMs: Date.now() - started,
+    });
     return [];
   }
-
-  return (data as CrmNotification[]) ?? [];
 }
 
 export async function fetchUnreadNotificationCount(userId: string): Promise<number> {
-  const { count, error } = await supabase
-    .from("crm_notifications")
-    .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
-    .is("read_at", null);
+  if (!userId) return 0;
+  const started = Date.now();
+  try {
+    const { count, error, status } = await supabase
+      .from("crm_notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .is("read_at", null);
 
-  if (error) {
-    console.error("fetchUnreadNotificationCount:", error.message);
+    if (error) {
+      const msg = error.message ?? "unknown";
+      console.error("[AreaIQ:notifications] COUNT failed", {
+        userId,
+        api: "crm_notifications.count",
+        status,
+        message: msg,
+        durationMs: Date.now() - started,
+        rls: /policy|permission|rls|401|403/i.test(msg),
+        missingTable: /does not exist|schema cache/i.test(msg),
+      });
+      return 0;
+    }
+
+    return count ?? 0;
+  } catch (err) {
+    console.error("[AreaIQ:notifications] COUNT threw", {
+      userId,
+      message: err instanceof Error ? err.message : String(err),
+      durationMs: Date.now() - started,
+    });
     return 0;
   }
-
-  return count ?? 0;
 }
 
 export async function markNotificationRead(notificationId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from("crm_notifications")
-    .update({ read_at: new Date().toISOString() })
-    .eq("id", notificationId);
+  if (!notificationId) return false;
+  try {
+    const { error, status } = await supabase
+      .from("crm_notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", notificationId);
 
-  if (error) {
-    console.error("markNotificationRead:", error.message);
+    if (error) {
+      console.error("[AreaIQ:notifications] markRead failed", {
+        notificationId,
+        status,
+        message: error.message,
+      });
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[AreaIQ:notifications] markRead threw", err);
     return false;
   }
-
-  return true;
 }
 
 export async function markAllNotificationsRead(userId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from("crm_notifications")
-    .update({ read_at: new Date().toISOString() })
-    .eq("user_id", userId)
-    .is("read_at", null);
+  if (!userId) return false;
+  try {
+    const { error, status } = await supabase
+      .from("crm_notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .is("read_at", null);
 
-  if (error) {
-    console.error("markAllNotificationsRead:", error.message);
+    if (error) {
+      console.error("[AreaIQ:notifications] markAllRead failed", {
+        userId,
+        status,
+        message: error.message,
+      });
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[AreaIQ:notifications] markAllRead threw", err);
     return false;
   }
-
-  return true;
 }
 
 /**
