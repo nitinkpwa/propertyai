@@ -20,3 +20,12 @@ export { logger, isFatalAuthError } from "./logger";
 export { apiFetch } from "./fetch";
 export { isStaleAssetError, recoverFromStaleAssets } from "./chunkRecovery";
 export { readVersionedStorage, writeVersionedStorage } from "./persistSchema";
+export {
+  traceRender,
+  recordCrash,
+  readLastCrash,
+  logAsyncFailure,
+  getRenderTrace,
+  CRASH_STORAGE_KEY,
+} from "./crashReport";
+export type { CrashReport } from "./crashReport";

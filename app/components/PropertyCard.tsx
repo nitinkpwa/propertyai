@@ -45,7 +45,8 @@ export interface PropertyCardProps {
 }
 
 function formatArea(area: number, unit: "sqft" | "sqyd"): string {
-  return `${area.toLocaleString("en-IN")} ${unit === "sqyd" ? "sq yd" : "sq ft"}`;
+  const safe = typeof area === "number" && Number.isFinite(area) ? area : 0;
+  return `${safe.toLocaleString("en-IN")} ${unit === "sqyd" ? "sq yd" : "sq ft"}`;
 }
 
 function growthTone(score: number | null): {

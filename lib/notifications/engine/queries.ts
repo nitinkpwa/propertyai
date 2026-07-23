@@ -120,7 +120,7 @@ export async function fetchActiveListingsSample(limit = 200): Promise<
 > {
   const { data, error } = await supabase
     .from("properties")
-    .select("id, price, city, location, bhk, created_at")
+    .select("id, price, city, location, bedrooms, created_at")
     .eq("status", "active")
     .is("deleted_at", null)
     .order("created_at", { ascending: false })
@@ -135,11 +135,16 @@ export async function fetchActiveListingsSample(limit = 200): Promise<
     price: number | null;
     city: string | null;
     location: string | null;
-    bhk: number | null;
+    bedrooms: number | null;
     created_at: string | null;
   }[] | null) ?? []).map((row) => ({
-    ...row,
+    id: row.id,
+    price: row.price,
+    city: row.city,
+    location: row.location,
     rental_yield: null as number | null,
+    bhk: row.bedrooms,
+    created_at: row.created_at,
   }));
 }
 

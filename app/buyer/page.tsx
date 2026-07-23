@@ -14,6 +14,7 @@ import AiInsights, { buildDashboardInsights } from "@/components/buyer/AiInsight
 import UpcomingVisitsPanel from "@/components/buyer/UpcomingVisitsPanel";
 import RecentlyViewedPanel from "@/components/buyer/RecentlyViewedPanel";
 import FeatureErrorBoundary from "@/components/stability/FeatureErrorBoundary";
+import RenderProbe from "@/components/stability/RenderProbe";
 import { DashboardSkeleton } from "@/components/ui/Skeleton";
 import Card, { CardHeader } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
@@ -24,12 +25,13 @@ import {
 } from "@/lib/buyer/queries";
 import { fetchBuyerCrmSummary } from "@/lib/crm/queries";
 import { getGreeting } from "@/lib/buyer/design";
-import { logger } from "@/lib/stability";
+import { logAsyncFailure, traceRender } from "@/lib/stability";
 import type { CrmLeadActivity, LeadStatus } from "@/lib/crm/types";
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
 import type { SiteVisitRow } from "@/lib/buyer/types";
 import EmptyState from "./components/EmptyState";
 import PropertyCardsGrid from "./components/PropertyCardsGrid";
+
 
 const TRENDING_LOCALITIES = [
   { name: "New Chandigarh", note: "Infra-led appreciation" },
@@ -45,6 +47,7 @@ const MARKET_INSIGHTS = [
 ];
 
 export default function BuyerDashboardPage() {
+  traceRender("BuyerDashboard");
   const { user, profile, sessionStatus } = useAuth();
   const { completeness, openModal } = useProgressiveProfile();
   const [recent, setRecent] = useState<(PropertyCardProps & { viewedAt: string })[]>([]);
@@ -64,14 +67,12 @@ export default function BuyerDashboardPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      logger.info("buyer", "Dashboard mount", {
-        userId: user?.id ?? null,
-        role: profile?.role ?? null,
-        sessionStatus,
-        route: "/buyer",
-      });
-    }
+    console.log("[AreaIQ:render] Rendering BuyerDashboard", {
+      userId: user?.id ?? null,
+      role: profile?.role ?? null,
+      sessionStatus,
+      route: "/buyer",
+    });
   }, [user?.id, profile?.role, sessionStatus]);
 
   useEffect(() => {
@@ -116,9 +117,27 @@ export default function BuyerDashboardPage() {
             ? visitsRes.value
             : [];
 
-        const failed = [recentRes, recommendedRes, crmRes, visitsRes].some(
+        const failed = [recentRes, recommendedRes, crmRes, visitsRes].filter(
           (r) => r.status === "rejected",
         );
+
+        for (const r of [recentRes, recommendedRes, crmRes, visitsRes]) {
+          if (r.status === "rejected") {
+            logAsyncFailure({
+              component: "BuyerDashboard",
+              api:
+                r === recentRes
+                  ? "fetchRecentViewedWithMeta"
+                  : r === recommendedRes
+                    ? "fetchRecommendedPropertyCards"
+                    : r === crmRes
+                      ? "fetchBuyerCrmSummary"
+                      : "fetchSiteVisits",
+              error: r.reason,
+              userId: user.id,
+            });
+          }
+        }
 
         const today = new Date().toISOString().slice(0, 10);
         const upcoming = allVisits
@@ -144,7 +163,7 @@ export default function BuyerDashboardPage() {
         setActivities(Array.isArray(crm?.activities) ? crm.activities.slice(-12).reverse() : []);
         setLeadStatus(crm?.lead?.status ?? null);
 
-        if (failed) {
+        if (failed.length > 0) {
           setLoadError("Couldn't refresh some widgets. Showing what we can.");
           if (attempt < 2) {
             window.setTimeout(() => {
@@ -201,7 +220,8 @@ export default function BuyerDashboardPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6 sm:space-y-8">
       {/* Hero — mobile-first single composition */}
-      <FeatureErrorBoundary name="Welcome" compact>
+      <FeatureErrorBoundary name="Profile Summary" compact>
+        <RenderProbe name="ProfileSummary">
         <section className="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 p-5 text-white shadow-xl shadow-emerald-900/20 sm:p-8">
           <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/10 blur-2xl" aria-hidden />
           <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-teal-400/10 blur-2xl" aria-hidden />
@@ -258,6 +278,7 @@ export default function BuyerDashboardPage() {
             </button>
           </div>
         </section>
+        </RenderProbe>
       </FeatureErrorBoundary>
 
       {loadError ? (
@@ -287,8 +308,10 @@ export default function BuyerDashboardPage() {
         </section>
       </FeatureErrorBoundary>
 
-      <FeatureErrorBoundary name="Upcoming visits" compact>
-        <UpcomingVisitsPanel visits={upcomingVisits} />
+      <FeatureErrorBoundary name="Visits" compact>
+        <RenderProbe name="BuyerVisits">
+          <UpcomingVisitsPanel visits={upcomingVisits} />
+        </RenderProbe>
       </FeatureErrorBoundary>
 
       {pendingApprovals > 0 ? (
@@ -308,11 +331,14 @@ export default function BuyerDashboardPage() {
         </FeatureErrorBoundary>
       ) : null}
 
-      <FeatureErrorBoundary name="AI suggestions" compact>
-        <AiInsights insights={insights} />
+      <FeatureErrorBoundary name="AI Widgets" compact>
+        <RenderProbe name="BuyerAIWidgets">
+          <AiInsights insights={insights} />
+        </RenderProbe>
       </FeatureErrorBoundary>
 
-      <FeatureErrorBoundary name="Market insights" compact>
+      <FeatureErrorBoundary name="Market Intelligence" compact>
+        <RenderProbe name="MarketIntelligence">
         <section aria-label="Market insights">
           <div className="mb-3">
             <h2 className="text-lg font-bold text-heading-primary">Market insights</h2>
@@ -330,6 +356,7 @@ export default function BuyerDashboardPage() {
             ))}
           </div>
         </section>
+        </RenderProbe>
       </FeatureErrorBoundary>
 
       <FeatureErrorBoundary name="Trending localities" compact>
@@ -391,26 +418,29 @@ export default function BuyerDashboardPage() {
         <QuickActions />
       </FeatureErrorBoundary>
 
-      <FeatureErrorBoundary name="Recently viewed" compact>
-        {recent.length > 0 ? (
-          <RecentlyViewedPanel properties={recent} />
-        ) : (
-          <section>
-            <h2 className="mb-4 text-lg font-bold text-heading-primary">Recently viewed</h2>
-            <EmptyState
-              icon="👀"
-              title="No recently viewed properties"
-              description="Properties you browse will appear here so you can pick up where you left off."
-              tips={[
-                "Browse listings and tap any property to view details",
-                "Your viewing history helps AI refine recommendations",
-              ]}
-            />
-          </section>
-        )}
+      <FeatureErrorBoundary name="Saved Properties" compact>
+        <RenderProbe name="SavedProperties">
+          {recent.length > 0 ? (
+            <RecentlyViewedPanel properties={recent} />
+          ) : (
+            <section>
+              <h2 className="mb-4 text-lg font-bold text-heading-primary">Recently viewed</h2>
+              <EmptyState
+                icon="👀"
+                title="No recently viewed properties"
+                description="Properties you browse will appear here so you can pick up where you left off."
+                tips={[
+                  "Browse listings and tap any property to view details",
+                  "Your viewing history helps AI refine recommendations",
+                ]}
+              />
+            </section>
+          )}
+        </RenderProbe>
       </FeatureErrorBoundary>
 
       <FeatureErrorBoundary name="Recommendations" compact>
+        <RenderProbe name="BuyerRecommendations">
         <section id="recommended">
           <div className="mb-4">
             <h2 className="text-lg font-bold text-heading-primary">Recommended for you</h2>
@@ -433,6 +463,7 @@ export default function BuyerDashboardPage() {
             <PropertyCardsGrid properties={recommended} columns="4" />
           )}
         </section>
+        </RenderProbe>
       </FeatureErrorBoundary>
 
       <FeatureErrorBoundary name="Activity timeline" compact>

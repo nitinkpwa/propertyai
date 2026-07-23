@@ -98,38 +98,50 @@ export async function fetchActivitiesForLeadIds(
 }
 
 export async function fetchBuyerCrmSummary(buyerId: string): Promise<BuyerCrmSummary> {
-  const [lead, enquiries, saved, chats, visits] = await Promise.all([
-    fetchBuyerLead(buyerId),
-    supabase
-      .from("inquiries")
-      .select("id", { count: "exact", head: true })
-      .eq("from_user_id", buyerId),
-    supabase
-      .from("saved_properties")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", buyerId),
-    supabase
-      .from("conversations")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", buyerId),
-    supabase
-      .from("site_visits")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", buyerId),
-  ]);
+  try {
+    const [lead, enquiries, saved, chats, visits] = await Promise.all([
+      fetchBuyerLead(buyerId),
+      supabase
+        .from("inquiries")
+        .select("id", { count: "exact", head: true })
+        .eq("from_user_id", buyerId),
+      supabase
+        .from("saved_properties")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", buyerId),
+      supabase
+        .from("conversations")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", buyerId),
+      supabase
+        .from("site_visits")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", buyerId),
+    ]);
 
-  // The buyer journey spans all of the buyer's leads (general + per partner).
-  const leadIds = await fetchBuyerLeadIds(buyerId);
-  const activities = leadIds.length > 0 ? await fetchActivitiesForLeadIds(leadIds, 30) : [];
+    // The buyer journey spans all of the buyer's leads (general + per partner).
+    const leadIds = await fetchBuyerLeadIds(buyerId);
+    const activities = leadIds.length > 0 ? await fetchActivitiesForLeadIds(leadIds, 30) : [];
 
-  return {
-    lead,
-    enquiriesCount: enquiries.count ?? 0,
-    savedCount: saved.count ?? 0,
-    chatsCount: chats.count ?? 0,
-    visitsCount: visits.count ?? 0,
-    activities: activities.reverse(),
-  };
+    return {
+      lead,
+      enquiriesCount: enquiries.count ?? 0,
+      savedCount: saved.count ?? 0,
+      chatsCount: chats.count ?? 0,
+      visitsCount: visits.count ?? 0,
+      activities: activities.reverse(),
+    };
+  } catch (err) {
+    console.error("fetchBuyerCrmSummary:", err);
+    return {
+      lead: null,
+      enquiriesCount: 0,
+      savedCount: 0,
+      chatsCount: 0,
+      visitsCount: 0,
+      activities: [],
+    };
+  }
 }
 
 export async function fetchSellerCrmLeads(sellerId: string): Promise<SellerCrmLeadRow[]> {

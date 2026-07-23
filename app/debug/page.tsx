@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isAdminRole } from "@/lib/auth/admin";
 import { APP_VERSION, listStorageKeys, logger } from "@/lib/stability";
+import { readLastCrash, type CrashReport } from "@/lib/stability/crashReport";
 import {
   clearAreaIqLocalStorage,
   clearAreaIqSessionStorage,
@@ -47,6 +48,7 @@ function decodeJwtExp(token?: string | null): string | null {
 export default function DebugPage() {
   const { user, profile, session, loading, sessionStatus } = useAuth();
   const [snapshot, setSnapshot] = useState<DebugSnapshot | null>(null);
+  const [lastCrash, setLastCrash] = useState<CrashReport | null>(null);
   const [busy, setBusy] = useState(false);
 
   const isAdmin = isAdminRole(profile?.role);
@@ -110,6 +112,7 @@ export default function DebugPage() {
     };
 
     setSnapshot(next);
+    setLastCrash(readLastCrash());
     logger.info("debug", "Snapshot collected", {
       appVersion: next.appVersion,
       role: next.role,
@@ -189,6 +192,20 @@ export default function DebugPage() {
         <PageSkeleton rows={4} />
       ) : (
         <div className="space-y-4">
+      <Section title="Last crash">
+            {lastCrash ? (
+              <>
+                <Row label="Component" value={lastCrash.component} />
+                <Row label="Message" value={lastCrash.message} />
+                <Row label="When" value={lastCrash.at} />
+                <Row label="Route" value={lastCrash.route ?? "—"} />
+                <CodeBlock lines={lastCrash.renderTrace ?? []} />
+              </>
+            ) : (
+              <p className="py-3 text-sm text-muted">No crash recorded this session</p>
+            )}
+          </Section>
+
           <Section title="Identity">
             <Row label="User" value={snapshot.userId ?? "—"} />
             <Row label="Email" value={snapshot.email ?? "—"} />

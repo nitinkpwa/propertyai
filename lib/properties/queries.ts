@@ -389,28 +389,57 @@ export function mapPropertyRowToListing(row: PropertyRow): ListingProperty {
 }
 
 export function mapPropertyRowToCardProps(row: PropertyRow): PropertyCardProps {
-  const listing = mapPropertyRowToListing(row);
-  return {
-    id: listing.id,
-    name: listing.name,
-    location: listing.location,
-    city: listing.city,
-    price: listing.price,
-    priceLabel: listing.priceLabel,
-    rateLabel: listing.rateLabel,
-    sizeLabel: listing.sizeLabel,
-    builderName: listing.builderName,
-    bhk: listing.bhk,
-    area: listing.area,
-    areaUnit: listing.areaUnit,
-    growthScore: listing.growthScore,
-    rentalYield: listing.rentalYield,
-    imageUrl: listing.imageUrl,
-    imageAlt: listing.imageAlt,
-    aiVerified: listing.aiVerified,
-    reraVerified: listing.reraVerified,
-    href: `/property/${listing.id}`,
-  };
+  try {
+    if (!row || typeof row !== "object" || !row.id) {
+      throw new Error("Invalid property row");
+    }
+    const listing = mapPropertyRowToListing(row);
+    return {
+      id: listing.id,
+      name: listing.name || "Property",
+      location: listing.location || "",
+      city: listing.city,
+      price: typeof listing.price === "number" ? listing.price : 0,
+      priceLabel: listing.priceLabel,
+      rateLabel: listing.rateLabel,
+      sizeLabel: listing.sizeLabel,
+      builderName: listing.builderName || "Builder",
+      bhk: listing.bhk,
+      area: typeof listing.area === "number" && Number.isFinite(listing.area) ? listing.area : 0,
+      areaUnit: listing.areaUnit,
+      growthScore: listing.growthScore,
+      rentalYield: listing.rentalYield,
+      imageUrl: listing.imageUrl,
+      imageAlt: listing.imageAlt,
+      aiVerified: listing.aiVerified,
+      reraVerified: listing.reraVerified,
+      href: `/property/${listing.id}`,
+    };
+  } catch (err) {
+    console.error("mapPropertyRowToCardProps:", err, { id: (row as { id?: string })?.id });
+    const id = (row as { id?: string })?.id ?? "unknown";
+    return {
+      id,
+      name: (row as { title?: string })?.title || "Property",
+      location: (row as { location?: string })?.location || "",
+      city: (row as { city?: string })?.city,
+      price: 0,
+      priceLabel: "Price on Request",
+      rateLabel: null,
+      sizeLabel: null,
+      builderName: "Builder",
+      bhk: 0,
+      area: 0,
+      areaUnit: "sqft",
+      growthScore: null,
+      rentalYield: null,
+      imageUrl: null,
+      imageAlt: "Property",
+      aiVerified: false,
+      reraVerified: false,
+      href: `/property/${id}`,
+    };
+  }
 }
 
 export function mapPropertyRowToDetail(

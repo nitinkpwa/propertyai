@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import NotificationBell from "./NotificationBell";
+import FeatureErrorBoundary from "@/components/stability/FeatureErrorBoundary";
+import RenderProbe from "@/components/stability/RenderProbe";
 import { ButtonLink } from "@/components/ui/Button";
 
 interface BuyerTopBarProps {
@@ -28,7 +30,11 @@ export default function BuyerTopBar({
           <span aria-hidden>🤖</span>
           <span className="font-medium">Ask AreaIQ</span>
         </Link>
-        <NotificationBell />
+        <FeatureErrorBoundary name="Notifications" compact>
+          <RenderProbe name="NotificationBell:desktop">
+            <NotificationBell />
+          </RenderProbe>
+        </FeatureErrorBoundary>
         <ButtonLink href="/properties" variant="secondary" size="sm">
           Browse
         </ButtonLink>

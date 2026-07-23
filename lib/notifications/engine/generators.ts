@@ -137,7 +137,7 @@ export function generateBuyerIntelligence(input: {
 
   if (recommended.length > 0) {
     const locs = Array.isArray(profile?.preferred_locations)
-      ? profile!.preferred_locations.filter(Boolean)
+      ? profile.preferred_locations.filter(Boolean)
       : [];
     const budget =
       profile?.budget_max != null

@@ -25,16 +25,19 @@ export function scoreAndRank(
   // Dedupe by title (keep highest score / newest)
   const byTitle = new Map<string, IntelligenceNotification>();
   for (const item of filtered) {
-    const key = item.title.trim().toLowerCase();
+    const title = typeof item.title === "string" ? item.title.trim() : "";
+    if (!title) continue;
+    const key = title.toLowerCase();
     const prev = byTitle.get(key);
     if (!prev) {
-      byTitle.set(key, item);
+      byTitle.set(key, { ...item, title });
       continue;
     }
     const better =
       item.score > prev.score ||
-      (item.score === prev.score && item.timestamp > prev.timestamp);
-    if (better) byTitle.set(key, item);
+      (item.score === prev.score &&
+        String(item.timestamp ?? "") > String(prev.timestamp ?? ""));
+    if (better) byTitle.set(key, { ...item, title });
   }
 
   return [...byTitle.values()].sort((a, b) => {

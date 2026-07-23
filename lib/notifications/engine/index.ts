@@ -60,8 +60,8 @@ export async function runIntelligenceEngine(
   candidates.push(...generateFromAnnouncements(announcements));
 
   if (input.isLoggedIn && input.userId) {
-    const preferred = Array.isArray(input.profile?.preferred_locations)
-      ? input.profile!.preferred_locations
+  const preferred = Array.isArray(input.profile?.preferred_locations)
+      ? input.profile.preferred_locations
       : [];
 
     const [crm, visits, saved, recent, recommended] = await Promise.all([
