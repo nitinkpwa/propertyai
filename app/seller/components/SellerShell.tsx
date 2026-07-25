@@ -107,7 +107,7 @@ export default function SellerShell({
   );
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] lg:pt-16">
+    <div className="min-h-screen overflow-x-clip bg-[#FAFAFA] lg:pt-layout">
       <MobileTopBar
         title="Seller"
         onNotifications={() => onTabChange("notifications")}
@@ -117,13 +117,13 @@ export default function SellerShell({
         searchHref="/seller?tab=listings"
       />
 
-      <header className="sticky top-16 z-30 hidden border-b border-neutral-200 bg-white/95 backdrop-blur-xl md:block">
+      <header className="sticky top-chrome z-layout-sticky hidden border-b border-neutral-200 bg-white/95 backdrop-blur-xl md:block">
         <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6 lg:pl-[17.5rem] lg:pr-8">
           <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setTabletOpen(true)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 text-body lg:hidden"
+              className="touch-target inline-flex items-center justify-center rounded-xl border border-neutral-200 text-body lg:hidden"
               aria-label="Open menu"
             >
               ☰
@@ -175,7 +175,7 @@ export default function SellerShell({
       </header>
 
       <div className="flex">
-        <aside className="fixed bottom-0 left-0 top-[7.5rem] hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
+        <aside className="fixed bottom-0 left-0 top-[calc(var(--chrome-top)+3.5rem)] hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
           <div className="border-b border-neutral-100 px-4 py-4">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">
               Seller Portal
@@ -224,7 +224,7 @@ export default function SellerShell({
       <button
         type="button"
         onClick={onAddProperty}
-        className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-lg shadow-[var(--brand-shadow)] active:scale-95 lg:hidden"
+        className="fixed bottom-chrome right-4 z-layout-sticky flex h-14 w-14 items-center justify-center rounded-full bg-brand text-white shadow-lg shadow-[var(--brand-shadow)] active:scale-95 lg:hidden"
         aria-label="Add property"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25">

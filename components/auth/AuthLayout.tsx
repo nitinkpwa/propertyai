@@ -16,7 +16,7 @@ export default function AuthLayout({
   footer,
 }: AuthLayoutProps) {
   return (
-    <div className="min-h-dvh bg-gradient-to-b from-brand-muted/50 via-neutral-50 to-neutral-100 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="min-h-dvh bg-gradient-to-b from-brand-muted/50 via-neutral-50 to-neutral-100 pt-safe pb-safe">
       <main className="flex min-h-dvh flex-col items-center justify-start px-[4vw] pb-8 pt-[12vh] sm:justify-center sm:px-6 sm:py-10 sm:pt-10 lg:px-8">
         <div className="w-full max-w-[420px] animate-page-enter" style={{ width: "min(420px, 92vw)" }}>
           <div className="rounded-3xl border border-neutral-200/80 bg-white px-6 py-7 shadow-[0_8px_32px_rgba(0,0,0,0.06)] sm:px-8 sm:py-9">

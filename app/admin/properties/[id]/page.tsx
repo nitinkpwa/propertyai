@@ -11,6 +11,7 @@ export default function AdminPropertyDetailPage({ params }: { params: Promise<{ 
   const router = useRouter();
   const [propertyId, setPropertyId] = useState<string | null>(null);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const [adminDisplayName, setAdminDisplayName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function AdminPropertyDetailPage({ params }: { params: Promise<{ 
       }
       if (!cancelled) {
         setAdminUserId(session.user.id);
+        setAdminDisplayName(profile.full_name || profile.email || null);
         setLoading(false);
       }
     })();
@@ -49,11 +51,12 @@ export default function AdminPropertyDetailPage({ params }: { params: Promise<{ 
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA]">
-      <div className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6 lg:px-8">
+    <div className="admin-shell min-h-dvh bg-[#F7F8FA]">
+      <div className="admin-shell-main w-full max-w-none px-4 py-6 sm:px-6 lg:px-8">
         <PropertyCmsEditor
           propertyId={propertyId}
           adminUserId={adminUserId}
+          adminDisplayName={adminDisplayName}
           onBack={() => router.push("/admin?tab=properties")}
         />
       </div>

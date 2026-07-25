@@ -25,7 +25,7 @@ export default function SellerToast({
   return (
     <div
       role="status"
-      className="pointer-events-none fixed bottom-6 right-6 z-[80] max-w-sm animate-[fadeIn_0.2s_ease-out]"
+      className="pointer-events-none fixed bottom-chrome right-4 z-layout-toast max-w-sm animate-[fadeIn_0.2s_ease-out] lg:bottom-6 lg:right-6"
     >
       <div
         className={`pointer-events-auto rounded-xl border px-4 py-3 text-sm font-medium shadow-lg ${

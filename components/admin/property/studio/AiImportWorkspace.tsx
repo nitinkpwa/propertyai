@@ -105,7 +105,7 @@ export default function AiImportWorkspace({ adminUserId, onGenerate, generating 
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35 }}
-          className="max-w-2xl"
+          className="w-full max-w-none lg:max-w-4xl"
         >
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-600">
             AreaIQ AI

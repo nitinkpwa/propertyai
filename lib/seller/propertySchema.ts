@@ -4,7 +4,17 @@
  *
  * `calculated_price` is optional — use PROPERTIES_CARD_SELECT_CORE when the
  * column may be absent, or go through getLiveProperties() which falls back.
+ *
+ * Public/buyer code must use PROPERTIES_PUBLIC_* or PROPERTIES_CARD_* (no contact).
  */
+
+/** Public catalog/detail — never includes seller contact fields. */
+export const PROPERTIES_PUBLIC_BASE_SELECT_CORE =
+  "id, seller_id, title, description, type, sub_type, price, area_sqft, bedrooms, bathrooms, location, city, sector, lat, lng, photos, amenities, status, is_featured, created_at, updated_at, views";
+
+export const PROPERTIES_PUBLIC_BASE_SELECT =
+  "id, seller_id, title, description, type, sub_type, price, calculated_price, area_sqft, bedrooms, bathrooms, location, city, sector, lat, lng, photos, amenities, status, is_featured, created_at, updated_at, views";
+
 export const PROPERTIES_BASE_SELECT_CORE =
   "id, seller_id, title, description, type, sub_type, price, area_sqft, bedrooms, bathrooms, location, city, sector, lat, lng, photos, amenities, status, is_featured, contact_name, contact_phone, created_at, updated_at, views";
 

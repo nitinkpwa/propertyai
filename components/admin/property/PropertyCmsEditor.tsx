@@ -20,6 +20,7 @@ import WizardStepContent from "./wizard/WizardStepContent";
 interface Props {
   propertyId: string;
   adminUserId: string;
+  adminDisplayName?: string | null;
   onBack: () => void;
 }
 
@@ -36,7 +37,12 @@ const SECTION_TO_STEP: Record<string, WizardStepId> = {
   ai: "basic",
 };
 
-export default function PropertyCmsEditor({ propertyId, adminUserId, onBack }: Props) {
+export default function PropertyCmsEditor({
+  propertyId,
+  adminUserId,
+  adminDisplayName,
+  onBack,
+}: Props) {
   const [form, setFormState] = useState<AdminPropertyFormState | null>(null);
   const [section, setSection] = useState<(typeof CMS_SECTIONS)[number]["id"]>("info");
   const [loading, setLoading] = useState(true);
@@ -149,7 +155,7 @@ export default function PropertyCmsEditor({ propertyId, adminUserId, onBack }: P
         <div className={`rounded-xl px-4 py-3 text-sm ${message.includes("✅") ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{message}</div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[280px_1fr_420px]">
+      <div className="grid w-full max-w-none gap-6 xl:grid-cols-[240px_minmax(0,1fr)_minmax(300px,26%)] 2xl:grid-cols-[260px_minmax(0,1fr)_380px]">
         <aside className="space-y-1 rounded-2xl border border-neutral-200 bg-white p-3 shadow-sm">
           {CMS_SECTIONS.map((s) => (
             <button
@@ -226,6 +232,9 @@ export default function PropertyCmsEditor({ propertyId, adminUserId, onBack }: P
               setForm={setForm}
               onUploadPhotos={handleUploadPhotos}
               uploadingPhotos={uploadingPhotos}
+              propertyId={propertyId}
+              adminUserId={adminUserId}
+              adminDisplayName={adminDisplayName}
             />
           )}
         </main>

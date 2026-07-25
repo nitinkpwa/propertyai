@@ -12,6 +12,15 @@ import {
 } from "@/lib/buyer/queries";
 import { invalidateBuyerNotifications } from "@/lib/buyer/notifications";
 
+export const SAVED_CHANGED_EVENT = "areaiq:saved-changed";
+
+function emitSavedChanged(ids: string[]) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent(SAVED_CHANGED_EVENT, { detail: { ids } }),
+  );
+}
+
 export function useSavedPropertyToggle() {
   const router = useRouter();
   const { user } = useAuth();
@@ -26,6 +35,15 @@ export function useSavedPropertyToggle() {
 
     fetchSavedPropertyIds(user.id).then((ids) => setSavedIds(new Set(ids)));
   }, [user]);
+
+  useEffect(() => {
+    const onChange = (e: Event) => {
+      const detail = (e as CustomEvent<{ ids: string[] }>).detail;
+      if (detail?.ids) setSavedIds(new Set(detail.ids));
+    };
+    window.addEventListener(SAVED_CHANGED_EVENT, onChange);
+    return () => window.removeEventListener(SAVED_CHANGED_EVENT, onChange);
+  }, []);
 
   const isSaved = useCallback((propertyId: string) => savedIds.has(propertyId), [savedIds]);
 
@@ -49,6 +67,7 @@ export function useSavedPropertyToggle() {
         const next = new Set(prev);
         if (favorited) next.add(propertyId);
         else next.delete(propertyId);
+        emitSavedChanged([...next]);
         return next;
       });
 
@@ -58,6 +77,7 @@ export function useSavedPropertyToggle() {
           const next = new Set(prev);
           if (favorited) next.delete(propertyId);
           else next.add(propertyId);
+          emitSavedChanged([...next]);
           return next;
         });
       } else if (favorited) {
@@ -93,7 +113,6 @@ export function useSavedProperty(propertyId: string) {
       .finally(() => setChecking(false));
   }, [user, propertyId]);
 
-  // Resume UI after pending save completes
   useEffect(() => {
     const onComplete = (e: Event) => {
       const detail = (e as CustomEvent<{ propertyId: string }>).detail;
@@ -101,8 +120,16 @@ export function useSavedProperty(propertyId: string) {
         setSaved(true);
       }
     };
+    const onSavedChanged = (e: Event) => {
+      const detail = (e as CustomEvent<{ ids: string[] }>).detail;
+      if (detail?.ids) setSaved(detail.ids.includes(propertyId));
+    };
     window.addEventListener("areaiq:pending-save-complete", onComplete);
-    return () => window.removeEventListener("areaiq:pending-save-complete", onComplete);
+    window.addEventListener(SAVED_CHANGED_EVENT, onSavedChanged);
+    return () => {
+      window.removeEventListener("areaiq:pending-save-complete", onComplete);
+      window.removeEventListener(SAVED_CHANGED_EVENT, onSavedChanged);
+    };
   }, [propertyId]);
 
   const toggle = useCallback(async () => {
@@ -127,10 +154,14 @@ export function useSavedProperty(propertyId: string) {
     const ok = await toggleSavedProperty(user.id, propertyId, next);
     if (!ok) {
       setSaved(!next);
-    } else if (next) {
-      clearPendingAuthIntent();
-      invalidateBuyerNotifications(user.id);
-      void profilePrompt?.promptIfNeeded("save_property");
+    } else {
+      // Sync other hooks (cards / detail)
+      fetchSavedPropertyIds(user.id).then((ids) => emitSavedChanged(ids));
+      if (next) {
+        clearPendingAuthIntent();
+        invalidateBuyerNotifications(user.id);
+        void profilePrompt?.promptIfNeeded("save_property");
+      }
     }
 
     setSaving(false);

@@ -112,7 +112,7 @@ export function AskIntelPanel({
         ) : null}
       </div>
 
-      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4 pb-safe">
         {loading ? <LoadingSidebar active /> : null}
 
         {!loading && propertyContext && !latestAssistant ? (

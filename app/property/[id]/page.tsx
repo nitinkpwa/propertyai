@@ -1,7 +1,15 @@
 import type { Metadata } from "next";
 import { fetchPropertyDetailById } from "@/lib/properties/detail";
 import { notFound } from "next/navigation";
-import PropertyDetailView from "./PropertyDetailView";
+import dynamic from "next/dynamic";
+
+const PropertyDetailView = dynamic(() => import("./PropertyDetailView"), {
+  loading: () => (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
+    </div>
+  ),
+});
 
 interface PageProps {
   params: Promise<{ id: string }>;

@@ -1,5 +1,6 @@
 import { searchPropertiesByLocality, searchPropertiesByName } from "../../search";
 import type { ListingProperty } from "@/lib/properties/types";
+import { calculateLegalCompliance } from "@/lib/properties/legalCompliance";
 import type { AskEngineResponse, HandlerContext, PropertyContext } from "../types";
 import { classificationToResponseFields } from "../types";
 import { resolvePropertyName } from "../classifier";
@@ -70,6 +71,8 @@ export async function handlePropertyAnalysis(
       imageAlt: ctx.propertyContext.name,
       aiVerified: false,
       reraVerified: false,
+      legalFlags: null,
+      legalCompliance: calculateLegalCompliance(null),
       propertyType: ctx.propertyContext.propertyType as ListingProperty["propertyType"],
       listingType: "buy",
       possession: ctx.propertyContext.possession as ListingProperty["possession"],

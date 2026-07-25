@@ -1,3 +1,7 @@
+import type {
+  LegalComplianceResult,
+  LegalVerificationFlags,
+} from "@/lib/properties/legalCompliance";
 import type { ListingProperty } from "@/lib/properties/types";
 
 export type MarketSignalKind =
@@ -69,6 +73,8 @@ export interface IntelligencePropertyCardModel {
   imageAlt?: string;
   aiVerified?: boolean;
   reraVerified?: boolean;
+  legalFlags?: Partial<LegalVerificationFlags> | null;
+  legalCompliance?: LegalComplianceResult | null;
   href: string;
   askHref: string;
 }
@@ -92,6 +98,8 @@ export function listingToIntelligenceCard(
     imageAlt: listing.imageAlt,
     aiVerified: listing.aiVerified,
     reraVerified: listing.reraVerified,
+    legalFlags: listing.legalFlags,
+    legalCompliance: listing.legalCompliance,
     href: `/property/${listing.id}`,
     askHref: `/ask?q=${encodeURIComponent(`Tell me about ${listing.name} in ${listing.location}`)}&propertyId=${listing.id}`,
   };

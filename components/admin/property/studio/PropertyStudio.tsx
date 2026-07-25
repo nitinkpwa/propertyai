@@ -21,6 +21,7 @@ import AiReviewScreen from "./AiReviewScreen";
 
 interface Props {
   adminUserId: string;
+  adminDisplayName?: string | null;
   editId: string | null;
   initialForm?: AdminPropertyFormState;
   /** Optional titles from property list for duplicate hints */
@@ -31,6 +32,7 @@ interface Props {
 
 export default function PropertyStudio({
   adminUserId,
+  adminDisplayName,
   editId,
   initialForm,
   existingTitles = [],
@@ -236,7 +238,7 @@ export default function PropertyStudio({
   };
 
   return (
-    <div className="space-y-5 lg:space-y-6">
+    <div className="w-full max-w-none space-y-5 lg:space-y-6">
       {/* Mode switch + step chrome */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex w-full rounded-2xl border border-neutral-200 bg-white/90 p-1 shadow-sm backdrop-blur sm:w-auto">
@@ -318,6 +320,7 @@ export default function PropertyStudio({
           >
             <PropertyWizard
               adminUserId={adminUserId}
+              adminDisplayName={adminDisplayName}
               editId={editId}
               initialForm={form}
               onSaved={onSaved}

@@ -20,36 +20,26 @@ import type {
 
 /**
  * A buyer can have several partner-scoped leads (one per Connect partner whose
- * property they engaged with) plus a general lead. For the buyer-facing view
- * we surface the most recently active one.
+ * property they engaged with) plus a general lead.
  */
-export async function fetchBuyerLead(buyerId: string): Promise<CrmLead | null> {
+export async function fetchBuyerLeads(buyerId: string): Promise<CrmLead[]> {
   const { data, error } = await supabase
     .from("crm_leads")
     .select("*")
     .eq("buyer_id", buyerId)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .order("updated_at", { ascending: false });
 
   if (error) {
-    console.error("fetchBuyerLead:", error.message);
-    return null;
-  }
-  return (data as CrmLead) ?? null;
-}
-
-async function fetchBuyerLeadIds(buyerId: string): Promise<string[]> {
-  const { data, error } = await supabase
-    .from("crm_leads")
-    .select("id")
-    .eq("buyer_id", buyerId);
-
-  if (error) {
-    console.error("fetchBuyerLeadIds:", error.message);
+    console.error("fetchBuyerLeads:", error.message);
     return [];
   }
-  return (data ?? []).map((l) => l.id as string);
+  return (data as CrmLead[]) ?? [];
+}
+
+/** Most recently active lead (compat for single-lead call sites). */
+export async function fetchBuyerLead(buyerId: string): Promise<CrmLead | null> {
+  const leads = await fetchBuyerLeads(buyerId);
+  return leads[0] ?? null;
 }
 
 export async function fetchLeadActivities(
@@ -99,8 +89,8 @@ export async function fetchActivitiesForLeadIds(
 
 export async function fetchBuyerCrmSummary(buyerId: string): Promise<BuyerCrmSummary> {
   try {
-    const [lead, enquiries, saved, chats, visits] = await Promise.all([
-      fetchBuyerLead(buyerId),
+    const [leads, enquiries, saved, chats, visits] = await Promise.all([
+      fetchBuyerLeads(buyerId),
       supabase
         .from("inquiries")
         .select("id", { count: "exact", head: true })
@@ -119,12 +109,12 @@ export async function fetchBuyerCrmSummary(buyerId: string): Promise<BuyerCrmSum
         .eq("user_id", buyerId),
     ]);
 
-    // The buyer journey spans all of the buyer's leads (general + per partner).
-    const leadIds = await fetchBuyerLeadIds(buyerId);
+    const leadIds = leads.map((l) => l.id);
     const activities = leadIds.length > 0 ? await fetchActivitiesForLeadIds(leadIds, 30) : [];
 
     return {
-      lead,
+      lead: leads[0] ?? null,
+      leads,
       enquiriesCount: enquiries.count ?? 0,
       savedCount: saved.count ?? 0,
       chatsCount: chats.count ?? 0,
@@ -135,6 +125,7 @@ export async function fetchBuyerCrmSummary(buyerId: string): Promise<BuyerCrmSum
     console.error("fetchBuyerCrmSummary:", err);
     return {
       lead: null,
+      leads: [],
       enquiriesCount: 0,
       savedCount: 0,
       chatsCount: 0,

@@ -28,6 +28,11 @@ import {
   type AdminPropertyFormSource,
   type AdminPropertyFormState,
 } from "./types";
+import {
+  resolveLegalVerificationFromProperty,
+  legalFlagsToMetaBlob,
+} from "./legalVerification";
+import { calculateLegalCompliance } from "@/lib/properties/legalCompliance";
 
 function resolveFormReraNumber(form: AdminPropertyFormState): string | null {
   const fromField = normalizeReraNumberForStorage(form.rera_number);
@@ -77,6 +82,7 @@ function buildFactualMetaFromForm(
     documents: form.documents,
     seo: form.seo,
     publishing: form.publishing,
+    legalVerification: legalFlagsToMetaBlob(form.legal),
     ai: existingAi,
     importKnowledge: form.importKnowledge ?? existingMeta?.importKnowledge ?? null,
     fieldConfidence:
@@ -108,6 +114,7 @@ function mergeMetaIntoForm(
     documents: { ...form.documents, ...meta.documents },
     seo: { ...form.seo, ...meta.seo },
     publishing: { ...form.publishing, ...meta.publishing },
+    // legal is resolved separately via resolveLegalVerificationFromProperty (columns + meta)
     aiIntelligence: meta.ai ?? form.aiIntelligence,
     importKnowledge: meta.importKnowledge ?? form.importKnowledge,
     fieldConfidence: meta.fieldConfidence ?? form.fieldConfidence,
@@ -149,6 +156,7 @@ export function adminRowToForm(row: AdminPropertyFormSource): AdminPropertyFormS
     featured_image: row.featured_image || "",
     connect_partner_id: row.connect_partner_id || "",
     site_visit_enabled: row.site_visit_enabled !== false,
+    legal: resolveLegalVerificationFromProperty(row),
     nearbyPlaces: places.map((p) => ({
       name: p.name,
       distance: p.distance,
@@ -167,7 +175,12 @@ export function adminRowToForm(row: AdminPropertyFormSource): AdminPropertyFormS
 export function formToDbPayload(
   form: AdminPropertyFormState,
   sellerId: string,
-  options?: { preserveStatus?: boolean; existingNearbyPlaces?: unknown },
+  options?: {
+    preserveStatus?: boolean;
+    /** When true (edits), do not overwrite ownership. */
+    preserveSellerId?: boolean;
+    existingNearbyPlaces?: unknown;
+  },
 ): Record<string, unknown> {
   const existingMeta = extractPropertyMeta(options?.existingNearbyPlaces ?? null);
   const meta = buildFactualMetaFromForm(
@@ -183,6 +196,8 @@ export function formToDbPayload(
     parseFloat(form.pricing.currentPrice) ||
     0;
   const workflowStatus = form.publishing.workflowStatus;
+
+  // Prefer explicit listing status on edit so CMS saves cannot unpublish live rows.
   const dbStatus = toPropertyStatus(
     options?.preserveStatus && form.status
       ? form.status
@@ -192,6 +207,24 @@ export function formToDbPayload(
           ? PROPERTY_STATUS.PAUSED
           : PROPERTY_STATUS_DEFAULT_CREATE,
   );
+
+  // Keep publishing meta aligned with the status we persist (single source of truth).
+  meta.publishing = {
+    ...meta.publishing,
+    workflowStatus:
+      dbStatus === PROPERTY_STATUS.ACTIVE
+        ? "active"
+        : workflowStatus === "archived" || dbStatus === PROPERTY_STATUS.PAUSED
+          ? workflowStatus === "archived"
+            ? "archived"
+            : form.publishing.workflowStatus === "review"
+              ? "review"
+              : "draft"
+          : form.publishing.workflowStatus || "draft",
+  };
+  if (dbStatus === PROPERTY_STATUS.ACTIVE) {
+    meta.publishing.workflowStatus = "active";
+  }
 
   // Never persist concatenated plot ranges as area_sqft
   const carpet = parseFloat(form.specs.carpetArea) || parseFloat(form.area_sqft) || null;
@@ -218,7 +251,7 @@ export function formToDbPayload(
   // Prefer explicit market total (≥ ₹1L); never persist a unit rate as price
   const price = formPrice >= 100_000 ? formPrice : priced.numericPrice || 0;
 
-  return {
+  const payload: Record<string, unknown> = {
     title: form.title,
     type: form.type,
     sub_type: form.sub_type,
@@ -248,9 +281,25 @@ export function formToDbPayload(
     featured_image: form.featured_image || form.photos[0] || null,
     nearby_places: buildNearbyPlacesPayload(places, meta),
     site_visit_enabled: form.site_visit_enabled !== false,
-    seller_id: sellerId,
+    approved_building_plan: Boolean(form.legal.approved_building_plan),
+    rera_certificate: Boolean(form.legal.rera_certificate),
+    title_deed_verified: Boolean(form.legal.title_deed_verified),
+    noc_verified: Boolean(form.legal.noc_verified),
+    completion_certificate: Boolean(form.legal.completion_certificate),
+    occupation_certificate: Boolean(form.legal.occupation_certificate),
+    environment_clearance: Boolean(form.legal.environment_clearance),
+    fire_clearance: Boolean(form.legal.fire_clearance),
+    bank_approved: Boolean(form.legal.bank_approved),
+    govt_layout_approved: Boolean(form.legal.govt_layout_approved),
     updated_at: new Date().toISOString(),
   };
+
+  // C1: never reassign ownership on edit — only set seller_id on create.
+  if (!options?.preserveSellerId) {
+    payload.seller_id = sellerId;
+  }
+
+  return payload;
 }
 
 /** Post-publish workflow: writes AI intelligence into nearby_places meta only. */
@@ -428,6 +477,8 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
     description: compiled.propertySummary || form.title,
     aiVerified: (form.aiIntelligence?.confidence ?? 0) >= 70,
     reraVerified: isReraApproved({ rera_number: resolveFormReraNumber(form) }),
+    legalFlags: form.legal,
+    legalCompliance: calculateLegalCompliance(form.legal),
     images,
     amenities: form.amenities,
     intelligenceBundle,
@@ -472,6 +523,7 @@ export function syncLegacyFormFields(form: AdminPropertyFormState): AdminPropert
     },
     seo: { ...defaults.seo, ...form.seo },
     publishing: { ...defaults.publishing, ...form.publishing },
+    legal: { ...defaults.legal, ...(form.legal ?? {}) },
     amenities: Array.isArray(form.amenities) ? form.amenities : defaults.amenities,
     photos: Array.isArray(form.photos) ? form.photos : defaults.photos,
     nearbyPlaces: Array.isArray(form.nearbyPlaces) ? form.nearbyPlaces : defaults.nearbyPlaces,

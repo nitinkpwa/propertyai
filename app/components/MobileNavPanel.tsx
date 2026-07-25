@@ -62,8 +62,8 @@ export default function MobileNavPanel({
           open ? "translate-x-0" : "-translate-x-full"
         }`}
         style={{
-          paddingTop: "env(safe-area-inset-top)",
-          paddingBottom: "env(safe-area-inset-bottom)",
+          paddingTop: "var(--safe-top)",
+          paddingBottom: "var(--safe-bottom)",
         }}
         aria-hidden={!open}
         aria-label="Mobile navigation"

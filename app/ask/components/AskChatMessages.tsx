@@ -11,8 +11,18 @@ import {
 import { AskAdvisorLoading } from "./loading/AskAdvisorLoading";
 import type { AskTurn } from "@/lib/ask/types";
 
-function formatInline(text: string) {
+function escapeHtml(text: string) {
   return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatInline(text: string) {
+  const safe = escapeHtml(text);
+  return safe
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/^###\s+(.+)$/gm, '<h4 class="mt-3 mb-1 text-sm font-semibold text-heading-primary">$1</h4>')
     .replace(/^##\s+(.+)$/gm, '<h3 class="mt-4 mb-2 text-base font-semibold text-heading-primary">$1</h3>')

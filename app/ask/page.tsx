@@ -137,7 +137,7 @@ function AskPageContent() {
       {/* Center chat — fills remaining width/height */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#fafbfa_100%)]">
         <header
-          className={`z-10 flex shrink-0 items-center gap-2 border-b border-neutral-200/80 bg-white/95 px-3 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur-md transition-shadow duration-200 sm:px-4 lg:pt-2.5 ${
+          className={`z-10 flex shrink-0 items-center gap-2 border-b border-neutral-200/80 bg-white/95 px-3 py-2.5 pt-[max(0.625rem,var(--safe-top))] backdrop-blur-md transition-shadow duration-200 sm:px-4 lg:pt-2.5 ${
             headerElevated ? "shadow-[0_4px_16px_rgba(0,0,0,0.06)]" : "shadow-none"
           }`}
         >

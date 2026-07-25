@@ -150,7 +150,7 @@ export function BookSiteVisitProvider({
       {roleMessage ? (
         <div
           role="alert"
-          className="fixed bottom-6 left-1/2 z-[110] -translate-x-1/2 rounded-xl bg-gray-900 px-5 py-3 text-sm font-medium text-white shadow-lg"
+          className="fixed bottom-chrome left-1/2 z-layout-toast -translate-x-1/2 rounded-xl bg-gray-900 px-5 py-3 text-sm font-medium text-white shadow-lg lg:bottom-6"
         >
           {roleMessage}
         </div>

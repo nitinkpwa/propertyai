@@ -1,4 +1,5 @@
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
+import type { LegalComplianceLevel } from "@/lib/properties/legalCompliance";
 
 export type PropertyType =
   | "apartment"
@@ -38,8 +39,11 @@ export interface AIFilterFlags {
   highRentalYield: boolean;
   highAppreciation: boolean;
   bestInvestment: boolean;
+  /** Legal compliance ≥ 90% */
   verifiedOnly: boolean;
-  reraOnly: boolean;
+  documentsVerified: boolean;
+  documentsPartial: boolean;
+  documentsMissing: boolean;
 }
 
 export interface PropertyFilterState {
@@ -75,7 +79,9 @@ export const DEFAULT_FILTER_STATE: PropertyFilterState = {
     highAppreciation: false,
     bestInvestment: false,
     verifiedOnly: false,
-    reraOnly: false,
+    documentsVerified: false,
+    documentsPartial: false,
+    documentsMissing: false,
   },
 };
 
@@ -94,6 +100,8 @@ export interface SupabasePropertyFilters {
   amenities?: Amenity[];
   aiVerified?: boolean;
   reraVerified?: boolean;
+  /** Legal documents compliance level filter(s). */
+  documentsCompliance?: LegalComplianceLevel[];
   minGrowthScore?: number;
   minRentalYield?: number;
 }

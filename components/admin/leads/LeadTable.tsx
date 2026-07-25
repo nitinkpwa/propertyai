@@ -33,20 +33,33 @@ export default function LeadTable({ leads }: { leads: AdminLeadSummary[] }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <div className="overflow-x-auto">
-        <table className="min-w-[1100px] w-full text-left text-sm">
+        <table className="admin-data-table w-full min-w-[1100px] table-fixed text-left text-sm">
+          <colgroup>
+            <col className="w-[6%]" />
+            <col className="w-[14%]" />
+            <col className="w-[11%]" />
+            <col className="w-[16%]" />
+            <col className="w-[10%]" />
+            <col className="w-[12%]" />
+            <col className="w-[10%]" />
+            <col className="w-[10%]" />
+            <col className="w-[9%]" />
+            <col className="w-[7%]" />
+            <col className="w-[5%]" />
+          </colgroup>
           <thead>
             <tr className="border-b border-neutral-200 bg-neutral-50/80 text-[11px] font-semibold uppercase tracking-wider text-muted">
-              <th className="px-4 py-3">Avatar</th>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Phone</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Budget</th>
-              <th className="px-4 py-3">Preferred Location</th>
-              <th className="px-4 py-3">Property Type</th>
-              <th className="px-4 py-3">Last Activity</th>
-              <th className="px-4 py-3">Created</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">AI Score</th>
+              <th className="whitespace-nowrap px-4 py-3">Avatar</th>
+              <th className="whitespace-nowrap px-4 py-3">Name</th>
+              <th className="whitespace-nowrap px-4 py-3">Phone</th>
+              <th className="whitespace-nowrap px-4 py-3">Email</th>
+              <th className="whitespace-nowrap px-4 py-3">Budget</th>
+              <th className="whitespace-nowrap px-4 py-3">Preferred Location</th>
+              <th className="whitespace-nowrap px-4 py-3">Property Type</th>
+              <th className="whitespace-nowrap px-4 py-3">Last Activity</th>
+              <th className="whitespace-nowrap px-4 py-3">Created</th>
+              <th className="whitespace-nowrap px-4 py-3">Status</th>
+              <th className="whitespace-nowrap px-4 py-3">AI Score</th>
             </tr>
           </thead>
           <tbody>

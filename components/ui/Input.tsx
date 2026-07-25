@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useId } from "react";
+import { scrollFieldIntoView } from "@/components/layout/engine";
 import { ui } from "@/lib/design/tokens";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -23,6 +24,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     containerClassName = "",
     id,
     placeholder = " ",
+    onFocus,
     ...props
   },
   ref,
@@ -47,6 +49,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
           className={`${ui.input} ${leftIcon ? "pl-11" : ""} ${rightSlot ? "pr-12" : ""} ${
             error ? "border-rose-300 focus:border-rose-400 focus:ring-rose-500/10" : ""
           } ${className}`}
+          onFocus={(e) => {
+            scrollFieldIntoView(e.currentTarget);
+            onFocus?.(e);
+          }}
           {...props}
         />
         <label htmlFor={inputId} className={`${ui.labelFloat} ${leftIcon ? "left-11" : ""}`}>
@@ -75,7 +81,7 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
 }
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-  { label, error, className = "", id, placeholder = " ", ...props },
+  { label, error, className = "", id, placeholder = " ", onFocus, ...props },
   ref,
 ) {
   const autoId = useId();
@@ -92,6 +98,10 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
           className={`peer min-h-[120px] w-full resize-y rounded-xl border border-neutral-200 bg-neutral-50 px-4 pb-3 pt-6 text-base text-input outline-none transition-all placeholder:text-transparent focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10 ${
             error ? "border-rose-300" : ""
           } ${className}`}
+          onFocus={(e) => {
+            scrollFieldIntoView(e.currentTarget);
+            onFocus?.(e);
+          }}
           {...props}
         />
         <label

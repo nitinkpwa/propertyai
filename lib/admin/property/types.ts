@@ -5,6 +5,10 @@ import type { ImportKnowledge } from "@/lib/admin/property/studio/types";
 import type { PropertyStructuredMeta } from "@/lib/properties/nearbyPlacesMeta";
 import { emptyPropertyStructuredMeta } from "@/lib/properties/nearbyPlacesMeta";
 import { PROPERTY_STATUS_DEFAULT_CREATE } from "@/lib/properties/status";
+import {
+  emptyLegalVerification,
+  type LegalVerificationState,
+} from "./legalVerification";
 
 export type WizardStepId =
   | "basic"
@@ -47,6 +51,8 @@ export interface AdminPropertyFormState {
   connect_partner_id: string;
   /** When false, buyers cannot book site visits. Default true. */
   site_visit_enabled: boolean;
+  /** Admin-only legal verification flags (never shown to buyers). */
+  legal: LegalVerificationState;
 
   basic: PropertyStructuredMeta["basic"];
   locationMeta: PropertyStructuredMeta["location"];
@@ -100,6 +106,7 @@ export function createEmptyAdminPropertyForm(): AdminPropertyFormState {
     featured_image: "",
     connect_partner_id: "",
     site_visit_enabled: true,
+    legal: emptyLegalVerification(),
     basic: { ...meta.basic },
     locationMeta: { ...meta.location },
     pricing: { ...meta.pricing },
@@ -130,4 +137,17 @@ export type AdminPropertyFormSource = AdminPropertyRow & {
   rental_yield?: number | null;
   photos?: string[];
   site_visit_enabled?: boolean | null;
+  approved_building_plan?: boolean | null;
+  rera_certificate?: boolean | null;
+  title_deed_verified?: boolean | null;
+  noc_verified?: boolean | null;
+  completion_certificate?: boolean | null;
+  occupation_certificate?: boolean | null;
+  environment_clearance?: boolean | null;
+  fire_clearance?: boolean | null;
+  bank_approved?: boolean | null;
+  govt_layout_approved?: boolean | null;
+  legal_verification_updated_at?: string | null;
+  legal_verification_updated_by?: string | null;
+  legal_verification_updated_by_name?: string | null;
 };

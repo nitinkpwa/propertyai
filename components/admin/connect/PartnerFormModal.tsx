@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { ConnectPartner, ConnectPartnerStatus } from "@/lib/connect/partners/types";
 import { CONNECT_CITIES } from "@/lib/connect/constants";
+import { useOverlay } from "@/lib/layout/overlay";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
@@ -87,6 +88,7 @@ export default function PartnerFormModal({
   const [form, setForm] = useState<FormState>(EMPTY);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { zClassName } = useOverlay("modal", open, onClose);
 
   useEffect(() => {
     if (!open) return;
@@ -98,8 +100,6 @@ export default function PartnerFormModal({
     if (!open) return;
 
     previousFocus.current = document.activeElement as HTMLElement | null;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -131,7 +131,6 @@ export default function PartnerFormModal({
     });
 
     return () => {
-      document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
       previousFocus.current?.focus?.();
     };
@@ -195,7 +194,7 @@ export default function PartnerFormModal({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-4"
+      className={`fixed inset-0 ${zClassName} flex items-center justify-center p-3 sm:p-4`}
       role="presentation"
     >
       <button

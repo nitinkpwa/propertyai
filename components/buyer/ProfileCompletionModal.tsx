@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useOverlay } from "@/lib/layout/overlay";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import SelectableChip from "@/app/components/filters/SelectableChip";
 import SearchableMultiSelect from "@/components/buyer/SearchableMultiSelect";
@@ -106,6 +107,7 @@ function stepProgressPercent(step: number): number {
 }
 
 export default function ProfileCompletionModal({ completeness, onClose, onSaved }: Props) {
+  const { zClassName } = useOverlay("modal", true, () => onClose(false));
   const { user, profile } = useAuth();
   const [step, setStep] = useState(() => getInitialStep(profile));
   const [saving, setSaving] = useState(false);
@@ -315,7 +317,7 @@ export default function ProfileCompletionModal({ completeness, onClose, onSaved 
   const labelClass = "mb-2 block text-base font-medium leading-snug text-heading-secondary";
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6">
+    <div className={`fixed inset-0 ${zClassName} flex items-center justify-center p-4 sm:p-6`}>
       <button
         type="button"
         aria-label="Close"

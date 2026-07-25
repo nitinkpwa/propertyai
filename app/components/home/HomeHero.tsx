@@ -23,7 +23,7 @@ export default function HomeHero() {
   };
 
   return (
-    <section className="relative overflow-hidden pt-16">
+    <section className="relative overflow-hidden pt-layout">
       <div className="mx-auto w-full max-w-7xl px-0 lg:px-8">
         <div className="relative min-h-[300px] overflow-hidden sm:min-h-[460px] lg:min-h-[580px] lg:rounded-2xl">
           <Image

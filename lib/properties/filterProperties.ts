@@ -4,6 +4,10 @@ import {
   BUDGET_MAX,
   BUDGET_MIN,
 } from "./constants";
+import {
+  calculateLegalCompliance,
+  type LegalComplianceLevel,
+} from "./legalCompliance";
 import type {
   ListingProperty,
   PropertyFilterState,
@@ -30,6 +34,26 @@ function matchesAmenities(
 ): boolean {
   if (amenities.length === 0) return true;
   return amenities.every((amenity) => property.amenities.includes(amenity));
+}
+
+function resolvePropertyComplianceLevel(
+  property: ListingProperty,
+): LegalComplianceLevel {
+  if (property.legalCompliance?.level) return property.legalCompliance.level;
+  return calculateLegalCompliance(property.legalFlags ?? null).level;
+}
+
+function matchesDocumentsFilters(
+  property: ListingProperty,
+  ai: PropertyFilterState["ai"],
+): boolean {
+  const wantsVerified = ai.documentsVerified || ai.verifiedOnly;
+  const levels: LegalComplianceLevel[] = [];
+  if (wantsVerified) levels.push("verified");
+  if (ai.documentsPartial) levels.push("partial");
+  if (ai.documentsMissing) levels.push("missing");
+  if (levels.length === 0) return true;
+  return levels.includes(resolvePropertyComplianceLevel(property));
 }
 
 function matchesAiFilters(
@@ -66,8 +90,7 @@ function matchesAiFilters(
       return false;
     }
   }
-  if (ai.verifiedOnly && !property.aiVerified) return false;
-  if (ai.reraOnly && !property.reraVerified) return false;
+  if (!matchesDocumentsFilters(property, ai)) return false;
   return true;
 }
 
@@ -139,7 +162,8 @@ export function filterProperties(
 
 /**
  * Maps UI filter state to Supabase-ready query parameters.
- * Use with `buildSupabasePropertyQuery()` when connecting the backend.
+ * Document compliance is evaluated client-side from legal flags / meta
+ * (dedicated columns may not exist on live schema yet).
  */
 export function toSupabaseFilters(
   filters: PropertyFilterState,
@@ -164,8 +188,17 @@ export function toSupabaseFilters(
   if (active.amenities.length > 0) {
     supabaseFilters.amenities = active.amenities;
   }
-  if (active.ai.verifiedOnly) supabaseFilters.aiVerified = true;
-  if (active.ai.reraOnly) supabaseFilters.reraVerified = true;
+
+  const docsLevels: LegalComplianceLevel[] = [];
+  if (active.ai.documentsVerified || active.ai.verifiedOnly) {
+    docsLevels.push("verified");
+  }
+  if (active.ai.documentsPartial) docsLevels.push("partial");
+  if (active.ai.documentsMissing) docsLevels.push("missing");
+  if (docsLevels.length > 0) {
+    supabaseFilters.documentsCompliance = [...new Set(docsLevels)];
+  }
+
   if (active.ai.highAreaIQScore) {
     supabaseFilters.minGrowthScore = HIGH_GROWTH_THRESHOLD;
   }
@@ -184,12 +217,14 @@ export function toSupabaseFilters(
 
 /**
  * Example Supabase query builder — wire this when the backend is ready.
+ * Legal compliance filters are applied in `filterProperties` from resolved flags.
  */
 export function buildSupabasePropertyQuery<
   T extends {
     eq: (column: string, value: unknown) => T;
     gte: (column: string, value: unknown) => T;
     lte: (column: string, value: unknown) => T;
+    or: (filters: string) => T;
     in: (column: string, values: unknown[]) => T;
     contains: (column: string, value: unknown) => T;
     not: (column: string, operator: string, value: unknown) => T;
@@ -205,10 +240,15 @@ export function buildSupabasePropertyQuery<
     next = next.in("property_type", filters.propertyTypes);
   }
   if (filters.minPrice != null) {
-    next = next.gte("price", filters.minPrice);
+    // Prefer calculated_price (display total) with fallback to legacy price.
+    next = next.or(
+      `calculated_price.gte.${filters.minPrice},and(calculated_price.is.null,price.gte.${filters.minPrice})`,
+    );
   }
   if (filters.maxPrice != null) {
-    next = next.lte("price", filters.maxPrice);
+    next = next.or(
+      `calculated_price.lte.${filters.maxPrice},and(calculated_price.is.null,price.lte.${filters.maxPrice})`,
+    );
   }
   if (filters.location) {
     next = next.eq("city", filters.location);

@@ -1,8 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import Image from "next/image";
+import dynamic from "next/dynamic";
+import { useCallback, useMemo, useState } from "react";
 import type { PropertyDetail } from "../data";
-import { CloseIcon, ExpandIcon } from "./shared";
+import { ExpandIcon } from "./shared";
+
+const Lightbox = dynamic(() => import("@/components/ui/Lightbox"), { ssr: false });
 
 interface PropertyGalleryProps {
   images: PropertyDetail["images"];
@@ -25,11 +29,35 @@ function GalleryPlaceholder({
         >
           🏠
         </span>
-        <span className="rounded-full bg-white/20 px-4 py-1.5 text-sm font-medium text-white backdrop-blur-md">
+        <span className="rounded-full bg-white/20 px-4 py-1.5 type-caption font-medium text-white backdrop-blur-md">
           {label}
         </span>
       </div>
     </>
+  );
+}
+
+function GalleryImage({
+  src,
+  alt,
+  sizes,
+  priority = false,
+}: {
+  src: string;
+  alt: string;
+  sizes: string;
+  priority?: boolean;
+}) {
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes={sizes}
+      priority={priority}
+      className="object-cover"
+      unoptimized={src.startsWith("blob:") || src.startsWith("data:")}
+    />
   );
 }
 
@@ -50,23 +78,18 @@ export default function PropertyGallery({ images, propertyName }: PropertyGaller
         ];
 
   const active = galleryImages[activeIndex] ?? galleryImages[0];
-
   const closeFullscreen = useCallback(() => setFullscreen(false), []);
 
-  useEffect(() => {
-    if (!fullscreen) return;
-    document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") closeFullscreen();
-      if (e.key === "ArrowRight") setActiveIndex((i) => (i + 1) % galleryImages.length);
-      if (e.key === "ArrowLeft") setActiveIndex((i) => (i - 1 + galleryImages.length) % galleryImages.length);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [fullscreen, galleryImages.length, closeFullscreen]);
+  const lightboxImages = useMemo(
+    () =>
+      galleryImages.map((img) => ({
+        id: img.id,
+        src: img.url ?? null,
+        alt: img.label,
+        gradient: img.gradient,
+      })),
+    [galleryImages],
+  );
 
   return (
     <>
@@ -79,14 +102,14 @@ export default function PropertyGallery({ images, propertyName }: PropertyGaller
         >
           {active.url ? (
             <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <GalleryImage
                 src={active.url}
                 alt={active.label}
-                className="absolute inset-0 h-full w-full object-cover"
+                sizes="(max-width: 768px) 100vw, 900px"
+                priority
               />
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-3">
-                <span className="rounded-full bg-black/40 px-3 py-1 text-sm font-medium text-white backdrop-blur-md">
+                <span className="rounded-full bg-black/40 px-3 py-1 type-caption font-medium text-white backdrop-blur-md">
                   {active.label}
                 </span>
               </div>
@@ -94,7 +117,7 @@ export default function PropertyGallery({ images, propertyName }: PropertyGaller
           ) : (
             <GalleryPlaceholder label={active.label} />
           )}
-          <div className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md opacity-0 transition-opacity group-hover:opacity-100">
+          <div className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 type-micro font-medium text-white backdrop-blur-md opacity-0 transition-opacity group-hover:opacity-100">
             <ExpandIcon />
             View fullscreen
           </div>
@@ -116,18 +139,13 @@ export default function PropertyGallery({ images, propertyName }: PropertyGaller
             >
               {img.url ? (
                 <>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={img.url}
-                    alt={img.label}
-                    className="absolute inset-0 h-full w-full object-cover"
-                  />
-                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent px-1.5 py-1 text-[9px] font-medium text-white sm:text-[10px]">
+                  <GalleryImage src={img.url} alt={img.label} sizes="112px" />
+                  <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent px-1.5 py-1 type-micro font-medium text-white">
                     {img.label}
                   </span>
                 </>
               ) : (
-                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent px-1.5 py-1 text-[9px] font-medium text-white sm:text-[10px]">
+                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent px-1.5 py-1 type-micro font-medium text-white">
                   {img.label}
                 </span>
               )}
@@ -136,81 +154,14 @@ export default function PropertyGallery({ images, propertyName }: PropertyGaller
         </div>
       </div>
 
-      {fullscreen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm sm:p-8"
-          role="dialog"
-          aria-modal="true"
-          aria-label={`${propertyName} photo gallery`}
-        >
-          <button
-            type="button"
-            onClick={closeFullscreen}
-            className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur-md transition-colors hover:bg-white/20 sm:right-8 sm:top-8"
-            aria-label="Close gallery"
-          >
-            <CloseIcon />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveIndex((i) => (i - 1 + galleryImages.length) % galleryImages.length)}
-            className="absolute left-2 z-10 hidden h-12 w-12 items-center justify-center rounded-full bg-white/10 text-2xl text-white backdrop-blur-md transition-colors hover:bg-white/20 sm:flex sm:left-8"
-            aria-label="Previous image"
-          >
-            ‹
-          </button>
-
-          <div
-            className={`relative aspect-[16/10] w-full max-w-5xl overflow-hidden rounded-2xl bg-gradient-to-br ${active.gradient} sm:rounded-3xl`}
-          >
-            {active.url ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={active.url}
-                  alt={active.label}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-6 py-5 text-center">
-                  <p className="text-lg font-semibold text-white/90">{active.label}</p>
-                  <p className="text-sm text-white/60">
-                    {activeIndex + 1} / {galleryImages.length}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <GalleryPlaceholder label={active.label} size="lg" />
-                <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-sm text-white/60">
-                  {activeIndex + 1} / {galleryImages.length}
-                </p>
-              </>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setActiveIndex((i) => (i + 1) % galleryImages.length)}
-            className="absolute right-2 z-10 hidden h-12 w-12 items-center justify-center rounded-full bg-white/10 text-2xl text-white backdrop-blur-md transition-colors hover:bg-white/20 sm:flex sm:right-8"
-            aria-label="Next image"
-          >
-            ›
-          </button>
-
-          <div className="absolute bottom-6 left-1/2 flex -translate-x-1/2 gap-2 sm:bottom-10">
-            {galleryImages.map((img, i) => (
-              <button
-                key={img.id}
-                type="button"
-                onClick={() => setActiveIndex(i)}
-                aria-label={img.label}
-                className={`h-2 rounded-full transition-all ${i === activeIndex ? "w-6 bg-emerald-400" : "w-2 bg-white/40 hover:bg-white/60"}`}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+      <Lightbox
+        open={fullscreen}
+        onClose={closeFullscreen}
+        images={lightboxImages}
+        index={activeIndex}
+        onIndexChange={setActiveIndex}
+        title={propertyName}
+      />
     </>
   );
 }

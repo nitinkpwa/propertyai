@@ -10,6 +10,7 @@ import CompareQueueBar from "@/components/buyer/CompareQueueBar";
 import { ToastProvider } from "@/components/ui/Toast";
 import BrandJsonLd from "@/components/seo/BrandJsonLd";
 import MainContent from "@/components/layout/MainContent";
+import LayoutProvider from "@/components/layout/engine/LayoutProvider";
 import StabilityProvider from "@/components/stability/StabilityProvider";
 import { BRAND } from "@/lib/brand";
 import { APP_VERSION } from "@/lib/stability/version";
@@ -115,11 +116,13 @@ export default function RootLayout({
           <AuthProvider>
             <AuthSessionHandler />
             <ProgressiveProfileProvider>
-              <ToastProvider>
-                <NavbarWrapper />
-                <MainContent>{children}</MainContent>
-                <CompareQueueBar />
-              </ToastProvider>
+              <LayoutProvider>
+                <ToastProvider>
+                  <NavbarWrapper />
+                  <MainContent>{children}</MainContent>
+                  <CompareQueueBar />
+                </ToastProvider>
+              </LayoutProvider>
             </ProgressiveProfileProvider>
           </AuthProvider>
         </StabilityProvider>

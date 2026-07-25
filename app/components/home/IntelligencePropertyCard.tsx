@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSavedPropertyToggle } from "@/lib/buyer/useSavedProperty";
 import { useComparedProperty } from "@/lib/buyer/useComparedProperty";
+import LegalTrustBadge from "@/components/property/LegalTrustBadge";
 import { formatPriceShort } from "@/lib/home/marketSignals";
 import type { IntelligencePropertyCardModel } from "@/lib/home/types";
-import { isReraApproved } from "@/lib/properties/reraStatus";
 import { IQ_GREEN } from "./theme";
 
 type Props = {
@@ -48,11 +48,11 @@ export default function IntelligencePropertyCard({ property }: Props) {
           </div>
         )}
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-          {isReraApproved(property) ? (
-            <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700">
-              RERA
-            </span>
-          ) : null}
+          <LegalTrustBadge
+            compliance={property.legalCompliance}
+            flags={property.legalFlags}
+            size="sm"
+          />
           {property.aiVerified ? (
             <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase text-heading-primary">
               AreaIQ Intelligence
@@ -93,16 +93,24 @@ export default function IntelligencePropertyCard({ property }: Props) {
             </p>
           </div>
           <div>
-            <p className="text-muted">Rental yield</p>
-            <p className="font-bold tabular-nums text-heading-primary">
-              {property.rentalYield != null ? `${property.rentalYield.toFixed(1)}%` : "—"}
+            <p className="text-muted">Legal compliance</p>
+            <p
+              className="font-bold tabular-nums"
+              style={{
+                color:
+                  property.legalCompliance?.colors.text ?? "var(--heading-primary, #111)",
+              }}
+            >
+              {property.legalCompliance
+                ? `${property.legalCompliance.compliancePercentage}% ${property.legalCompliance.label}`
+                : "—"}
             </p>
           </div>
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Link
-            href={property.href}
+            href={`${property.href}?action=book`}
             className="inline-flex min-h-10 items-center justify-center rounded-xl text-xs font-bold text-white no-underline"
             style={{ backgroundColor: IQ_GREEN }}
           >

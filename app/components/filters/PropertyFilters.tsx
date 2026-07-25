@@ -94,7 +94,7 @@ export default function PropertyFilters({
 
   return (
     <>
-      <div className="sticky top-16 z-30 -mx-4 mb-6 border-b border-neutral-200/80 bg-white/95 px-4 py-4 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="sticky-below-nav z-layout-sticky -mx-4 mb-6 border-b border-neutral-200/80 bg-white/95 px-4 py-4 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         {/* Mobile always-visible search */}
         <div className="mb-3 lg:hidden">
           <div className="relative flex items-center gap-2">

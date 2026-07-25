@@ -175,7 +175,10 @@ export interface PropertyOwnerInfo {
 }
 
 export interface BuyerCrmSummary {
+  /** Most recently updated lead — used for primary journey stage. */
   lead: CrmLead | null;
+  /** All partner-scoped + general leads for multi-journey UI. */
+  leads: CrmLead[];
   enquiriesCount: number;
   savedCount: number;
   chatsCount: number;

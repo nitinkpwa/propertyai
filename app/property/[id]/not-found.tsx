@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function PropertyNotFound() {
   return (
-    <div className="flex min-h-screen flex-col bg-neutral-50 pt-16">
+    <div className="flex min-h-screen flex-col bg-neutral-50 pt-layout">
       <main className="flex flex-1 items-center justify-center px-4 py-16 sm:px-6 lg:px-8">
         <div className="w-full max-w-lg rounded-3xl border border-neutral-200 bg-white px-8 py-12 text-center shadow-[0_8px_32px_rgba(0,0,0,0.06)]">
           <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-3xl">

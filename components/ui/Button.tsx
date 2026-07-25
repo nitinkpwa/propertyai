@@ -51,7 +51,7 @@ export function Button({
   type = "button",
   ...props
 }: ButtonBaseProps & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  const widthClass = fullWidth ? "!w-full" : "";
+  const widthClass = fullWidth ? "w-full" : "";
   return (
     <button
       type={type}
@@ -79,7 +79,7 @@ export function ButtonLink({
   className = "",
   children,
 }: ButtonBaseProps & { href: string }) {
-  const widthClass = fullWidth ? "!w-full" : "";
+  const widthClass = fullWidth ? "w-full" : "";
   return (
     <Link
       href={href}

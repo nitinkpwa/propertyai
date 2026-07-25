@@ -34,7 +34,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={value}>
       {children}
       <div
-        className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-[70] flex flex-col items-center gap-2 px-4 lg:bottom-6"
+        className="pointer-events-none fixed inset-x-0 bottom-chrome z-layout-toast flex flex-col items-center gap-2 px-4 lg:bottom-6"
         aria-live="polite"
       >
         <AnimatePresence>

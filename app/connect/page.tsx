@@ -34,7 +34,7 @@ export default function ConnectLandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] pt-16">
+    <div className="min-h-screen bg-[#FAFAFA] pt-layout">
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-neutral-200 bg-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(74,170,39,0.08),transparent_50%)]" />

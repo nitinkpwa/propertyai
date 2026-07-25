@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Cormorant_Garamond } from "next/font/google";
 import Logo from "@/components/common/Logo";
 import { useTribute } from "@/hooks/useTribute";
+import { useOverlay } from "@/lib/layout/overlay";
 
 const tributeSerif = Cormorant_Garamond({
   subsets: ["latin"],
@@ -42,13 +43,12 @@ export default function WelcomeTribute() {
   const glowId = useId().replace(/:/g, "");
   const panelRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
+  const { zClassName } = useOverlay("modal", open, dismiss);
 
   useEffect(() => {
     if (!open) return;
 
     previousFocus.current = document.activeElement as HTMLElement | null;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -86,7 +86,6 @@ export default function WelcomeTribute() {
     });
 
     return () => {
-      document.body.style.overflow = prevOverflow;
       window.removeEventListener("keydown", onKey);
       previousFocus.current?.focus?.();
     };
@@ -96,7 +95,7 @@ export default function WelcomeTribute() {
     <AnimatePresence>
       {open ? (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center overflow-hidden p-3 sm:p-5 md:p-8"
+          className={`fixed inset-0 ${zClassName} flex items-center justify-center overflow-hidden p-3 sm:p-5 md:p-8`}
           role="presentation"
         >
           <motion.button

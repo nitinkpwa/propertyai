@@ -69,8 +69,10 @@ export const AI_FILTER_OPTIONS: {
   { key: "highRentalYield", label: "Rental Yield" },
   { key: "highAppreciation", label: "High Appreciation" },
   { key: "bestInvestment", label: "Best Investment" },
+  { key: "documentsVerified", label: "Documents Verified" },
+  { key: "documentsPartial", label: "Documents Partial" },
+  { key: "documentsMissing", label: "Documents Missing" },
   { key: "verifiedOnly", label: "Verified Only" },
-  { key: "reraOnly", label: "RERA Only" },
 ];
 
 export const BUDGET_MIN = 0;

@@ -23,24 +23,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { messages, extraContext } = await req.json();
+    const body = await req.json();
+    const messages = Array.isArray(body?.messages) ? body.messages : null;
 
-    if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGES) {
+    if (!messages || messages.length === 0 || messages.length > MAX_MESSAGES) {
+      return NextResponse.json({ error: "Invalid messages" }, { status: 400 });
+    }
+
+    // H3: never trust client system roles or extraContext — server owns the prompt.
+    const sanitized = messages
+      .filter(
+        (m: { role?: string; content?: unknown }) =>
+          (m?.role === "user" || m?.role === "assistant") &&
+          typeof m.content === "string" &&
+          m.content.length > 0 &&
+          m.content.length < 8_000,
+      )
+      .slice(-MAX_MESSAGES)
+      .map((m: { role: string; content: string }) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      }));
+
+    if (sanitized.length === 0) {
       return NextResponse.json({ error: "Invalid messages" }, { status: 400 });
     }
 
     const openai = getOpenAIClient();
-
-    const systemContent = extraContext
-      ? AREA_IQ_SYSTEM_PROMPT + extraContext
-      : AREA_IQ_SYSTEM_PROMPT;
 
     const stream = await openai.chat.completions.create({
       model: OPENAI_MODEL,
       stream: true,
       max_tokens: 1200,
       temperature: 0.7,
-      messages: [{ role: "system", content: systemContent }, ...messages],
+      messages: [{ role: "system", content: AREA_IQ_SYSTEM_PROMPT }, ...sanitized],
     });
 
     const encoder = new TextEncoder();

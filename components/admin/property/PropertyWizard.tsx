@@ -12,6 +12,7 @@ import WizardStepContent from "./wizard/WizardStepContent";
 
 interface Props {
   adminUserId: string;
+  adminDisplayName?: string | null;
   editId: string | null;
   initialForm?: AdminPropertyFormState;
   onSaved: (propertyId: string) => void;
@@ -21,6 +22,7 @@ interface Props {
 
 export default function PropertyWizard({
   adminUserId,
+  adminDisplayName,
   editId,
   initialForm,
   onSaved,
@@ -222,7 +224,7 @@ export default function PropertyWizard({
         </div>
       </div>
 
-      <div className={`grid gap-6 ${showPreview ? "xl:grid-cols-[1fr_420px]" : ""}`}>
+      <div className={`grid w-full max-w-none gap-6 ${showPreview ? "xl:grid-cols-[minmax(0,1fr)_minmax(320px,28%)] 2xl:grid-cols-[minmax(0,1fr)_400px]" : ""}`}>
         <div className="rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm sm:p-6">
           <p className="mb-4 text-lg font-semibold text-heading-primary lg:hidden">
             {step.icon} {step.title}
@@ -241,6 +243,9 @@ export default function PropertyWizard({
                 setForm={setForm}
                 onUploadPhotos={handleUploadPhotos}
                 uploadingPhotos={uploadingPhotos}
+                propertyId={editId}
+                adminUserId={adminUserId}
+                adminDisplayName={adminDisplayName}
               />
             </motion.div>
           </AnimatePresence>
@@ -271,7 +276,7 @@ export default function PropertyWizard({
       </div>
 
       {/* Floating Next — mobile */}
-      <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2 border-t border-neutral-200 bg-white/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl lg:hidden">
+      <div className="fixed inset-x-0 bottom-chrome z-layout-nav flex gap-2 border-t border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur-xl lg:hidden">
         <button
           type="button"
           onClick={goBack}

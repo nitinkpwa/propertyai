@@ -2,6 +2,9 @@
 
 import Link from "next/link";
 import { BottomNavIconSvg } from "@/components/layout/BottomNavIcons";
+import { useRegisterChrome } from "@/components/layout/engine";
+import { CHROME } from "@/lib/layout/chrome";
+import { zClass } from "@/lib/layout/zIndex";
 import type { BottomNavItem } from "@/lib/design/bottomNav";
 
 interface BottomNavProps {
@@ -11,6 +14,8 @@ interface BottomNavProps {
   /** For SPA tab shells */
   onItemSelect?: (item: BottomNavItem) => void;
   className?: string;
+  /** When false, does not register bottom chrome (e.g. hidden duplicate) */
+  registerChrome?: boolean;
 }
 
 export default function BottomNav({
@@ -18,16 +23,20 @@ export default function BottomNav({
   activeId,
   onItemSelect,
   className = "",
+  registerChrome = true,
 }: BottomNavProps) {
+  useRegisterChrome("bottomnav", CHROME.bottomnav, registerChrome, "bottom-nav");
+
   return (
     <nav
-      className={`fixed bottom-0 left-0 right-0 z-40 border-t border-neutral-200/80 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden ${className}`}
+      className={`fixed bottom-0 left-0 right-0 ${zClass.nav} border-t border-neutral-200/80 bg-white/95 backdrop-blur-xl lg:hidden ${className}`}
       aria-label="Primary"
+      style={{ paddingBottom: "var(--safe-bottom)" }}
     >
-      <div className="flex h-16 items-stretch justify-around px-1">
+      <div className="flex h-[var(--bottomnav-height)] items-stretch justify-around px-1">
         {items.map((item) => {
           const active = activeId === item.id;
-          const classNames = `relative flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[11px] font-semibold transition-all duration-200 active:scale-[0.96] ${
+          const classNames = `relative flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-1 type-micro transition-all duration-200 active:scale-[0.96] ${
             active ? "text-brand" : "text-muted"
           }`;
 
@@ -40,7 +49,7 @@ export default function BottomNav({
               >
                 <BottomNavIconSvg icon={item.icon} />
                 {item.badge && item.badge > 0 ? (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-0.5 text-[9px] font-bold text-white shadow-sm">
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand px-0.5 text-[length:var(--type-micro)] font-bold text-white shadow-sm">
                     {item.badge > 9 ? "9+" : item.badge}
                   </span>
                 ) : null}

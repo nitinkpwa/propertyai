@@ -41,9 +41,21 @@ const TRENDING_LOCALITIES = [
 ];
 
 const MARKET_INSIGHTS = [
-  { title: "Tricity price pulse", body: "Ready inventory is seeing sharper negotiation than soft launches." },
-  { title: "Builder updates", body: "Delivery timelines remain the #1 diligence check before booking." },
-  { title: "Price drops", body: "Watch resale stock near IT corridors for 3–8% room vs ask." },
+  {
+    title: "Tricity demand",
+    body: "Ask AreaIQ which sectors are seeing the strongest buyer interest this week.",
+    href: "/ask?q=Which%20Tricity%20sectors%20have%20the%20strongest%20buyer%20demand%20this%20week",
+  },
+  {
+    title: "Rental yields",
+    body: "Compare expected rental yields across Mohali, Zirakpur, and Chandigarh.",
+    href: "/ask?q=Compare%20rental%20yields%20in%20Mohali%20Zirakpur%20and%20Chandigarh",
+  },
+  {
+    title: "Ready to move",
+    body: "Find ready-to-move homes that fit your budget and locality preferences.",
+    href: "/properties?possession=ready",
+  },
 ];
 
 export default function BuyerDashboardPage() {
@@ -248,14 +260,14 @@ export default function BuyerDashboardPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <ButtonLink
                 href="/properties"
-                className="!min-h-12 !bg-white !text-emerald-800 !shadow-none hover:!bg-emerald-50"
+                className="min-h-12 bg-white text-emerald-800 shadow-none hover:bg-emerald-50"
               >
                 Continue searching
               </ButtonLink>
               <ButtonLink
                 href="/ask"
                 variant="secondary"
-                className="!min-h-12 !border-white/30 !bg-white/10 !text-white hover:!bg-white/15"
+                className="min-h-12 border-white/30 bg-white/10 text-white hover:bg-white/15"
               >
                 Ask AreaIQ
               </ButtonLink>
@@ -300,7 +312,7 @@ export default function BuyerDashboardPage() {
         <section aria-label="Your activity">
           <div className="-mx-4 flex gap-3 overflow-x-auto scroll-touch px-4 pb-1 snap-x snap-mandatory sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-5">
             <MetricCard icon="❤️" label="Saved" value={crmCounts.savedCount} href="/buyer/saved" accent="rose" />
-            <MetricCard icon="👀" label="Viewed" value={crmCounts.viewedCount} accent="blue" />
+            <MetricCard icon="👀" label="Viewed" value={crmCounts.viewedCount} href="#recently-viewed" accent="blue" />
             <MetricCard icon="🤖" label="Intelligence" value={crmCounts.chatsCount} href="/ask" accent="violet" />
             <MetricCard icon="📅" label="Visits" value={crmCounts.visitsCount} href="/buyer/site-visits" accent="amber" />
             <MetricCard icon="📩" label="Inquiries" value={crmCounts.enquiriesCount} href="/buyer/crm" accent="emerald" />
@@ -346,13 +358,14 @@ export default function BuyerDashboardPage() {
           </div>
           <div className="-mx-4 flex gap-3 overflow-x-auto scroll-touch px-4 pb-1 snap-x sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0">
             {MARKET_INSIGHTS.map((item) => (
-              <article
+              <Link
                 key={item.title}
-                className="min-w-[260px] shrink-0 snap-start rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm active:scale-[0.99] sm:min-w-0"
+                href={item.href}
+                className="min-w-[260px] shrink-0 snap-start rounded-2xl border border-neutral-200/80 bg-white p-4 shadow-sm no-underline transition hover:border-emerald-200 active:scale-[0.99] sm:min-w-0"
               >
                 <p className="text-sm font-semibold text-heading-primary">{item.title}</p>
                 <p className="mt-1.5 text-xs leading-relaxed text-body">{item.body}</p>
-              </article>
+              </Link>
             ))}
           </div>
         </section>
@@ -421,7 +434,9 @@ export default function BuyerDashboardPage() {
       <FeatureErrorBoundary name="Saved Properties" compact>
         <RenderProbe name="SavedProperties">
           {recent.length > 0 ? (
-            <RecentlyViewedPanel properties={recent} />
+            <div id="recently-viewed">
+              <RecentlyViewedPanel properties={recent} />
+            </div>
           ) : (
             <section>
               <h2 className="mb-4 text-lg font-bold text-heading-primary">Recently viewed</h2>

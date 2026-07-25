@@ -710,15 +710,21 @@ export async function deleteSellerProperty(
     }
   }
 
+  const now = new Date().toISOString();
   const { data: deleted, error: deleteError } = await supabase
     .from("properties")
-    .delete()
+    .update({
+      deleted_at: now,
+      status: PROPERTY_STATUS.PAUSED,
+      updated_at: now,
+    })
     .eq("id", propertyId)
     .eq("seller_id", sellerId)
+    .is("deleted_at", null)
     .select("id")
     .maybeSingle();
 
-  console.log("[deleteSellerProperty] delete response", { deleted, deleteError });
+  console.log("[deleteSellerProperty] soft-delete response", { deleted, deleteError });
 
   if (deleteError) {
     return { ok: false, error: deleteError.message };
@@ -727,7 +733,7 @@ export async function deleteSellerProperty(
     return {
       ok: false,
       error:
-        "Delete reported no row. Check RLS: sellers need DELETE on their own properties.",
+        "Delete reported no row. Check RLS: sellers need UPDATE on their own properties.",
     };
   }
 
@@ -847,12 +853,20 @@ export async function uploadPropertyPhotos(
   console.log("[uploadPropertyPhotos] start", { userId, fileCount: files.length });
   const uploaded: string[] = [];
   const failures: string[] = [];
+  const MAX_BYTES = 8 * 1024 * 1024;
+  const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/jpg"]);
+
   for (const photo of files) {
-    const ext = photo.name.split(".").pop();
+    if (!ALLOWED.has(photo.type) || photo.size <= 0 || photo.size > MAX_BYTES) {
+      failures.push(`${photo.name}: invalid type or size`);
+      continue;
+    }
+    const rawExt = photo.name.split(".").pop()?.toLowerCase();
+    const ext = rawExt && /^[a-z0-9]{1,8}$/.test(rawExt) ? rawExt : "jpg";
     const filename = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
     const { data, error } = await supabase.storage
       .from("property-photos")
-      .upload(filename, photo);
+      .upload(filename, photo, { contentType: photo.type, upsert: false });
     if (error || !data) {
       console.error("[uploadPropertyPhotos] failed", { name: photo.name, error });
       failures.push(`${photo.name}: ${error?.message ?? "upload failed"}`);

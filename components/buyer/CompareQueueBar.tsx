@@ -17,7 +17,6 @@ export default function CompareQueueBar() {
   const { user } = useAuth();
   const { ids, count, hydrated } = useComparedPropertyToggle();
 
-  const buyerShell = pathname?.startsWith("/buyer");
   const hideBar =
     !hydrated || count === 0 || Boolean(pathname?.startsWith("/buyer/compare"));
 
@@ -33,11 +32,7 @@ export default function CompareQueueBar() {
       <CompareSync />
       {hideBar ? null : (
         <div
-          className={`pointer-events-none fixed inset-x-0 z-50 flex justify-center px-3 ${
-            buyerShell
-              ? "bottom-[calc(4.25rem+env(safe-area-inset-bottom))] lg:bottom-6"
-              : "bottom-[calc(1rem+env(safe-area-inset-bottom))] lg:bottom-6"
-          }`}
+          className="pointer-events-none fixed inset-x-0 bottom-chrome z-layout-dropdown flex justify-center px-3 lg:bottom-6"
         >
           <div className="pointer-events-auto flex w-full max-w-lg items-center gap-3 rounded-2xl border border-neutral-200/90 bg-white/95 px-3 py-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl sm:px-4">
             <div className="flex min-w-0 flex-1 items-center gap-2">

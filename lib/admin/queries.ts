@@ -452,7 +452,64 @@ export function getPendingProperties(
   if (usesApprovalStatus) {
     return properties.filter((p) => p.approval_status === "pending");
   }
-  return properties.filter((p) => p.status === "paused");
+  // Prefer publishing meta so rejected (archived) and drafts are not treated as pending.
+  return properties.filter((p) => {
+    if (p.status === PROPERTY_STATUS.ACTIVE) return false;
+    if ((p as { deleted_at?: string | null }).deleted_at) return false;
+    const meta = extractPropertyMeta(
+      (p as { nearby_places?: unknown }).nearby_places,
+    );
+    const workflow = meta?.publishing?.workflowStatus;
+    if (workflow === "archived" || workflow === "active" || workflow === "draft") {
+      return false;
+    }
+    if (workflow === "review") return true;
+    // Legacy paused rows without meta — keep in queue for admin triage
+    return p.status === PROPERTY_STATUS.PAUSED;
+  });
+}
+
+async function withPublishingWorkflowStatus(
+  propertyId: string,
+  workflowStatus: "active" | "review" | "draft" | "archived",
+  basePayload: Record<string, unknown>,
+): Promise<{ ok: boolean; error?: string }> {
+  const { data: existing } = await supabase
+    .from("properties")
+    .select("nearby_places")
+    .eq("id", propertyId)
+    .maybeSingle();
+
+  let nearbyPlaces = existing?.nearby_places ?? null;
+  try {
+    const meta = extractPropertyMeta(nearbyPlaces) ?? emptyPropertyStructuredMeta();
+    meta.publishing = { ...meta.publishing, workflowStatus };
+    nearbyPlaces = buildNearbyPlacesPayload(extractNearbyPlacesList(nearbyPlaces), meta);
+  } catch {
+    /* keep existing nearby_places */
+  }
+
+  const { data, error } = await supabase
+    .from("properties")
+    .update({
+      ...basePayload,
+      nearby_places: nearbyPlaces,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", propertyId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) return { ok: false, error: error.message };
+  if (!data?.id) return { ok: false, error: "Property not found" };
+  if (typeof window !== "undefined") {
+    void fetch("/api/admin/revalidate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ propertyId }),
+    }).catch(() => undefined);
+  }
+  return { ok: true };
 }
 
 export async function approveProperty(id: string): Promise<{ ok: boolean; error?: string }> {
@@ -462,60 +519,43 @@ export async function approveProperty(id: string): Promise<{ ok: boolean; error?
     ? {
         approval_status: "approved",
         status: PROPERTY_STATUS.ACTIVE,
-        updated_at: new Date().toISOString(),
       }
-    : { status: PROPERTY_STATUS.ACTIVE, updated_at: new Date().toISOString() };
+    : { status: PROPERTY_STATUS.ACTIVE };
 
-  const { data, error } = await supabase
-    .from("properties")
-    .update(payload)
-    .eq("id", id)
-    .select("id")
-    .maybeSingle();
-
-  if (error) return { ok: false, error: error.message };
-  if (!data?.id) return { ok: false, error: "Property not found" };
-  return { ok: true };
+  return withPublishingWorkflowStatus(id, "active", payload);
 }
 
 export async function rejectProperty(id: string): Promise<{ ok: boolean; error?: string }> {
   const usesApproval = await hasApprovalStatusColumn();
-
-  // Mark seller-facing badge as Rejected via nearby_places.meta.publishing.workflowStatus
-  const { data: existing } = await supabase
-    .from("properties")
-    .select("nearby_places")
-    .eq("id", id)
-    .maybeSingle();
-
-  let nearbyPlaces = existing?.nearby_places ?? null;
-  try {
-    const meta = extractPropertyMeta(nearbyPlaces) ?? emptyPropertyStructuredMeta();
-    meta.publishing = { ...meta.publishing, workflowStatus: "archived" };
-    nearbyPlaces = buildNearbyPlacesPayload(extractNearbyPlacesList(nearbyPlaces), meta);
-  } catch {
-    /* keep existing nearby_places */
-  }
-
   const payload = usesApproval
     ? {
         approval_status: "rejected",
         status: PROPERTY_STATUS.PAUSED,
-        nearby_places: nearbyPlaces,
-        updated_at: new Date().toISOString(),
       }
-    : {
-        status: PROPERTY_STATUS.PAUSED,
-        nearby_places: nearbyPlaces,
-        updated_at: new Date().toISOString(),
-      };
+    : { status: PROPERTY_STATUS.PAUSED };
 
-  const { error } = await supabase.from("properties").update(payload).eq("id", id);
-  return error ? { ok: false, error: error.message } : { ok: true };
+  return withPublishingWorkflowStatus(id, "archived", payload);
 }
 
+/** Soft-delete — catalog already filters deleted_at IS NULL. */
 export async function deleteProperty(id: string): Promise<boolean> {
-  const { error } = await supabase.from("properties").delete().eq("id", id);
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("properties")
+    .update({
+      deleted_at: now,
+      status: PROPERTY_STATUS.PAUSED,
+      updated_at: now,
+    })
+    .eq("id", id)
+    .is("deleted_at", null);
+  if (!error && typeof window !== "undefined") {
+    void fetch("/api/admin/revalidate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ propertyId: id }),
+    }).catch(() => undefined);
+  }
   return !error;
 }
 
@@ -524,11 +564,9 @@ export async function updatePropertyStatus(
   status: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const safeStatus = toPropertyStatus(status);
-  const { error } = await supabase
-    .from("properties")
-    .update({ status: safeStatus, updated_at: new Date().toISOString() })
-    .eq("id", id);
-  return error ? { ok: false, error: error.message } : { ok: true };
+  const workflowStatus =
+    safeStatus === PROPERTY_STATUS.ACTIVE ? "active" : "draft";
+  return withPublishingWorkflowStatus(id, workflowStatus, { status: safeStatus });
 }
 
 export function buildBuilderRows(

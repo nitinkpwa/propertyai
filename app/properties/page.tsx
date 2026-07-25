@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import PropertyListings from "../components/PropertyListings";
 
+export const metadata: Metadata = {
+  title: "Featured Properties · AreaIQ",
+  description:
+    "Browse live listings with AreaIQ Property Intelligence — pricing, trust, growth, and rental insights across Mohali, Chandigarh, and Zirakpur.",
+  alternates: { canonical: "/properties" },
+};
 function ListingsFallback() {
   return (
     <div className="animate-pulse space-y-6">
@@ -17,7 +24,7 @@ function ListingsFallback() {
 export default function PropertiesPage() {
   return (
     <div className="flex min-h-screen flex-col bg-neutral-50">
-      <main className="flex-1 pt-16">
+      <main className="flex-1 pt-layout">
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
           <h1 className="mb-6 text-[32px] font-bold tracking-tight text-heading-primary sm:mb-8 lg:text-3xl">
             Featured Properties

@@ -1,6 +1,7 @@
 import { text } from "@/lib/design/text";
+import { layout, typography, ui } from "@/lib/design/tokens";
 
-/** Shared design tokens for the Buyer Portal */
+/** Shared design tokens for the Buyer Portal — aligned with layout engine */
 export const buyerTokens = {
   radius: {
     sm: "rounded-xl",
@@ -8,23 +9,19 @@ export const buyerTokens = {
     lg: "rounded-3xl",
     full: "rounded-full",
   },
-  card: "rounded-2xl border border-neutral-200/80 bg-white shadow-sm transition-all duration-200",
+  card: ui.card,
   cardHover: "hover:shadow-md hover:-translate-y-0.5",
   section: "space-y-4",
-  page: "mx-auto max-w-6xl space-y-8",
-  heading: `text-2xl font-bold tracking-tight ${text.headingPrimary} sm:text-3xl`,
-  subheading: `text-sm ${text.muted}`,
-  label: `text-xs font-semibold uppercase tracking-wider ${text.label}`,
+  page: `mx-auto max-w-6xl space-y-8 overflow-x-clip ${layout.pagePad}`,
+  heading: typography.heading,
+  subheading: typography.caption,
+  label: `type-micro font-semibold uppercase tracking-wider ${text.label}`,
   gradientHero:
     "relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-600 via-emerald-700 to-teal-800 text-white shadow-xl shadow-emerald-900/20",
-  btnPrimary:
-    "inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.35)] transition-all hover:bg-emerald-700 hover:brightness-105 active:scale-[0.98] disabled:opacity-60",
-  btnSecondary:
-    `inline-flex items-center justify-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold ${text.body} transition-all hover:bg-neutral-50 active:scale-[0.98] disabled:opacity-60`,
-  btnGhost:
-    "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-emerald-700 transition-all hover:bg-emerald-50 active:scale-[0.98]",
-  input:
-    `w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm ${text.input} ${text.placeholder} outline-none transition-all focus:border-emerald-400 focus:bg-white focus:ring-4 focus:ring-emerald-500/10`,
+  btnPrimary: `${ui.btnBase} ${ui.btnPrimary}`,
+  btnSecondary: `${ui.btnBase} ${ui.btnSecondary}`,
+  btnGhost: `${ui.btnBase} ${ui.btnGhost}`,
+  input: ui.input,
 } as const;
 
 export const COLLECTION_PRESETS = [

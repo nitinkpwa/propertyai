@@ -8,6 +8,7 @@ import BuyerProfileGrid from "@/components/crm/BuyerProfileGrid";
 import LeadStatusBadge from "@/components/crm/LeadStatusBadge";
 import LeadTemperatureBadge from "@/components/premium/LeadTemperatureBadge";
 import ProfileCompletionRing from "@/components/premium/ProfileCompletionRing";
+import { useToast } from "@/components/ui/Toast";
 import { calculateLeadScore } from "@/lib/crm/leadScore";
 import {
   fetchAdminBuyerJourney,
@@ -23,6 +24,7 @@ interface AdminCrmPanelProps {
 }
 
 export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
+  const { showToast } = useToast();
   const [leads, setLeads] = useState<SellerCrmLeadRow[]>([]);
   const [partners, setPartners] = useState<
     Array<{
@@ -41,6 +43,7 @@ export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
   const [assigning, setAssigning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"list" | "detail">("list");
+  const [assignError, setAssignError] = useState<string | null>(null);
 
   const load = async () => {
     const [allLeads, allPartners] = await Promise.all([
@@ -77,13 +80,30 @@ export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
   const handleAssign = async (connectPartnerId: string) => {
     if (!selectedLeadId) return;
     setAssigning(true);
-    const res = await fetch("/api/crm/assign", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leadId: selectedLeadId, connectPartnerId }),
-    });
-    setAssigning(false);
-    if (res.ok) await load();
+    setAssignError(null);
+    try {
+      const res = await fetch("/api/crm/assign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: selectedLeadId, connectPartnerId }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const msg =
+          typeof body?.error === "string" ? body.error : "Could not assign partner";
+        setAssignError(msg);
+        showToast(msg, "error");
+        return;
+      }
+      showToast("Partner assigned", "success");
+      await load();
+    } catch {
+      const msg = "Could not assign partner";
+      setAssignError(msg);
+      showToast(msg, "error");
+    } finally {
+      setAssigning(false);
+    }
   };
 
   if (loading) {
@@ -148,7 +168,7 @@ export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
           />
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
           <section className="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
             <h3 className="font-semibold text-heading-primary">Site Visits</h3>
             <ul className="mt-3 space-y-2 text-sm">
@@ -189,7 +209,7 @@ export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
             <h3 className="mb-3 font-semibold text-heading-primary">Assign Connect Partner</h3>
             <select
               className="w-full max-w-xs rounded-xl border border-neutral-200 px-3 py-2.5 text-sm"
-              defaultValue={selected.assigned_connect_id ?? ""}
+              value={selected.assigned_connect_id ?? ""}
               onChange={(e) => {
                 if (e.target.value) handleAssign(e.target.value);
               }}
@@ -205,6 +225,9 @@ export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
                 );
               })}
             </select>
+            {assignError ? (
+              <p className="mt-2 text-sm text-rose-600">{assignError}</p>
+            ) : null}
           </section>
         </div>
       </div>
@@ -220,7 +243,7 @@ export default function AdminCrmPanel({ profileLookup }: AdminCrmPanelProps) {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {leads.map((lead) => {
           const buyer = lead.buyer;
           const score = calculateLeadScore({ profile: buyer ?? undefined });

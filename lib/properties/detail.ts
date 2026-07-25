@@ -4,8 +4,8 @@ import { runPropertyAnalytics } from "@/lib/analytics";
 import { areaIntelligenceService } from "@/lib/intelligence/AreaIntelligenceService";
 import { fetchMarketContext } from "@/lib/intelligence/data/marketContext";
 import {
-  PROPERTIES_BASE_SELECT,
-  PROPERTIES_BASE_SELECT_CORE,
+  PROPERTIES_PUBLIC_BASE_SELECT,
+  PROPERTIES_PUBLIC_BASE_SELECT_CORE,
 } from "@/lib/seller/propertySchema";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { PropertyDetail } from "@/app/property/[id]/data";
@@ -20,9 +20,9 @@ const UUID_RE =
 const DETAIL_EXTENDED =
   "builder_name, furnishing, parking, facing, nearby_places, rera_number, possession, featured_image, seller:profiles!properties_seller_id_fkey(full_name)";
 
-/** Use base columns (+ contact) so preview works even when optional score columns are absent. */
-const PROPERTY_DETAIL_SELECT = `${PROPERTIES_BASE_SELECT}, ${DETAIL_EXTENDED}`;
-const PROPERTY_DETAIL_SELECT_CORE = `${PROPERTIES_BASE_SELECT_CORE}, ${DETAIL_EXTENDED}`;
+/** Public detail — no contact_name / contact_phone (gated via site-visit API). */
+const PROPERTY_DETAIL_SELECT = `${PROPERTIES_PUBLIC_BASE_SELECT}, ${DETAIL_EXTENDED}`;
+const PROPERTY_DETAIL_SELECT_CORE = `${PROPERTIES_PUBLIC_BASE_SELECT_CORE}, ${DETAIL_EXTENDED}`;
 
 async function fetchPropertyDetailByIdUncached(
   id: string,

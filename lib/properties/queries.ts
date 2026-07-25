@@ -13,6 +13,11 @@ import {
   buildPropertyIntelligenceBundle,
 } from "@/lib/properties/intelligenceBundle";
 import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
+import {
+  calculateLegalCompliance,
+  calculateLegalComplianceFromProperty,
+  resolveLegalFlagsFromProperty,
+} from "@/lib/properties/legalCompliance";
 import { isReraApproved } from "@/lib/properties/reraStatus";
 import { supabase, type Property } from "@/lib/supabase";
 import { getLiveProperties } from "./getLiveProperties";
@@ -43,6 +48,16 @@ type PropertyRow = Omit<Property, "contact_name" | "contact_phone"> & {
   featured_image?: string | null;
   deleted_at?: string | null;
   seller?: { full_name?: string | null } | null;
+  approved_building_plan?: boolean | null;
+  rera_certificate?: boolean | null;
+  title_deed_verified?: boolean | null;
+  noc_verified?: boolean | null;
+  completion_certificate?: boolean | null;
+  occupation_certificate?: boolean | null;
+  environment_clearance?: boolean | null;
+  fire_clearance?: boolean | null;
+  bank_approved?: boolean | null;
+  govt_layout_approved?: boolean | null;
 };
 
 const GALLERY_GRADIENTS = [
@@ -358,6 +373,8 @@ export function mapPropertyRowToListing(row: PropertyRow): ListingProperty {
     sub_type: row.sub_type,
     nearby_places: row.nearby_places,
   });
+  const legalFlags = resolveLegalFlagsFromProperty(row);
+  const legalCompliance = calculateLegalComplianceFromProperty(row);
 
   return {
     id: row.id,
@@ -381,6 +398,8 @@ export function mapPropertyRowToListing(row: PropertyRow): ListingProperty {
     imageAlt: row.title,
     aiVerified: Boolean(row.ai_verified),
     reraVerified: isReraApproved(row),
+    legalFlags,
+    legalCompliance,
     propertyType: mapPropertyType(row.sub_type),
     listingType: mapListingType(row.type),
     possession,
@@ -413,11 +432,15 @@ export function mapPropertyRowToCardProps(row: PropertyRow): PropertyCardProps {
       imageAlt: listing.imageAlt,
       aiVerified: listing.aiVerified,
       reraVerified: listing.reraVerified,
+      legalFlags: listing.legalFlags,
+      legalCompliance: listing.legalCompliance,
       href: `/property/${listing.id}`,
     };
   } catch (err) {
     console.error("mapPropertyRowToCardProps:", err, { id: (row as { id?: string })?.id });
     const id = (row as { id?: string })?.id ?? "unknown";
+    const legalFlags = resolveLegalFlagsFromProperty(row as PropertyRow);
+    const legalCompliance = calculateLegalCompliance(legalFlags);
     return {
       id,
       name: (row as { title?: string })?.title || "Property",
@@ -437,6 +460,8 @@ export function mapPropertyRowToCardProps(row: PropertyRow): PropertyCardProps {
       imageAlt: "Property",
       aiVerified: false,
       reraVerified: false,
+      legalFlags,
+      legalCompliance,
       href: `/property/${id}`,
     };
   }
@@ -532,6 +557,9 @@ export function mapPropertyRowToDetail(
     row.description?.trim() ||
     `${row.title} is listed in ${row.location}, ${row.city}. Contact the seller for full details, site visit scheduling, and documentation.`;
 
+  const legalFlags = resolveLegalFlagsFromProperty(row);
+  const legalCompliance = calculateLegalComplianceFromProperty(row);
+
   return {
     id: row.id,
     name: row.title?.trim() || "Property",
@@ -568,6 +596,8 @@ export function mapPropertyRowToDetail(
     description: compiledDescription,
     aiVerified: Boolean(row.ai_verified),
     reraVerified: isReraApproved(row),
+    legalFlags,
+    legalCompliance,
     images: buildGalleryImages(row.photos),
     amenities,
     intelligenceReport,

@@ -125,6 +125,19 @@ export type Property = {
   assigned_connect_id?: string | null;
   /** Default true — buyers can request visits when status is active. */
   site_visit_enabled?: boolean;
+  /** Admin-only legal verification (internal moderation — not buyer-facing). */
+  approved_building_plan?: boolean;
+  rera_certificate?: boolean;
+  title_deed_verified?: boolean;
+  noc_verified?: boolean;
+  completion_certificate?: boolean;
+  occupation_certificate?: boolean;
+  environment_clearance?: boolean;
+  fire_clearance?: boolean;
+  bank_approved?: boolean;
+  govt_layout_approved?: boolean;
+  legal_verification_updated_at?: string | null;
+  legal_verification_updated_by?: string | null;
 };
 
 export type SavedProperty = {

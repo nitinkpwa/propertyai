@@ -72,21 +72,34 @@ export default function PropertyListings() {
 
   useEffect(() => {
     let cancelled = false;
+    let firstLoad = true;
 
     async function loadProperties() {
-      setLoading(true);
+      if (firstLoad) setLoading(true);
       const rows = await getLiveProperties({ includeSeller: true });
       const data = rows.map((row) => mapPropertyRowToListing(row));
       if (!cancelled) {
         setProperties(data);
         setLoading(false);
+        firstLoad = false;
       }
     }
 
     loadProperties();
 
+    const onFocus = () => {
+      void loadProperties();
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") onFocus();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibility);
+
     return () => {
       cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 

@@ -115,6 +115,25 @@ export interface PropertyStructuredMeta {
     exclusive: boolean;
     editorsPick: boolean;
   };
+  /**
+   * Admin-only legal verification flags (dual-write with DB columns).
+   * Never render on buyer/public surfaces.
+   */
+  legalVerification?: {
+    approved_building_plan?: boolean;
+    rera_certificate?: boolean;
+    title_deed_verified?: boolean;
+    noc_verified?: boolean;
+    completion_certificate?: boolean;
+    occupation_certificate?: boolean;
+    environment_clearance?: boolean;
+    fire_clearance?: boolean;
+    bank_approved?: boolean;
+    govt_layout_approved?: boolean;
+    legal_verification_updated_at?: string | null;
+    legal_verification_updated_by?: string | null;
+    legal_verification_updated_by_name?: string | null;
+  } | null;
   ai: PropertyAIIntelligence | null;
   /** AI Property Studio import knowledge (OCR stubs, sources, confidence). */
   importKnowledge?: ImportKnowledge | null;
@@ -276,6 +295,7 @@ export function emptyPropertyStructuredMeta(): PropertyStructuredMeta {
       exclusive: false,
       editorsPick: false,
     },
+    legalVerification: null,
     ai: null,
   };
 }

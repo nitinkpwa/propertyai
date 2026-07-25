@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "type-check": "tsc --noEmit",
+    "mobile:audit": "node scripts/mobile-readiness-audit.mjs",
     "db:apply-site-visit": "node scripts/apply-site-visit-schema.mjs",
     "db:check-site-visit": "node scripts/check-site-visit-schema.mjs",
     "db:apply-connect-partners": "node scripts/apply-connect-partners-schema.mjs",

@@ -27,7 +27,7 @@ export default function StickyAskBar() {
   if (!visible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200/80 bg-white/90 px-4 py-3 backdrop-blur-lg sm:hidden">
+    <div className="fixed inset-x-0 bottom-chrome z-layout-nav border-t border-neutral-200/80 bg-white/90 px-4 py-3 backdrop-blur-lg sm:hidden">
       <div className="mx-auto flex max-w-lg gap-2">
         <input
           type="text"
@@ -36,12 +36,12 @@ export default function StickyAskBar() {
           onKeyDown={(e) => e.key === "Enter" && submit()}
           placeholder="Ask AreaIQ anything…"
           aria-label="Ask AreaIQ"
-          className="min-w-0 flex-1 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-input placeholder:text-placeholder outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+          className="min-h-12 min-w-0 flex-1 rounded-xl border border-neutral-200 bg-white px-4 type-caption text-input placeholder:text-placeholder outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
         />
         <button
           type="button"
           onClick={submit}
-          className="shrink-0 rounded-xl px-4 py-2.5 text-sm font-bold text-white"
+          className="touch-target shrink-0 rounded-xl px-4 type-label text-white"
           style={{ backgroundColor: IQ_GREEN }}
         >
           Ask

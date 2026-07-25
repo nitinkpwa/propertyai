@@ -129,7 +129,9 @@ export function filtersFromSearchParams(
       highAppreciation: params.get("appreciation") === "high",
       bestInvestment: params.get("investment") === "best",
       verifiedOnly: params.get("verified") === "true",
-      reraOnly: params.get("rera") === "true",
+      documentsVerified: params.get("docsVerified") === "true",
+      documentsPartial: params.get("docsPartial") === "true",
+      documentsMissing: params.get("docsMissing") === "true",
     },
   };
 
@@ -190,7 +192,9 @@ export function filtersToSearchParams(
   if (normalized.ai.highAppreciation) params.set("appreciation", "high");
   if (normalized.ai.bestInvestment) params.set("investment", "best");
   if (normalized.ai.verifiedOnly) params.set("verified", "true");
-  if (normalized.ai.reraOnly) params.set("rera", "true");
+  if (normalized.ai.documentsVerified) params.set("docsVerified", "true");
+  if (normalized.ai.documentsPartial) params.set("docsPartial", "true");
+  if (normalized.ai.documentsMissing) params.set("docsMissing", "true");
 
   return params;
 }

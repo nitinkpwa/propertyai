@@ -30,6 +30,17 @@ export const typeScale = {
   small: 12,
 } as const;
 
+/** Semantic typography roles — prefer these over ad-hoc text sizes */
+export const typography = {
+  display: "type-display text-heading-primary",
+  heading: "type-heading text-heading-primary",
+  title: "type-title text-heading-primary",
+  body: "type-body text-body",
+  caption: "type-caption text-muted",
+  label: "type-label text-label",
+  micro: "type-micro text-muted",
+} as const;
+
 export const touch = {
   min: 44,
   button: 48,
@@ -48,6 +59,13 @@ export const layout = {
   pagePad: "px-4 sm:px-5 md:px-6",
   sectionGap: "space-y-6",
   cardPad: "p-4",
+  grid: {
+    cards: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
+    stats: "grid grid-cols-2 gap-3 sm:grid-cols-4",
+    form: "grid grid-cols-1 gap-4 sm:grid-cols-2",
+    split: "grid grid-cols-1 gap-6 lg:grid-cols-2",
+  },
+  shell: "overflow-x-clip",
 } as const;
 
 /** Shared class strings for mobile-first UI */
@@ -69,16 +87,21 @@ export const ui = {
   card: "rounded-2xl border border-neutral-200/80 bg-white shadow-sm transition-all duration-200",
   cardPress: "active:scale-[0.99] lg:active:scale-100",
   sheet:
-    "fixed inset-x-0 bottom-0 z-50 max-h-[92dvh] overflow-hidden rounded-t-3xl bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)]",
-  safeBottom: "pb-[max(1rem,env(safe-area-inset-bottom))]",
-  safeTop: "pt-[env(safe-area-inset-top)]",
-  topBar: "h-16",
-  bottomNav: "h-16",
-  typeH1: "text-[32px] font-bold leading-tight tracking-tight text-heading-primary",
-  typeH2: "text-[28px] font-bold leading-tight tracking-tight text-heading-primary",
-  typeH3: "text-2xl font-bold leading-snug text-heading-primary",
+    "fixed inset-x-0 bottom-0 z-layout-sheet max-h-[92dvh] overflow-hidden rounded-t-3xl bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.12)]",
+  safeBottom: "pb-safe",
+  safeTop: "pt-safe",
+  topBar: "h-[var(--navbar-height)]",
+  bottomNav: "h-[var(--bottomnav-height)]",
+  iconBtn:
+    "touch-target inline-flex items-center justify-center rounded-xl text-body transition-colors active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40",
+  typeH1: "type-display text-heading-primary",
+  typeH2: "type-heading text-heading-primary",
+  typeH3: "type-title text-heading-primary",
   typeH4: "text-xl font-semibold leading-snug text-heading-primary",
-  typeBody: "text-base leading-relaxed text-body",
-  typeCaption: "text-sm leading-normal text-muted",
-  typeSmall: "text-xs leading-normal text-muted",
+  typeBody: "type-body text-body",
+  typeCaption: "type-caption text-muted",
+  typeSmall: "type-micro text-muted",
 } as const;
+
+export { Z_INDEX, zClass } from "@/lib/layout/zIndex";
+export { CHROME, layoutClass, CSS_VARS } from "@/lib/layout/chrome";

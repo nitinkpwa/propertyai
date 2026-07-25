@@ -10,9 +10,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  // Public property-page feature (unauthenticated by design) but the OpenAI
-  // call is cost-sensitive, so cap it per IP.
-  const limited = rateLimit(getRateLimitKey(req), 15, 60_000);
+  // Public property-page feature but cost-sensitive — tighter IP cap.
+  const limited = rateLimit(getRateLimitKey(req), 8, 60_000);
   if (!limited.ok) {
     return NextResponse.json(
       { outlook: null, error: "Too many requests" },

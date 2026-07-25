@@ -13,6 +13,7 @@ import {
 } from "@/lib/admin/property/constants";
 import type { AdminPropertyFormState, WizardStepId } from "@/lib/admin/property/types";
 import ConnectAssignmentCenter from "../ConnectAssignmentCenter";
+import LegalVerificationCard from "../LegalVerificationCard";
 import {
   Field,
   FieldGrid,
@@ -30,6 +31,9 @@ interface Props {
   setForm: (form: AdminPropertyFormState) => void;
   onUploadPhotos?: (files: FileList) => void;
   uploadingPhotos?: boolean;
+  propertyId?: string | null;
+  adminUserId?: string | null;
+  adminDisplayName?: string | null;
 }
 
 type NestedSection = "basic" | "locationMeta" | "pricing" | "specs" | "media" | "documents" | "seo" | "publishing";
@@ -40,6 +44,9 @@ export default function WizardStepContent({
   setForm,
   onUploadPhotos,
   uploadingPhotos,
+  propertyId,
+  adminUserId,
+  adminDisplayName,
 }: Props) {
   const [amenitySearch, setAmenitySearch] = useState("");
 
@@ -108,7 +115,18 @@ export default function WizardStepContent({
           <Field label="Contact Phone">
             <TextInput value={form.contact_phone} onChange={(v) => setRoot("contact_phone", v)} />
           </Field>
+          <Field label="RERA Number" span={2}>
+            <TextInput value={form.rera_number} onChange={(v) => setRoot("rera_number", v)} placeholder="e.g. PBRERA-SAS80-PRXXXX" />
+          </Field>
         </FieldGrid>
+
+        <LegalVerificationCard
+          form={form}
+          setForm={setForm}
+          propertyId={propertyId}
+          adminUserId={adminUserId}
+          adminDisplayName={adminDisplayName}
+        />
       </>
     );
   }

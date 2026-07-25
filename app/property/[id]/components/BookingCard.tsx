@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import type { ReactNode } from "react";
 import { useSavedProperty } from "@/lib/buyer/useSavedProperty";
-import { isReraApproved } from "@/lib/properties/reraStatus";
+import LegalTrustBadge from "@/components/property/LegalTrustBadge";
 import type { PropertyDetail } from "../data";
 import { formatPropertyPrice } from "../data";
 import { useBookSiteVisit } from "./BookSiteVisitProvider";
@@ -12,7 +12,6 @@ import {
   HeartIcon,
   MapPinIcon,
   ShareIcon,
-  ShieldIcon,
   SparkIcon,
 } from "./shared";
 
@@ -55,16 +54,11 @@ export default function BookingCard({ property }: BookingCardProps) {
           ) : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
+            <LegalTrustBadge compliance={property.legalCompliance} size="sm" />
             {property.aiVerified && (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">
                 <SparkIcon className="text-emerald-500" />
                 AreaIQ Intelligence
-              </span>
-            )}
-            {isReraApproved(property) && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-semibold text-blue-700">
-                <ShieldIcon className="text-blue-600" />
-                RERA
               </span>
             )}
           </div>

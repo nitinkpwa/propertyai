@@ -36,8 +36,8 @@ export default function MobileTopBar({
   return (
     <header
       className={`${
-        sticky ? "sticky top-0 z-30" : ""
-      } flex min-h-16 items-center gap-2 border-b border-neutral-200/80 bg-white/95 px-3 backdrop-blur-xl pt-safe md:hidden ${className}`}
+        sticky ? "sticky top-0 z-layout-sticky" : ""
+      } flex min-h-[var(--navbar-height)] items-center gap-2 border-b border-neutral-200/80 bg-white/95 px-3 backdrop-blur-xl pt-safe md:hidden ${className}`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">
         {showLogo ? (
@@ -111,7 +111,7 @@ function IconBtn({
   label: string;
 }) {
   const className =
-    "relative inline-flex h-11 w-11 items-center justify-center rounded-xl text-body transition-colors active:bg-neutral-100";
+    "touch-target relative inline-flex items-center justify-center rounded-xl text-body transition-colors active:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40";
 
   if (href) {
     return (

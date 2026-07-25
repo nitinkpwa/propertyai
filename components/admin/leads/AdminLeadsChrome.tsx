@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 
+/**
+ * Full-width chrome for /admin/leads routes — matches AdminShell CRM layout
+ * (no public-site max-width container).
+ */
 export default function AdminLeadsChrome({
   title,
   subtitle,
@@ -16,15 +20,18 @@ export default function AdminLeadsChrome({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#FAFAFA] pt-16">
-      <header className="sticky top-16 z-30 border-b border-neutral-200 bg-white/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+    <div className="admin-shell flex min-h-dvh flex-col bg-[#F7F8FA]">
+      <header className="sticky top-0 z-30 shrink-0 border-b border-neutral-200/90 bg-white">
+        <div className="flex h-14 w-full max-w-none items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-heading-primary">{title}</p>
             {subtitle ? <p className="truncate text-xs text-muted">{subtitle}</p> : null}
           </div>
-          <div className="flex items-center gap-3">
-            <Link href={backHref} className="text-sm font-medium text-emerald-700 hover:text-emerald-800">
+          <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href={backHref}
+              className="text-sm font-medium text-emerald-700 hover:text-emerald-800"
+            >
               {backLabel}
             </Link>
             <Link
@@ -36,7 +43,9 @@ export default function AdminLeadsChrome({
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+      <main className="admin-shell-main w-full max-w-none flex-1 overflow-x-hidden px-4 py-6 sm:px-6 lg:px-8">
+        {children}
+      </main>
     </div>
   );
 }

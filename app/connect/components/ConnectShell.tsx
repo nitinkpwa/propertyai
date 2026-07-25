@@ -84,7 +84,7 @@ export default function ConnectShell({
   );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] lg:pt-16">
+    <div className="min-h-screen overflow-x-clip bg-[#F8FAFC] lg:pt-layout">
       <MobileTopBar
         title={companyName ?? "Connect"}
         onNotifications={() => onTabChange("notifications")}
@@ -93,7 +93,7 @@ export default function ConnectShell({
         searchHref="/connect/dashboard?tab=properties"
       />
 
-      <header className="sticky top-16 z-30 hidden border-b border-neutral-200 bg-white/95 backdrop-blur-xl md:block">
+      <header className="sticky top-chrome z-layout-sticky hidden border-b border-neutral-200 bg-white/95 backdrop-blur-xl md:block">
         <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6 lg:pl-[17.5rem] lg:pr-8">
           <div className="flex min-w-0 items-center gap-3">
             <button
@@ -138,7 +138,7 @@ export default function ConnectShell({
       </header>
 
       <div className="flex">
-        <aside className="fixed bottom-0 left-0 top-[7.5rem] hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
+        <aside className="fixed bottom-0 left-0 top-[calc(var(--chrome-top)+3.5rem)] hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
           <div className="border-b border-neutral-100 px-4 py-4">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">
               AreaIQ Connect

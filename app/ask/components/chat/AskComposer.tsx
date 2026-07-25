@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useKeyboardHeight } from "@/components/layout/engine";
 
 const QUICK_TYPES = ["Apartment", "Villa", "Plot", "Builder Floor"] as const;
 
@@ -15,26 +16,9 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
   const [budgetLakh, setBudgetLakh] = useState(80);
   const [showTools, setShowTools] = useState(false);
   const [propertyType, setPropertyType] = useState<string | null>(null);
-  const [keyboardPad, setKeyboardPad] = useState(0);
+  const keyboardHeight = useKeyboardHeight();
+  const keyboardPad = keyboardHeight > 40 ? keyboardHeight : 0;
   const fileRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    const sync = () => {
-      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      setKeyboardPad(inset > 40 ? inset : 0);
-    };
-
-    sync();
-    vv.addEventListener("resize", sync);
-    vv.addEventListener("scroll", sync);
-    return () => {
-      vv.removeEventListener("resize", sync);
-      vv.removeEventListener("scroll", sync);
-    };
-  }, []);
 
   const handleSubmit = () => {
     let text = query.trim();
@@ -95,7 +79,7 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
     <div
       className="shrink-0 border-t border-neutral-200/80 bg-white/95 px-3 pt-3 backdrop-blur-md sm:px-5 sm:pt-3.5"
       style={{
-        paddingBottom: `max(0.75rem, calc(env(safe-area-inset-bottom) + ${keyboardPad}px))`,
+        paddingBottom: `max(0.75rem, calc(var(--safe-bottom) + ${keyboardPad}px))`,
       }}
     >
       <div className="mx-auto w-full max-w-[1100px]">

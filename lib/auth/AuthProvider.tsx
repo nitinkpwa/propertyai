@@ -12,6 +12,7 @@ import {
 import { useRouter } from "next/navigation";
 import { fetchProfile, getDashboardPath } from "@/lib/auth/profile";
 import { bootstrapSession, recoverSessionOnWake } from "@/lib/auth/sessionRecovery";
+import { clearCompareIds } from "@/lib/buyer/compareStore";
 import { logger, APP_VERSION } from "@/lib/stability";
 import { supabase } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/supabase";
@@ -241,6 +242,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         /* ignore */
       }
     }
+    clearCompareIds();
     clearAuthState();
     setSessionStatus("signed_out");
     router.refresh();

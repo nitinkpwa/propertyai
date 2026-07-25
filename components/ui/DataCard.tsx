@@ -112,7 +112,7 @@ export default function DataCard({
   );
 }
 
-/** Desktop table + mobile card list wrapper */
+/** Desktop table + mobile card list wrapper — tables never force page overflow */
 export function ResponsiveDataView({
   table,
   cards,
@@ -122,8 +122,8 @@ export function ResponsiveDataView({
 }) {
   return (
     <>
-      <div className="hidden lg:block">{table}</div>
-      <div className="space-y-3 lg:hidden">{cards}</div>
+      <div className="table-scroll-guard hidden lg:block">{table}</div>
+      <div className="space-y-3 overflow-x-clip lg:hidden">{cards}</div>
     </>
   );
 }

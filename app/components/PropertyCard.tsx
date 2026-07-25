@@ -6,12 +6,17 @@ import { useCallback, useEffect, useState } from "react";
 
 import { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
-import { isReraApproved } from "@/lib/properties/reraStatus";
+import {
+  calculateLegalCompliance,
+  type LegalComplianceResult,
+  type LegalVerificationFlags,
+} from "@/lib/properties/legalCompliance";
 import { useComparedProperty } from "@/lib/buyer/useComparedProperty";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Badge from "@/components/ui/Badge";
 import Price from "@/components/ui/Price";
 import Gallery from "@/components/ui/Gallery";
+import LegalTrustBadge from "@/components/property/LegalTrustBadge";
 
 export type BHKOption = 1 | 2 | 3 | 4 | 5;
 
@@ -36,6 +41,10 @@ export interface PropertyCardProps {
   imageAlt?: string;
   aiVerified?: boolean;
   reraVerified?: boolean;
+  /** Legal verification flags from DB / meta — used for Trust badge. */
+  legalFlags?: Partial<LegalVerificationFlags> | null;
+  /** Precomputed compliance (preferred). */
+  legalCompliance?: LegalComplianceResult | null;
   featured?: boolean;
   isFavorite?: boolean;
   isCompared?: boolean;
@@ -87,15 +96,6 @@ function SparkIcon() {
   );
 }
 
-function ShieldIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M9 12l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function CompareIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
@@ -123,7 +123,9 @@ export default function PropertyCard({
   imageUrls,
   imageAlt,
   aiVerified = false,
-  reraVerified = false,
+  reraVerified: _reraVerified = false,
+  legalFlags = null,
+  legalCompliance: legalComplianceProp = null,
   featured = false,
   isFavorite: isFavoriteProp = false,
   isCompared: isComparedProp = false,
@@ -132,7 +134,8 @@ export default function PropertyCard({
   onCompareToggle,
   onViewDetails,
 }: PropertyCardProps) {
-  const showRera = isReraApproved({ reraVerified });
+  const legalCompliance =
+    legalComplianceProp ?? calculateLegalCompliance(legalFlags ?? null);
   const isControlled = onFavoriteToggle !== undefined;
   const [internalFavorite, setInternalFavorite] = useState(isFavoriteProp);
   const isFavorite = isControlled ? isFavoriteProp : internalFavorite;
@@ -217,7 +220,7 @@ export default function PropertyCard({
             </div>
           )}
           <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-wrap gap-1.5 p-3">
-            {showRera ? <Badge variant="rera">RERA</Badge> : null}
+            <LegalTrustBadge compliance={legalCompliance} size="sm" className="pointer-events-auto" />
             {aiVerified ? <Badge variant="verified">Verified</Badge> : null}
             {featured ? <Badge variant="featured">Featured</Badge> : null}
           </div>
@@ -242,20 +245,13 @@ export default function PropertyCard({
 
           <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
             <div className="flex flex-wrap gap-1.5">
+              <LegalTrustBadge compliance={legalCompliance} />
               {aiVerified && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold tracking-wide text-heading-secondary shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
                   <span className="text-emerald-500">
                     <SparkIcon />
                   </span>
                   AreaIQ Intelligence
-                </span>
-              )}
-              {showRera && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold tracking-wide text-heading-secondary shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
-                  <span className="text-blue-600">
-                    <ShieldIcon />
-                  </span>
-                  RERA
                 </span>
               )}
             </div>
@@ -301,6 +297,15 @@ export default function PropertyCard({
                 <span className="rounded-lg bg-neutral-100 px-2.5 py-1 font-medium text-body">
                   {sizeLabel || (area > 0 ? formatArea(area, areaUnit) : "—")}
                 </span>
+                <span
+                  className="rounded-lg px-2.5 py-1 font-semibold tabular-nums"
+                  style={{
+                    backgroundColor: legalCompliance.colors.background,
+                    color: legalCompliance.colors.text,
+                  }}
+                >
+                  {legalCompliance.compliancePercentage}% {legalCompliance.label}
+                </span>
               </div>
             </div>
 
@@ -333,6 +338,12 @@ export default function PropertyCard({
               </div>
               <p className="mt-1.5 text-sm text-muted">
                 {sizeLabel || (area > 0 ? formatArea(area, areaUnit) : "—")}
+              </p>
+              <p
+                className="mt-2 text-xs font-semibold tabular-nums"
+                style={{ color: legalCompliance.colors.text }}
+              >
+                {legalCompliance.compliancePercentage}% {legalCompliance.label}
               </p>
             </div>
           </div>

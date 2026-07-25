@@ -375,7 +375,7 @@ export default function AdminConnectPanel() {
 
           <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
+              <table className="admin-data-table w-full min-w-[1000px] table-fixed text-sm">
                 <thead className="border-b border-neutral-200 bg-neutral-50">
                   <tr>
                     {["Company", "Manager", "Email", "Phone", "Status", "Projects", "Listings", "Buyers", "Created", "Last Activity"].map((h) => (
@@ -551,25 +551,33 @@ function AdminConnectPropertiesTab({ partners }: { partners: ConnectPartnerListR
 
   return (
     <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-      <table className="min-w-full text-sm">
-        <thead className="border-b border-neutral-200 bg-neutral-50">
-          <tr>
-            {["Property", "City", "Status", "Partner"].map((h) => (
-              <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label">{h}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {properties.map((p) => (
-            <tr key={p.id} className="border-b border-neutral-100">
-              <td className="px-4 py-3 font-medium text-heading-primary">{p.title}</td>
-              <td className="px-4 py-3 text-body">{p.city}</td>
-              <td className="px-4 py-3 capitalize text-body">{p.status}</td>
-              <td className="px-4 py-3 text-body">{p.partner_name ?? "—"}</td>
+      <div className="overflow-x-auto">
+        <table className="admin-data-table w-full min-w-[720px] table-fixed text-sm">
+          <colgroup>
+            <col className="w-[40%]" />
+            <col className="w-[20%]" />
+            <col className="w-[15%]" />
+            <col className="w-[25%]" />
+          </colgroup>
+          <thead className="border-b border-neutral-200 bg-neutral-50">
+            <tr>
+              {["Property", "City", "Status", "Partner"].map((h) => (
+                <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label">{h}</th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {properties.map((p) => (
+              <tr key={p.id} className="border-b border-neutral-100">
+                <td className="truncate px-4 py-3 font-medium text-heading-primary">{p.title}</td>
+                <td className="truncate px-4 py-3 text-body">{p.city}</td>
+                <td className="whitespace-nowrap px-4 py-3 capitalize text-body">{p.status}</td>
+                <td className="truncate px-4 py-3 text-body">{p.partner_name ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

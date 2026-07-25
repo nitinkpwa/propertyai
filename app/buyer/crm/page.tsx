@@ -98,13 +98,6 @@ export default function BuyerCrmPage() {
   }, [user]);
 
   const currentStatus = summary?.lead?.status ?? null;
-  const currentStageIdx = JOURNEY_STAGES.findIndex((s) => s.status === currentStatus);
-
-  const journeySteps = JOURNEY_STAGES.map((stage, idx) => ({
-    label: stage.label,
-    done: currentStageIdx >= 0 ? idx < currentStageIdx : false,
-    active: currentStageIdx >= 0 ? currentStageIdx === idx : idx === 0,
-  }));
 
   const nextAction = getNextAction(currentStatus, enquiries.length, visitCount);
 
@@ -143,30 +136,48 @@ export default function BuyerCrmPage() {
         }
       />
 
-      {summary?.lead ? (
-        <Card>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-label">Current Stage</p>
-              <div className="mt-2">
-                <LeadStatusBadge status={summary.lead.status} />
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-muted">Lead since</p>
-              <p className="text-sm font-medium text-label">
-                {new Date(summary.lead.created_at).toLocaleDateString("en-IN", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
-              </p>
-            </div>
-          </div>
-          <div className="mt-6 overflow-hidden">
-            <StepProgress steps={journeySteps} />
-          </div>
-        </Card>
+      {summary?.leads && summary.leads.length > 0 ? (
+        <div className="space-y-4">
+          {summary.leads.map((lead, idx) => {
+            const stageIdx = JOURNEY_STAGES.findIndex((s) => s.status === lead.status);
+            const steps = JOURNEY_STAGES.map((stage, i) => ({
+              label: stage.label,
+              done: stageIdx >= 0 ? i < stageIdx : false,
+              active: stageIdx >= 0 ? stageIdx === i : i === 0,
+            }));
+            return (
+              <Card key={lead.id}>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-label">
+                      {lead.assigned_connect_id
+                        ? `Partner journey${summary.leads.length > 1 ? ` · ${idx + 1}` : ""}`
+                        : summary.leads.length > 1
+                          ? "General journey"
+                          : "Current Stage"}
+                    </p>
+                    <div className="mt-2">
+                      <LeadStatusBadge status={lead.status} />
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-muted">Lead since</p>
+                    <p className="text-sm font-medium text-label">
+                      {new Date(lead.created_at).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-6 overflow-hidden">
+                  <StepProgress steps={steps} />
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       ) : null}
 
       <Card className="border-emerald-100 bg-gradient-to-br from-emerald-50/80 to-white">

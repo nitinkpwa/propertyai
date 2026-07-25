@@ -20,6 +20,7 @@ import {
 } from "@/lib/crm/siteVisitErrors";
 import { useProgressiveProfileOptional } from "@/components/buyer/ProgressiveProfileProvider";
 import { SITE_VISIT_BOOKED_EVENT } from "@/lib/crm/events";
+import { useOverlay } from "@/lib/layout/overlay";
 import { buildLoginUrlForBookVisit } from "./BookSiteVisitProvider";
 import { CloseIcon, EMERALD } from "./shared";
 import {
@@ -78,6 +79,7 @@ export default function SiteVisitModal({
   const panelRef = useRef<HTMLDivElement>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
   const submittingRef = useRef(false);
+  const { zClassName } = useOverlay("modal", open, onClose);
 
   const [visitDate, setVisitDate] = useState("");
   const [visitTime, setVisitTime] = useState("11:00");
@@ -197,11 +199,8 @@ export default function SiteVisitModal({
       }
     };
     document.addEventListener("keydown", onKeyDown);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = prevOverflow;
       previouslyFocused.current?.focus?.();
     };
   }, [open, onClose]);
@@ -341,7 +340,7 @@ export default function SiteVisitModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100]" role="presentation">
+    <div className={`fixed inset-0 ${zClassName}`} role="presentation">
       <button
         type="button"
         className="absolute inset-0 bg-neutral-950/40 backdrop-blur-[2px] transition-opacity"

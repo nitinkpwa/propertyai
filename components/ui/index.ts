@@ -14,6 +14,8 @@ export { default as BuilderCard } from "./BuilderCard";
 export { default as Card, CardHeader } from "./Card";
 export { default as Badge } from "./Badge";
 export { default as DataCard, ResponsiveDataView } from "./DataCard";
+export { default as IconButton } from "./IconButton";
+export { default as Lightbox } from "./Lightbox";
 export {
   Skeleton,
   DashboardSkeleton,

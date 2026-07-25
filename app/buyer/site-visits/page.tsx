@@ -211,7 +211,7 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
               {visit.property?.city ? `, ${visit.property.city}` : ""}
             </p>
           </div>
-          <Badge variant={STATUS_VARIANT[visit.status] ?? "neutral"} className="!bg-white/20 !text-white !ring-white/30">
+          <Badge variant={STATUS_VARIANT[visit.status] ?? "neutral"} className="bg-white/20 text-white ring-white/30">
             {formatVisitStatusLabel(visit.status)}
           </Badge>
         </div>

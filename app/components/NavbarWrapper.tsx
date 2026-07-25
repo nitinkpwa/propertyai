@@ -16,6 +16,11 @@ function NavbarWrapperInner() {
     return <PublicBottomNav />;
   }
 
+  // Admin CRM uses its own full-width shell — no public website navbar.
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   // Portal + Ask: navbar + smart bar on desktop only (mobile shells own chrome).
   if (isPortalPath(pathname) || pathname.startsWith("/ask")) {
     return (

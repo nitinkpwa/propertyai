@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import AuthInput from "@/components/auth/AuthInput";
@@ -8,10 +9,8 @@ import AuthButton from "@/components/auth/AuthButton";
 import AdminEmptyState from "./components/AdminEmptyState";
 import AdminSiteVisitsPanel from "./components/AdminSiteVisitsPanel";
 import AdminShell, { type AdminNavItem } from "./components/AdminShell";
-import AdminConnectPanel from "@/components/admin/connect/AdminConnectPanel";
 import ConnectPartnerAssignSelect from "@/components/admin/connect/ConnectPartnerAssignSelect";
-import PropertyStudio from "@/components/admin/property/studio/PropertyStudio";
-import AdminCrmPanel from "@/components/crm/AdminCrmPanel";
+import LegalComplianceBadge from "@/components/admin/property/LegalComplianceBadge";
 import AdminBroadcastPanel from "@/components/admin/AdminBroadcastPanel";
 import AdminProfileCard, {
   AdminProfileInline,
@@ -42,6 +41,11 @@ import {
   updatePropertyStatus,
 } from "@/lib/admin/queries";
 import { adminRowToForm } from "@/lib/admin/property/mappers";
+import {
+  matchesLegalComplianceFilter,
+  resolveLegalVerificationFromProperty,
+  type LegalComplianceFilter,
+} from "@/lib/admin/property/legalVerification";
 import { createEmptyAdminPropertyForm } from "@/lib/admin/property/types";
 import type { AdminPropertyFormState } from "@/lib/admin/property/types";
 import {
@@ -57,7 +61,39 @@ import type {
   AdminTab,
 } from "@/lib/admin/types";
 import { PROPERTY_STATUS_DEFAULT_CREATE, PROPERTY_STATUS_LABELS } from "@/lib/properties/status";
+import { saveAdminProperty } from "@/lib/admin/property/saveProperty";
 import { supabase } from "@/lib/supabase/client";
+
+const PropertyStudio = dynamic(
+  () => import("@/components/admin/property/studio/PropertyStudio"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex justify-center py-16">
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
+      </div>
+    ),
+  },
+);
+const AdminCrmPanel = dynamic(() => import("@/components/crm/AdminCrmPanel"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center py-16">
+      <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
+    </div>
+  ),
+});
+const AdminConnectPanel = dynamic(
+  () => import("@/components/admin/connect/AdminConnectPanel"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex justify-center py-16">
+        <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
+      </div>
+    ),
+  },
+);
 
 type AdminAccessState = "loading" | "signed_out" | "ready";
 
@@ -144,6 +180,7 @@ function AdminPageInner() {
   const [data, setData] = useState<AdminData | null>(null);
   const [loading, setLoading] = useState(false);
   const [adminUserId, setAdminUserId] = useState<string | null>(null);
+  const [adminDisplayName, setAdminDisplayName] = useState<string | null>(null);
   const [wizardForm, setWizardForm] = useState<AdminPropertyFormState>(() => createEmptyAdminPropertyForm());
   const [editId, setEditId] = useState<string | null>(null);
   const [bulkCsv, setBulkCsv] = useState("");
@@ -151,6 +188,7 @@ function AdminPageInner() {
   const [bulkLoading, setBulkLoading] = useState(false);
   const [searchQ, setSearchQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [complianceFilter, setComplianceFilter] = useState<LegalComplianceFilter>("all");
   const [userRoleFilter, setUserRoleFilter] = useState("all");
   const [selectedChat, setSelectedChat] = useState<AdminConversationRow | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -173,6 +211,7 @@ function AdminPageInner() {
       const profile = await fetchProfile(user.id);
       if (isAdminRole(profile?.role)) {
         setAdminUserId(user.id);
+        setAdminDisplayName(profile?.full_name || profile?.email || null);
         setAccessState("ready");
         return;
       }
@@ -328,7 +367,11 @@ function AdminPageInner() {
       p.city?.toLowerCase().includes(q) ||
       p.contact_name?.toLowerCase().includes(q);
     const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesCompliance = matchesLegalComplianceFilter(
+      resolveLegalVerificationFromProperty(p),
+      complianceFilter,
+    );
+    return matchesSearch && matchesStatus && matchesCompliance;
   });
 
   const filteredUsers = profiles.filter((p) => {
@@ -370,28 +413,29 @@ function AdminPageInner() {
         results.push(`Row ${i}: SKIP — missing title/price/city`);
         continue;
       }
-      const { error } = await supabase.from("properties").insert({
-        seller_id: adminUserId,
-        title: row.title,
-        type: row.type || "buy",
-        sub_type: row.sub_type || "flat",
-        price: parseFloat(row.price) || 0,
-        area_sqft: parseFloat(row.area_sqft) || null,
-        bedrooms: parseInt(row.bedrooms, 10) || null,
-        bathrooms: parseInt(row.bathrooms, 10) || null,
-        city: row.city,
-        location: row.location || row.city,
-        contact_name: row.contact_name || "",
-        contact_phone: row.contact_phone || "",
-        description: row.description || "",
-        photos: [],
-        amenities: [],
-        status: PROPERTY_STATUS_DEFAULT_CREATE,
-      });
+      const form = createEmptyAdminPropertyForm();
+      form.title = row.title;
+      form.type = (row.type as AdminPropertyFormState["type"]) || "buy";
+      form.sub_type = (row.sub_type as AdminPropertyFormState["sub_type"]) || "flat";
+      form.price = row.price;
+      form.area_sqft = row.area_sqft || "";
+      form.bedrooms = row.bedrooms || "";
+      form.bathrooms = row.bathrooms || "";
+      form.city = row.city;
+      form.location = row.location || row.city;
+      form.contact_name = row.contact_name || "";
+      form.contact_phone = row.contact_phone || "";
+      form.status = PROPERTY_STATUS_DEFAULT_CREATE;
+      form.publishing.workflowStatus = "review";
+      // CSV description flows into factual description via project/config fields when present.
+      if (row.description) {
+        form.basic.project = row.description.slice(0, 120);
+      }
+      const saved = await saveAdminProperty(form, adminUserId, null);
       results.push(
-        error
-          ? `Row ${i} (${row.title}): ERROR — ${error.message}`
-          : `Row ${i} (${row.title}): ✅ Added (pending review)`,
+        saved.ok
+          ? `Row ${i} (${row.title}): ✅ Added (pending review)`
+          : `Row ${i} (${row.title}): ERROR — ${saved.error ?? "save failed"}`,
       );
     }
     setBulkResult(results);
@@ -481,6 +525,10 @@ function AdminPageInner() {
       onTabChange={goToTab}
       navItems={navItems}
       onLogout={logoutAdmin}
+      onAddProperty={() => {
+        resetWizard();
+        goToTab("add");
+      }}
     >
       {supabaseRoleWarning ? (
         <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -498,7 +546,7 @@ function AdminPageInner() {
           <h1 className="mb-6 text-[28px] font-bold tracking-tight text-heading-primary lg:text-2xl">
             Dashboard Overview
           </h1>
-          <div className="-mx-4 flex gap-3 overflow-x-auto scroll-touch px-4 pb-1 snap-x snap-mandatory lg:mx-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:overflow-visible lg:px-0 lg:pb-0 xl:grid-cols-3 lg:snap-none">
+          <div className="-mx-4 flex gap-3 overflow-x-auto scroll-touch px-4 pb-1 snap-x snap-mandatory sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0 sm:snap-none md:grid-cols-3 xl:grid-cols-4">
             <StatCard icon="🏠" label="Total Properties" value={stats.totalProperties} />
             <StatCard icon="⏳" label="Pending Properties" value={stats.pendingProperties} />
             <StatCard icon="✅" label="Approved Properties" value={stats.approvedProperties} />
@@ -510,7 +558,7 @@ function AdminPageInner() {
             <StatCard icon="📩" label="Leads" value={stats.leads} />
           </div>
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
               <h2 className="mb-4 font-semibold text-heading-primary">Latest Leads</h2>
               {leads.slice(0, 5).map((l) => (
@@ -552,18 +600,20 @@ function AdminPageInner() {
 
       {tab === "properties" ? (
         <div>
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-            <h1 className="text-2xl font-bold text-heading-primary">Property Command Center</h1>
+          <div className="sticky top-[calc(var(--admin-header-h,3.5rem)+var(--smart-bar-h,0px))] z-20 -mx-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200/80 bg-[#FAFAFA]/95 px-4 py-3 backdrop-blur-md sm:-mx-0 sm:static sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none md:top-auto">
+            <h1 className="text-xl font-bold text-heading-primary sm:text-2xl">
+              Property Command Center
+            </h1>
             <button
               type="button"
               onClick={() => {
                 resetWizard();
                 goToTab("add");
               }}
-              className="rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
-              style={{ backgroundColor: EMERALD }}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98]"
             >
-              + Add Property
+              <span aria-hidden>+</span>
+              Add Property
             </button>
           </div>
           <div className="mb-4 flex flex-wrap gap-3">
@@ -579,16 +629,55 @@ function AdminPageInner() {
               <option value="sold">Sold</option>
               <option value="rented">Rented</option>
             </select>
+            <select
+              value={complianceFilter}
+              onChange={(e) => setComplianceFilter(e.target.value as LegalComplianceFilter)}
+              className="rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-sm"
+            >
+              <option value="all">All compliance</option>
+              <option value="verified">Verified (≥90%)</option>
+              <option value="partial">Partial (30–89%)</option>
+              <option value="missing">Missing (&lt;30%)</option>
+              <option value="rera_pending">RERA Pending</option>
+              <option value="bank_approved">Bank Approved</option>
+              <option value="govt_approved">Government Approved</option>
+            </select>
           </div>
           <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm lg:border">
             <ResponsiveDataView
               table={
                 <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
+                  <table className="admin-data-table w-full min-w-[1100px] table-fixed text-sm">
+                    <colgroup>
+                      <col className="w-[18%]" />
+                      <col className="w-[7%]" />
+                      <col className="w-[9%]" />
+                      <col className="w-[8%]" />
+                      <col className="w-[14%]" />
+                      <col className="w-[14%]" />
+                      <col className="w-[7%]" />
+                      <col className="w-[9%]" />
+                      <col className="w-[7%]" />
+                      <col className="w-[7%]" />
+                    </colgroup>
                     <thead className="border-b border-neutral-200 bg-neutral-50">
                       <tr>
-                        {["Property", "Type", "Price", "City", "Seller", "Connect Partner", "Status", "Date", "Actions"].map((h) => (
-                          <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label">
+                        {[
+                          "Property",
+                          "Type",
+                          "Price",
+                          "City",
+                          "Seller",
+                          "Connect Partner",
+                          "Status",
+                          "Compliance",
+                          "Date",
+                          "Actions",
+                        ].map((h) => (
+                          <th
+                            key={h}
+                            className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label"
+                          >
                             {h}
                           </th>
                         ))}
@@ -598,11 +687,11 @@ function AdminPageInner() {
                       {filteredProperties.map((prop) => (
                         <tr key={prop.id} className="border-b border-neutral-100 hover:bg-neutral-50/50">
                           <td className="px-4 py-3">
-                            <p className="font-medium text-heading-primary">{prop.title}</p>
-                            <p className="text-xs text-muted">{prop.sub_type}</p>
+                            <p className="truncate font-medium text-heading-primary">{prop.title}</p>
+                            <p className="truncate text-xs text-muted">{prop.sub_type}</p>
                           </td>
-                          <td className="px-4 py-3 capitalize text-body">{prop.type}</td>
-                          <td className="px-4 py-3 font-semibold text-emerald-700">
+                          <td className="whitespace-nowrap px-4 py-3 capitalize text-body">{prop.type}</td>
+                          <td className="whitespace-nowrap px-4 py-3 font-semibold text-emerald-700">
                             {formatPropertyPrice({
                               price: prop.price,
                               calculated_price: prop.calculated_price,
@@ -611,14 +700,14 @@ function AdminPageInner() {
                               nearby_places: (prop as { nearby_places?: unknown }).nearby_places,
                             }).displayPrice}
                           </td>
-                          <td className="px-4 py-3 text-body">{prop.city}</td>
+                          <td className="truncate px-4 py-3 text-body">{prop.city}</td>
                           <td className="px-4 py-3">
                             <AdminPropertySellerInline property={prop} lookup={profileLookup} />
                           </td>
                           <td className="px-4 py-3">
                             <div className="space-y-1">
                               {prop.connect_partner?.company_name ? (
-                                <p className="text-xs font-medium text-emerald-700">
+                                <p className="truncate text-xs font-medium text-emerald-700">
                                   {prop.connect_partner.company_name}
                                 </p>
                               ) : null}
@@ -629,14 +718,17 @@ function AdminPageInner() {
                               />
                             </div>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="whitespace-nowrap px-4 py-3">
                             <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${statusBadgeClass(prop.status)}`}>
                               {PROPERTY_STATUS_LABELS[prop.status as keyof typeof PROPERTY_STATUS_LABELS] ?? prop.status}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-xs text-muted">{formatDate(prop.created_at)}</td>
+                          <td className="whitespace-nowrap px-4 py-3">
+                            <LegalComplianceBadge flags={resolveLegalVerificationFromProperty(prop)} />
+                          </td>
+                          <td className="whitespace-nowrap px-4 py-3 text-xs text-muted">{formatDate(prop.created_at)}</td>
                           <td className="px-4 py-3">
-                            <div className="flex flex-wrap gap-1">
+                            <div className="flex flex-nowrap gap-1">
                               <Link href={`/admin/properties/${prop.id}`} className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100">CMS</Link>
                               <button type="button" onClick={() => startEdit(prop)} className="rounded-lg border border-neutral-200 px-2 py-1 text-xs font-medium hover:bg-neutral-50">Edit</button>
                               <button type="button" onClick={async () => {
@@ -672,8 +764,11 @@ function AdminPageInner() {
                         title={prop.title}
                         subtitle={`${prop.city} · ${prop.type}`}
                         badges={
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(prop.status)}`}>
-                            {PROPERTY_STATUS_LABELS[prop.status as keyof typeof PROPERTY_STATUS_LABELS] ?? prop.status}
+                          <span className="inline-flex flex-wrap items-center gap-1.5">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusBadgeClass(prop.status)}`}>
+                              {PROPERTY_STATUS_LABELS[prop.status as keyof typeof PROPERTY_STATUS_LABELS] ?? prop.status}
+                            </span>
+                            <LegalComplianceBadge flags={resolveLegalVerificationFromProperty(prop)} />
                           </span>
                         }
                         meta={[
@@ -826,11 +921,20 @@ function AdminPageInner() {
             </div>
           </div>
           <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-            <table className="min-w-full text-sm">
+          <div className="overflow-x-auto">
+            <table className="admin-data-table w-full min-w-[900px] table-fixed text-sm">
+              <colgroup>
+                <col className="w-[22%]" />
+                <col className="w-[14%]" />
+                <col className="w-[22%]" />
+                <col className="w-[12%]" />
+                <col className="w-[14%]" />
+                <col className="w-[16%]" />
+              </colgroup>
               <thead className="border-b border-neutral-200 bg-neutral-50">
                 <tr>
                   {["User", "Phone", "Email", "Role", "Joined", "Status"].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label">{h}</th>
+                    <th key={h} className="whitespace-nowrap px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-label">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -857,6 +961,7 @@ function AdminPageInner() {
               </tbody>
             </table>
             {filteredUsers.length === 0 ? <p className="py-12 text-center text-sm text-muted">No users found</p> : null}
+          </div>
           </div>
         </div>
       ) : null}
@@ -1013,6 +1118,18 @@ function AdminPageInner() {
                 <li>• Intelligence Sessions: {data?.hasConversationsTable ? "connected" : "table not accessible"}</li>
               </ul>
             </div>
+            <div className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+              <h2 className="font-semibold text-heading-primary">Developer Health Check</h2>
+              <p className="mt-2 text-sm text-muted">
+                Env, Supabase, OpenAI, cache, migrations, storage, and runtime diagnostics.
+              </p>
+              <Link
+                href="/admin/system"
+                className="mt-4 inline-flex rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+              >
+                Open system health →
+              </Link>
+            </div>
           </div>
         </div>
       ) : null}
@@ -1021,6 +1138,7 @@ function AdminPageInner() {
         <PropertyStudio
           key={editId ?? "new"}
           adminUserId={adminUserId}
+          adminDisplayName={adminDisplayName}
           editId={editId}
           initialForm={wizardForm}
           existingTitles={properties.map((p) => ({
@@ -1044,13 +1162,13 @@ function AdminPageInner() {
         <div>
           <h1 className="mb-2 text-2xl font-bold text-heading-primary">Bulk Import</h1>
           <p className="mb-6 text-sm text-muted">Import multiple properties using CSV format.</p>
-          <div className="max-w-3xl rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+          <div className="w-full max-w-none rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm lg:p-8">
             <div className="mb-4 flex flex-wrap gap-2">
               <button type="button" onClick={() => fileRef.current?.click()} className="rounded-xl border border-neutral-200 px-4 py-2 text-sm font-medium">Upload CSV</button>
               <button type="button" onClick={() => setBulkCsv(BULK_TEMPLATE)} className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">Load Example</button>
             </div>
             <input ref={fileRef} type="file" accept=".csv,.txt" hidden onChange={(e) => { const f = e.target.files?.[0]; if (!f) return; const r = new FileReader(); r.onload = (ev) => setBulkCsv(ev.target?.result as string); r.readAsText(f); }} />
-            <textarea value={bulkCsv} onChange={(e) => setBulkCsv(e.target.value)} className="h-48 w-full rounded-xl border border-neutral-200 p-3 font-mono text-xs" placeholder="Paste CSV..." />
+            <textarea value={bulkCsv} onChange={(e) => setBulkCsv(e.target.value)} className="h-64 w-full rounded-xl border border-neutral-200 p-3 font-mono text-xs lg:h-80" placeholder="Paste CSV..." />
             <div className="mt-4 flex gap-3">
               <button type="button" disabled={bulkLoading || !bulkCsv.trim()} onClick={handleBulkImport} className="rounded-xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60" style={{ backgroundColor: EMERALD }}>{bulkLoading ? "Importing..." : "Import Properties"}</button>
               <button type="button" onClick={() => { setBulkCsv(""); setBulkResult([]); }} className="rounded-xl border border-neutral-200 px-5 py-2.5 text-sm font-medium">Clear</button>

@@ -141,8 +141,8 @@ function VisitCard({
 
       {rescheduleId === visit.id ? (
         <div className="mt-3 flex flex-wrap gap-2">
-          <input type="date" style={inp} className="!w-auto" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
-          <input type="time" style={inp} className="!w-auto" value={newTime} onChange={(e) => setNewTime(e.target.value)} />
+          <input type="date" style={inp} className="w-auto" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+          <input type="time" style={inp} className="w-auto" value={newTime} onChange={(e) => setNewTime(e.target.value)} />
           <button
             type="button"
             style={btnSecondary}

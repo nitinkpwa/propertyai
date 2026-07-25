@@ -4,11 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useRegisterChrome } from "@/components/layout/engine";
 import {
   useNotificationRotation,
   useSmartNotifications,
 } from "@/lib/notifications/hooks";
 import { ROTATE_MS, SMART_BAR_HEIGHT_PX } from "@/lib/notifications/types";
+import { zClass } from "@/lib/layout/zIndex";
 import MarketTicker from "./MarketTicker";
 import PersonalUpdates from "./PersonalUpdates";
 import NotificationDrawer from "./NotificationDrawer";
@@ -16,6 +18,7 @@ import NotificationBarBell from "./NotificationBarBell";
 
 interface NotificationBarProps {
   variant?: "fixed" | "sticky" | "inline";
+  /** @deprecated Use layout engine top-chrome; kept for call-site compat */
   topOffsetClassName?: string;
   className?: string;
   visible?: boolean;
@@ -27,7 +30,7 @@ interface NotificationBarProps {
  */
 export default function NotificationBar({
   variant = "fixed",
-  topOffsetClassName = "top-16",
+  topOffsetClassName = "top-chrome",
   className = "",
   visible = true,
 }: NotificationBarProps) {
@@ -46,6 +49,13 @@ export default function NotificationBar({
     hideBar,
     onDisplay,
   } = useSmartNotifications();
+
+  useRegisterChrome(
+    "notification",
+    SMART_BAR_HEIGHT_PX,
+    Boolean(visible && showBar),
+    "smart-notification-bar",
+  );
 
   const [paused, setPaused] = useState(false);
   const { current, goNext, goPrev } = useNotificationRotation(
@@ -80,10 +90,10 @@ export default function NotificationBar({
 
   const positionClass =
     variant === "fixed"
-      ? `fixed inset-x-0 z-40 ${topOffsetClassName}`
+      ? `fixed inset-x-0 ${zClass.nav} ${topOffsetClassName}`
       : variant === "sticky"
-        ? "sticky z-30 top-16"
-        : "relative z-20 w-full";
+        ? `sticky ${zClass.sticky} top-chrome`
+        : "relative z-layout-sticky w-full";
 
   const handleActivate = () => {
     markRead(current.id);

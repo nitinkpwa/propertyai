@@ -61,6 +61,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Authenticated but profile missing/unreadable — force re-auth instead of
+  // skipping role gates (M1).
+  if (user && !profileRole && isProtectedPath(pathname) && !isAuthPage(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("redirect", pathname);
+    url.searchParams.set("error", "profile_missing");
+    return NextResponse.redirect(url);
+  }
+
   if (user && profileRole) {
     const unauthorizedRedirect = getUnauthorizedRedirect(profileRole, pathname);
     if (unauthorizedRedirect && unauthorizedRedirect !== pathname) {

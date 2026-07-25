@@ -1,6 +1,10 @@
 import type { BHKOption, PropertyCardProps } from "../../components/PropertyCard";
 import type { AreaIntelligenceReport } from "@/lib/intelligence/types";
 import type { PropertyStructuredMeta } from "@/lib/properties/nearbyPlacesMeta";
+import type {
+  LegalComplianceResult,
+  LegalVerificationFlags,
+} from "@/lib/properties/legalCompliance";
 import {
   formatInrAmount,
   formatPropertyPrice as formatPropertyPriceParts,
@@ -264,6 +268,10 @@ export interface PropertyDetail {
   description: string;
   aiVerified: boolean;
   reraVerified: boolean;
+  /** Legal verification flags from DB / meta. */
+  legalFlags: LegalVerificationFlags;
+  /** Precomputed legal compliance for Trust Layer UI. */
+  legalCompliance: LegalComplianceResult;
   images: { id: string; label: string; gradient: string; url?: string | null }[];
   amenities: string[];
   intelligenceReport?: AreaIntelligenceReport | null;

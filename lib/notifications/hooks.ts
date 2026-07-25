@@ -13,9 +13,8 @@ import {
   markNotificationReadLocal,
 } from "./storage";
 import type { IntelligenceNotification } from "./types";
-import { ROTATE_MS, SMART_BAR_HEIGHT_PX } from "./types";
+import { ROTATE_MS } from "./types";
 
-const CSS_VAR = "--smart-bar-h";
 const REFRESH_MS = 90_000;
 
 export function useSmartNotifications() {
@@ -87,14 +86,6 @@ export function useSmartNotifications() {
   }, []);
 
   const showBar = !authLoading && !loading && !hidden && items.length > 0;
-
-  useEffect(() => {
-    const root = document.documentElement;
-    root.style.setProperty(CSS_VAR, showBar ? `${SMART_BAR_HEIGHT_PX}px` : "0px");
-    return () => {
-      root.style.setProperty(CSS_VAR, "0px");
-    };
-  }, [showBar]);
 
   const onDisplay = useCallback((item: IntelligenceNotification) => {
     recordIntelligenceSeen(item);

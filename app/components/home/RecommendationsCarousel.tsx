@@ -28,6 +28,8 @@ function listingToCard(listing: ListingProperty): PropertyCardProps {
     imageAlt: listing.imageAlt,
     aiVerified: listing.aiVerified,
     reraVerified: listing.reraVerified,
+    legalFlags: listing.legalFlags,
+    legalCompliance: listing.legalCompliance,
     href: `/property/${listing.id}`,
   };
 }

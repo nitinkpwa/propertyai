@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useState } from "react";
+import { useChromeElement } from "@/components/layout/engine";
 import { useSavedProperty } from "@/lib/buyer/useSavedProperty";
 import { useComparedProperty } from "@/lib/buyer/useComparedProperty";
+import { zClass } from "@/lib/layout/zIndex";
 import type { PropertyDetail } from "../data";
 import { formatPropertyPrice } from "../data";
 import { useBookSiteVisit } from "./BookSiteVisitProvider";
@@ -18,6 +20,7 @@ export default function MobileActionBar({ property }: MobileActionBarProps) {
   const { saved, toggle, saving } = useSavedProperty(property.id);
   const { compared, toggle: toggleCompare, busy: comparing } = useComparedProperty(property.id);
   const [shared, setShared] = useState(false);
+  const chromeRef = useChromeElement("actionbar", true, "property-action-bar");
 
   const phone = property.contactPhone?.trim();
   const wa = property.whatsapp?.trim() || phone;
@@ -44,24 +47,26 @@ export default function MobileActionBar({ property }: MobileActionBarProps) {
   }, [property.name]);
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-200/80 bg-white/95 backdrop-blur-xl lg:hidden">
-      {/* Sticky price strip */}
+    <div
+      ref={chromeRef}
+      className={`fixed inset-x-0 bottom-0 ${zClass.nav} border-t border-neutral-200/80 bg-white/95 backdrop-blur-xl lg:hidden`}
+      style={{ paddingBottom: "var(--safe-bottom)" }}
+    >
       <div className="flex items-center justify-between gap-3 border-b border-neutral-100 px-4 py-2">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-muted">Starting from</p>
-          <p className="truncate text-xl font-bold tracking-tight text-heading-primary">
+          <p className="type-micro font-medium text-muted">Starting from</p>
+          <p className="truncate type-title tracking-tight text-heading-primary">
             {formatPropertyPrice(property)}
           </p>
         </div>
-        <p className="shrink-0 text-xs text-muted">{property.configuration}</p>
+        <p className="shrink-0 type-micro text-muted">{property.configuration}</p>
       </div>
 
-      {/* Action row */}
-      <div className="flex items-center gap-1.5 px-2.5 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] sm:gap-2 sm:px-3">
+      <div className="flex items-center gap-1.5 px-2.5 py-2.5 sm:gap-2 sm:px-3">
         <button
           type="button"
           onClick={requestBookVisit}
-          className="inline-flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-xl px-2.5 text-xs font-semibold text-white shadow-[0_2px_8px_rgba(74,170,39,0.35)] active:scale-[0.98] sm:min-h-12 sm:px-3 sm:text-sm"
+          className="inline-flex min-h-12 min-w-0 flex-1 items-center justify-center rounded-xl px-2.5 type-label text-white shadow-[0_2px_8px_rgba(74,170,39,0.35)] active:scale-[0.98] sm:px-3"
           style={{ backgroundColor: EMERALD }}
         >
           Book Visit
@@ -73,7 +78,7 @@ export default function MobileActionBar({ property }: MobileActionBarProps) {
           disabled={comparing}
           aria-pressed={compared}
           aria-label={compared ? "Remove from compare" : "Compare"}
-          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border sm:h-12 sm:w-12 ${
+          className={`touch-target inline-flex shrink-0 items-center justify-center rounded-xl border ${
             compared
               ? "border-emerald-200 bg-emerald-50 text-emerald-700"
               : "border-neutral-200 text-body"
@@ -88,7 +93,7 @@ export default function MobileActionBar({ property }: MobileActionBarProps) {
           type="button"
           onClick={handleShare}
           aria-label={shared ? "Link copied" : "Share"}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-neutral-200 text-body sm:h-12 sm:w-12"
+          className="touch-target inline-flex shrink-0 items-center justify-center rounded-xl border border-neutral-200 text-body"
         >
           <ShareIcon />
         </button>
@@ -98,7 +103,7 @@ export default function MobileActionBar({ property }: MobileActionBarProps) {
             href={waLink}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 sm:h-12 sm:w-12"
+            className="touch-target inline-flex shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700"
             aria-label="WhatsApp"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
@@ -109,7 +114,7 @@ export default function MobileActionBar({ property }: MobileActionBarProps) {
         ) : (
           <Link
             href={`/ask?propertyId=${property.id}&q=${encodeURIComponent("How can I contact the seller?")}`}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 sm:h-12 sm:w-12"
+            className="touch-target inline-flex shrink-0 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700"
             aria-label="Ask about contact"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -124,7 +129,7 @@ export default function MobileActionBar({ property }: MobileActionBarProps) {
           disabled={saving}
           aria-pressed={saved}
           aria-label={saved ? "Unsave" : "Save"}
-          className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border sm:h-12 sm:w-12 ${
+          className={`touch-target inline-flex shrink-0 items-center justify-center rounded-xl border ${
             saved ? "border-rose-200 bg-rose-50 text-rose-600" : "border-neutral-200 text-body"
           }`}
         >
