@@ -51,13 +51,13 @@ export async function POST(req: NextRequest) {
 
     const openai = getOpenAIClient();
 
-    const stream = await openai.chat.completions.create({
+    const stream = (await openai.chat.completions.create({
       model: OPENAI_MODEL,
       stream: true,
       max_tokens: 1200,
       temperature: 0.7,
       messages: [{ role: "system", content: AREA_IQ_SYSTEM_PROMPT }, ...sanitized],
-    });
+    })) as AsyncIterable<unknown>;
 
     const encoder = new TextEncoder();
     const readable = new ReadableStream({

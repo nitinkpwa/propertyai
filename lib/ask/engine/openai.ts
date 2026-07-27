@@ -1,8 +1,8 @@
-import type OpenAI from "openai";
 import {
-  getOpenAIClient,
+  createChatCompletion,
   OPENAI_MODEL,
   toOpenAIMessages,
+  type ChatMessage,
 } from "../openai-client";
 import type { ConversationMessage } from "../types";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
@@ -38,16 +38,14 @@ export async function completeJSON<T>(
   user: string,
   history: ConversationMessage[] = [],
 ): Promise<T> {
-  const openai = getOpenAIClient();
-
-  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+  const messages: ChatMessage[] = [
     { role: "system", content: system },
     ...toOpenAIMessages(history.slice(-8)),
     { role: "user", content: user },
   ];
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await createChatCompletion({
       model: OPENAI_MODEL,
       temperature: 0.1,
       max_tokens: 900,
@@ -88,7 +86,6 @@ export async function completeText(
     temperature?: number;
   } = {},
 ): Promise<string> {
-  const openai = getOpenAIClient();
   const {
     history = [],
     extraContext,
@@ -96,14 +93,14 @@ export async function completeText(
     temperature = 0.65,
   } = options;
 
-  const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+  const messages: ChatMessage[] = [
     { role: "system", content: system + (extraContext ?? "") },
     ...toOpenAIMessages(history.slice(-10)),
     { role: "user", content: userMessage },
   ];
 
   try {
-    const response = await openai.chat.completions.create({
+    const response = await createChatCompletion({
       model: OPENAI_MODEL,
       temperature,
       max_tokens: maxTokens,

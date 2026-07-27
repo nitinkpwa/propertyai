@@ -1,5 +1,5 @@
 import "server-only";
-import { getOpenAIClient, isOpenAIConfigured, OPENAI_MODEL } from "@/lib/ask/openai-client";
+import { createChatCompletion, isOpenAIConfigured, OPENAI_MODEL } from "@/lib/ask/openai-client";
 import { emptyExtractedListingFields, type ExtractedListingFields, type FieldConfidenceMap } from "./types";
 import { semanticExtractFromText } from "./semanticExtract";
 
@@ -116,8 +116,7 @@ export async function extractListingWithAI(input: {
   }
 
   try {
-    const client = getOpenAIClient();
-    const completion = await client.chat.completions.create({
+    const completion = await createChatCompletion({
       model: OPENAI_MODEL,
       temperature: 0.15,
       response_format: { type: "json_object" },

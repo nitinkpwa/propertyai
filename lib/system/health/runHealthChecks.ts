@@ -1,45 +1,45 @@
 import "server-only";
 
 import {
-  checkApiRoutes,
-  checkBuildRuntimeMismatch,
   checkCloudflareConfig,
-  checkDatabaseMigrations,
-  checkDuplicateEnvKeys,
   checkEnvVariables,
-  checkMiddlewareProxy,
-  checkNextCache,
-  checkNextConfig,
   checkNodeVersion,
-  checkNpmPackages,
   checkOpenAIConnectivity,
   checkPortAvailability,
   checkStorageBuckets,
   checkSupabaseConnectivity,
-} from "./checks";
-import { buildHealthReport, type HealthReport } from "./types";
+} from "./runtimeChecks";
+import { buildHealthReport, type HealthCheckResult, type HealthReport } from "./types";
 
-/** Run the full Developer Health Check suite (server-only). */
+/**
+ * Full suite for local development (includes filesystem probes).
+ * Not imported by any App Router route — keeps the Worker NFT graph lean.
+ * Run via: `npm run health:full`
+ */
 export async function runHealthChecks(): Promise<HealthReport> {
-  const sync = [
+  const sync: HealthCheckResult[] = [
     checkEnvVariables(),
-    checkDuplicateEnvKeys(),
     checkCloudflareConfig(),
     checkPortAvailability(),
-    checkNextCache(),
     checkNodeVersion(),
-    checkNpmPackages(),
-    checkMiddlewareProxy(),
-    checkApiRoutes(),
-    checkNextConfig(),
-    checkBuildRuntimeMismatch(),
   ];
+
+  const fs = await import("./fsChecks");
+  sync.push(
+    fs.checkDuplicateEnvKeys(),
+    fs.checkNextCache(),
+    fs.checkNpmPackages(),
+    fs.checkMiddlewareProxy(),
+    fs.checkApiRoutes(),
+    fs.checkNextConfig(),
+    fs.checkBuildRuntimeMismatch(),
+  );
 
   const asyncChecks = await Promise.all([
     checkSupabaseConnectivity(),
     checkOpenAIConnectivity(),
-    checkDatabaseMigrations(),
     checkStorageBuckets(),
+    fs.checkDatabaseMigrations(),
   ]);
 
   return buildHealthReport([...sync, ...asyncChecks]);

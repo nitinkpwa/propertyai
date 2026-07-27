@@ -4,8 +4,10 @@ import dynamic from "next/dynamic";
 import HomeHero from "./HomeHero";
 import HomeNavbar from "./HomeNavbar";
 import NotificationBar from "@/components/notifications/NotificationBar";
-import WelcomeTribute from "@/components/tribute/WelcomeTribute";
 
+const WelcomeTribute = dynamic(() => import("@/components/tribute/WelcomeTribute"), {
+  ssr: false,
+});
 const PopularAIQuestions = dynamic(() => import("./sections/PopularAIQuestions"));
 const MarketIntelligenceSection = dynamic(() => import("./sections/MarketIntelligenceSection"));
 const FeaturedIntelligenceCarousel = dynamic(() => import("./FeaturedIntelligenceCarousel"));

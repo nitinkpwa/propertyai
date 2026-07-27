@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { manageSiteVisit } from "@/lib/crm/queries";
 import { emptyForm } from "@/lib/seller/constants";
@@ -33,16 +34,17 @@ import type {
   SellerVisitRow,
 } from "@/lib/seller/types";
 import { supabase } from "@/lib/supabase";
-import DashboardHome from "./components/DashboardHome";
-import MyPropertiesTab from "./components/MyPropertiesTab";
-import PropertyFormTab from "./components/PropertyFormTab";
-import LeadsTab from "./components/LeadsTab";
-import VisitsTab from "./components/VisitsTab";
-import AnalyticsTab from "./components/AnalyticsTab";
-import NotificationsTab from "./components/NotificationsTab";
-import ProfileTab from "./components/ProfileTab";
 import SellerShell from "./components/SellerShell";
 import SellerToast, { type SellerToastState } from "./components/SellerToast";
+
+const DashboardHome = dynamic(() => import("./components/DashboardHome"));
+const MyPropertiesTab = dynamic(() => import("./components/MyPropertiesTab"));
+const PropertyFormTab = dynamic(() => import("./components/PropertyFormTab"));
+const LeadsTab = dynamic(() => import("./components/LeadsTab"));
+const VisitsTab = dynamic(() => import("./components/VisitsTab"));
+const AnalyticsTab = dynamic(() => import("./components/AnalyticsTab"));
+const NotificationsTab = dynamic(() => import("./components/NotificationsTab"));
+const ProfileTab = dynamic(() => import("./components/ProfileTab"));
 
 const TAB_TITLES: Record<SellerTab, string> = {
   home: "Dashboard",

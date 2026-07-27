@@ -31,6 +31,8 @@ const nextConfig: NextConfig = {
   reactCompiler: true,
   compress: true,
   poweredByHeader: false,
+  // Keep native/binary packages out of the Cloudflare Worker graph
+  serverExternalPackages: ["sharp", "pg", "to-ico", "@opennextjs/cloudflare", "wrangler"],
   env: {
     NEXT_PUBLIC_APP_VERSION: appVersion,
   },
@@ -98,7 +100,11 @@ const nextConfig: NextConfig = {
         ],
   },
   experimental: {
-    optimizePackageImports: ["framer-motion"],
+    optimizePackageImports: [
+      "framer-motion",
+      "@supabase/supabase-js",
+      "@supabase/ssr",
+    ],
   },
   compiler: {
     removeConsole:

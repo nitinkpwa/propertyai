@@ -4,4 +4,4 @@ export type {
   HealthSeverity,
 } from "./types";
 export { buildHealthReport, scoreHealth } from "./types";
-export { runHealthChecks } from "./runHealthChecks";
+export { runProductionHealthChecks } from "./runProductionHealthChecks";

@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getRateLimitKey, rateLimit } from "@/lib/api/rateLimit";
-import { processAskMessage, type PropertyContext } from "@/lib/ask/engine";
-import { logAsk } from "@/lib/ask/engine/logger";
+import type { PropertyContext } from "@/lib/ask/engine";
 import type { ConversationMessage } from "@/lib/ask/openai-client";
-import { buildBuyerProfileContext } from "@/lib/buyer/aiContext";
 import { createSupabaseServerClient, getAuthenticatedUser } from "@/lib/supabase/server";
 
 const MAX_MESSAGE_LENGTH = 2000;
@@ -80,6 +78,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const [{ processAskMessage }, { logAsk }, { buildBuyerProfileContext }] =
+      await Promise.all([
+        import("@/lib/ask/engine"),
+        import("@/lib/ask/engine/logger"),
+        import("@/lib/buyer/aiContext"),
+      ]);
+
     logAsk({
       event: "api_ask_query_received",
       userMessage: message,
@@ -116,6 +121,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
+    const { logAsk } = await import("@/lib/ask/engine/logger");
     logAsk({
       event: "api_ask_query_error",
       level: "error",

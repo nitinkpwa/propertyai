@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { requireAdminApiAccess } from "@/lib/admin/auth";
-import { runHealthChecks } from "@/lib/system/health/runHealthChecks";
+import { runProductionHealthChecks } from "@/lib/system/health/runProductionHealthChecks";
 
-export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
  * Developer Health Check API.
+ * Always uses the Worker-safe (no filesystem) suite so NFT cannot pull
+ * next.config / OpenNext / the repo into the Cloudflare Worker graph.
+ *
+ * Full local FS diagnostics: `npm run health:full`
+ *
  * - development: open (local diagnostics before login)
  * - production: admin session required
  * Never returns secret values.
@@ -25,7 +29,8 @@ export async function GET() {
   }
 
   try {
-    const report = await runHealthChecks();
+    const report = await runProductionHealthChecks();
+
     return NextResponse.json(report, {
       status: report.ok ? 200 : 503,
       headers: {

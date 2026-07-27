@@ -1,5 +1,5 @@
 import "server-only";
-import { getOpenAIClient, isOpenAIConfigured, OPENAI_MODEL } from "@/lib/ask/openai-client";
+import { createChatCompletion, isOpenAIConfigured, OPENAI_MODEL } from "@/lib/ask/openai-client";
 import type { AdminPropertyFormState } from "../types";
 import type { GenerateAction, GenerateResult } from "./types";
 
@@ -91,7 +91,6 @@ export async function generateMarketingCopy(
   }
 
   try {
-    const client = getOpenAIClient();
     const prompts: Record<GenerateAction, string> = {
       improve_description: "Write an improved professional property listing description (120-180 words). Use only provided facts.",
       rewrite_seo: "Rewrite SEO meta title, meta description, and keywords. Format as labeled lines.",
@@ -103,7 +102,7 @@ export async function generateMarketingCopy(
       video_narration: "Write a calm 60-second video narration script.",
     };
 
-    const completion = await client.chat.completions.create({
+    const completion = await createChatCompletion({
       model: OPENAI_MODEL,
       temperature: 0.5,
       messages: [
