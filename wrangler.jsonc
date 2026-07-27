@@ -1,8 +1,9 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
+  // Must match the Cloudflare dashboard Worker name so Git builds on `main` deploy here.
+  "name": "propertyai",
   "main": ".open-next/worker.js",
-  "name": "areaiq",
-  "compatibility_date": "2025-05-05",
+  "compatibility_date": "2026-07-23",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "assets": {
     "directory": ".open-next/assets",
@@ -11,7 +12,21 @@
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
-      "service": "areaiq"
+      // Self-reference service name must equal Worker `name`.
+      "service": "propertyai"
     }
-  ]
+  ],
+  // Bindings present on the existing Cloudflare Worker `propertyai` (from Workers autoconfig).
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "propertyai-opennext-cache"
+    }
+  ],
+  "images": {
+    "binding": "IMAGES"
+  },
+  "observability": {
+    "enabled": true
+  }
 }
