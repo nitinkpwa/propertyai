@@ -1,0 +1,12 @@
+﻿# Keep Cursor indexing / AI context off Git internals and heavy build trees.
+# Prevents file-handle contention that blocks git gc / ref prune on Windows.
+.git/
+.git/**
+node_modules/
+.next/
+.open-next/
+.wrangler/
+out/
+build/
+coverage/
+*.tsbuildinfo

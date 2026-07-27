@@ -30,13 +30,22 @@ Legacy aliases kept in sync: `--topbar-h`, `--bottomnav-h`, `--smart-bar-h`.
 
 | Class | Use |
 |---|---|
-| `pt-layout` / `pb-layout` | Content insets |
-| `top-chrome` / `bottom-chrome` | Sticky / FAB / toast position |
+| `pt-layout` / `pb-layout` | Content insets (`--chrome-top` / `--chrome-bottom`) |
+| `top-chrome` / `bottom-chrome` | Sticky filters / FAB / toast under **full** top chrome |
+| `top-navbar` | Directly under the navbar only — **NotificationBar must use this** |
+| `top-shell-aside` | Seller/Connect sidebars under chrome + shell header |
 | `sticky-below-nav` | Sticky filters under top chrome |
 | `pt-safe` / `pb-safe` | Safe-area padding |
 | `z-layout-*` | Named overlay layers |
 | `touch-target` | 44×44 minimum |
 | `type-display` … `type-micro` | Typography roles |
+
+### Top chrome rules
+
+1. Navbar / MobileTopBar register `--navbar-height` (measured).
+2. NotificationBar registers `--notification-height` and positions with `top-navbar`.
+3. Page content / heroes / sticky filters use `pt-layout` or `top-chrome` (full stack).
+4. Never give NotificationBar `top-chrome` — that aggregate includes its own height.
 
 ## Z-index hierarchy
 

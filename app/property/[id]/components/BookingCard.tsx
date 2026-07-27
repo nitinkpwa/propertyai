@@ -41,7 +41,7 @@ export default function BookingCard({ property }: BookingCardProps) {
   }, [property.name]);
 
   return (
-    <aside className="lg:sticky lg:top-24 lg:self-start">
+    <aside className="lg:sticky lg:top-chrome lg:self-start">
       <div className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:rounded-3xl">
         <div className="border-b border-neutral-100 p-5 sm:p-6">
           <p className="text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import Logo from "@/components/common/Logo";
+import { useChromeElement, useViewport } from "@/components/layout/engine";
+import { zClass } from "@/lib/layout/zIndex";
 
 interface MobileTopBarProps {
   title?: string;
@@ -33,10 +35,19 @@ export default function MobileTopBar({
   className = "",
   sticky = true,
 }: MobileTopBarProps) {
+  const { isDesktop } = useViewport();
+  // Only contribute to --navbar-height on viewports where this bar is visible.
+  const chromeRef = useChromeElement(
+    "navbar",
+    sticky && !isDesktop,
+    "mobile-top-bar",
+  );
+
   return (
     <header
+      ref={chromeRef}
       className={`${
-        sticky ? "sticky top-0 z-layout-sticky" : ""
+        sticky ? `sticky top-0 ${zClass.dropdown}` : ""
       } flex min-h-[var(--navbar-height)] items-center gap-2 border-b border-neutral-200/80 bg-white/95 px-3 backdrop-blur-xl pt-safe md:hidden ${className}`}
     >
       <div className="flex min-w-0 flex-1 items-center gap-2">

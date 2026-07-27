@@ -196,13 +196,13 @@ export function useRegisterChrome(
  * Measure an element and register its height as a chrome slot.
  * Use for MobileActionBar, sticky toolbars, etc.
  */
-export function useChromeElement(
+export function useChromeElement<T extends HTMLElement = HTMLElement>(
   slot: ChromeSlot,
   enabled = true,
   id?: string,
-): RefObject<HTMLDivElement | null> {
+): RefObject<T | null> {
   const { registerChrome } = useChromeContext();
-  const ref = useRef<HTMLDivElement | null>(null);
+  const ref = useRef<T | null>(null);
   const stableId = id ?? `el-${slot}`;
   const unregisterRef = useRef<(() => void) | null>(null);
 
@@ -213,8 +213,12 @@ export function useChromeElement(
       return;
     }
 
-    const el = ref.current;
+    let ro: ResizeObserver | null = null;
+    let raf = 0;
+    let cancelled = false;
+
     const publish = (h: number) => {
+      if (cancelled) return;
       unregisterRef.current?.();
       unregisterRef.current = registerChrome({
         id: stableId,
@@ -223,25 +227,31 @@ export function useChromeElement(
       });
     };
 
-    if (!el) {
+    const attach = (): boolean => {
+      const el = ref.current;
+      if (!el) return false;
+      publish(el.getBoundingClientRect().height);
+      ro = new ResizeObserver((entries) => {
+        const entry = entries[0];
+        if (!entry) return;
+        publish(entry.contentRect.height);
+      });
+      ro.observe(el);
+      return true;
+    };
+
+    // Ref may not be set on the first effect pass (AnimatePresence / late mount).
+    if (!attach()) {
       publish(defaultSlotHeight(slot));
-      return () => {
-        unregisterRef.current?.();
-        unregisterRef.current = null;
-      };
+      raf = requestAnimationFrame(() => {
+        if (!cancelled) attach();
+      });
     }
 
-    publish(el.getBoundingClientRect().height);
-
-    const ro = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      publish(entry.contentRect.height);
-    });
-    ro.observe(el);
-
     return () => {
-      ro.disconnect();
+      cancelled = true;
+      if (raf) cancelAnimationFrame(raf);
+      ro?.disconnect();
       unregisterRef.current?.();
       unregisterRef.current = null;
     };

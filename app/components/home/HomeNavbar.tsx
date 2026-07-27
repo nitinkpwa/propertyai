@@ -6,6 +6,8 @@ import { useCallback, useEffect, useState } from "react";
 import UserMenu from "../UserMenu";
 import MobileNavPanel from "../MobileNavPanel";
 import Logo from "@/components/common/Logo";
+import { useChromeElement } from "@/components/layout/engine";
+import { zClass } from "@/lib/layout/zIndex";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { HOME_NAV_LINKS } from "./data";
 import { IQ_GREEN } from "./theme";
@@ -16,6 +18,7 @@ export default function HomeNavbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuPath, setMenuPath] = useState(pathname);
+  const chromeRef = useChromeElement("navbar", true, "home-navbar");
 
   if (pathname !== menuPath) {
     setMenuPath(pathname);
@@ -51,7 +54,8 @@ export default function HomeNavbar() {
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
+        ref={chromeRef}
+        className={`fixed inset-x-0 top-0 ${zClass.dropdown} transition-all duration-500 ${
           solid
             ? "border-b border-neutral-200/80 bg-white/95 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur-xl"
             : "border-b border-white/20 bg-white/40 backdrop-blur-md"

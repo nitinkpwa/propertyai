@@ -56,6 +56,8 @@
   /* Aggregates — components consume these only */
   --chrome-top: calc(var(--navbar-height) + var(--notification-height) + var(--sticky-height));
   --chrome-bottom: max(var(--bottomnav-height), var(--actionbar-height));
+  /* Shell portal headers (Seller/Connect desktop header row) */
+  --shell-header-height: 3.5rem;
 
   /* Legacy aliases (kept in sync by ChromeCoordinator) */
   --topbar-h: var(--navbar-height);
@@ -267,9 +269,10 @@ html {
   padding-bottom: calc(var(--chrome-bottom) + var(--safe-bottom) + 1rem);
 }
 
-/* Layout engine content insets */
+/* Layout engine content insets — transition keeps hero/content in sync when the bar mounts */
 .pt-layout {
   padding-top: var(--chrome-top);
+  transition: padding-top 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .pb-layout {
@@ -285,10 +288,17 @@ html {
 /* Chrome stack: navbar + optional smart notification bar */
 .pt-chrome {
   padding-top: var(--chrome-top);
+  transition: padding-top 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Full top chrome (navbar + notification + sticky). Use for page content / sticky filters. */
 .top-chrome {
   top: var(--chrome-top);
+}
+
+/* Directly under the navbar only — NotificationBar MUST use this, not top-chrome. */
+.top-navbar {
+  top: var(--navbar-height);
 }
 
 .bottom-chrome {
@@ -302,6 +312,11 @@ html {
 .sticky-below-nav {
   position: sticky;
   top: var(--chrome-top);
+}
+
+/* Seller / Connect desktop sidebars sit under chrome + shell header */
+.top-shell-aside {
+  top: calc(var(--chrome-top) + var(--shell-header-height));
 }
 
 /* Named z-index layers */

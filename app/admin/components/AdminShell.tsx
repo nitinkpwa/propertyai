@@ -199,7 +199,7 @@ export default function AdminShell({
       <div className="relative flex min-h-0 flex-1">
         {/* Fixed desktop sidebar */}
         <aside
-          className={`fixed bottom-0 left-0 top-14 z-20 hidden flex-col border-r border-neutral-200/90 bg-white lg:flex ${SIDEBAR_W_CLASS}`}
+          className={`fixed bottom-0 left-0 top-[var(--shell-header-height)] z-layout-sticky hidden flex-col border-r border-neutral-200/90 bg-white lg:flex ${SIDEBAR_W_CLASS}`}
         >
           {sidebar}
           <div className="border-t border-neutral-100 px-4 py-3">

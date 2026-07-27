@@ -1,0 +1,40 @@
+{
+  "files.exclude": {
+    "**/.git": true
+  },
+  "files.watcherExclude": {
+    "**/.git/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/.git/refs/**": true,
+    "**/.git/logs/**": true,
+    "**/node_modules/**": true,
+    "**/.next/**": true,
+    "**/.open-next/**": true,
+    "**/.wrangler/**": true,
+    "**/dist/**": true,
+    "**/coverage/**": true
+  },
+  "search.exclude": {
+    "**/.git": true,
+    "**/node_modules": true,
+    "**/.next": true,
+    "**/.open-next": true,
+    "**/.wrangler": true,
+    "**/dist": true,
+    "**/coverage": true
+  },
+  "typescript.tsserver.watchOptions": {
+    "excludeDirectories": [
+      "**/node_modules",
+      "**/.git",
+      "**/.next",
+      "**/.open-next",
+      "**/.wrangler"
+    ]
+  },
+  "git.autoRepositoryDetection": "open",
+  "git.detectSubmodules": false,
+  "git.repositoryScanMaxDepth": 1,
+  "git.autofetchPeriod": 180
+}

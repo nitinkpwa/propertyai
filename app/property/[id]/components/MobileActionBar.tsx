@@ -20,7 +20,11 @@ export default function MobileActionBar({ property }: MobileActionBarProps) {
   const { saved, toggle, saving } = useSavedProperty(property.id);
   const { compared, toggle: toggleCompare, busy: comparing } = useComparedProperty(property.id);
   const [shared, setShared] = useState(false);
-  const chromeRef = useChromeElement("actionbar", true, "property-action-bar");
+  const chromeRef = useChromeElement<HTMLDivElement>(
+    "actionbar",
+    true,
+    "property-action-bar",
+  );
 
   const phone = property.contactPhone?.trim();
   const wa = property.whatsapp?.trim() || phone;

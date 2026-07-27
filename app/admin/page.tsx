@@ -600,7 +600,7 @@ function AdminPageInner() {
 
       {tab === "properties" ? (
         <div>
-          <div className="sticky top-[calc(var(--admin-header-h,3.5rem)+var(--smart-bar-h,0px))] z-20 -mx-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200/80 bg-[#FAFAFA]/95 px-4 py-3 backdrop-blur-md sm:-mx-0 sm:static sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none md:top-auto">
+          <div className="sticky top-chrome z-layout-sticky -mx-4 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200/80 bg-[#FAFAFA]/95 px-4 py-3 backdrop-blur-md sm:-mx-0 sm:static sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none md:top-auto">
             <h1 className="text-xl font-bold text-heading-primary sm:text-2xl">
               Property Command Center
             </h1>

@@ -111,6 +111,8 @@ export const layoutClass = {
   pbNav: "pb-nav",
   ptChrome: "pt-chrome",
   topChrome: "top-chrome",
+  topNavbar: "top-navbar",
+  topShellAside: "top-shell-aside",
   bottomChrome: "bottom-chrome",
   stickyBelowNav: "sticky-below-nav",
   insetChromeBottom: "inset-chrome-bottom",

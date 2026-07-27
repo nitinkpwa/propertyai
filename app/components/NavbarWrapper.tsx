@@ -4,12 +4,14 @@ import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import Navbar from "./Navbar";
 import PublicBottomNav from "@/components/layout/PublicBottomNav";
+import { useViewport } from "@/components/layout/engine";
 import NotificationBar from "@/components/notifications/NotificationBar";
 import FeatureErrorBoundary from "@/components/stability/FeatureErrorBoundary";
 import { isPortalPath } from "@/lib/design/bottomNav";
 
 function NavbarWrapperInner() {
   const pathname = usePathname();
+  const { isDesktop } = useViewport();
 
   // Home uses HomeNavbar + its own NotificationBar.
   if (pathname === "/") {
@@ -21,15 +23,17 @@ function NavbarWrapperInner() {
     return null;
   }
 
-  // Portal + Ask: navbar + smart bar on desktop only (mobile shells own chrome).
+  // Portal + Ask: desktop chrome only (mobile shells own MobileTopBar + sticky bar).
+  // Mount only on desktop so hidden chrome cannot pollute --chrome-top measurements.
   if (isPortalPath(pathname) || pathname.startsWith("/ask")) {
+    if (!isDesktop) return null;
     return (
-      <div className="hidden lg:block">
+      <>
         <Navbar />
         <FeatureErrorBoundary name="Intelligence bar" compact>
           <NotificationBar variant="fixed" />
         </FeatureErrorBoundary>
-      </div>
+      </>
     );
   }
 

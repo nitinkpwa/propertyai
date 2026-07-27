@@ -1,6 +1,6 @@
 export default function PropertyLoading() {
   return (
-    <div className="min-h-screen bg-neutral-50 pt-20">
+    <div className="min-h-screen bg-neutral-50 pt-layout">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="h-64 animate-pulse rounded-2xl bg-neutral-200 sm:h-80" />
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">

@@ -138,7 +138,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50 pt-20 pb-nav lg:pb-16">
+    <div className="min-h-screen bg-neutral-50 pt-layout pb-nav lg:pb-16">
       <div className="mx-auto max-w-2xl space-y-5 px-4 animate-page-enter sm:px-6 lg:px-8">
         <div>
           <h1 className="text-[32px] font-bold tracking-tight text-heading-primary">Settings</h1>

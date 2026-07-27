@@ -175,7 +175,7 @@ export default function SellerShell({
       </header>
 
       <div className="flex">
-        <aside className="fixed bottom-0 left-0 top-[calc(var(--chrome-top)+3.5rem)] hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
+        <aside className="fixed bottom-0 left-0 top-shell-aside hidden w-64 flex-col border-r border-neutral-200 bg-white lg:flex">
           <div className="border-b border-neutral-100 px-4 py-4">
             <p className="text-xs font-bold uppercase tracking-[0.14em] text-brand-dark">
               Seller Portal

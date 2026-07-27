@@ -45,7 +45,7 @@ export default function ReportSidebar({ property }: ReportSidebarProps) {
   }, [property.name]);
 
   return (
-    <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+    <aside className="space-y-4 lg:sticky lg:top-chrome lg:self-start">
       <div className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
         <div className="border-b border-neutral-100 p-5">
           <p className="text-2xl font-bold tracking-tight text-heading-primary">

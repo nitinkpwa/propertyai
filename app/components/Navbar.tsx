@@ -6,6 +6,8 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import UserMenu from "./UserMenu";
 import MobileNavPanel from "./MobileNavPanel";
 import Logo from "@/components/common/Logo";
+import { useChromeElement } from "@/components/layout/engine";
+import { zClass } from "@/lib/layout/zIndex";
 import { EMERALD } from "@/lib/auth/constants";
 
 const NAV_LINKS = [
@@ -86,6 +88,7 @@ function NavbarInner() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuPath, setMenuPath] = useState(pathname);
   const isHomeHero = pathname === "/" && !scrolled;
+  const chromeRef = useChromeElement("navbar", true, "global-navbar");
 
   if (pathname !== menuPath) {
     setMenuPath(pathname);
@@ -119,7 +122,8 @@ function NavbarInner() {
   return (
     <>
       <header
-        className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ease-out ${
+        ref={chromeRef}
+        className={`fixed inset-x-0 top-0 ${zClass.dropdown} transition-all duration-500 ease-out ${
           scrolled
             ? "border-b border-neutral-200/80 bg-white/95 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.04)] backdrop-blur-xl"
             : isHomeHero
