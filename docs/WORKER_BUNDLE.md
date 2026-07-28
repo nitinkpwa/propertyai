@@ -60,7 +60,7 @@ Worker gzip size **&lt; 2.8 MiB**.
 ### Scaffolding
 
 12. `wrangler.jsonc`, `open-next.config.ts`, `public/_headers`
-13. Scripts: `cf:build`, `cf:size`, `deploy`, `preview`, `analyze:server`, `health:full`
+13. Scripts: `cf:build`, `cf:size`, `deploy`, `upload`, `preview`, `cf-typegen`, `analyze:server`, `health:full`
 
 ---
 
@@ -124,4 +124,6 @@ https://esbuild.github.io/analyze/ for a visual breakdown.
 | `npm run health:full` | Local FS + connectivity health (CLI) |
 | `npm run cf:build` | OpenNext Cloudflare build |
 | `npm run cf:size` | Gzip Worker size report |
-| `npm run deploy` | Build + deploy to Cloudflare |
+| `npm run deploy` | OpenNext build + deploy |
+| `npm run upload` | OpenNext build + version upload |
+| `npm run cf-typegen` | Generate Cloudflare env types |
