@@ -412,7 +412,7 @@ export async function fetchUpcomingVisits(userId: string, limit = 3): Promise<Si
     )
     .eq("user_id", userId)
     .gte("visit_date", today)
-    .in("status", ["pending_approval", "accepted", "scheduled"])
+    .in("status", ["pending_approval", "accepted", "scheduled", "rescheduled"])
     .order("visit_date", { ascending: true })
     .order("visit_time", { ascending: true })
     .limit(limit);
@@ -422,7 +422,13 @@ export async function fetchUpcomingVisits(userId: string, limit = 3): Promise<Si
     return [];
   }
 
-  return (data as SiteVisitRow[]) ?? [];
+  return ((data as SiteVisitRow[]) ?? []).sort((a, b) => {
+    // Approved before pending within same day (client-side polish).
+    const rank = (s: string) =>
+      s === "accepted" || s === "scheduled" || s === "rescheduled" ? 0 : 1;
+    if (a.visit_date === b.visit_date) return rank(a.status) - rank(b.status);
+    return 0;
+  });
 }
 
 export async function fetchRecommendedPropertyCards(

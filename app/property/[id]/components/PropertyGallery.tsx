@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PropertyDetail } from "../data";
 import { ExpandIcon } from "./shared";
 
@@ -57,6 +57,7 @@ function GalleryImage({
       priority={priority}
       className="object-cover"
       unoptimized={src.startsWith("blob:") || src.startsWith("data:")}
+      draggable={false}
     />
   );
 }
@@ -64,6 +65,8 @@ function GalleryImage({
 export default function PropertyGallery({ images, propertyName }: PropertyGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [fullscreen, setFullscreen] = useState(false);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const syncFromScroll = useRef(true);
 
   const galleryImages =
     images.length > 0
@@ -77,7 +80,6 @@ export default function PropertyGallery({ images, propertyName }: PropertyGaller
           },
         ];
 
-  const active = galleryImages[activeIndex] ?? galleryImages[0];
   const closeFullscreen = useCallback(() => setFullscreen(false), []);
 
   const lightboxImages = useMemo(
@@ -91,44 +93,117 @@ export default function PropertyGallery({ images, propertyName }: PropertyGaller
     [galleryImages],
   );
 
+  const onScrollerScroll = useCallback(() => {
+    if (!syncFromScroll.current) return;
+    const el = scrollerRef.current;
+    if (!el || el.clientWidth <= 0) return;
+    const next = Math.round(el.scrollLeft / el.clientWidth);
+    setActiveIndex(Math.max(0, Math.min(next, galleryImages.length - 1)));
+  }, [galleryImages.length]);
+
+  const goToIndex = useCallback(
+    (index: number, behavior: ScrollBehavior = "smooth") => {
+      const clamped = Math.max(0, Math.min(index, galleryImages.length - 1));
+      setActiveIndex(clamped);
+      const el = scrollerRef.current;
+      if (!el) return;
+      syncFromScroll.current = false;
+      el.scrollTo({ left: clamped * el.clientWidth, behavior });
+      window.setTimeout(() => {
+        syncFromScroll.current = true;
+      }, behavior === "smooth" ? 320 : 0);
+    },
+    [galleryImages.length],
+  );
+
+  // Keep scroller aligned if layout width changes (orientation / resize).
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const onResize = () => {
+      syncFromScroll.current = false;
+      el.scrollTo({ left: activeIndex * el.clientWidth, behavior: "auto" });
+      syncFromScroll.current = true;
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [activeIndex]);
+
   return (
     <>
       <div className="space-y-3">
-        <button
-          type="button"
-          onClick={() => setFullscreen(true)}
-          className={`group relative aspect-[16/10] w-full overflow-hidden rounded-2xl bg-gradient-to-br ${active.gradient} shadow-[0_4px_24px_rgba(0,0,0,0.08)] transition-shadow hover:shadow-[0_8px_32px_rgba(0,0,0,0.12)] sm:aspect-[16/9] sm:rounded-3xl`}
-          aria-label="Open fullscreen gallery"
-        >
-          {active.url ? (
+        <div className="relative overflow-hidden rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] sm:rounded-3xl">
+          <div
+            ref={scrollerRef}
+            onScroll={onScrollerScroll}
+            className="flex aspect-[16/10] snap-x snap-mandatory overflow-x-auto scroll-smooth carousel-x sm:aspect-[16/9]"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {galleryImages.map((img, i) => (
+              <button
+                key={img.id}
+                type="button"
+                onClick={() => setFullscreen(true)}
+                className={`relative h-full w-full shrink-0 snap-center bg-gradient-to-br ${img.gradient}`}
+                aria-label={`Open fullscreen — ${img.label}`}
+              >
+                {img.url ? (
+                  <>
+                    <GalleryImage
+                      src={img.url}
+                      alt={img.label}
+                      sizes="(max-width: 768px) 100vw, 900px"
+                      priority={i === 0}
+                    />
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-3">
+                      <span className="rounded-full bg-black/40 px-3 py-1 type-caption font-medium text-white backdrop-blur-md">
+                        {img.label}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <GalleryPlaceholder label={img.label} />
+                )}
+              </button>
+            ))}
+          </div>
+
+          {galleryImages.length > 1 ? (
             <>
-              <GalleryImage
-                src={active.url}
-                alt={active.label}
-                sizes="(max-width: 768px) 100vw, 900px"
-                priority
-              />
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/60 to-transparent px-4 py-3">
-                <span className="rounded-full bg-black/40 px-3 py-1 type-caption font-medium text-white backdrop-blur-md">
-                  {active.label}
-                </span>
+              <span className="pointer-events-none absolute right-3 top-3 rounded-full bg-black/45 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                {activeIndex + 1}/{galleryImages.length}
+              </span>
+              <div className="pointer-events-none absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                {galleryImages.map((img, i) => (
+                  <span
+                    key={img.id}
+                    className={`h-1.5 rounded-full transition-all ${
+                      i === activeIndex ? "w-4 bg-white" : "w-1.5 bg-white/50"
+                    }`}
+                    aria-hidden
+                  />
+                ))}
               </div>
             </>
-          ) : (
-            <GalleryPlaceholder label={active.label} />
-          )}
-          <div className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 type-micro font-medium text-white backdrop-blur-md opacity-0 transition-opacity group-hover:opacity-100">
-            <ExpandIcon />
-            View fullscreen
-          </div>
-        </button>
+          ) : null}
 
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+          <button
+            type="button"
+            onClick={() => setFullscreen(true)}
+            className="absolute bottom-4 right-4 z-10 flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1.5 type-micro font-medium text-white backdrop-blur-md"
+            aria-label="Open fullscreen gallery"
+          >
+            <ExpandIcon />
+            <span className="hidden sm:inline">View fullscreen</span>
+          </button>
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-1 carousel-x scrollbar-thin">
           {galleryImages.map((img, i) => (
             <button
               key={img.id}
               type="button"
-              onClick={() => setActiveIndex(i)}
+              onClick={() => goToIndex(i)}
               aria-label={`Show ${img.label}`}
               aria-pressed={i === activeIndex}
               className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br ${img.gradient} transition-all duration-200 sm:h-20 sm:w-28 sm:rounded-2xl ${
@@ -159,7 +234,7 @@ export default function PropertyGallery({ images, propertyName }: PropertyGaller
         onClose={closeFullscreen}
         images={lightboxImages}
         index={activeIndex}
-        onIndexChange={setActiveIndex}
+        onIndexChange={(i) => goToIndex(i, "auto")}
         title={propertyName}
       />
     </>

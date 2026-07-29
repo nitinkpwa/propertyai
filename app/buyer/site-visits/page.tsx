@@ -14,8 +14,12 @@ import {
 } from "@/lib/crm/queries";
 import { SITE_VISIT_BOOKED_EVENT, SITE_VISIT_UPDATED_EVENT } from "@/lib/crm/events";
 import {
+  comparePastVisits,
+  compareUpcomingVisits,
   formatVisitStatusLabel,
   isApprovedVisitStatus,
+  isVisitPast,
+  isVisitUpcoming,
   matchesVisitStatusFilter,
   VISIT_STATUS_FILTERS,
 } from "@/lib/crm/visitWorkflow";
@@ -170,8 +174,7 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
         )
         .filter((item): item is string => Boolean(item?.trim()))
     : [];
-  const isUpcoming =
-    visit.status === "pending_approval" || isApprovedVisitStatus(visit.status);
+  const isUpcoming = isVisitUpcoming(visit);
 
   const steps = [
     { label: "Requested", done: true, active: visit.status === "pending_approval" },
@@ -381,12 +384,12 @@ export default function SiteVisitsPage() {
   }, [user]);
 
   const filtered = visits.filter((v) => matchesVisitStatusFilter(v.status, statusFilter));
-  const upcoming = filtered.filter(
-    (v) => v.status === "pending_approval" || isApprovedVisitStatus(v.status),
-  );
-  const past = filtered.filter(
-    (v) => !["pending_approval", "accepted", "scheduled", "rescheduled"].includes(v.status),
-  );
+  const upcoming = filtered
+    .filter((v) => isVisitUpcoming(v))
+    .sort(compareUpcomingVisits);
+  const past = filtered
+    .filter((v) => isVisitPast(v))
+    .sort(comparePastVisits);
 
   if (loading) return <PageSkeleton rows={3} />;
 
@@ -457,7 +460,7 @@ export default function SiteVisitsPage() {
           ) : null}
           {past.length > 0 ? (
             <section>
-              <h2 className="mb-4 text-lg font-bold text-heading-primary">Past Visits ({past.length})</h2>
+              <h2 className="mb-4 text-lg font-bold text-heading-primary">History ({past.length})</h2>
               <div className="space-y-4">
                 {past.map((visit) => (
                   <VisitCard key={visit.id} visit={visit} />

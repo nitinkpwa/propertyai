@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   getNotificationIcon,
   groupNotificationsByDate,
@@ -9,6 +10,7 @@ import {
   showBrowserNotification,
   useBuyerNotifications,
 } from "@/lib/buyer/notifications";
+import { getCrmNotificationHref } from "@/lib/buyer/notificationRoutes";
 import { useAuthOptional } from "@/lib/auth/AuthProvider";
 
 interface NotificationBellProps {
@@ -44,12 +46,15 @@ function BellSkeleton({ className = "" }: { className?: string }) {
 
 export default function NotificationBell({ className = "" }: NotificationBellProps) {
   const auth = useAuthOptional();
+  const router = useRouter();
   const userId = auth?.user?.id;
   const { notifications, unreadCount, loading, offline, markRead, markAllRead } =
     useBuyerNotifications(userId);
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const prevUnread = useRef(unreadCount);
+  const [panelStyle, setPanelStyle] = useState<CSSProperties>({});
 
   useEffect(() => {
     void requestBrowserNotificationPermission();
@@ -59,7 +64,11 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
     if (unreadCount > prevUnread.current && notifications.length > 0) {
       const latest = notifications.find((n) => !n.read_at);
       if (latest) {
-        showBrowserNotification(latest.title, latest.message, "/buyer/notifications");
+        showBrowserNotification(
+          latest.title,
+          latest.message,
+          getCrmNotificationHref(latest),
+        );
       }
     }
     prevUnread.current = unreadCount;
@@ -73,6 +82,23 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
     };
     if (open) document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  // Anchor panel under the bell, clamped to viewport (mobile-safe).
+  useEffect(() => {
+    if (!open || !buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    const gutter = 12;
+    const width = Math.min(380, window.innerWidth - gutter * 2);
+    let left = rect.right - width;
+    left = Math.max(gutter, Math.min(left, window.innerWidth - width - gutter));
+    setPanelStyle({
+      position: "fixed",
+      top: Math.min(rect.bottom + 8, window.innerHeight - 120),
+      left,
+      width,
+      zIndex: 80,
+    });
   }, [open]);
 
   if (!auth) {
@@ -90,13 +116,21 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
     groups = [];
   }
 
+  const openNotification = (n: (typeof notifications)[number]) => {
+    if (!n.read_at) void markRead(n.id);
+    setOpen(false);
+    router.push(getCrmNotificationHref(n));
+  };
+
   return (
     <div ref={panelRef} className={`relative ${className}`}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-body shadow-sm transition-all hover:bg-neutral-50 hover:text-heading-primary"
         aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
+        aria-expanded={open}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -110,7 +144,10 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-full z-50 mt-2 w-[min(100vw-2rem,380px)] overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl animate-in fade-in slide-in-from-top-2 duration-200">
+        <div
+          style={panelStyle}
+          className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl animate-in fade-in slide-in-from-top-2 duration-200"
+        >
           <div className="flex items-center justify-between border-b border-neutral-100 px-4 py-3">
             <p className="text-sm font-bold text-heading-primary">Notifications</p>
             {unreadCount > 0 ? (
@@ -130,7 +167,7 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
             </p>
           ) : null}
 
-          <div className="max-h-80 overflow-y-auto">
+          <div className="max-h-80 overflow-y-auto scroll-touch">
             {notifications.length === 0 ? (
               <div className="px-4 py-8 text-center">
                 <p className="text-2xl">🔔</p>
@@ -147,10 +184,7 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
                     <button
                       key={n.id}
                       type="button"
-                      onClick={() => {
-                        if (!n.read_at) void markRead(n.id);
-                        setOpen(false);
-                      }}
+                      onClick={() => openNotification(n)}
                       className={`flex w-full gap-3 px-4 py-3 text-left transition hover:bg-neutral-50 ${
                         !n.read_at ? "bg-emerald-50/40" : ""
                       }`}

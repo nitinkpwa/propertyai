@@ -56,7 +56,11 @@ export function generateCriticalFromCrm(
         icon: "🔴",
         href: n.property_id
           ? `/property/${n.property_id}`
-          : "/buyer/notifications",
+          : n.type.startsWith("site_visit") || n.type === "visit_feedback_submitted"
+            ? "/buyer/site-visits"
+            : n.type === "property_saved"
+              ? "/buyer/saved"
+              : "/buyer/notifications",
         score,
         kind: "critical",
         source: "crm",

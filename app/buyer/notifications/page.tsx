@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
   getNotificationIcon,
@@ -8,6 +9,7 @@ import {
   requestBrowserNotificationPermission,
   useBuyerNotifications,
 } from "@/lib/buyer/notifications";
+import { getCrmNotificationHref } from "@/lib/buyer/notificationRoutes";
 import PageHeader from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { PageSkeleton } from "@/components/ui/Skeleton";
@@ -16,6 +18,7 @@ import Card from "@/components/ui/Card";
 
 export default function NotificationsPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const { notifications, unreadCount, loading, offline, markRead, markAllRead } =
     useBuyerNotifications(user?.id);
   const [browserPermission, setBrowserPermission] =
@@ -113,6 +116,7 @@ export default function NotificationsPage() {
                     type="button"
                     onClick={() => {
                       if (!n.read_at) void markRead(n.id);
+                      router.push(getCrmNotificationHref(n));
                     }}
                     className={`flex w-full min-h-12 gap-4 rounded-2xl border p-4 text-left transition active:scale-[0.99] hover:shadow-sm ${
                       !n.read_at

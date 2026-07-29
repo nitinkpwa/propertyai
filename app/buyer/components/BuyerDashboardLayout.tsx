@@ -10,7 +10,6 @@ import MobileBottomNav from "@/components/buyer/MobileBottomNav";
 import BuyerTopBar from "@/components/buyer/BuyerTopBar";
 import MobileTopBar from "@/components/layout/MobileTopBar";
 import MobileDrawer from "@/components/layout/MobileDrawer";
-import NotificationBar from "@/components/notifications/NotificationBar";
 import FeatureErrorBoundary from "@/components/stability/FeatureErrorBoundary";
 import RenderProbe from "@/components/stability/RenderProbe";
 import { PageSkeleton } from "@/components/ui/Skeleton";
@@ -141,14 +140,6 @@ export default function BuyerDashboardLayout({
                   />
                 </RenderProbe>
               </FeatureErrorBoundary>
-
-              <div className="lg:hidden">
-                <FeatureErrorBoundary name="Market Intelligence" compact>
-                  <RenderProbe name="NotificationBar:mobile">
-                    <NotificationBar variant="sticky" />
-                  </RenderProbe>
-                </FeatureErrorBoundary>
-              </div>
 
               <div className="sticky top-0 z-30 hidden items-center gap-3 border-b border-neutral-200/80 bg-white/95 px-4 py-3 backdrop-blur-xl md:flex lg:hidden">
                 <button

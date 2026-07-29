@@ -48,7 +48,7 @@ export function AskPropertyCarousel({
           </p>
         </div>
       )}
-      <div className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-1 pb-2 touch-pan-x scroll-smooth scrollbar-thin">
+      <div className="-mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-2 scroll-smooth carousel-x scrollbar-thin">
         {listings.map((p) => {
           const href = p.href ?? `/property/${p.id}`;
           const saved = isSaved(p.id);

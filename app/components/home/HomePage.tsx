@@ -5,9 +5,6 @@ import HomeHero from "./HomeHero";
 import HomeNavbar from "./HomeNavbar";
 import NotificationBar from "@/components/notifications/NotificationBar";
 
-const WelcomeTribute = dynamic(() => import("@/components/tribute/WelcomeTribute"), {
-  ssr: false,
-});
 const PopularAIQuestions = dynamic(() => import("./sections/PopularAIQuestions"));
 const MarketIntelligenceSection = dynamic(() => import("./sections/MarketIntelligenceSection"));
 const FeaturedIntelligenceCarousel = dynamic(() => import("./FeaturedIntelligenceCarousel"));
@@ -23,7 +20,6 @@ const StickyAskBar = dynamic(() => import("./StickyAskBar"), { ssr: false });
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white font-sans text-body">
-      <WelcomeTribute />
       <HomeNavbar />
       <NotificationBar variant="fixed" />
       <main>

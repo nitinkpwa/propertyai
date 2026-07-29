@@ -24,6 +24,10 @@ import {
   fetchSiteVisits,
 } from "@/lib/buyer/queries";
 import { fetchBuyerCrmSummary } from "@/lib/crm/queries";
+import {
+  compareUpcomingVisits,
+  isVisitUpcoming,
+} from "@/lib/crm/visitWorkflow";
 import { getGreeting } from "@/lib/buyer/design";
 import { logAsyncFailure, traceRender } from "@/lib/stability";
 import type { CrmLeadActivity, LeadStatus } from "@/lib/crm/types";
@@ -151,20 +155,19 @@ export default function BuyerDashboardPage() {
           }
         }
 
-        const today = new Date().toISOString().slice(0, 10);
         const upcoming = allVisits
-          .filter(
-            (v) =>
-              typeof v.visit_date === "string" &&
-              v.visit_date >= today &&
-              ["pending_approval", "accepted", "scheduled"].includes(v.status),
-          )
+          .filter((v) => isVisitUpcoming(v))
+          .sort(compareUpcomingVisits)
           .slice(0, 3);
 
         setRecent(nextRecent);
         setRecommended(nextRecommended);
         setUpcomingVisits(upcoming);
-        setPendingApprovals(allVisits.filter((v) => v.status === "pending_approval").length);
+        setPendingApprovals(
+          allVisits.filter(
+            (v) => v.status === "pending_approval" && isVisitUpcoming(v),
+          ).length,
+        );
         setCrmCounts({
           enquiriesCount: crm?.enquiriesCount ?? 0,
           savedCount: crm?.savedCount ?? 0,

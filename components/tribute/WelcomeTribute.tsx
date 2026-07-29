@@ -222,9 +222,8 @@ export default function WelcomeTribute() {
                 ].join(" ")}
               >
                 <p>
-                  We honour the courage, resilience, and peaceful civic
-                  participation shown during the 2026 Jantar Mantar
-                  demonstrations.
+                  We honour courage, resilience, and peaceful civic
+                  participation in our communities.
                 </p>
                 <p>
                   AreaIQ recognizes the importance of peaceful dialogue,

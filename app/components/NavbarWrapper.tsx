@@ -23,10 +23,13 @@ function NavbarWrapperInner() {
     return null;
   }
 
-  // Portal + Ask: desktop chrome only (mobile shells own MobileTopBar + sticky bar).
-  // Mount only on desktop so hidden chrome cannot pollute --chrome-top measurements.
+  // Portal (buyer/seller/builder) + Ask: desktop chrome only.
+  // Buyer portal uses CRM NotificationBell only — skip intelligence bar to avoid duplicate bells.
   if (isPortalPath(pathname) || pathname.startsWith("/ask")) {
     if (!isDesktop) return null;
+    if (pathname.startsWith("/buyer")) {
+      return <Navbar />;
+    }
     return (
       <>
         <Navbar />

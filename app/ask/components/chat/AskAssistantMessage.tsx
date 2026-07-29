@@ -171,7 +171,7 @@ export function AskAssistantMessage({
                 </div>
               </div>
 
-              <div className="mt-4 w-full min-w-0 overflow-hidden">
+              <div className="mt-4 w-full min-w-0">
                 <AskPropertyCarousel
                   listings={turn.listings}
                   rationales={turn.propertyRationales}

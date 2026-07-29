@@ -58,6 +58,67 @@ export function isApprovedVisitStatus(status: string): boolean {
   return status === "accepted" || status === "scheduled" || status === "rescheduled";
 }
 
+/** Active pipeline statuses that can still appear in Upcoming (if date is today/future). */
+export function isActiveVisitPipelineStatus(status: string): boolean {
+  return status === "pending_approval" || isApprovedVisitStatus(status);
+}
+
+function todayIsoDate(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Upcoming = still in pipeline AND visit_date >= today.
+ * Past-dated pending/approved visits automatically move to History.
+ */
+export function isVisitUpcoming(visit: {
+  status: string;
+  visit_date?: string | null;
+}): boolean {
+  if (!isActiveVisitPipelineStatus(visit.status)) return false;
+  const date = (visit.visit_date ?? "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  return date >= todayIsoDate();
+}
+
+export function isVisitPast(visit: {
+  status: string;
+  visit_date?: string | null;
+}): boolean {
+  return !isVisitUpcoming(visit);
+}
+
+/** Upcoming sort: date ASC, then Approved before Pending, then time ASC. */
+export function compareUpcomingVisits(
+  a: { status: string; visit_date?: string | null; visit_time?: string | null },
+  b: { status: string; visit_date?: string | null; visit_time?: string | null },
+): number {
+  const da = (a.visit_date ?? "").slice(0, 10);
+  const db = (b.visit_date ?? "").slice(0, 10);
+  if (da !== db) return da.localeCompare(db);
+
+  const rank = (status: string) => {
+    if (isApprovedVisitStatus(status)) return 0;
+    if (status === "pending_approval") return 1;
+    return 2;
+  };
+  const rd = rank(a.status) - rank(b.status);
+  if (rd !== 0) return rd;
+
+  return (a.visit_time ?? "").localeCompare(b.visit_time ?? "");
+}
+
+/** Past/History sort: newest date first. */
+export function comparePastVisits(
+  a: { visit_date?: string | null; visit_time?: string | null },
+  b: { visit_date?: string | null; visit_time?: string | null },
+): number {
+  const da = (a.visit_date ?? "").slice(0, 10);
+  const db = (b.visit_date ?? "").slice(0, 10);
+  if (da !== db) return db.localeCompare(da);
+  return (b.visit_time ?? "").localeCompare(a.visit_time ?? "");
+}
+
 export function matchesVisitStatusFilter(status: string, filter: string): boolean {
   if (filter === "all") return true;
   if (filter === "approved") return isApprovedVisitStatus(status);
