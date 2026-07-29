@@ -3,6 +3,7 @@ import "server-only";
 import { extractNearbyPlacesList } from "@/lib/properties/nearbyPlacesMeta";
 import { calculateRentalYield } from "@/lib/intelligence/calculations/rentalYield";
 import type { MarketContext } from "@/lib/intelligence/types";
+import { recordPerf, timed } from "@/lib/perf/timing";
 import { calculateBuilderScore } from "./builderScore";
 import { calculateComparablePrices } from "./comps";
 import { calculateFairValue } from "./fairValue";
@@ -84,6 +85,53 @@ function locationScoreFromComps(
 }
 
 /**
+ * Analytics from an already-built subject — skips fetchSubjectProperty.
+ * Used by property detail after the primary properties.select.
+ */
+export async function runPropertyAnalyticsFromSubject(
+  subjectInput: SubjectPropertyInput & { rawNearby?: unknown },
+  options: CompFilterOptions = {},
+): Promise<PropertyAnalyticsReport | null> {
+  const t0 = performance.now();
+  const nearby =
+    subjectInput.nearbyPlaces?.length > 0
+      ? subjectInput.nearbyPlaces
+      : extractNearbyPlacesList(subjectInput.rawNearby);
+  const subject: SubjectPropertyInput = {
+    ...subjectInput,
+    nearbyPlaces: nearby,
+    possession: subjectInput.possession,
+  };
+
+  const [candidates, engagement, builderVerified] = await Promise.all([
+    timed("analytics.fetchCandidateListings300", () =>
+      fetchCandidateListings(subject),
+    ),
+    timed("analytics.fetchEngagement", () =>
+      fetchEngagementSignals(subject.id, subject.views),
+    ),
+    timed("analytics.fetchBuilder", () =>
+      fetchBuilderIntelligence(subject.builderName),
+    ),
+  ]);
+
+  const report = timedSyncBuild({
+    subject,
+    candidates,
+    engagement,
+    builderVerified,
+    options,
+  });
+
+  recordPerf("analytics.fromSubject.total", performance.now() - t0, {
+    propertyId: subject.id,
+    candidateCount: candidates.length,
+  });
+
+  return report;
+}
+
+/**
  * Full Property Analytics Engine entry point.
  * All numbers are derived from DB listings / engagement — never invented.
  */
@@ -91,29 +139,37 @@ export async function runPropertyAnalytics(
   propertyId: string,
   options: CompFilterOptions = {},
 ): Promise<PropertyAnalyticsReport | null> {
-  const subjectRow = await fetchSubjectProperty(propertyId);
-  if (!subjectRow) return null;
+  const t0 = performance.now();
+  const subjectRow = await timed("analytics.fetchSubject", () =>
+    fetchSubjectProperty(propertyId),
+  );
+  if (!subjectRow) {
+    recordPerf("analytics.total", performance.now() - t0, {
+      propertyId,
+      empty: true,
+    });
+    return null;
+  }
 
-  const nearby = extractNearbyPlacesList(subjectRow.rawNearby);
-  const subject: SubjectPropertyInput = {
-    ...subjectRow,
-    nearbyPlaces: nearby,
-    possession: subjectRow.possession,
-  };
-
-  const [candidates, engagement, builderVerified] = await Promise.all([
-    fetchCandidateListings(subject),
-    fetchEngagementSignals(propertyId, subject.views),
-    fetchBuilderIntelligence(subject.builderName),
-  ]);
-
-  return buildAnalyticsReport({
-    subject,
-    candidates,
-    engagement,
-    builderVerified,
-    options,
+  const report = await runPropertyAnalyticsFromSubject(subjectRow, options);
+  recordPerf("analytics.total", performance.now() - t0, {
+    propertyId,
+    candidateCount: report ? undefined : 0,
   });
+  return report;
+}
+
+function timedSyncBuild(
+  input: Parameters<typeof buildAnalyticsReport>[0],
+): PropertyAnalyticsReport {
+  const t0 = performance.now();
+  try {
+    return buildAnalyticsReport(input);
+  } finally {
+    recordPerf("analytics.buildReport.cpu", performance.now() - t0, {
+      candidateCount: input.candidates.length,
+    });
+  }
 }
 
 /** Pure calculation path — reusable for tests and batch jobs. */

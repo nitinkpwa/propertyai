@@ -1,5 +1,7 @@
+import { cache } from "react";
 import { supabase } from "@/lib/supabase";
 import { extractNearbyPlacesList } from "@/lib/properties/nearbyPlacesMeta";
+import { recordPerf, timed } from "@/lib/perf/timing";
 import type { MarketContext, MarketListing, PropertyIntelligenceInput } from "../types";
 import { average, matchesLocality, median, pricePerSqft } from "../utils";
 
@@ -56,16 +58,21 @@ function parseNearbyPlaces(raw: unknown): PropertyIntelligenceInput["nearbyPlace
   }));
 }
 
-export async function fetchPropertyIntelligenceInput(
+async function fetchPropertyIntelligenceInputUncached(
   propertyId: string,
 ): Promise<PropertyIntelligenceInput | null> {
-  const { data, error } = await supabase
-    .from("properties")
-    .select(PROPERTY_SELECT)
-    .eq("id", propertyId)
-    .eq("status", "active")
-    .is("deleted_at", null)
-    .maybeSingle();
+  const { data, error } = await timed(
+    "marketContext.fetchPropertyIntelligenceInput",
+    async () =>
+      await supabase
+        .from("properties")
+        .select(PROPERTY_SELECT)
+        .eq("id", propertyId)
+        .eq("status", "active")
+        .is("deleted_at", null)
+        .maybeSingle(),
+    { propertyId },
+  );
 
   if (error) {
     console.error("fetchPropertyIntelligenceInput:", error.message);
@@ -94,21 +101,36 @@ export async function fetchPropertyIntelligenceInput(
   };
 }
 
-export async function fetchMarketContext(
+/** Deduped within a single RSC/API request. */
+export const fetchPropertyIntelligenceInput = cache(
+  fetchPropertyIntelligenceInputUncached,
+);
+
+async function fetchMarketContextUncached(
   city: string,
   locality: string,
   excludeId?: string,
 ): Promise<MarketContext> {
-  const { data, error } = await supabase
-    .from("properties")
-    .select(MARKET_SELECT)
-    .eq("status", "active")
-    .is("deleted_at", null)
-    .ilike("city", `%${city}%`)
-    .limit(250);
+  const t0 = performance.now();
+  const { data, error } = await timed(
+    "marketContext.fetchListings250",
+    async () =>
+      await supabase
+        .from("properties")
+        .select(MARKET_SELECT)
+        .eq("status", "active")
+        .is("deleted_at", null)
+        .ilike("city", `%${city}%`)
+        .limit(250),
+    { city, locality },
+  );
 
   if (error) {
     console.error("fetchMarketContext:", error.message);
+    recordPerf("marketContext.total", performance.now() - t0, {
+      city,
+      failed: true,
+    });
     return emptyMarketContext(city, locality);
   }
 
@@ -139,7 +161,7 @@ export async function fetchMarketContext(
     .map((l) => pricePerSqft(l.price, l.areaSqft))
     .filter((v): v is number => v !== null);
 
-  return {
+  const result: MarketContext = {
     city,
     locality,
     listings: scoped,
@@ -152,7 +174,17 @@ export async function fetchMarketContext(
     olderMedianPricePerSqft: median(olderPpsf),
     avgViews: average(scoped.map((l) => l.views)),
   };
+
+  recordPerf("marketContext.total", performance.now() - t0, {
+    city,
+    listingCount: scoped.length,
+  });
+
+  return result;
 }
+
+/** Deduped within a single RSC/API request (eliminates detail×intel double fetch). */
+export const fetchMarketContext = cache(fetchMarketContextUncached);
 
 function emptyMarketContext(city: string, locality: string): MarketContext {
   return {

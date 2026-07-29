@@ -622,8 +622,10 @@ export async function fetchSimilarListingProperties(
   city: string,
   excludeId: string,
   limit = 4,
+  client?: { from: typeof supabase.from },
 ): Promise<PropertyCardProps[]> {
   const rows = await getLiveProperties({
+    client,
     includeSeller: true,
     city,
     excludeId,

@@ -3,6 +3,9 @@ import { fetchPropertyDetailById } from "@/lib/properties/detail";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 
+/** ISR window — warm requests serve from OpenNext R2/regional cache (same UI). */
+export const revalidate = 120;
+
 const PropertyDetailView = dynamic(() => import("./PropertyDetailView"), {
   loading: () => (
     <div className="flex min-h-[50vh] items-center justify-center">

@@ -12,20 +12,30 @@ import {
   getConnectivity,
 } from "./calculations/connectivity";
 import { calculateInvestmentScore } from "./calculations/investmentScore";
-import type { AreaIntelligenceReport } from "./types";
+import type { AreaIntelligenceReport, MarketContext, PropertyIntelligenceInput } from "./types";
 import { summarizeReportMetrics } from "./utils";
+import { recordPerf, timed } from "@/lib/perf/timing";
 
 export class AreaIntelligenceService {
-  async generateReport(propertyId: string): Promise<AreaIntelligenceReport | null> {
-    const property = await fetchPropertyIntelligenceInput(propertyId);
-    if (!property) return null;
+  /**
+   * Pure report build from already-loaded property + optional market context.
+   * Prefer this from property detail to avoid re-fetching the same rows.
+   */
+  async generateReportFromInputs(
+    property: PropertyIntelligenceInput,
+    market?: MarketContext,
+  ): Promise<AreaIntelligenceReport> {
+    const t0 = performance.now();
+    const marketCtx =
+      market ??
+      (await timed("areaIntel.fetchMarketContext", () =>
+        fetchMarketContext(property.city, property.location, property.id),
+      ));
 
-    const market = await fetchMarketContext(property.city, property.location, property.id);
-
-    const growthScore = calculateGrowthScore(property, market);
-    const rentalYield = calculateRentalYield(property, market);
-    const demandIndex = calculateDemandIndex(property, market);
-    const builderAnalysis = calculateBuilderAnalysis(property, market);
+    const growthScore = calculateGrowthScore(property, marketCtx);
+    const rentalYield = calculateRentalYield(property, marketCtx);
+    const demandIndex = calculateDemandIndex(property, marketCtx);
+    const builderAnalysis = calculateBuilderAnalysis(property, marketCtx);
     const builderReputation = builderReputationMetric(builderAnalysis);
     const connectivity = getConnectivity(property);
     const schoolsNearby = countNearbyByType(property, ["school", "college", "university"]);
@@ -78,19 +88,46 @@ export class AreaIntelligenceService {
         source: null,
       },
       marketSnapshot: {
-        comparableListings: market.totalListings,
-        city: market.city,
+        comparableListings: marketCtx.totalListings,
+        city: marketCtx.city,
         locality: property.location,
       },
     };
 
     const { availableMetrics, unavailableMetrics } = summarizeReportMetrics(body);
 
+    recordPerf("areaIntel.generateReportFromInputs.total", performance.now() - t0, {
+      propertyId: property.id,
+      marketListings: marketCtx.totalListings,
+      reusedMarket: Boolean(market),
+    });
+
     return {
       ...body,
       availableMetrics,
       unavailableMetrics,
     };
+  }
+
+  async generateReport(propertyId: string): Promise<AreaIntelligenceReport | null> {
+    const t0 = performance.now();
+    const property = await timed("areaIntel.fetchProperty", () =>
+      fetchPropertyIntelligenceInput(propertyId),
+    );
+    if (!property) {
+      recordPerf("areaIntel.generateReport.total", performance.now() - t0, {
+        propertyId,
+        empty: true,
+      });
+      return null;
+    }
+
+    const report = await this.generateReportFromInputs(property);
+    recordPerf("areaIntel.generateReport.total", performance.now() - t0, {
+      propertyId,
+      marketListings: report.marketSnapshot.comparableListings,
+    });
+    return report;
   }
 
   calculateGrowthScore = calculateGrowthScore;

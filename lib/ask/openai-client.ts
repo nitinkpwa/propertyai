@@ -142,12 +142,18 @@ export type AreaIQOpenAI = OpenAIChatClient;
 let client: OpenAIChatClient | null = null;
 
 export function getOpenAIClient(): OpenAIChatClient {
+  const t0 = performance.now();
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY is not configured");
   }
   if (!client) {
     client = new OpenAIChatClient(apiKey);
+    // Dynamic import kept out of page render; log first init only.
+    console.warn("[perf] openai.client.init", {
+      durationMs: Math.round((performance.now() - t0) * 100) / 100,
+      note: "Should only run inside Ask/API handlers — never during page SSR",
+    });
   }
   return client;
 }

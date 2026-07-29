@@ -5,6 +5,14 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-07-23",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Smart Placement: move Worker closer to backends (Supabase/OpenAI) — large CPU win on OpenNext.
+  "placement": {
+    "mode": "smart"
+  },
+  // Safety net on Workers Paid while keeping application CPU low. Does not change behavior.
+  "limits": {
+    "cpu_ms": 60000
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"

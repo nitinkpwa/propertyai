@@ -9,6 +9,7 @@ export {
   calculateLiquidity,
   calculatePriceTrend,
   runPropertyAnalytics,
+  runPropertyAnalyticsFromSubject,
 } from "./engine";
 export { calculateConfidence } from "./confidence";
 export type * from "./types";

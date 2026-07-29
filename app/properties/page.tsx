@@ -8,6 +8,9 @@ export const metadata: Metadata = {
     "Browse live listings with AreaIQ Property Intelligence — pricing, trust, growth, and rental insights across Mohali, Chandigarh, and Zirakpur.",
   alternates: { canonical: "/properties" },
 };
+
+/** Cache public listings shell — data still loads client-side. */
+export const revalidate = 60;
 function ListingsFallback() {
   return (
     <div className="animate-pulse space-y-6">

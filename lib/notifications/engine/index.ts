@@ -11,6 +11,7 @@ import {
   fetchSiteVisits,
 } from "@/lib/buyer/queries";
 import type { Profile } from "@/lib/supabase";
+import { recordPerf, timed } from "@/lib/perf/timing";
 import type { IntelligenceNotification } from "../types";
 import {
   fetchActiveAnnouncements,
@@ -47,13 +48,14 @@ export interface IntelligenceEngineResult {
 export async function runIntelligenceEngine(
   input: RunIntelligenceEngineInput,
 ): Promise<IntelligenceEngineResult> {
+  const t0 = performance.now();
   const generatedAt = new Date().toISOString();
   const candidates: IntelligenceNotification[] = [];
 
   const [stats, listings, announcements] = await Promise.all([
-    fetchPlatformStats(),
-    fetchActiveListingsSample(200),
-    fetchActiveAnnouncements(),
+    timed("notifications.fetchPlatformStats", () => fetchPlatformStats()),
+    timed("notifications.fetchListingsSample200", () => fetchActiveListingsSample(200)),
+    timed("notifications.fetchAnnouncements", () => fetchActiveAnnouncements()),
   ]);
 
   // Admin broadcasts (real table only — localStorage broadcasts are optional admin drafts)
@@ -65,11 +67,13 @@ export async function runIntelligenceEngine(
       : [];
 
     const [crm, visits, saved, recent, recommended] = await Promise.all([
-      fetchUserNotifications(input.userId, 30),
-      fetchSiteVisits(input.userId),
-      fetchSavedPropertyCards(input.userId),
-      fetchRecentViewedWithMeta(input.userId, 6),
-      fetchRecommendedPropertyCards(input.userId, preferred, 6),
+      timed("notifications.fetchCrm", () => fetchUserNotifications(input.userId!, 30)),
+      timed("notifications.fetchVisits", () => fetchSiteVisits(input.userId!)),
+      timed("notifications.fetchSaved", () => fetchSavedPropertyCards(input.userId!)),
+      timed("notifications.fetchRecent", () => fetchRecentViewedWithMeta(input.userId!, 6)),
+      timed("notifications.fetchRecommended", () =>
+        fetchRecommendedPropertyCards(input.userId!, preferred, 6),
+      ),
     ]);
 
     candidates.push(...generateCriticalFromCrm(crm));
@@ -107,6 +111,12 @@ export async function runIntelligenceEngine(
   }
 
   const queue = selectDisplayQueue(ranked);
+
+  recordPerf("notifications.runIntelligenceEngine.total", performance.now() - t0, {
+    isLoggedIn: input.isLoggedIn,
+    candidateCount: candidates.length,
+    queueCount: queue.length,
+  });
 
   return {
     queue,

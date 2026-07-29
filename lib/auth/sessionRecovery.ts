@@ -45,6 +45,7 @@ function isMissingSessionError(error: { name?: string; message?: string } | null
  * Never throws. On fatal auth: clear local session and return anonymous.
  */
 export async function bootstrapSession(): Promise<SessionBootstrapResult> {
+  const t0 = typeof performance !== "undefined" ? performance.now() : Date.now();
   try {
     const {
       data: { session: initialSession },
@@ -90,6 +91,11 @@ export async function bootstrapSession(): Promise<SessionBootstrapResult> {
       const profile = user ? await safeProfile(user.id) : null;
       const meta = sessionMeta(refreshed.session);
       logDevBootstrap("recovered", user, refreshed.session, profile, meta);
+      console.warn("[perf] auth.bootstrapSession", {
+        durationMs: Math.round(((typeof performance !== "undefined" ? performance.now() : Date.now()) - t0) * 100) / 100,
+        status: "recovered",
+        getUserCalls: "multiple",
+      });
       return {
         user,
         session: refreshed.session,
@@ -111,6 +117,14 @@ export async function bootstrapSession(): Promise<SessionBootstrapResult> {
     const profile = user ? await safeProfile(user.id) : null;
     const meta = sessionMeta(session);
     logDevBootstrap("ok", user, session, profile, meta);
+
+    console.warn("[perf] auth.bootstrapSession", {
+      durationMs: Math.round(((typeof performance !== "undefined" ? performance.now() : Date.now()) - t0) * 100) / 100,
+      status: user ? "ok" : "anonymous",
+      repeatedGetUser: true,
+      repeatedGetSession: true,
+      fetchProfile: Boolean(user),
+    });
 
     return {
       user: user ?? null,

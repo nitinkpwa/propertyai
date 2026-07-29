@@ -11,6 +11,7 @@
  */
 
 import { supabase as defaultClient, type Property } from "@/lib/supabase";
+import { recordPerf, timed } from "@/lib/perf/timing";
 import {
   PROPERTIES_CARD_SELECT,
   PROPERTIES_CARD_SELECT_CORE,
@@ -37,8 +38,10 @@ export type LivePropertyRow = Omit<Property, "contact_name" | "contact_phone"> &
 };
 
 export interface GetLivePropertiesOptions {
-  /** Defaults to browser/anon supabase client */
-  client?: typeof defaultClient;
+  /** Defaults to browser/anon supabase client; SSR may pass server client */
+  client?: {
+    from: typeof defaultClient.from;
+  };
   includeSeller?: boolean;
   limit?: number;
   city?: string;
@@ -67,7 +70,7 @@ function buildSelect(includeSeller: boolean, withCalculatedPrice: boolean): stri
 }
 
 async function runLiveQuery(
-  client: typeof defaultClient,
+  client: { from: typeof defaultClient.from },
   select: string,
   options: GetLivePropertiesOptions,
 ): Promise<{
@@ -108,6 +111,7 @@ async function runLiveQuery(
 export async function getLiveProperties(
   options: GetLivePropertiesOptions = {},
 ): Promise<LivePropertyRow[]> {
+  const t0 = performance.now();
   const client = options.client ?? defaultClient;
   const includeSeller = options.includeSeller ?? true;
   const preferCalc = calculatedPriceSupported !== false;
@@ -122,7 +126,9 @@ export async function getLiveProperties(
     limit: options.limit ?? null,
   });
 
-  let { rows, error } = await runLiveQuery(client, selectPrimary, options);
+  let { rows, error } = await timed("getLiveProperties.query", () =>
+    runLiveQuery(client, selectPrimary, options),
+  );
 
   if (error && isMissingColumnError(error) && /calculated_price/i.test(error.message ?? "")) {
     console.warn("[getLiveProperties] calculated_price missing — retrying without it", {
@@ -132,7 +138,9 @@ export async function getLiveProperties(
     });
     calculatedPriceSupported = false;
     const fallbackSelect = buildSelect(includeSeller, false);
-    ({ rows, error } = await runLiveQuery(client, fallbackSelect, options));
+    ({ rows, error } = await timed("getLiveProperties.queryCoreRetry", () =>
+      runLiveQuery(client, fallbackSelect, options),
+    ));
   } else if (!error && preferCalc) {
     calculatedPriceSupported = true;
   }
@@ -145,6 +153,11 @@ export async function getLiveProperties(
         "Public catalog requires status=active and deleted_at IS NULL. " +
         "Missing select columns or RLS denials return zero rows.",
     });
+    recordPerf("getLiveProperties.total", performance.now() - t0, {
+      count: 0,
+      failed: true,
+      limit: options.limit ?? null,
+    });
     return [];
   }
 
@@ -156,6 +169,12 @@ export async function getLiveProperties(
       rows.length === 0
         ? "No rows matched status=active AND deleted_at IS NULL under current RLS"
         : null,
+  });
+
+  recordPerf("getLiveProperties.total", performance.now() - t0, {
+    count: rows.length,
+    limit: options.limit ?? null,
+    city: options.city ?? null,
   });
 
   return rows;
