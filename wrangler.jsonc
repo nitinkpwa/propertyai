@@ -9,10 +9,6 @@
   "placement": {
     "mode": "smart"
   },
-  // Safety net on Workers Paid while keeping application CPU low. Does not change behavior.
-  "limits": {
-    "cpu_ms": 60000
-  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
