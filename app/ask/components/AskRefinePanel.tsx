@@ -7,11 +7,12 @@ import {
   BuilderGroup,
 } from "@/app/components/filters/filterGroups";
 import type { PropertyFilterState } from "@/lib/properties/types";
+import type { PropertyFilterUpdater } from "@/lib/properties/usePropertyFilters";
 
 interface AskRefinePanelProps {
   filters: PropertyFilterState;
   builderOptions: string[];
-  onChange: (filters: PropertyFilterState) => void;
+  onChange: (filters: PropertyFilterUpdater) => void;
   onRefine: () => void;
   loading?: boolean;
 }

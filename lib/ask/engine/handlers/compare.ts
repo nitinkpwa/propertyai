@@ -32,7 +32,7 @@ async function fetchCompareListings(targets: string[]) {
 
 export async function handleCompare(ctx: HandlerContext): Promise<AskEngineResponse> {
   const baseFields = classificationToResponseFields(ctx.classification);
-  const memoryContext = buildMemoryContext(ctx.classification);
+  const memoryContext = buildMemoryContext(ctx.classification, ctx.propertyContext);
   const targets =
     ctx.classification.compareTargets.length > 0
       ? ctx.classification.compareTargets

@@ -33,6 +33,7 @@ export const BHK_OPTIONS: { value: number; label: string }[] = [
 
 export const LOCATION_OPTIONS = [
   "Mohali",
+  "Chandigarh",
   "Aerocity",
   "Zirakpur",
   "Panchkula",

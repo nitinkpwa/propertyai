@@ -118,28 +118,28 @@ export default function NotificationsPage() {
                       if (!n.read_at) void markRead(n.id);
                       router.push(getCrmNotificationHref(n));
                     }}
-                    className={`flex w-full min-h-12 gap-4 rounded-2xl border p-4 text-left transition active:scale-[0.99] hover:shadow-sm ${
+                    className={`flex w-full min-h-14 items-start gap-3 rounded-2xl border p-4 text-left transition active:scale-[0.99] hover:shadow-sm sm:gap-4 ${
                       !n.read_at
                         ? "border-emerald-200 bg-emerald-50/40"
                         : "border-neutral-200/80 bg-white"
                     }`}
                   >
-                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-neutral-50 text-lg">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-neutral-50 text-lg sm:h-12 sm:w-12">
                       {getNotificationIcon(n.type)}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="font-semibold text-heading-primary">
+                        <p className="text-base font-semibold leading-snug text-heading-primary">
                           {typeof n.title === "string" ? n.title : "Notification"}
                         </p>
                         {!n.read_at ? (
-                          <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                          <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" aria-label="Unread" />
                         ) : null}
                       </div>
-                      <p className="mt-1 text-sm text-body">
+                      <p className="mt-1 text-base leading-relaxed text-body">
                         {typeof n.message === "string" ? n.message : ""}
                       </p>
-                      <p className="mt-2 text-xs text-muted">
+                      <p className="mt-2 text-sm text-muted">
                         {n.created_at
                           ? new Date(n.created_at).toLocaleString("en-IN", {
                               hour: "2-digit",

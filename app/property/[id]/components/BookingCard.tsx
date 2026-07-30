@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { useSavedProperty } from "@/lib/buyer/useSavedProperty";
 import LegalTrustBadge from "@/components/property/LegalTrustBadge";
@@ -23,6 +23,20 @@ export default function BookingCard({ property }: BookingCardProps) {
   const { saved, toggle, saving } = useSavedProperty(property.id);
   const { requestBookVisit } = useBookSiteVisit();
   const [shared, setShared] = useState(false);
+  const [resumeHint, setResumeHint] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onResume = (event: Event) => {
+      const detail = (event as CustomEvent<{ propertyId?: string }>).detail;
+      if (detail?.propertyId && detail.propertyId !== property.id) return;
+      setResumeHint(
+        "You're signed in — schedule a visit to unlock seller contact and next steps.",
+      );
+      requestBookVisit();
+    };
+    window.addEventListener("areaiq:pending-contact-resume", onResume);
+    return () => window.removeEventListener("areaiq:pending-contact-resume", onResume);
+  }, [property.id, requestBookVisit]);
 
   const handleShare = useCallback(async () => {
     const url = window.location.href;
@@ -41,7 +55,7 @@ export default function BookingCard({ property }: BookingCardProps) {
   }, [property.name]);
 
   return (
-    <aside className="lg:sticky lg:top-chrome lg:self-start">
+    <aside id="property-booking-cta" className="lg:sticky lg:top-chrome lg:self-start">
       <div className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] sm:rounded-3xl">
         <div className="border-b border-neutral-100 p-5 sm:p-6">
           <p className="text-2xl font-bold tracking-tight text-heading-primary sm:text-3xl">
@@ -65,6 +79,11 @@ export default function BookingCard({ property }: BookingCardProps) {
         </div>
 
         <div className="space-y-4 p-5 sm:p-6">
+          {resumeHint ? (
+            <p className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900" role="status">
+              {resumeHint}
+            </p>
+          ) : null}
           <div className="space-y-3 text-sm">
             <Row label="Builder" value={property.builder.name} />
             <Row label="Location" value={`${property.location}, ${property.city}`} icon={<MapPinIcon />} />

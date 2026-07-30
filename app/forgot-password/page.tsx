@@ -7,6 +7,7 @@ import AuthAlert from "@/components/auth/AuthAlert";
 import AuthButton from "@/components/auth/AuthButton";
 import AuthInput from "@/components/auth/AuthInput";
 import AuthLayout from "@/components/auth/AuthLayout";
+import { resolveLoginAuthEmail } from "@/lib/auth/credentials";
 import { getAuthErrorMessage, getRecoveryLinkErrorMessage } from "@/lib/auth/errors";
 import { buildPasswordRecoveryRedirectUrl, getRequiredSupabaseRedirectUrls } from "@/lib/auth/redirects";
 import { supabase } from "@/lib/supabase/client";
@@ -15,31 +16,58 @@ function ForgotPasswordForm() {
   const searchParams = useSearchParams();
   const linkError = getRecoveryLinkErrorMessage(searchParams.get("error"));
 
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setInfo(null);
 
-    const trimmed = email.trim().toLowerCase();
-    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
-      setError("Enter a valid email address.");
+    const trimmed = identifier.trim();
+    if (!trimmed) {
+      setError("Enter your registered mobile number, username, or contact email.");
       return;
     }
 
     setLoading(true);
 
     try {
+      const authEmail = await resolveLoginAuthEmail(trimmed);
+      if (!authEmail) {
+        // Same generic success to avoid account enumeration
+        setSent(true);
+        setInfo(
+          "If an account matches that mobile number or contact email, we can help you reset. AreaIQ accounts sign in with mobile — if you did not receive a link, email support@areaiq.app with your registered phone.",
+        );
+        return;
+      }
+
+      // Auth mailbox is phone@areaiq.app — reset mail only delivers when the
+      // user also registered a reachable contact_email and ops has mail wired
+      // to forward, OR when auth email is a real inbox. Prefer honest copy.
+      const looksSynthetic = /@areaiq\.app$/i.test(authEmail);
+      if (looksSynthetic) {
+        setSent(true);
+        setInfo(
+          "AreaIQ buyer accounts use your mobile number to sign in. Password reset by email is only available if you saved a contact email and our mail service can reach it. Email support@areaiq.app with your registered 10-digit mobile for help resetting your password.",
+        );
+        return;
+      }
+
       const redirectTo = buildPasswordRecoveryRedirectUrl();
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmed, {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(authEmail, {
         redirectTo,
       });
 
       if (resetError) throw resetError;
       setSent(true);
+      setInfo(
+        "If an account exists, a reset link has been sent. Open the link, then set your new password.",
+      );
     } catch (err) {
       setError(getAuthErrorMessage(err));
     } finally {
@@ -50,7 +78,7 @@ function ForgotPasswordForm() {
   return (
     <AuthLayout
       title="Forgot password?"
-      subtitle="We will email you a reset link"
+      subtitle="Use your registered mobile number"
       footer={
         <p className="text-sm text-muted">
           Remember your password?{" "}
@@ -61,27 +89,24 @@ function ForgotPasswordForm() {
       }
     >
       {linkError ? <AuthAlert type="error" message={linkError} /> : null}
-      {sent ? (
-        <AuthAlert
-          type="success"
-          message="If an account exists for that email, a reset link has been sent. Open the link, then set your new password."
-        />
-      ) : null}
+      {sent && info ? <AuthAlert type="success" message={info} /> : null}
       {error ? <AuthAlert type="error" message={error} /> : null}
 
       {!sent ? (
         <form onSubmit={handleSubmit} className="space-y-1">
           <AuthInput
-            label="Email"
-            type="email"
-            autoComplete="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            label="Mobile, username, or contact email"
+            autoComplete="username"
+            placeholder="9876543210"
+            value={identifier}
+            onChange={(event) => setIdentifier(event.target.value)}
           />
+          <p className="mb-3 text-sm leading-relaxed text-muted">
+            Buyers sign in with mobile. Contact email (if you added one) is for updates — not your login ID.
+          </p>
           <div className="pt-2">
-            <AuthButton type="submit" loading={loading} loadingText="Sending...">
-              Send reset link
+            <AuthButton type="submit" loading={loading} loadingText="Checking...">
+              Continue
             </AuthButton>
           </div>
         </form>

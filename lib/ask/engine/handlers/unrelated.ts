@@ -1,24 +1,23 @@
 import type { AskEngineResponse, HandlerContext } from "../types";
 import { classificationToResponseFields } from "../types";
-import { generateAreaIQResponse, UNRELATED_PROMPT } from "../openai";
+import {
+  AREA_IQ_DOMAIN_FOLLOW_UPS,
+  buildUnrelatedStaticAnswer,
+} from "../domainGuard";
 
+/**
+ * Off-topic handler — static redirect only.
+ * Never calls the LLM (token waste + wrong product positioning).
+ */
 export async function handleUnrelated(ctx: HandlerContext): Promise<AskEngineResponse> {
-  const answer = await generateAreaIQResponse(UNRELATED_PROMPT, ctx.message, {
-    history: ctx.history,
-  });
-
   return {
     intent: "UNRELATED",
-    answer,
+    answer: buildUnrelatedStaticAnswer(),
     ...classificationToResponseFields(ctx.classification),
     properties: [],
     propertyRationales: {},
     suggestions: [],
-    followUpQuestions: [
-      "3 BHK under 80 lakh in Mohali",
-      "Tell me about Aerocity",
-      "Where should I invest 80 lakh?",
-    ],
+    followUpQuestions: [...AREA_IQ_DOMAIN_FOLLOW_UPS.slice(0, 3)],
     stats: null,
     searchedDatabase: false,
     isSimilar: false,

@@ -9,7 +9,7 @@ import { buildListingsContext, generateAreaIQResponse, LOCALITY_PROMPT } from ".
 export async function handleLocality(ctx: HandlerContext): Promise<AskEngineResponse> {
   const baseFields = classificationToResponseFields(ctx.classification);
   const searchTerm = resolveLocalitySearchTerm(ctx.classification);
-  const memoryContext = buildMemoryContext(ctx.classification);
+  const memoryContext = buildMemoryContext(ctx.classification, ctx.propertyContext);
 
   if (!searchTerm) {
     const answer = await generateAreaIQResponse(LOCALITY_PROMPT, ctx.message, {

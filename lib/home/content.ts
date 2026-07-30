@@ -1,4 +1,4 @@
-import type { PopularQuestion, SearchChip, WhyAreaIQItem } from "./types";
+import type { HeroUspItem, PopularQuestion, SearchChip, WhyAreaIQItem } from "./types";
 
 export const HERO_SEARCH_CHIPS: SearchChip[] = [
   { id: "first-home", label: "First Home", href: "/ask?q=First+home+buyer+guide+Tricity" },
@@ -22,6 +22,31 @@ export const HERO_PLACEHOLDERS = [
   "Properties with highest rental yield",
   "Compare Omaxe vs Smart World",
 ] as const;
+
+/** Hero “Why AreaIQ?” USPs — first-screen differentiation vs portals/brokers. */
+export const HERO_USP_ITEMS: HeroUspItem[] = [
+  {
+    id: "ai-search",
+    eyebrow: "AI Powered Property Search",
+    title: "Easy Property Search with AI",
+    description:
+      "Describe your requirements in natural language and let AreaIQ find the right property for you.",
+  },
+  {
+    id: "direct-connect",
+    eyebrow: "No Broker. Direct Connect.",
+    title: "Connect Directly with Builders & Sellers",
+    description:
+      "No unnecessary middlemen. Talk directly with verified builders or property owners.",
+  },
+  {
+    id: "verified",
+    eyebrow: "Verified Listings Only",
+    title: "Verified Properties Only",
+    description:
+      "Every listing is verified before it appears on AreaIQ to reduce fake or misleading properties.",
+  },
+];
 
 export const POPULAR_AI_QUESTIONS: PopularQuestion[] = [
   { id: "mohali", question: "Is Mohali overpriced?", href: "/ask?q=Is+Mohali+overpriced" },

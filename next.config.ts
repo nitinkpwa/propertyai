@@ -61,6 +61,9 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com",
+              // Allow Google Maps embed in footer contact section
+              "frame-src 'self' https://www.google.com https://maps.google.com https://www.google.co.in",
+              "child-src 'self' https://www.google.com https://maps.google.com https://www.google.co.in",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",

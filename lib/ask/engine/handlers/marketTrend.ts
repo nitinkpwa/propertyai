@@ -4,7 +4,7 @@ import { buildMemoryContext } from "../memory";
 import { generateAreaIQResponse, MARKET_TREND_PROMPT } from "../openai";
 
 export async function handleMarketTrend(ctx: HandlerContext): Promise<AskEngineResponse> {
-  const memoryContext = buildMemoryContext(ctx.classification);
+  const memoryContext = buildMemoryContext(ctx.classification, ctx.propertyContext);
 
   const answer = await generateAreaIQResponse(MARKET_TREND_PROMPT, ctx.message, {
     history: ctx.history,

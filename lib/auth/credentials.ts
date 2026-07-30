@@ -6,14 +6,16 @@ import { normalizeUsername } from "@/lib/auth/username";
 import type { Profile } from "@/lib/supabase";
 import { supabase } from "@/lib/supabase/client";
 import type { AccountType } from "@/lib/auth/mobile";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /** Resolve a login identifier to the Supabase Auth email address. */
 export async function resolveLoginAuthEmail(identifier: string): Promise<string | null> {
   const trimmed = identifier.trim();
   if (!trimmed) return null;
 
-  if (EMAIL_RE.test(trimmed)) {
+  // Never treat arbitrary emails as Auth emails — buyers' contact_email is not
+  // the Auth mailbox. Always resolve via RPC (phone / username / contact_email).
+  // Exception: already-synthetic AreaIQ auth addresses.
+  if (/^[6-9]\d{9}@areaiq\.app$/i.test(trimmed)) {
     return trimmed.toLowerCase();
   }
 

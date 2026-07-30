@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import SocialLinks from "@/components/common/SocialLinks";
 import PropertyListings from "../components/PropertyListings";
 
 export const metadata: Metadata = {
@@ -39,14 +40,17 @@ export default function PropertiesPage() {
       </main>
 
       <footer className="border-t border-neutral-200 bg-neutral-900 text-muted">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 sm:flex-row sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 px-4 py-8 sm:flex-row sm:px-6 lg:px-8">
           <p className="text-sm font-semibold text-white">AreaIQ</p>
-          <p className="text-center text-xs sm:text-sm">
-            Property Intelligence · Powered by Tech172
-          </p>
-          <p className="text-xs sm:text-sm">
-            © {new Date().getFullYear()} AreaIQ · Tech172 Intelligence
-          </p>
+          <SocialLinks variant="dark" className="text-center" />
+          <div className="text-center sm:text-right">
+            <p className="text-xs sm:text-sm">
+              Property Intelligence · Powered by Tech172
+            </p>
+            <p className="mt-1 text-xs sm:text-sm">
+              © {new Date().getFullYear()} AreaIQ · Tech172 Intelligence
+            </p>
+          </div>
         </div>
       </footer>
     </div>

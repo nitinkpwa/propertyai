@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
+  getConnectNotificationHref,
   getNotificationIcon,
   groupNotificationsByDate,
   requestBrowserNotificationPermission,
@@ -15,6 +17,7 @@ interface Props {
 }
 
 export default function NotificationsPanel({ userId }: Props) {
+  const router = useRouter();
   const { notifications, unreadCount, markRead, markAllRead } = useConnectNotifications(userId);
   const [browserPermission, setBrowserPermission] = useState<NotificationPermission>(() =>
     typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default",
@@ -37,7 +40,13 @@ export default function NotificationsPanel({ userId }: Props) {
       {browserPermission !== "granted" ? (
         <div className={`${connectTokens.card} border-amber-100 bg-amber-50/50 p-4`}>
           <p className="text-sm font-semibold text-amber-900">Enable browser notifications</p>
-          <button type="button" onClick={async () => setBrowserPermission(await requestBrowserNotificationPermission())} className={`mt-2 ${connectTokens.btnPrimary} text-xs`}>Enable</button>
+          <button
+            type="button"
+            onClick={async () => setBrowserPermission(await requestBrowserNotificationPermission())}
+            className={`mt-2 ${connectTokens.btnPrimary} text-xs`}
+          >
+            Enable
+          </button>
         </div>
       ) : null}
 
@@ -50,7 +59,15 @@ export default function NotificationsPanel({ userId }: Props) {
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-label">{group.label}</p>
               <div className="space-y-2">
                 {group.items.map((n) => (
-                  <button key={n.id} type="button" onClick={() => { if (!n.read_at) markRead(n.id); }} className={`flex w-full gap-4 rounded-2xl border p-4 text-left ${!n.read_at ? "border-emerald-200 bg-emerald-50/40" : "border-neutral-200 bg-white"}`}>
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => {
+                      if (!n.read_at) void markRead(n.id);
+                      router.push(getConnectNotificationHref(n));
+                    }}
+                    className={`flex w-full gap-4 rounded-2xl border p-4 text-left ${!n.read_at ? "border-emerald-200 bg-emerald-50/40" : "border-neutral-200 bg-white"}`}
+                  >
                     <span className="text-xl">{getNotificationIcon(n.type)}</span>
                     <div>
                       <p className="font-semibold text-heading-primary">{n.title}</p>

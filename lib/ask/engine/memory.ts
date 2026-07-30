@@ -1,8 +1,16 @@
 import type { IntentClassification, PropertyContext } from "./types";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
-export function buildMemoryContext(classification: IntentClassification): string {
+export function buildMemoryContext(
+  classification: IntentClassification,
+  propertyContext?: PropertyContext | null,
+): string {
   const parts: string[] = [];
+
+  if (propertyContext) {
+    parts.push(`Selected property: ${propertyContext.name} (${propertyContext.location}, ${propertyContext.city})`);
+    parts.push(`Selected builder: ${propertyContext.builderName}`);
+  }
 
   if (classification.budget) {
     parts.push(`Budget: ${formatInrAmount(classification.budget)}`);
@@ -28,10 +36,13 @@ export function buildMemoryContext(classification: IntentClassification): string
   if (classification.entities.investmentFocus) {
     parts.push(`Investment focus: ${classification.entities.investmentFocus}`);
   }
+  if (classification.entities.propertyType) {
+    parts.push(`Property type: ${classification.entities.propertyType}`);
+  }
 
   if (parts.length === 0) return "";
 
-  return `\n\nCONVERSATION MEMORY (do not re-ask for these):\n${parts.map((p) => `- ${p}`).join("\n")}`;
+  return `\n\nCONVERSATION MEMORY (do not re-ask for these — use silently):\n${parts.map((p) => `- ${p}`).join("\n")}`;
 }
 
 export function buildPropertyPageContext(property: PropertyContext): string {

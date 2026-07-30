@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ButtonLink } from "@/components/ui/Button";
+import { Button, ButtonLink } from "@/components/ui/Button";
 
 interface EmptyStateProps {
   icon: string;
@@ -9,6 +9,7 @@ interface EmptyStateProps {
   description: string;
   actionLabel?: string;
   actionHref?: string;
+  onAction?: () => void;
   tips?: string[];
 }
 
@@ -18,6 +19,7 @@ export default function EmptyState({
   description,
   actionLabel = "Browse Properties",
   actionHref = "/properties",
+  onAction,
   tips,
 }: EmptyStateProps) {
   return (
@@ -40,9 +42,15 @@ export default function EmptyState({
       ) : null}
 
       <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-        <ButtonLink href={actionHref} className="min-h-12">
-          {actionLabel}
-        </ButtonLink>
+        {onAction ? (
+          <Button type="button" onClick={onAction} className="min-h-12">
+            {actionLabel}
+          </Button>
+        ) : (
+          <ButtonLink href={actionHref} className="min-h-12">
+            {actionLabel}
+          </ButtonLink>
+        )}
         <Link
           href="/ask"
           className="inline-flex min-h-12 items-center justify-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-emerald-700 transition active:scale-[0.98] hover:bg-emerald-50"

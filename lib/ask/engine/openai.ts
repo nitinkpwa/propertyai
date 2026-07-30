@@ -1,5 +1,6 @@
 import {
   createChatCompletion,
+  createChatCompletionStream,
   OPENAI_MODEL,
   toOpenAIMessages,
   type ChatMessage,
@@ -25,6 +26,7 @@ import {
 } from "./prompts";
 import { detectConversationLanguage, languageInstruction } from "../language";
 import { logAsk } from "./logger";
+import { emitStreamToken, getStreamHooks, isStreamAborted } from "./streamSink";
 
 export class AskAIError extends Error {
   constructor(message: string) {
@@ -99,7 +101,37 @@ export async function completeText(
     { role: "user", content: userMessage },
   ];
 
+  const hooks = getStreamHooks();
+  const shouldStream = Boolean(hooks?.onToken);
+
   try {
+    if (shouldStream) {
+      let content = "";
+      for await (const delta of createChatCompletionStream(
+        {
+          model: OPENAI_MODEL,
+          temperature,
+          max_tokens: maxTokens,
+          messages,
+        },
+        hooks?.signal,
+      )) {
+        if (isStreamAborted()) break;
+        content += delta;
+        emitStreamToken(delta);
+      }
+      const trimmed = content.trim();
+      if (!trimmed && !isStreamAborted()) {
+        throw new AskAIError("OpenAI returned an empty text response");
+      }
+      logAsk({
+        event: "openai_text_stream_complete",
+        model: OPENAI_MODEL,
+        chars: trimmed.length,
+      });
+      return trimmed;
+    }
+
     const response = await createChatCompletion({
       model: OPENAI_MODEL,
       temperature,

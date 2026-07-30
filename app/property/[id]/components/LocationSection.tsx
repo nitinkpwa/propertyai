@@ -13,7 +13,7 @@ export default function LocationSection({ property }: LocationSectionProps) {
         subtitle={`${property.location}, ${property.city}`}
       />
 
-      <div className="relative mb-6 aspect-[16/9] overflow-hidden rounded-2xl border border-neutral-200 bg-gradient-to-br from-emerald-100/50 via-neutral-100 to-neutral-200 sm:rounded-3xl">
+      <div className="relative mb-6 aspect-[16/9] w-full overflow-hidden rounded-2xl border border-neutral-200 bg-gradient-to-br from-emerald-100/50 via-neutral-100 to-neutral-200 sm:rounded-3xl">
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <span className="text-4xl">🗺️</span>
           <p className="text-sm font-medium text-muted">Google Map</p>
@@ -32,7 +32,7 @@ export default function LocationSection({ property }: LocationSectionProps) {
       </div>
 
       <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-muted">Nearby Places</h3>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {property.nearbyPlaces.map((place) => (
           <div
             key={place.name}

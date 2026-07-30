@@ -4,7 +4,7 @@ import { buildMemoryContext } from "../memory";
 import { generateAreaIQResponse, SELLING_PROMPT } from "../openai";
 
 export async function handleSelling(ctx: HandlerContext): Promise<AskEngineResponse> {
-  const memoryContext = buildMemoryContext(ctx.classification);
+  const memoryContext = buildMemoryContext(ctx.classification, ctx.propertyContext);
 
   const answer = await generateAreaIQResponse(SELLING_PROMPT, ctx.message, {
     history: ctx.history,

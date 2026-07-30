@@ -26,6 +26,42 @@ function sanitizePropertyContext(raw: unknown): PropertyContext | null {
   const ctx = raw as Record<string, unknown>;
   if (typeof ctx.id !== "string" || typeof ctx.name !== "string") return null;
 
+  const analyticsRaw =
+    typeof ctx.analytics === "object" && ctx.analytics !== null
+      ? (ctx.analytics as Record<string, unknown>)
+      : null;
+
+  const numOrNull = (v: unknown): number | null =>
+    typeof v === "number" && Number.isFinite(v) ? v : null;
+
+  const analytics = analyticsRaw
+    ? {
+        currentPsf: numOrNull(analyticsRaw.currentPsf),
+        areaAveragePsf: numOrNull(analyticsRaw.areaAveragePsf),
+        differencePercent: numOrNull(analyticsRaw.differencePercent),
+        marketPosition:
+          typeof analyticsRaw.marketPosition === "string"
+            ? analyticsRaw.marketPosition
+            : null,
+        priceConfidence: numOrNull(analyticsRaw.priceConfidence),
+        investmentScore: numOrNull(analyticsRaw.investmentScore),
+        investmentConfidence: numOrNull(analyticsRaw.investmentConfidence),
+        fairValueExpected: numOrNull(analyticsRaw.fairValueExpected),
+        growthRange:
+          typeof analyticsRaw.growthRange === "string"
+            ? analyticsRaw.growthRange
+            : null,
+        comparableCount:
+          typeof analyticsRaw.comparableCount === "number"
+            ? analyticsRaw.comparableCount
+            : 0,
+        priceOpinion:
+          typeof analyticsRaw.priceOpinion === "string"
+            ? analyticsRaw.priceOpinion
+            : null,
+      }
+    : null;
+
   return {
     id: ctx.id,
     name: ctx.name,
@@ -39,18 +75,30 @@ function sanitizePropertyContext(raw: unknown): PropertyContext | null {
     rentalYield: typeof ctx.rentalYield === "number" ? ctx.rentalYield : null,
     possession: typeof ctx.possession === "string" ? ctx.possession : "",
     propertyType: typeof ctx.propertyType === "string" ? ctx.propertyType : "",
+    analytics,
   };
+}
+
+function wantsStream(req: NextRequest, body: Record<string, unknown>): boolean {
+  if (body.stream === true) return true;
+  const accept = req.headers.get("accept") ?? "";
+  return accept.includes("text/event-stream");
+}
+
+function sseEncode(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as Record<string, unknown>;
     const message = typeof body.message === "string" ? body.message.trim() : "";
     const history = sanitizeHistory(body.history);
     const propertyContext = sanitizePropertyContext(body.propertyContext);
     const excludePropertyIds = Array.isArray(body.excludePropertyIds)
       ? body.excludePropertyIds.filter((id: unknown): id is string => typeof id === "string")
       : [];
+    const stream = wantsStream(req, body);
 
     if (!message) {
       return NextResponse.json({ error: "Message is required" }, { status: 400 });
@@ -63,9 +111,6 @@ export async function POST(req: NextRequest) {
     let buyerProfileContext = "";
     const user = await getAuthenticatedUser();
 
-    // Guest chat is a product feature, so anonymous access is allowed, but every
-    // caller is rate limited (per user when known, per IP otherwise) to cap
-    // OpenAI cost/abuse. Anonymous callers get a tighter budget.
     const limited = rateLimit(
       getRateLimitKey(req, user?.id),
       user ? 30 : 10,
@@ -78,7 +123,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const [{ processAskMessage }, { logAsk }, { buildBuyerProfileContext }] =
+    const [{ processAskMessage, processAskMessageStreaming }, { logAsk }, { buildBuyerProfileContext }] =
       await Promise.all([
         import("@/lib/ask/engine"),
         import("@/lib/ask/engine/logger"),
@@ -90,6 +135,7 @@ export async function POST(req: NextRequest) {
       userMessage: message,
       historyLength: history.length,
       hasPropertyContext: Boolean(propertyContext),
+      stream,
     });
 
     if (user) {
@@ -104,22 +150,95 @@ export async function POST(req: NextRequest) {
       buyerProfileContext = buildBuyerProfileContext(profile);
     }
 
-    const response = await processAskMessage(
-      message,
-      history,
-      propertyContext,
-      excludePropertyIds,
-      buyerProfileContext,
-    );
+    if (!stream) {
+      const response = await processAskMessage(
+        message,
+        history,
+        propertyContext,
+        excludePropertyIds,
+        buyerProfileContext,
+      );
 
-    logAsk({
-      event: "api_ask_query_response",
-      intent: response.intent,
-      propertyCount: response.properties.length,
-      searchedDatabase: response.searchedDatabase,
+      logAsk({
+        event: "api_ask_query_response",
+        intent: response.intent,
+        propertyCount: response.properties.length,
+        searchedDatabase: response.searchedDatabase,
+      });
+
+      return NextResponse.json(response);
+    }
+
+    const encoder = new TextEncoder();
+    let cancelled = false;
+    const abort = new AbortController();
+
+    const readable = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        const send = (event: string, data: unknown) => {
+          if (cancelled) return;
+          controller.enqueue(encoder.encode(sseEncode(event, data)));
+        };
+
+        try {
+          send("status", { phase: "understanding" });
+
+          const response = await processAskMessageStreaming(
+            message,
+            history,
+            propertyContext,
+            excludePropertyIds,
+            buyerProfileContext,
+            {
+              signal: abort.signal,
+              onToken: (delta) => {
+                send("token", { delta });
+              },
+            },
+          );
+
+          if (!cancelled) {
+            send("done", response);
+            logAsk({
+              event: "api_ask_query_stream_complete",
+              intent: response.intent,
+              propertyCount: response.properties.length,
+            });
+          }
+        } catch (error) {
+          logAsk({
+            event: "api_ask_query_stream_error",
+            level: "error",
+            error: error instanceof Error ? error.message : String(error),
+          });
+          send("error", {
+            message:
+              error instanceof Error
+                ? error.message
+                : "Failed to process your request",
+          });
+        } finally {
+          try {
+            controller.close();
+          } catch {
+            /* already closed */
+          }
+        }
+      },
+      cancel() {
+        cancelled = true;
+        abort.abort();
+      },
     });
 
-    return NextResponse.json(response);
+    return new Response(readable, {
+      headers: {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        "X-Accel-Buffering": "no",
+      },
+    });
   } catch (error) {
     const { logAsk } = await import("@/lib/ask/engine/logger");
     logAsk({
@@ -128,7 +247,10 @@ export async function POST(req: NextRequest) {
       error: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json(
-      { error: "Failed to process your request" },
+      {
+        error: "Something went wrong while processing your request. Please try again.",
+        retryable: true,
+      },
       { status: 500 },
     );
   }

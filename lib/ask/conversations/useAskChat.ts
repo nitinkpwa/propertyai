@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import {
-  queryAskEngine,
+  queryAskEngineStream,
   type PropertyContext,
 } from "@/lib/ask/client";
 import { generateConversationTitle } from "@/lib/ask/conversations/titles";
@@ -82,12 +82,18 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
     initialPropertyContext ?? null,
   );
   const [loading, setLoading] = useState(false);
+  const [awaitingFirstToken, setAwaitingFirstToken] = useState(false);
   const [typingPhase, setTypingPhase] = useState<TypingPhase>("understanding");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   /** @deprecated scroll ownership moved to AskChatThread — kept for call-site compat */
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const MIN_TYPING_MS = 400;
+  const abortRef = useRef<AbortController | null>(null);
+  const lastUserPromptRef = useRef<string | null>(null);
+  const activeConversationRef = useRef<AskConversation | null>(null);
+  const sendMessageRef = useRef<(text: string) => Promise<void>>(async () => {});
+
+  activeConversationRef.current = activeConversation;
 
   const refreshConversationList = useCallback(async () => {
     if (isLoggedIn) {
@@ -115,7 +121,7 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
           const conv = loadGuestConversation(activeId);
           if (conv) {
             setActiveConversation(conv);
-            if (conv.propertyContext) setPropertyContext(conv.propertyContext);
+            setPropertyContext(conv.propertyContext ?? null);
           }
         }
       }
@@ -142,31 +148,36 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
         setConversations(loadGuestConversations().map(toConversationSummary));
       }
       setActiveConversation(conversation);
+      activeConversationRef.current = conversation;
     },
     [isLoggedIn, refreshConversationList],
   );
 
   const startNewChat = useCallback(
     async (ctx?: PropertyContext | null) => {
-      const context = ctx ?? propertyContext;
+      // Explicit arg wins; omit/undefined clears sticky property context (New chat).
+      const context = ctx !== undefined ? ctx : null;
+      setPropertyContext(context);
       const empty = createEmptyConversation("New conversation", context);
 
       if (isLoggedIn) {
         const remote = await createRemoteConversation("New conversation", context);
         if (remote) {
+          activeConversationRef.current = remote;
           setActiveConversation(remote);
           await refreshConversationList();
           return remote;
         }
       }
 
+      activeConversationRef.current = empty;
       setActiveConversation(empty);
       setGuestActiveConversationId(empty.id);
       upsertGuestConversation(empty);
       setConversations(loadGuestConversations().map(toConversationSummary));
       return empty;
     },
-    [isLoggedIn, propertyContext, refreshConversationList],
+    [isLoggedIn, refreshConversationList],
   );
 
   const loadConversation = useCallback(
@@ -174,8 +185,9 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
       if (isLoggedIn) {
         const remote = await fetchRemoteConversation(id);
         if (remote) {
+          activeConversationRef.current = remote;
           setActiveConversation(remote);
-          if (remote.propertyContext) setPropertyContext(remote.propertyContext);
+          setPropertyContext(remote.propertyContext ?? null);
           setSidebarOpen(false);
         }
         return;
@@ -183,9 +195,10 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
 
       const guest = loadGuestConversation(id);
       if (guest) {
+        activeConversationRef.current = guest;
         setActiveConversation(guest);
         setGuestActiveConversationId(guest.id);
-        if (guest.propertyContext) setPropertyContext(guest.propertyContext);
+        setPropertyContext(guest.propertyContext ?? null);
         setSidebarOpen(false);
       }
     },
@@ -209,16 +222,30 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
     [activeConversation?.id, isLoggedIn, refreshConversationList],
   );
 
+  const cancelGeneration = useCallback(() => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setLoading(false);
+    setAwaitingFirstToken(false);
+    setTypingPhase("understanding");
+  }, []);
+
   const sendMessage = useCallback(
     async (text: string) => {
       const messageText = text.trim();
       if (!messageText || loading) return;
 
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
       setLoading(true);
+      setAwaitingFirstToken(true);
       setTypingPhase("understanding");
       setRecentSearches(addRecentSearch(messageText));
+      lastUserPromptRef.current = messageText;
 
-      let conversation = activeConversation;
+      let conversation = activeConversationRef.current;
       if (!conversation) {
         conversation = await startNewChat(propertyContext);
       }
@@ -228,38 +255,80 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
       }
 
       const userMessage = buildUserMessage(messageText);
+      const assistantId = crypto.randomUUID();
+      const streamingAssistant: AskChatMessage = {
+        id: assistantId,
+        role: "assistant",
+        content: "",
+        timestamp: new Date().toISOString(),
+        streaming: true,
+      };
+
       const withUser: AskConversation = {
         ...conversation,
         messages: [...conversation.messages, userMessage],
         updatedAt: new Date().toISOString(),
       };
+      activeConversationRef.current = withUser;
       setActiveConversation(withUser);
 
-      const phaseTimers = [
-        window.setTimeout(() => setTypingPhase("searching"), 700),
-        window.setTimeout(() => setTypingPhase("responding"), 2200),
-      ];
+      // Append streaming stub so tokens render in place (no page rebuild).
+      const withStub: AskConversation = {
+        ...withUser,
+        messages: [...withUser.messages, streamingAssistant],
+        updatedAt: new Date().toISOString(),
+      };
+      activeConversationRef.current = withStub;
+      setActiveConversation(withStub);
+
+      let assembled = "";
+      let firstToken = false;
+
+      const patchAssistant = (patch: Partial<AskChatMessage>) => {
+        setActiveConversation((prev) => {
+          if (!prev) return prev;
+          const messages = prev.messages.map((m) =>
+            m.id === assistantId ? { ...m, ...patch } : m,
+          );
+          const next = { ...prev, messages, updatedAt: new Date().toISOString() };
+          activeConversationRef.current = next;
+          return next;
+        });
+      };
 
       try {
-        const typingStartedAt = Date.now();
         const history = conversationToHistory(conversation);
-        const engineResponse = await queryAskEngine(
+        const engineResponse = await queryAskEngineStream(
           messageText,
           history,
           propertyContext ?? conversation.propertyContext,
           conversation.suggestedPropertyIds,
+          controller.signal,
+          {
+            onStatus: (phase) => {
+              if (phase === "understanding" || phase === "searching" || phase === "responding") {
+                setTypingPhase(phase);
+              }
+            },
+            onToken: (delta) => {
+              if (!firstToken) {
+                firstToken = true;
+                setTypingPhase("responding");
+                setAwaitingFirstToken(false);
+              }
+              assembled += delta;
+              patchAssistant({ content: assembled, streaming: true });
+            },
+          },
         );
 
-        // Hold a subtle typing indicator briefly before the answer appears
-        const elapsed = Date.now() - typingStartedAt;
-        if (elapsed < MIN_TYPING_MS) {
-          await new Promise((resolve) =>
-            window.setTimeout(resolve, MIN_TYPING_MS - elapsed),
-          );
+        if (controller.signal.aborted) {
+          patchAssistant({
+            content: assembled || "Generation stopped.",
+            streaming: false,
+          });
+          return;
         }
-
-        phaseTimers.forEach((id) => window.clearTimeout(id));
-        setTypingPhase("responding");
 
         const { message: assistantMessage } = buildAssistantMessage(
           messageText,
@@ -277,13 +346,20 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
               })
             : conversation.title;
 
+        const finalAssistant: AskChatMessage = {
+          ...assistantMessage,
+          id: assistantId,
+          content: engineResponse.answer || assembled,
+          streaming: false,
+        };
+
         const updated: AskConversation = {
           ...withUser,
           title,
-          messages: [...withUser.messages, assistantMessage],
+          messages: [...withUser.messages, finalAssistant],
           suggestedPropertyIds: mergeSuggestedPropertyIds(
             conversation,
-            assistantMessage.suggestedPropertyIds ?? [],
+            finalAssistant.suggestedPropertyIds ?? [],
           ),
           updatedAt: new Date().toISOString(),
           propertyContext: propertyContext ?? conversation.propertyContext,
@@ -301,14 +377,28 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
           });
         }
       } catch (error) {
-        phaseTimers.forEach((id) => window.clearTimeout(id));
+        if (
+          controller.signal.aborted ||
+          (error instanceof DOMException && error.name === "AbortError")
+        ) {
+          patchAssistant({
+            content: assembled || "Generation stopped.",
+            streaming: false,
+          });
+          return;
+        }
         console.error("Ask engine error:", error);
+        const friendly =
+          error instanceof Error && error.message
+            ? error.message
+            : "Something went wrong while processing your request. Please try again.";
         const errorMessage: AskChatMessage = {
-          id: crypto.randomUUID(),
+          id: assistantId,
           role: "assistant",
-          content:
-            "Something went wrong while processing your request. Please try again.",
+          content: friendly,
           timestamp: new Date().toISOString(),
+          streaming: false,
+          followUps: ["Try again", "3 BHK in Mohali"],
         };
         await persistConversation({
           ...withUser,
@@ -316,19 +406,56 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
           updatedAt: new Date().toISOString(),
         });
       } finally {
-        phaseTimers.forEach((id) => window.clearTimeout(id));
-        setLoading(false);
-        setTypingPhase("understanding");
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+          setLoading(false);
+          setAwaitingFirstToken(false);
+          setTypingPhase("understanding");
+        }
       }
     },
     [
-      activeConversation,
+      isLoggedIn,
       loading,
       persistConversation,
       propertyContext,
       startNewChat,
     ],
   );
+
+  sendMessageRef.current = sendMessage;
+
+  const continueGeneration = useCallback(async () => {
+    if (loading) return;
+    await sendMessageRef.current(
+      "Please continue your previous answer from where you left off.",
+    );
+  }, [loading]);
+
+  const retryLastMessage = useCallback(async () => {
+    const prompt = lastUserPromptRef.current;
+    if (!prompt || loading) return;
+
+    const current = activeConversationRef.current;
+    if (current?.messages.length) {
+      const msgs = [...current.messages];
+      if (msgs[msgs.length - 1]?.role === "assistant") {
+        msgs.pop();
+      }
+      if (msgs[msgs.length - 1]?.role === "user") {
+        msgs.pop();
+      }
+      const trimmed: AskConversation = {
+        ...current,
+        messages: msgs,
+        updatedAt: new Date().toISOString(),
+      };
+      activeConversationRef.current = trimmed;
+      setActiveConversation(trimmed);
+    }
+
+    await sendMessageRef.current(prompt);
+  }, [loading]);
 
   return {
     isLoggedIn,
@@ -340,6 +467,7 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
     propertyContext,
     setPropertyContext,
     loading,
+    awaitingFirstToken,
     typingStatus: getTypingStatus(typingPhase),
     sidebarOpen,
     setSidebarOpen,
@@ -348,6 +476,9 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
     loadConversation,
     deleteConversation,
     sendMessage,
+    cancelGeneration,
+    retryLastMessage,
+    continueGeneration,
     refreshConversationList,
   };
 }

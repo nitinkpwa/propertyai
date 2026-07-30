@@ -3,17 +3,19 @@
 import { useState } from "react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { Button } from "@/components/ui/Button";
-import PropertyFiltersPanel from "./PropertyFiltersPanel";
 import type { PropertyFilterState } from "@/lib/properties/types";
+import type { PropertyFilterUpdater } from "@/lib/properties/usePropertyFilters";
+import PropertyFiltersPanel from "./PropertyFiltersPanel";
 
 interface MobileFilterDrawerProps {
   open: boolean;
   filters: PropertyFilterState;
   activeCount: number;
-  onChange: (filters: PropertyFilterState) => void;
+  onChange: (filters: PropertyFilterUpdater) => void;
   onClose: () => void;
   onReset?: () => void;
   builderOptions?: string[];
+  scoreFiltersAvailable?: boolean;
 }
 
 export default function MobileFilterDrawer({
@@ -24,6 +26,7 @@ export default function MobileFilterDrawer({
   onClose,
   onReset,
   builderOptions = [],
+  scoreFiltersAvailable = true,
 }: MobileFilterDrawerProps) {
   return (
     <BottomSheet
@@ -58,6 +61,7 @@ export default function MobileFilterDrawer({
         filters={filters}
         onChange={onChange}
         builderOptions={builderOptions}
+        scoreFiltersAvailable={scoreFiltersAvailable}
       />
     </BottomSheet>
   );
@@ -70,12 +74,14 @@ export function MobileFilterTrigger({
   onChange,
   onClearAll,
   builderOptions = [],
+  scoreFiltersAvailable = true,
 }: {
   activeCount: number;
   filters: PropertyFilterState;
-  onChange: (filters: PropertyFilterState) => void;
+  onChange: (filters: PropertyFilterUpdater) => void;
   onClearAll?: () => void;
   builderOptions?: string[];
+  scoreFiltersAvailable?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -104,6 +110,7 @@ export function MobileFilterTrigger({
         onClose={() => setOpen(false)}
         onReset={onClearAll}
         builderOptions={builderOptions}
+        scoreFiltersAvailable={scoreFiltersAvailable}
       />
     </>
   );

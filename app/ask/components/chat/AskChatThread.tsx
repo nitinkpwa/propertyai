@@ -18,6 +18,8 @@ interface AskChatThreadProps {
   messages: AskChatMessage[];
   propertyContext: PropertyContext | null;
   loading: boolean;
+  /** Show rich loader only until first stream token */
+  awaitingFirstToken?: boolean;
   /** @deprecated cosmetic status is owned by AskAdvisorLoading */
   typingStatus?: string;
   /** @deprecated kept for call-site compat; scroll is owned by this thread */
@@ -25,15 +27,20 @@ interface AskChatThreadProps {
   onFollowUp: (text: string) => void;
   onOpenIntel?: () => void;
   onScrollElevated?: (elevated: boolean) => void;
+  onRetry?: () => void;
+  onContinue?: () => void;
 }
 
 export function AskChatThread({
   messages,
   propertyContext,
   loading,
+  awaitingFirstToken = false,
   onFollowUp,
   onOpenIntel,
   onScrollElevated,
+  onRetry,
+  onContinue,
 }: AskChatThreadProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const typingAnchorRef = useRef<HTMLDivElement>(null);
@@ -65,7 +72,7 @@ export function AskChatThread({
 
   // New user turn / AI cycle starts → keep the advisor loader fully in view
   useEffect(() => {
-    if (!loading) {
+    if (!awaitingFirstToken) {
       didScrollTypingRef.current = false;
       return;
     }
@@ -85,14 +92,13 @@ export function AskChatThread({
       scrollToLoader();
     });
 
-    // Layout settles as the rich loader mounts — nudge once more so it isn't half-clipped
     const settle = window.setTimeout(scrollToLoader, 120);
 
     return () => {
       window.cancelAnimationFrame(raf);
       window.clearTimeout(settle);
     };
-  }, [loading, scrollAnchorToStart]);
+  }, [awaitingFirstToken, scrollAnchorToStart]);
 
   // Brand-new assistant message → scroll once to its TOP (never to the bottom)
   useEffect(() => {
@@ -182,6 +188,10 @@ export function AskChatThread({
                     turn={turnFromMessage(pair.assistant, pair.user?.content ?? "")}
                     onAction={onFollowUp}
                     onOpenIntel={onOpenIntel}
+                    onRetry={onRetry}
+                    onContinue={onContinue}
+                    isLatest={isLatestAssistant}
+                    streaming={Boolean(pair.assistant.streaming)}
                   />
                 </div>
               ) : null}
@@ -189,9 +199,9 @@ export function AskChatThread({
           );
         })}
 
-        {loading ? (
+        {awaitingFirstToken ? (
           <div ref={typingAnchorRef} className="scroll-mt-4">
-            <AskAdvisorLoading active={loading} />
+            <AskAdvisorLoading active={awaitingFirstToken} />
           </div>
         ) : null}
       </div>

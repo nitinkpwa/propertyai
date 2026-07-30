@@ -108,7 +108,7 @@ export default function SellerLeadCard({
           </button>
           {lead.siteVisitId ? (
             <Link
-              href="/seller"
+              href="/seller?tab=visits"
               className="rounded-xl border border-neutral-200 px-4 py-2 text-sm font-semibold text-body hover:bg-neutral-50"
             >
               Manage Visit

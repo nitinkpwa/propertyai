@@ -1,6 +1,7 @@
 "use client";
 
 import type { PropertyFilterState } from "@/lib/properties/types";
+import type { PropertyFilterUpdater } from "@/lib/properties/usePropertyFilters";
 import {
   AiFiltersGroup,
   AmenitiesGroup,
@@ -16,14 +17,16 @@ import {
 
 interface PropertyFiltersPanelProps {
   filters: PropertyFilterState;
-  onChange: (filters: PropertyFilterState) => void;
+  onChange: (filters: PropertyFilterUpdater) => void;
   builderOptions?: string[];
+  scoreFiltersAvailable?: boolean;
 }
 
 export default function PropertyFiltersPanel({
   filters,
   onChange,
   builderOptions = [],
+  scoreFiltersAvailable = true,
 }: PropertyFiltersPanelProps) {
   return (
     <div className="space-y-6">
@@ -40,7 +43,11 @@ export default function PropertyFiltersPanel({
       <PossessionGroup filters={filters} onChange={onChange} />
       <AreaGroup filters={filters} onChange={onChange} />
       <AmenitiesGroup filters={filters} onChange={onChange} />
-      <AiFiltersGroup filters={filters} onChange={onChange} />
+      <AiFiltersGroup
+        filters={filters}
+        onChange={onChange}
+        scoreFiltersAvailable={scoreFiltersAvailable}
+      />
     </div>
   );
 }

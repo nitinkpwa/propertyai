@@ -42,7 +42,7 @@ export function getAuthErrorMessage(error: unknown): string {
   }
 
   if (normalized.includes("email not confirmed")) {
-    return "Your session expired. Please sign in again.";
+    return "Please confirm your email before signing in, or use your registered mobile number.";
   }
 
   if (

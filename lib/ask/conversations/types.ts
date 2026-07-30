@@ -20,6 +20,8 @@ export interface AskChatMessage {
   /** Extracted entities from engine (optional; older messages may omit) */
   location?: string | null;
   builder?: string | null;
+  /** True while tokens are still streaming in */
+  streaming?: boolean;
 }
 
 export interface AskConversation {

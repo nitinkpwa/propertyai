@@ -160,6 +160,7 @@ const ADMIN_TABS: AdminTab[] = [
   "visits",
   "chats",
   "analytics",
+  "broadcasts",
   "settings",
   "add",
   "bulk",

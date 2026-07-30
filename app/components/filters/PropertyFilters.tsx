@@ -1,8 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { countActiveFilters, isAreaFilterActive, isBudgetFilterActive } from "@/lib/properties/urlFilters";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { applySearchQuery } from "@/lib/properties/parseSearchQuery";
+import {
+  countActiveFilters,
+  isAreaFilterActive,
+  isBudgetFilterActive,
+} from "@/lib/properties/urlFilters";
 import type { PropertyFilterState } from "@/lib/properties/types";
+import type { PropertyFilterUpdater } from "@/lib/properties/usePropertyFilters";
 import ActiveFilterChips from "./ActiveFilterChips";
 import FilterDropdown from "./FilterDropdown";
 import {
@@ -19,15 +25,23 @@ import {
 } from "./filterGroups";
 import { MobileFilterTrigger } from "./MobileFilterDrawer";
 
-const POPULAR = ["Mohali", "Chandigarh", "Zirakpur", "Panchkula", "2 BHK", "Under 1 Cr"];
+const POPULAR = [
+  "Mohali",
+  "Chandigarh",
+  "Zirakpur",
+  "Panchkula",
+  "2 BHK",
+  "Under 1 Cr",
+];
 const RECENT_KEY = "areaiq_recent_searches";
 
 interface PropertyFiltersProps {
   filters: PropertyFilterState;
-  onChange: (filters: PropertyFilterState) => void;
+  onChange: (filters: PropertyFilterUpdater) => void;
   onClearAll: () => void;
   resultCount: number;
   builderOptions?: string[];
+  scoreFiltersAvailable?: boolean;
 }
 
 export default function PropertyFilters({
@@ -36,6 +50,7 @@ export default function PropertyFilters({
   onClearAll,
   resultCount,
   builderOptions = [],
+  scoreFiltersAvailable = true,
 }: PropertyFiltersProps) {
   const activeCount = countActiveFilters(filters);
   const aiActiveCount = Object.values(filters.ai).filter(Boolean).length;
@@ -52,10 +67,15 @@ export default function PropertyFilters({
     }
   }, []);
 
+  // Keep search box in sync when location chip is cleared / URL restored
+  useEffect(() => {
+    setQuery(filters.location ?? "");
+  }, [filters.location]);
+
   const commitSearch = useCallback(
     (value: string) => {
       const trimmed = value.trim();
-      onChange({ ...filters, location: trimmed });
+      onChange((prev) => applySearchQuery(prev, trimmed));
       if (!trimmed) return;
       setRecent((prev) => {
         const next = [trimmed, ...prev.filter((r) => r !== trimmed)].slice(0, 6);
@@ -67,8 +87,32 @@ export default function PropertyFilters({
         return next;
       });
     },
-    [filters, onChange],
+    [onChange],
   );
+
+  const debounceRef = useRef<number | null>(null);
+
+  const scheduleSearch = useCallback(
+    (value: string) => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+      debounceRef.current = window.setTimeout(() => {
+        commitSearch(value);
+      }, 320);
+    },
+    [commitSearch],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const clearSearch = () => {
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    setQuery("");
+    onChange((prev) => ({ ...prev, location: null }));
+  };
 
   const startVoice = () => {
     const SR =
@@ -115,21 +159,41 @@ export default function PropertyFilters({
               <input
                 type="search"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setQuery(value);
+                  scheduleSearch(value);
+                }}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") commitSearch(query);
+                  if (e.key === "Enter") {
+                    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+                    commitSearch(query);
+                  }
+                  if (e.key === "Escape") clearSearch();
                 }}
                 placeholder="Search locality, project, builder"
                 enterKeyHint="search"
                 autoComplete="off"
-                className="h-[52px] w-full rounded-xl border border-neutral-200 bg-neutral-50 pl-11 pr-12 text-base text-input outline-none transition-all placeholder:text-placeholder focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
+                className="h-[52px] w-full rounded-xl border border-neutral-200 bg-neutral-50 pl-11 pr-20 text-base text-input outline-none transition-all placeholder:text-placeholder focus:border-brand focus:bg-white focus:ring-4 focus:ring-brand/10"
                 aria-label="Search properties"
               />
+              {query ? (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="absolute right-12 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg text-muted transition hover:bg-neutral-100 hover:text-heading-primary"
+                  aria-label="Clear search"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+                    <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+                  </svg>
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={startVoice}
-                className={`absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg ${
-                  listening ? "text-brand" : "text-muted"
+                className={`absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-lg transition ${
+                  listening ? "text-brand" : "text-muted hover:bg-neutral-100"
                 }`}
                 aria-label="Voice search"
               >
@@ -145,6 +209,7 @@ export default function PropertyFilters({
               onChange={onChange}
               onClearAll={onClearAll}
               builderOptions={builderOptions}
+              scoreFiltersAvailable={scoreFiltersAvailable}
             />
           </div>
 
@@ -182,7 +247,9 @@ export default function PropertyFilters({
                       key={p}
                       type="button"
                       onClick={() => {
-                        setQuery(p);
+                        setQuery(
+                          /bhk|under\s+\d/i.test(p) ? filters.location ?? "" : p,
+                        );
                         commitSearch(p);
                       }}
                       className="shrink-0 rounded-full bg-brand-muted px-3 py-2 text-sm font-medium text-brand-dark"
@@ -207,6 +274,15 @@ export default function PropertyFilters({
               </p>
             )}
           </div>
+          {activeCount > 0 ? (
+            <button
+              type="button"
+              onClick={onClearAll}
+              className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-body transition-colors hover:bg-neutral-50 lg:hidden"
+            >
+              Clear All Filters
+            </button>
+          ) : null}
         </div>
 
         {/* Desktop filter bar */}
@@ -254,7 +330,12 @@ export default function PropertyFilters({
             </FilterDropdown>
 
             <FilterDropdown label="AI Filters" activeCount={aiActiveCount}>
-              <AiFiltersGroup compact filters={filters} onChange={onChange} />
+              <AiFiltersGroup
+                compact
+                filters={filters}
+                onChange={onChange}
+                scoreFiltersAvailable={scoreFiltersAvailable}
+              />
             </FilterDropdown>
           </div>
         </div>

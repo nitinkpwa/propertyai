@@ -35,7 +35,7 @@ export async function handlePropertyAnalysis(
   ctx: HandlerContext,
 ): Promise<AskEngineResponse> {
   const baseFields = classificationToResponseFields(ctx.classification);
-  const memoryContext = buildMemoryContext(ctx.classification);
+  const memoryContext = buildMemoryContext(ctx.classification, ctx.propertyContext);
   const propertyName = resolvePropertyName(ctx.classification);
 
   let primaryListing: ListingProperty | null = null;

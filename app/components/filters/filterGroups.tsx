@@ -9,13 +9,14 @@ import {
   POSSESSION_OPTIONS,
   PROPERTY_TYPE_OPTIONS,
 } from "@/lib/properties/constants";
-import type { PropertyFilterState } from "@/lib/properties/types";
+import type { AIFilterFlags, PropertyFilterState } from "@/lib/properties/types";
+import type { PropertyFilterUpdater } from "@/lib/properties/usePropertyFilters";
 import FilterSection from "./FilterSection";
 import { AreaFilter, BudgetFilter } from "./RangeFilter";
 import SearchableDropdown from "./SearchableDropdown";
 import SelectableChip from "./SelectableChip";
 
-type OnChange = (filters: PropertyFilterState) => void;
+type OnChange = (filters: PropertyFilterUpdater) => void;
 
 type GroupProps = {
   filters: PropertyFilterState;
@@ -49,13 +50,13 @@ export function PropertyTypeGroup({ filters, onChange, compact }: GroupProps) {
           label={option.label}
           selected={filters.propertyTypes.includes(option.value)}
           onClick={() =>
-            onChange({
-              ...filters,
+            onChange((prev) => ({
+              ...prev,
               propertyTypes: toggleArrayValue(
-                filters.propertyTypes,
+                prev.propertyTypes,
                 option.value,
               ),
-            })
+            }))
           }
         />
       ))}
@@ -74,11 +75,11 @@ export function ListingTypeGroup({ filters, onChange, compact }: GroupProps) {
           label={option.label}
           selected={filters.listingType === option.value}
           onClick={() =>
-            onChange({
-              ...filters,
+            onChange((prev) => ({
+              ...prev,
               listingType:
-                filters.listingType === option.value ? null : option.value,
-            })
+                prev.listingType === option.value ? null : option.value,
+            }))
           }
         />
       ))}
@@ -94,7 +95,7 @@ export function BudgetGroup({ filters, onChange, compact }: GroupProps) {
       minPrice={filters.minPrice}
       maxPrice={filters.maxPrice}
       onChange={(minPrice, maxPrice) =>
-        onChange({ ...filters, minPrice, maxPrice })
+        onChange((prev) => ({ ...prev, minPrice, maxPrice }))
       }
     />,
   );
@@ -111,10 +112,10 @@ export function BhkGroup({ filters, onChange, compact }: GroupProps) {
           label={option.label}
           selected={filters.bhk.includes(option.value)}
           onClick={() =>
-            onChange({
-              ...filters,
-              bhk: toggleArrayValue(filters.bhk, option.value),
-            })
+            onChange((prev) => ({
+              ...prev,
+              bhk: toggleArrayValue(prev.bhk, option.value),
+            }))
           }
         />
       ))}
@@ -131,7 +132,9 @@ export function LocationGroup({ filters, onChange, compact }: GroupProps) {
       placeholder="Search locations..."
       value={filters.location}
       options={LOCATION_OPTIONS}
-      onChange={(location) => onChange({ ...filters, location })}
+      onChange={(location) =>
+        onChange((prev) => ({ ...prev, location }))
+      }
     />,
   );
 }
@@ -150,7 +153,9 @@ export function BuilderGroup({
       placeholder="Search builders..."
       value={filters.builder}
       options={builderOptions}
-      onChange={(builder) => onChange({ ...filters, builder })}
+      onChange={(builder) =>
+        onChange((prev) => ({ ...prev, builder }))
+      }
     />,
   );
 }
@@ -166,13 +171,13 @@ export function PossessionGroup({ filters, onChange, compact }: GroupProps) {
           label={option.label}
           selected={filters.possession.includes(option.value)}
           onClick={() =>
-            onChange({
-              ...filters,
+            onChange((prev) => ({
+              ...prev,
               possession: toggleArrayValue(
-                filters.possession,
+                prev.possession,
                 option.value,
               ),
-            })
+            }))
           }
         />
       ))}
@@ -188,7 +193,7 @@ export function AreaGroup({ filters, onChange, compact }: GroupProps) {
       minArea={filters.minArea}
       maxArea={filters.maxArea}
       onChange={(minArea, maxArea) =>
-        onChange({ ...filters, minArea, maxArea })
+        onChange((prev) => ({ ...prev, minArea, maxArea }))
       }
     />,
   );
@@ -205,13 +210,13 @@ export function AmenitiesGroup({ filters, onChange, compact }: GroupProps) {
           label={option.label}
           selected={filters.amenities.includes(option.value)}
           onClick={() =>
-            onChange({
-              ...filters,
+            onChange((prev) => ({
+              ...prev,
               amenities: toggleArrayValue(
-                filters.amenities,
+                prev.amenities,
                 option.value,
               ),
-            })
+            }))
           }
         />
       ))}
@@ -219,27 +224,66 @@ export function AmenitiesGroup({ filters, onChange, compact }: GroupProps) {
   );
 }
 
-export function AiFiltersGroup({ filters, onChange, compact }: GroupProps) {
+const SCORE_AI_KEYS: Array<keyof AIFilterFlags> = [
+  "highAreaIQScore",
+  "highRentalYield",
+  "highAppreciation",
+  "bestInvestment",
+];
+
+export function AiFiltersGroup({
+  filters,
+  onChange,
+  compact,
+  scoreFiltersAvailable = true,
+}: GroupProps & { scoreFiltersAvailable?: boolean }) {
   return wrapSection(
     "AI Filters",
     compact,
-    <div className="flex flex-wrap gap-2">
-      {AI_FILTER_OPTIONS.map((option) => (
-        <SelectableChip
-          key={option.key}
-          label={option.label}
-          selected={filters.ai[option.key]}
-          onClick={() =>
-            onChange({
-              ...filters,
-              ai: {
-                ...filters.ai,
-                [option.key]: !filters.ai[option.key],
-              },
-            })
+    <div className="space-y-3">
+      {!scoreFiltersAvailable ? (
+        <p className="text-xs text-muted">
+          AreaIQ score &amp; yield filters — Coming Soon
+        </p>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        {AI_FILTER_OPTIONS.map((option) => {
+          const isScoreFilter = SCORE_AI_KEYS.includes(option.key);
+          const disabled = isScoreFilter && !scoreFiltersAvailable;
+
+          if (disabled) {
+            return (
+              <span
+                key={option.key}
+                className="inline-flex cursor-not-allowed items-center rounded-full border border-dashed border-neutral-200 bg-neutral-50 px-3 py-1.5 text-sm font-medium text-muted"
+                title="Coming Soon"
+              >
+                {option.label}
+                <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-label">
+                  Soon
+                </span>
+              </span>
+            );
           }
-        />
-      ))}
+
+          return (
+            <SelectableChip
+              key={option.key}
+              label={option.label}
+              selected={filters.ai[option.key]}
+              onClick={() =>
+                onChange((prev) => ({
+                  ...prev,
+                  ai: {
+                    ...prev.ai,
+                    [option.key]: !prev.ai[option.key],
+                  },
+                }))
+              }
+            />
+          );
+        })}
+      </div>
     </div>,
   );
 }

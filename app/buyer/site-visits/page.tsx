@@ -18,7 +18,10 @@ import {
   compareUpcomingVisits,
   formatVisitStatusLabel,
   isApprovedVisitStatus,
+  isVisitLaterUpcoming,
   isVisitPast,
+  isVisitToday,
+  isVisitTomorrow,
   isVisitUpcoming,
   matchesVisitStatusFilter,
   VISIT_STATUS_FILTERS,
@@ -85,10 +88,12 @@ function VisitFeedbackForm({ visitId, onDone }: { visitId: string; onDone: () =>
   const [builderBehaviour, setBuilderBehaviour] = useState(3);
   const [comments, setComments] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setSubmitError(null);
     const ok = await submitVisitFeedback(visitId, {
       notes: [notes, pros ? `Pros: ${pros}` : "", cons ? `Cons: ${cons}` : ""].filter(Boolean).join("\n"),
       wouldBuy,
@@ -99,6 +104,7 @@ function VisitFeedbackForm({ visitId, onDone }: { visitId: string; onDone: () =>
     });
     setSubmitting(false);
     if (ok) onDone();
+    else setSubmitError("Couldn't save feedback. Please try again.");
   };
 
   return (
@@ -107,6 +113,11 @@ function VisitFeedbackForm({ visitId, onDone }: { visitId: string; onDone: () =>
         <p className="text-sm font-semibold text-heading-secondary">Post-Visit Feedback</p>
         <p className="text-xs text-muted">Your feedback helps AI refine recommendations</p>
       </div>
+      {submitError ? (
+        <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm text-rose-700" role="alert">
+          {submitError}
+        </p>
+      ) : null}
       <textarea
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
@@ -366,7 +377,7 @@ export default function SiteVisitsPage() {
         .catch(() => {
           setVisits([]);
           setLoading(false);
-          setLoadError("Unable to load site visits. Pull to refresh or try again.");
+          setLoadError("Unable to load site visits. Tap Retry or refresh the page.");
         });
     };
 
@@ -384,12 +395,20 @@ export default function SiteVisitsPage() {
   }, [user]);
 
   const filtered = visits.filter((v) => matchesVisitStatusFilter(v.status, statusFilter));
-  const upcoming = filtered
-    .filter((v) => isVisitUpcoming(v))
+  const todayVisits = filtered
+    .filter((v) => isVisitToday(v))
+    .sort(compareUpcomingVisits);
+  const tomorrowVisits = filtered
+    .filter((v) => isVisitTomorrow(v))
+    .sort(compareUpcomingVisits);
+  const laterUpcoming = filtered
+    .filter((v) => isVisitLaterUpcoming(v))
     .sort(compareUpcomingVisits);
   const past = filtered
     .filter((v) => isVisitPast(v))
     .sort(comparePastVisits);
+  const hasAny =
+    todayVisits.length + tomorrowVisits.length + laterUpcoming.length + past.length > 0;
 
   if (loading) return <PageSkeleton rows={3} />;
 
@@ -442,17 +461,50 @@ export default function SiteVisitsPage() {
             "Share feedback after visiting to improve recommendations",
           ]}
         />
-      ) : filtered.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-neutral-200 bg-white px-6 py-10 text-center text-sm text-muted">
-          No visits match this filter.
-        </p>
+      ) : filtered.length === 0 || !hasAny ? (
+        <div className="rounded-2xl border border-dashed border-neutral-200 bg-white px-6 py-10 text-center">
+          <p className="text-base text-muted">No visits match this filter.</p>
+          <button
+            type="button"
+            onClick={() => setStatusFilter("all")}
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white"
+          >
+            Clear filter
+          </button>
+        </div>
       ) : (
         <>
-          {upcoming.length > 0 ? (
+          {todayVisits.length > 0 ? (
             <section>
-              <h2 className="mb-4 text-lg font-bold text-heading-primary">Upcoming ({upcoming.length})</h2>
+              <h2 className="mb-4 text-xl font-bold text-heading-primary">
+                Today ({todayVisits.length})
+              </h2>
               <div className="space-y-4">
-                {upcoming.map((visit) => (
+                {todayVisits.map((visit) => (
+                  <VisitCard key={visit.id} visit={visit} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+          {tomorrowVisits.length > 0 ? (
+            <section>
+              <h2 className="mb-4 text-xl font-bold text-heading-primary">
+                Tomorrow ({tomorrowVisits.length})
+              </h2>
+              <div className="space-y-4">
+                {tomorrowVisits.map((visit) => (
+                  <VisitCard key={visit.id} visit={visit} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+          {laterUpcoming.length > 0 ? (
+            <section>
+              <h2 className="mb-4 text-xl font-bold text-heading-primary">
+                Upcoming ({laterUpcoming.length})
+              </h2>
+              <div className="space-y-4">
+                {laterUpcoming.map((visit) => (
                   <VisitCard key={visit.id} visit={visit} />
                 ))}
               </div>
@@ -460,7 +512,12 @@ export default function SiteVisitsPage() {
           ) : null}
           {past.length > 0 ? (
             <section>
-              <h2 className="mb-4 text-lg font-bold text-heading-primary">History ({past.length})</h2>
+              <h2 className="mb-4 text-xl font-bold text-heading-primary">
+                History ({past.length})
+              </h2>
+              <p className="mb-3 text-sm text-muted">
+                Completed, cancelled, rejected, and past-dated visits.
+              </p>
               <div className="space-y-4">
                 {past.map((visit) => (
                   <VisitCard key={visit.id} visit={visit} />

@@ -412,11 +412,11 @@ export default function BuyerDashboardPage() {
         </Card>
       </FeatureErrorBoundary>
 
-      <FeatureErrorBoundary name="Saved searches" compact>
+      <FeatureErrorBoundary name="Saved properties" compact>
         <Card padding="sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-semibold text-heading-primary">Saved searches</p>
+              <p className="text-sm font-semibold text-heading-primary">Saved properties</p>
               <p className="mt-1 text-xs text-muted">
                 {crmCounts.savedCount > 0
                   ? `${crmCounts.savedCount} saved propert${crmCounts.savedCount === 1 ? "y" : "ies"} ready to revisit`

@@ -4,13 +4,13 @@ import {
   BHK_OPTIONS,
   POSSESSION_OPTIONS,
   PROPERTY_TYPE_OPTIONS,
-} from "@/lib/properties/constants";
+} from "./constants";
 import {
   isAreaFilterActive,
   isBudgetFilterActive,
-} from "@/lib/properties/urlFilters";
+} from "./urlFilters";
 import { formatIndianPrice } from "@/app/components/filters/utils";
-import type { PropertyFilterState } from "@/lib/properties/types";
+import type { PropertyFilterState } from "./types";
 
 export interface ActiveFilterChip {
   id: string;
@@ -29,7 +29,7 @@ export function getActiveFilterChips(
       type;
     chips.push({
       id: `propertyType-${type}`,
-      label,
+      label: `Type: ${label}`,
       remove: (current) => ({
         ...current,
         propertyTypes: current.propertyTypes.filter((item) => item !== type),
@@ -48,19 +48,19 @@ export function getActiveFilterChips(
   if (isBudgetFilterActive(filters)) {
     const min = filters.minPrice;
     const max = filters.maxPrice;
-    let label = "";
+    let range = "";
 
     if (min != null && max != null) {
-      label = `${formatIndianPrice(min)} – ${formatIndianPrice(max)}`;
+      range = `${formatIndianPrice(min)} – ${formatIndianPrice(max)}`;
     } else if (min != null) {
-      label = `From ${formatIndianPrice(min)}`;
+      range = `From ${formatIndianPrice(min)}`;
     } else if (max != null) {
-      label = `Up to ${formatIndianPrice(max)}`;
+      range = `Up to ${formatIndianPrice(max)}`;
     }
 
     chips.push({
       id: "budget",
-      label,
+      label: `Budget: ${range}`,
       remove: (current) => ({ ...current, minPrice: null, maxPrice: null }),
     });
   }
@@ -68,10 +68,10 @@ export function getActiveFilterChips(
   for (const bhk of filters.bhk) {
     const label =
       BHK_OPTIONS.find((option) => option.value === bhk)?.label ??
-      `${bhk} BHK`;
+      `${bhk}BHK`;
     chips.push({
       id: `bhk-${bhk}`,
-      label,
+      label: `Bedrooms: ${label.replace(/\s+/g, "")}`,
       remove: (current) => ({
         ...current,
         bhk: current.bhk.filter((item) => item !== bhk),
@@ -82,7 +82,7 @@ export function getActiveFilterChips(
   if (filters.location) {
     chips.push({
       id: "location",
-      label: filters.location,
+      label: `Location: ${filters.location}`,
       remove: (current) => ({ ...current, location: null }),
     });
   }
@@ -90,7 +90,7 @@ export function getActiveFilterChips(
   if (filters.builder) {
     chips.push({
       id: "builder",
-      label: filters.builder,
+      label: `Builder: ${filters.builder}`,
       remove: (current) => ({ ...current, builder: null }),
     });
   }
@@ -101,7 +101,7 @@ export function getActiveFilterChips(
       possession;
     chips.push({
       id: `possession-${possession}`,
-      label,
+      label: `Possession: ${label}`,
       remove: (current) => ({
         ...current,
         possession: current.possession.filter((item) => item !== possession),
@@ -112,19 +112,19 @@ export function getActiveFilterChips(
   if (isAreaFilterActive(filters)) {
     const min = filters.minArea;
     const max = filters.maxArea;
-    let label = "";
+    let range = "";
 
     if (min != null && max != null) {
-      label = `${min.toLocaleString("en-IN")} – ${max.toLocaleString("en-IN")} sq ft`;
+      range = `${min.toLocaleString("en-IN")} – ${max.toLocaleString("en-IN")} sq ft`;
     } else if (min != null) {
-      label = `From ${min.toLocaleString("en-IN")} sq ft`;
+      range = `From ${min.toLocaleString("en-IN")} sq ft`;
     } else if (max != null) {
-      label = `Up to ${max.toLocaleString("en-IN")} sq ft`;
+      range = `Up to ${max.toLocaleString("en-IN")} sq ft`;
     }
 
     chips.push({
       id: "area",
-      label,
+      label: `Area: ${range}`,
       remove: (current) => ({ ...current, minArea: null, maxArea: null }),
     });
   }
@@ -135,7 +135,7 @@ export function getActiveFilterChips(
       amenity;
     chips.push({
       id: `amenity-${amenity}`,
-      label,
+      label: `Amenity: ${label}`,
       remove: (current) => ({
         ...current,
         amenities: current.amenities.filter((item) => item !== amenity),

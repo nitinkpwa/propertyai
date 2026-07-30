@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
+  getConnectNotificationHref,
   getNotificationIcon,
   groupNotificationsByDate,
-  requestBrowserNotificationPermission,
   showBrowserNotification,
   useConnectNotifications,
 } from "@/lib/connect/notifications";
@@ -15,19 +16,22 @@ interface ConnectNotificationBellProps {
 }
 
 export default function ConnectNotificationBell({ userId, onViewAll }: ConnectNotificationBellProps) {
+  const router = useRouter();
   const { notifications, unreadCount, markRead, markAllRead } = useConnectNotifications(userId);
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const prevUnread = useRef(unreadCount);
 
   useEffect(() => {
-    requestBrowserNotificationPermission();
-  }, []);
-
-  useEffect(() => {
     if (unreadCount > prevUnread.current && notifications.length > 0) {
       const latest = notifications.find((n) => !n.read_at);
-      if (latest) showBrowserNotification(latest.title, latest.message);
+      if (latest) {
+        showBrowserNotification(
+          latest.title,
+          latest.message,
+          getConnectNotificationHref(latest),
+        );
+      }
     }
     prevUnread.current = unreadCount;
   }, [unreadCount, notifications]);
@@ -42,12 +46,18 @@ export default function ConnectNotificationBell({ userId, onViewAll }: ConnectNo
 
   const groups = groupNotificationsByDate(notifications.slice(0, 8));
 
+  const openNotification = (n: (typeof notifications)[number]) => {
+    if (!n.read_at) void markRead(n.id);
+    setOpen(false);
+    router.push(getConnectNotificationHref(n));
+  };
+
   return (
     <div ref={panelRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-body transition hover:bg-neutral-50"
+        className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-neutral-200 bg-white text-body transition hover:bg-neutral-50"
         aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
       >
         🔔
@@ -80,7 +90,7 @@ export default function ConnectNotificationBell({ userId, onViewAll }: ConnectNo
                     <button
                       key={n.id}
                       type="button"
-                      onClick={() => { if (!n.read_at) markRead(n.id); setOpen(false); }}
+                      onClick={() => openNotification(n)}
                       className={`flex w-full gap-3 px-4 py-3 text-left hover:bg-neutral-50 ${!n.read_at ? "bg-emerald-50/40" : ""}`}
                     >
                       <span>{getNotificationIcon(n.type)}</span>

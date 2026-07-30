@@ -108,6 +108,47 @@ export default function PropertyListings() {
     [properties],
   );
 
+  const scoreFiltersAvailable = useMemo(
+    () =>
+      properties.some(
+        (property) =>
+          property.growthScore != null || property.rentalYield != null,
+      ),
+    [properties],
+  );
+
+  // Drop score-based AI URL flags when catalog has no growth/yield data
+  useEffect(() => {
+    if (scoreFiltersAvailable || properties.length === 0) return;
+    const { ai } = filters;
+    if (
+      !ai.highAreaIQScore &&
+      !ai.highRentalYield &&
+      !ai.highAppreciation &&
+      !ai.bestInvestment
+    ) {
+      return;
+    }
+    setFilters((prev) => ({
+      ...prev,
+      ai: {
+        ...prev.ai,
+        highAreaIQScore: false,
+        highRentalYield: false,
+        highAppreciation: false,
+        bestInvestment: false,
+      },
+    }));
+  }, [
+    scoreFiltersAvailable,
+    properties.length,
+    filters.ai.highAreaIQScore,
+    filters.ai.highRentalYield,
+    filters.ai.highAppreciation,
+    filters.ai.bestInvestment,
+    setFilters,
+  ]);
+
   const filteredProperties = useMemo(
     () => filterProperties(properties, filters),
     [properties, filters],
@@ -129,6 +170,7 @@ export default function PropertyListings() {
         onClearAll={clearFilters}
         resultCount={filteredProperties.length}
         builderOptions={builderOptions}
+        scoreFiltersAvailable={scoreFiltersAvailable}
       />
 
       {filteredProperties.length === 0 ? (

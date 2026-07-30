@@ -4,14 +4,15 @@ import type { AskTurn } from "@/lib/ask/types";
 
 export function turnFromMessage(message: AskChatMessage, userQuery = ""): AskTurn {
   const content = message.content ?? "";
-  const sections = parseMarkdownSections(content);
-  const headline =
-    content
-      .split("\n")
-      .find((l) => l.startsWith("##"))
-      ?.replace(/^##\s+/, "")
-      .replace(/^[✅⚠️📊🏗️💰]\s*/, "")
-      .trim() || "AreaIQ Intelligence";
+  const sections = message.streaming ? [] : parseMarkdownSections(content);
+  const headline = message.streaming
+    ? "AreaIQ Advisor"
+    : content
+        .split("\n")
+        .find((l) => l.startsWith("##"))
+        ?.replace(/^##\s+/, "")
+        .replace(/^[✅⚠️📊🏗️💰]\s*/, "")
+        .trim() || "AreaIQ Intelligence";
 
   return {
     id: message.id,
@@ -20,15 +21,17 @@ export function turnFromMessage(message: AskChatMessage, userQuery = ""): AskTur
     headline,
     subtext: message.isSimilar
       ? "Showing closest matches from AreaIQ database."
-      : null,
+      : message.streaming
+        ? "Writing…"
+        : null,
     aiContent: content,
     sections,
     stats: message.stats ?? null,
     listings: message.properties ?? [],
     propertyRationales: message.propertyRationales ?? {},
     isSimilar: message.isSimilar ?? false,
-    quickActions: message.quickActions ?? [],
-    followUps: message.followUps ?? [],
+    quickActions: message.streaming ? [] : message.quickActions ?? [],
+    followUps: message.streaming ? [] : message.followUps ?? [],
   };
 }
 

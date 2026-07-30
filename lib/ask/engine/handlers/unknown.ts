@@ -4,7 +4,7 @@ import { buildMemoryContext } from "../memory";
 import { generateUnknownClarification } from "../openai";
 
 export async function handleUnknown(ctx: HandlerContext): Promise<AskEngineResponse> {
-  const memoryContext = buildMemoryContext(ctx.classification);
+  const memoryContext = buildMemoryContext(ctx.classification, ctx.propertyContext);
 
   const answer = await generateUnknownClarification(
     ctx.message,

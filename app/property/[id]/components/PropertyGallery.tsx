@@ -48,17 +48,28 @@ function GalleryImage({
   sizes: string;
   priority?: boolean;
 }) {
+  const [loaded, setLoaded] = useState(false);
+
   return (
-    <Image
-      src={src}
-      alt={alt}
-      fill
-      sizes={sizes}
-      priority={priority}
-      className="object-cover"
-      unoptimized={src.startsWith("blob:") || src.startsWith("data:")}
-      draggable={false}
-    />
+    <>
+      {!loaded ? (
+        <div
+          className="absolute inset-0 animate-pulse bg-neutral-200/80"
+          aria-hidden
+        />
+      ) : null}
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        priority={priority}
+        className={`object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+        unoptimized={src.startsWith("blob:") || src.startsWith("data:")}
+        draggable={false}
+        onLoad={() => setLoaded(true)}
+      />
+    </>
   );
 }
 
@@ -128,6 +139,17 @@ export default function PropertyGallery({ images, propertyName }: PropertyGaller
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [activeIndex]);
+
+  // Preload adjacent images for smoother swipe.
+  useEffect(() => {
+    const next = galleryImages[activeIndex + 1]?.url;
+    const prev = galleryImages[activeIndex - 1]?.url;
+    for (const url of [next, prev]) {
+      if (!url || typeof window === "undefined") continue;
+      const img = new window.Image();
+      img.src = url;
+    }
+  }, [activeIndex, galleryImages]);
 
   return (
     <>

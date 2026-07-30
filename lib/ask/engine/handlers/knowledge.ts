@@ -4,7 +4,7 @@ import { buildMemoryContext } from "../memory";
 import { generateAreaIQResponse, KNOWLEDGE_PROMPT } from "../openai";
 
 export async function handleKnowledge(ctx: HandlerContext): Promise<AskEngineResponse> {
-  const memoryContext = buildMemoryContext(ctx.classification);
+  const memoryContext = buildMemoryContext(ctx.classification, ctx.propertyContext);
 
   const answer = await generateAreaIQResponse(KNOWLEDGE_PROMPT, ctx.message, {
     history: ctx.history,

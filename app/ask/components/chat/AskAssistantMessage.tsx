@@ -23,14 +23,24 @@ interface AskAssistantMessageProps {
   turn: AskTurn;
   onAction: (text: string) => void;
   onOpenIntel?: () => void;
+  onRetry?: () => void;
+  onContinue?: () => void;
+  isLatest?: boolean;
+  streaming?: boolean;
 }
 
 export function AskAssistantMessage({
   turn,
   onAction,
   onOpenIntel,
+  onRetry,
+  onContinue,
+  isLatest = false,
+  streaming = false,
 }: AskAssistantMessageProps) {
   const [expanded, setExpanded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [feedback, setFeedback] = useState<"up" | "down" | null>(null);
   const sections = turn.sections;
   const hasListings = turn.listings.length > 0;
 
@@ -58,15 +68,27 @@ export function AskAssistantMessage({
   const actions =
     turn.quickActions.length > 0
       ? turn.quickActions
-      : DEFAULT_SMART_ACTIONS.slice(0, 5);
+      : DEFAULT_SMART_ACTIONS.slice(0, 4);
   const chips =
     turn.followUps.length > 0
       ? turn.followUps
-      : ["Highest ROI", "Under ₹1 Cr", "Builder Review", "Metro Connectivity", "Rental Income"];
+      : ["Highest ROI", "Under ₹1 Cr", "Builder Review", "Metro Connectivity"];
 
   const matchCount = turn.listings.length;
   const matchSubtitle =
     matchCount === 1 ? "1 Matching Property" : `${matchCount} Properties Found`;
+
+  const handleCopy = async () => {
+    const text = primaryContent || turn.aiContent || "";
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
 
   return (
     <div className="flex items-start gap-3">
@@ -96,10 +118,10 @@ export function AskAssistantMessage({
             ) : null}
           </div>
 
-          <h3 className="mt-2 text-base font-bold tracking-tight text-heading-primary sm:text-lg">
+          <h3 className="mt-2 text-lg font-bold tracking-tight text-heading-primary sm:text-xl">
             {turn.headline}
           </h3>
-          {turn.subtext ? <p className="mt-1 text-xs text-muted">{turn.subtext}</p> : null}
+          {turn.subtext ? <p className="mt-1 text-sm text-muted">{turn.subtext}</p> : null}
 
           {turn.stats ? (
             <div className="mt-3 grid grid-cols-3 gap-2">
@@ -128,12 +150,17 @@ export function AskAssistantMessage({
 
           {/* Single primary conversational response — complements cards, never duplicates them */}
           {primaryContent ? (
-            <div className="mt-3 text-sm leading-relaxed text-body">
-              <AskMarkdown content={primaryContent} />
+            <div className="mt-3 text-base leading-relaxed text-body">
+              <AskMarkdown content={primaryContent} streaming={streaming} />
+            </div>
+          ) : streaming ? (
+            <div className="mt-3 flex items-center gap-2 text-sm text-muted">
+              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+              Thinking…
             </div>
           ) : null}
 
-          {hasListings ? (
+          {hasListings && !streaming ? (
             <section
               className="mt-5 w-full animate-in fade-in zoom-in-[0.98] duration-[250ms]"
               aria-label="Best match properties"
@@ -200,38 +227,82 @@ export function AskAssistantMessage({
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="mt-2 text-xs font-semibold text-emerald-700 hover:underline"
+              className="mt-2 min-h-11 text-sm font-semibold text-emerald-700 hover:underline"
             >
               {expanded ? "Show fewer insights" : `Show all ${insightSections.length} insights`}
             </button>
           ) : null}
+
+          {streaming ? null : (
+          <div className="mt-4 flex flex-wrap items-center gap-1 border-t border-neutral-100 pt-3">
+            <button
+              type="button"
+              onClick={() => void handleCopy()}
+              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted transition hover:bg-neutral-50 hover:text-heading-primary"
+              aria-label="Copy answer"
+            >
+              {copied ? "Copied" : "Copy"}
+            </button>
+            {isLatest && onRetry ? (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted transition hover:bg-neutral-50 hover:text-heading-primary"
+                aria-label="Retry"
+              >
+                Retry
+              </button>
+            ) : null}
+            {isLatest && onContinue ? (
+              <button
+                type="button"
+                onClick={onContinue}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted transition hover:bg-neutral-50 hover:text-heading-primary"
+                aria-label="Continue generating"
+              >
+                Continue
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setFeedback("up")}
+              className={`inline-flex min-h-11 w-11 items-center justify-center rounded-xl text-sm transition hover:bg-neutral-50 ${
+                feedback === "up" ? "bg-emerald-50 text-emerald-700" : "text-muted"
+              }`}
+              aria-label="Helpful"
+              aria-pressed={feedback === "up"}
+            >
+              👍
+            </button>
+            <button
+              type="button"
+              onClick={() => setFeedback("down")}
+              className={`inline-flex min-h-11 w-11 items-center justify-center rounded-xl text-sm transition hover:bg-neutral-50 ${
+                feedback === "down" ? "bg-rose-50 text-rose-600" : "text-muted"
+              }`}
+              aria-label="Not helpful"
+              aria-pressed={feedback === "down"}
+            >
+              👎
+            </button>
+          </div>
+          )}
         </div>
 
-        <div className="flex flex-wrap gap-1.5 pl-1">
-          {actions.slice(0, 6).map((action) => (
+        {streaming ? null : (
+        <div className="flex flex-wrap gap-2 pl-1">
+          {(actions.length > 0 ? actions : chips).slice(0, 5).map((action) => (
             <button
               key={action}
               type="button"
               onClick={() => onAction(action)}
-              className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-body shadow-sm transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
+              className="min-h-11 rounded-full border border-neutral-200 bg-white px-3.5 py-2 text-sm font-semibold text-body shadow-sm transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
             >
               {action}
             </button>
           ))}
         </div>
-
-        <div className="flex flex-wrap gap-1.5 pl-1">
-          {chips.slice(0, 8).map((chip) => (
-            <button
-              key={chip}
-              type="button"
-              onClick={() => onAction(chip)}
-              className="rounded-full bg-neutral-100/90 px-2.5 py-1 text-[11px] font-medium text-muted transition-colors hover:bg-emerald-100 hover:text-emerald-800"
-            >
-              {chip}
-            </button>
-          ))}
-        </div>
+        )}
       </div>
     </div>
   );

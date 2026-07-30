@@ -190,7 +190,7 @@ export default function SavedPropertiesPage() {
           title="No properties in this collection"
           description="Move saved properties into this collection using the dropdown below each card."
           actionLabel="View All Saved"
-          actionHref="/buyer/saved"
+          onAction={() => setCollection("all")}
         />
       ) : (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">

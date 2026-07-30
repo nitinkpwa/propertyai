@@ -11,6 +11,7 @@ export async function queryAskEngine(
   history: ConversationMessage[] = [],
   propertyContext?: PropertyContext | null,
   excludePropertyIds: string[] = [],
+  signal?: AbortSignal,
 ): Promise<AskEngineResponse> {
   const response = await apiFetch("/api/ask/query", {
     method: "POST",
@@ -21,13 +22,108 @@ export async function queryAskEngine(
       propertyContext: propertyContext ?? null,
       excludePropertyIds,
     }),
+    signal,
   });
 
   if (!response.ok) {
-    throw new Error("Ask engine request failed");
+    const err = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(err.error || "Ask engine request failed");
   }
 
   return response.json() as Promise<AskEngineResponse>;
+}
+
+export type AskStreamHandlers = {
+  onStatus?: (phase: string) => void;
+  onToken?: (delta: string) => void;
+  onDone?: (response: AskEngineResponse) => void;
+  onError?: (message: string) => void;
+};
+
+/**
+ * True SSE streaming against /api/ask/query (stream: true).
+ * Tokens arrive as the LLM generates; done carries the full engine response.
+ */
+export async function queryAskEngineStream(
+  message: string,
+  history: ConversationMessage[] = [],
+  propertyContext?: PropertyContext | null,
+  excludePropertyIds: string[] = [],
+  signal?: AbortSignal,
+  handlers: AskStreamHandlers = {},
+): Promise<AskEngineResponse> {
+  const response = await apiFetch("/api/ask/query", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "text/event-stream",
+    },
+    body: JSON.stringify({
+      message,
+      history,
+      propertyContext: propertyContext ?? null,
+      excludePropertyIds,
+      stream: true,
+    }),
+    signal,
+  });
+
+  if (!response.ok || !response.body) {
+    const err = await response.json().catch(() => ({})) as { error?: string };
+    throw new Error(err.error || "Ask engine stream failed");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let finalResponse: AskEngineResponse | null = null;
+  let streamError: string | null = null;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const parts = buffer.split("\n\n");
+    buffer = parts.pop() ?? "";
+
+    for (const part of parts) {
+      const lines = part.split("\n");
+      let event = "message";
+      let data = "";
+      for (const line of lines) {
+        if (line.startsWith("event:")) event = line.slice(6).trim();
+        else if (line.startsWith("data:")) data += line.slice(5).trim();
+      }
+      if (!data) continue;
+
+      try {
+        const parsed = JSON.parse(data) as Record<string, unknown>;
+        if (event === "status" && typeof parsed.phase === "string") {
+          handlers.onStatus?.(parsed.phase);
+        } else if (event === "token" && typeof parsed.delta === "string") {
+          handlers.onToken?.(parsed.delta);
+        } else if (event === "done") {
+          finalResponse = parsed as unknown as AskEngineResponse;
+          handlers.onDone?.(finalResponse);
+        } else if (event === "error") {
+          streamError =
+            typeof parsed.message === "string"
+              ? parsed.message
+              : "Streaming failed";
+          handlers.onError?.(streamError);
+        }
+      } catch {
+        /* skip malformed */
+      }
+    }
+  }
+
+  if (streamError) throw new Error(streamError);
+  if (!finalResponse) {
+    throw new Error("Stream ended without a complete response");
+  }
+  return finalResponse;
 }
 
 function mapEngineIntentToUi(intent: AskEngineIntent): AskIntent {
@@ -77,8 +173,6 @@ function extractHeadline(answer: string, intent: AskEngineIntent): string {
     UNKNOWN: "Quick clarification",
   };
 
-  // Only use a markdown title when it is a meaningful, non-generic heading.
-  // Avoid turning the first sentence into a headline — that duplicated the advisor reply.
   const h2Match = answer.match(/^##\s+(.+)/m);
   if (h2Match?.[1]) {
     const cleaned = h2Match[1].replace(/\*\*/g, "").trim();

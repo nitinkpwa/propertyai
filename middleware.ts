@@ -89,8 +89,8 @@ export async function middleware(request: NextRequest) {
     return withPerfHeaders(NextResponse.redirect(url));
   }
 
-  // Authenticated but profile missing/unreadable — force re-auth instead of
-  // skipping role gates (M1).
+  // Authenticated but profile missing — stay on auth pages to recover; never bounce
+  // protected ↔ login in a loop (getDashboardPath(null) would send /login → /buyer → /login).
   if (user && !profileRole && isProtectedPath(pathname) && !isAuthPage(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
@@ -115,7 +115,8 @@ export async function middleware(request: NextRequest) {
     return withPerfHeaders(NextResponse.redirect(url));
   }
 
-  if (isConnectAuthPage(pathname) && user) {
+  // Only auto-leave auth pages when role is known. Missing profile must see login recovery UI.
+  if (isConnectAuthPage(pathname) && user && profileRole) {
     const redirectTo = sanitizeRedirectPath(
       request.nextUrl.searchParams.get("redirect"),
       getDashboardPath(profileRole),
@@ -123,7 +124,7 @@ export async function middleware(request: NextRequest) {
     return withPerfHeaders(NextResponse.redirect(new URL(redirectTo, request.url)));
   }
 
-  if (isAuthPage(pathname) && user) {
+  if (isAuthPage(pathname) && user && profileRole) {
     const redirectTo = sanitizeRedirectPath(
       request.nextUrl.searchParams.get("redirect"),
       getDashboardPath(profileRole),
@@ -140,6 +141,6 @@ export const config = {
      * Exclude static assets AND Next internals. Keep HTML/RSC + most /api
      * so auth cookies still refresh via getUser().
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|webmanifest)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|favicon.png|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|txt|xml|webmanifest)$).*)",
   ],
 };

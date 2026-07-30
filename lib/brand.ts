@@ -9,8 +9,10 @@ export const BRAND = {
   trustLine: "Trusted AI platform for Real Estate Intelligence.",
   assets: {
     logo: "/logo.webp",
-    hero: "/hero-banner.jpg",
-    favicon: "/favicon.ico",
+    hero: "/hero-banner.png",
+    /** Primary tab icon — PNG master uploaded as public/favicon.png */
+    favicon: "/favicon.png",
+    faviconIco: "/favicon.ico",
     favicon16: "/favicon-16x16.png",
     favicon32: "/favicon-32x32.png",
     appleTouch: "/apple-touch-icon.png",
@@ -35,6 +37,35 @@ export const BRAND = {
     email: "Tech172chd@gmail.com",
     website: "https://tech172.com",
     websiteLabel: "tech172.com",
+  },
+  maps: {
+    /** Query-based embed tied to official BRAND.contact office address. */
+    embedSrc:
+      "https://www.google.com/maps?q=" +
+      encodeURIComponent(
+        "Tech172, Plot No. 337, Industrial Area Phase II, Chandigarh 160002",
+      ) +
+      "&z=16&output=embed",
+    directionsUrl:
+      "https://www.google.com/maps/dir/?api=1&destination=" +
+      encodeURIComponent(
+        "Tech172, Plot No. 337, Industrial Area Phase II, Chandigarh 160002",
+      ),
+    openUrl:
+      "https://www.google.com/maps/search/?api=1&query=" +
+      encodeURIComponent(
+        "Tech172, Plot No. 337, Industrial Area Phase II, Chandigarh 160002",
+      ),
+  },
+  social: {
+    areaiq: {
+      facebook: "https://www.facebook.com/areaiq1",
+      instagram: "https://www.instagram.com/areaiq1",
+    },
+    tech172: {
+      facebook: "https://www.facebook.com/tech172chd",
+      instagram: "https://www.instagram.com/tech172chd",
+    },
   },
   products: [
     { label: "Property Intelligence", href: "/ask?q=Property+intelligence+Tricity" },

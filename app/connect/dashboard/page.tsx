@@ -49,6 +49,7 @@ function ConnectDashboardInner() {
   const [analytics, setAnalytics] = useState<ConnectPartnerAnalytics | null>(null);
   const [siteVisits, setSiteVisits] = useState<ConnectSiteVisitRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const handleTabChange = useCallback(
     (next: ConnectTab) => {
@@ -63,8 +64,12 @@ function ConnectDashboardInner() {
 
   const loadDashboard = useCallback(async () => {
     const res = await fetch("/api/connect/dashboard");
-    if (!res.ok) return;
+    if (!res.ok) {
+      setLoadError("Couldn't load your CRM right now. Check your connection and try again.");
+      return;
+    }
     const data = await res.json();
+    setLoadError(null);
     setPartner(data.partner ?? null);
     setBuyers(data.buyers ?? []);
     setProperties(data.properties ?? []);
@@ -117,6 +122,27 @@ function ConnectDashboardInner() {
     );
   }
 
+  if (loadError && !partner) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8FAFC] px-4">
+        <div className="max-w-md rounded-2xl border border-rose-200 bg-white p-6 text-center shadow-sm">
+          <p className="text-sm font-semibold text-heading-primary">CRM unavailable</p>
+          <p className="mt-2 text-sm text-muted">{loadError}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setLoading(true);
+              void loadDashboard().finally(() => setLoading(false));
+            }}
+            className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <ConnectShell
       tab={tab}
@@ -128,6 +154,18 @@ function ConnectDashboardInner() {
       newLeads={newLeads}
       onLogout={handleLogout}
     >
+      {loadError ? (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900" role="status">
+          {loadError}{" "}
+          <button
+            type="button"
+            onClick={() => void loadDashboard()}
+            className="font-semibold underline"
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
       {tab === "home" && analytics ? (
         <ConnectDashboardPanel
           companyName={partner?.company_name}

@@ -9,7 +9,7 @@ import { buildListingsContext, generateAreaIQResponse, BUILDER_PROMPT } from "..
 export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineResponse> {
   const builderName = resolveBuilderName(ctx.classification);
   const baseFields = classificationToResponseFields(ctx.classification);
-  const memoryContext = buildMemoryContext(ctx.classification);
+  const memoryContext = buildMemoryContext(ctx.classification, ctx.propertyContext);
 
   if (!builderName) {
     const answer = await generateAreaIQResponse(BUILDER_PROMPT, ctx.message, {

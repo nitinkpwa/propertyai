@@ -126,7 +126,10 @@ export default function UserMenu() {
 
           {[
             { label: "Dashboard", href: dashboardPath },
-            { label: "Profile", href: "/profile" },
+            {
+              label: "Profile",
+              href: profile?.role === "buyer" ? "/buyer/profile" : "/profile",
+            },
           ].map((item) => (
             <Link
               key={item.label}

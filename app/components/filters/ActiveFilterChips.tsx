@@ -3,11 +3,12 @@
 import { getActiveFilterChips } from "@/lib/properties/activeFilterChips";
 import { DEFAULT_FILTER_STATE } from "@/lib/properties/types";
 import type { PropertyFilterState } from "@/lib/properties/types";
+import type { PropertyFilterUpdater } from "@/lib/properties/usePropertyFilters";
 import RemovableChip from "./RemovableChip";
 
 interface ActiveFilterChipsProps {
   filters: PropertyFilterState;
-  onChange: (filters: PropertyFilterState) => void;
+  onChange: (filters: PropertyFilterUpdater) => void;
   onClearAll: () => void;
 }
 
@@ -26,7 +27,7 @@ export default function ActiveFilterChips({
         <RemovableChip
           key={chip.id}
           label={chip.label}
-          onRemove={() => onChange(chip.remove(filters))}
+          onRemove={() => onChange((prev) => chip.remove(prev))}
         />
       ))}
       <button
@@ -34,7 +35,7 @@ export default function ActiveFilterChips({
         onClick={onClearAll}
         className="rounded-full px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:bg-neutral-100 hover:text-heading-secondary"
       >
-        Clear All
+        Clear All Filters
       </button>
     </div>
   );

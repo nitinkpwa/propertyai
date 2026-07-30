@@ -38,6 +38,7 @@ function AskPageContent() {
     propertyContext,
     setPropertyContext,
     loading,
+    awaitingFirstToken,
     typingStatus,
     sidebarOpen,
     setSidebarOpen,
@@ -46,6 +47,9 @@ function AskPageContent() {
     loadConversation,
     deleteConversation,
     sendMessage,
+    cancelGeneration,
+    retryLastMessage,
+    continueGeneration,
   } = useAskChat(null);
 
   useEffect(() => {
@@ -81,7 +85,7 @@ function AskPageContent() {
   }, [latestAssistant]);
 
   const handleNewChat = async () => {
-    await startNewChat(propertyContext);
+    await startNewChat(null);
     setSidebarOpen(false);
   };
 
@@ -182,17 +186,21 @@ function AskPageContent() {
           messages={messages}
           propertyContext={propertyContext}
           loading={loading}
+          awaitingFirstToken={awaitingFirstToken}
           typingStatus={typingStatus}
           messagesEndRef={messagesEndRef}
           onFollowUp={sendMessage}
           onOpenIntel={() => setIntelOpen(true)}
           onScrollElevated={setHeaderElevated}
+          onRetry={retryLastMessage}
+          onContinue={continueGeneration}
         />
 
         <AskComposer
           onSubmit={sendMessage}
           loading={loading}
           recentSearches={recentSearches}
+          onCancel={cancelGeneration}
         />
       </div>
 

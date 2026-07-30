@@ -1,5 +1,6 @@
 export {
   processAskMessage,
+  processAskMessageStreaming,
   detectIntent,
   handlePropertySearch,
   handlePropertyAnalysis,
@@ -23,5 +24,7 @@ export type {
   IntentEntities,
   PropertyContext,
 } from "./types";
+
+export type { AskStreamCallbacks } from "./orchestrator";
 
 export type { ConversationMessage } from "../types";

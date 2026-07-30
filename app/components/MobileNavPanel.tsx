@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/common/Logo";
+import SocialLinks from "@/components/common/SocialLinks";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { EMERALD } from "@/lib/auth/constants";
 import {
@@ -188,6 +189,10 @@ export default function MobileNavPanel({
             })}
           </div>
         ) : null}
+
+        <div className="shrink-0 border-t border-neutral-100 px-6 py-4">
+          <SocialLinks variant="drawer" />
+        </div>
       </aside>
     </>
   );

@@ -50,6 +50,7 @@ type CreateParams = {
   max_tokens?: number;
   response_format?: { type: "json_object" | "text" };
   stream?: boolean;
+  signal?: AbortSignal;
 };
 
 /**
@@ -65,7 +66,7 @@ class OpenAIChatClient {
         params: CreateParams,
       ): Promise<ChatCompletion | AsyncIterable<ChatCompletionChunk>> => {
         if (params.stream) {
-          return this.createStream(params);
+          return this.createStream(params, params.signal);
         }
         return this.createOnce(params);
       },
@@ -92,6 +93,7 @@ class OpenAIChatClient {
 
   private async createStream(
     params: CreateParams,
+    signal?: AbortSignal,
   ): Promise<AsyncIterable<ChatCompletionChunk>> {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -101,6 +103,7 @@ class OpenAIChatClient {
         Accept: "text/event-stream",
       },
       body: JSON.stringify({ ...params, stream: true }),
+      signal,
     });
 
     if (!res.ok || !res.body) {
@@ -114,6 +117,14 @@ class OpenAIChatClient {
 
     async function* iterate(): AsyncGenerator<ChatCompletionChunk> {
       while (true) {
+        if (signal?.aborted) {
+          try {
+            await reader.cancel();
+          } catch {
+            /* ignore */
+          }
+          break;
+        }
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
@@ -184,4 +195,27 @@ export async function createChatCompletion(
     throw new Error("OpenAI returned an unexpected response");
   }
   return result;
+}
+
+/** Streaming chat completion — yields content delta strings. */
+export async function* createChatCompletionStream(
+  params: Omit<CreateParams, "stream">,
+  signal?: AbortSignal,
+): AsyncGenerator<string> {
+  const client = getOpenAIClient();
+  const result = await client.chat.completions.create({
+    ...params,
+    stream: true,
+    signal,
+  });
+
+  if (!result || typeof result !== "object" || !(Symbol.asyncIterator in result)) {
+    return;
+  }
+
+  for await (const chunk of result as AsyncIterable<ChatCompletionChunk>) {
+    if (signal?.aborted) break;
+    const delta = chunk.choices[0]?.delta?.content;
+    if (delta) yield delta;
+  }
 }

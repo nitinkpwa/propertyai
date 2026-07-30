@@ -1,17 +1,30 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useKeyboardHeight } from "@/components/layout/engine";
 
 const QUICK_TYPES = ["Apartment", "Villa", "Plot", "Builder Floor"] as const;
+const TEXTAREA_MAX_PX = 144; // max-h-36
 
 interface AskComposerProps {
   onSubmit: (text: string) => void;
   loading: boolean;
   recentSearches: string[];
+  onCancel?: () => void;
 }
 
-export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerProps) {
+function resizeTextarea(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = "auto";
+  el.style.height = `${Math.min(el.scrollHeight, TEXTAREA_MAX_PX)}px`;
+}
+
+export function AskComposer({
+  onSubmit,
+  loading,
+  recentSearches,
+  onCancel,
+}: AskComposerProps) {
   const [query, setQuery] = useState("");
   const [budgetLakh, setBudgetLakh] = useState(80);
   const [showTools, setShowTools] = useState(false);
@@ -19,6 +32,17 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
   const keyboardHeight = useKeyboardHeight();
   const keyboardPad = keyboardHeight > 40 ? keyboardHeight : 0;
   const fileRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useLayoutEffect(() => {
+    resizeTextarea(textareaRef.current);
+  }, [query]);
+
+  useEffect(() => {
+    const onResize = () => resizeTextarea(textareaRef.current);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   const handleSubmit = () => {
     let text = query.trim();
@@ -82,7 +106,7 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
         paddingBottom: `max(0.75rem, calc(var(--safe-bottom) + ${keyboardPad}px))`,
       }}
     >
-      <div className="mx-auto w-full max-w-[1100px]">
+      <div className="mx-auto w-full min-w-0 max-w-[1100px]">
         {recentSearches.length > 0 ? (
           <div className="mb-2.5 flex gap-2 overflow-x-auto scroll-touch pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {recentSearches.slice(0, 5).map((search) => (
@@ -139,13 +163,13 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
             e.preventDefault();
             handleSubmit();
           }}
-          className="flex items-end gap-2 rounded-[1.35rem] border border-neutral-200 bg-white px-3 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.06)] focus-within:border-emerald-300 focus-within:ring-4 focus-within:ring-emerald-100/80"
+          className="flex w-full min-w-0 items-end gap-1.5 rounded-[1.35rem] border border-neutral-200 bg-white px-2 py-2 shadow-[0_8px_30px_rgba(0,0,0,0.06)] focus-within:border-emerald-300 focus-within:ring-4 focus-within:ring-emerald-100/80 sm:gap-2 sm:px-3"
         >
-          <div className="flex shrink-0 gap-0.5 pb-1">
+          <div className="flex shrink-0 items-center gap-0 self-end pb-0.5">
             <button
               type="button"
               onClick={() => setShowTools((v) => !v)}
-              className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors active:scale-[0.96] ${
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors active:scale-[0.96] sm:h-11 sm:w-11 ${
                 showTools ? "bg-emerald-50 text-emerald-700" : "text-muted hover:bg-neutral-100"
               }`}
               aria-label="Tools"
@@ -158,7 +182,7 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex h-11 w-11 items-center justify-center rounded-xl text-muted transition active:scale-[0.96] hover:bg-neutral-100"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted transition active:scale-[0.96] hover:bg-neutral-100 sm:h-11 sm:w-11"
               aria-label="Upload image"
               title="Attach image context"
             >
@@ -182,7 +206,7 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
             <button
               type="button"
               onClick={startVoice}
-              className="flex h-11 w-11 items-center justify-center rounded-xl text-muted transition active:scale-[0.96] hover:bg-neutral-100"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-muted transition active:scale-[0.96] hover:bg-neutral-100 sm:h-11 sm:w-11"
               aria-label="Voice input"
               title="Voice input"
             >
@@ -192,31 +216,46 @@ export function AskComposer({ onSubmit, loading, recentSearches }: AskComposerPr
             </button>
           </div>
 
-          <textarea
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSubmit();
-              }
-            }}
-            placeholder="Ask anything — properties, areas, EMI, builders…"
-            disabled={loading}
-            rows={1}
-            className="max-h-36 min-h-[48px] flex-1 resize-none bg-transparent py-3 text-base text-heading-primary outline-none placeholder:text-placeholder disabled:opacity-60"
-          />
+          <div className="min-w-0 flex-1 self-center">
+            <textarea
+              ref={textareaRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit();
+                }
+              }}
+              placeholder="Ask about properties, areas, EMI, builders…"
+              disabled={loading}
+              rows={2}
+              className="block w-full min-w-0 max-h-36 min-h-[52px] resize-none overflow-y-auto bg-transparent px-1.5 py-2.5 text-base leading-snug text-heading-primary outline-none placeholder:text-placeholder disabled:opacity-60 sm:min-h-[48px] sm:py-3 sm:leading-relaxed"
+            />
+          </div>
 
-          <button
-            type="submit"
-            disabled={loading || !query.trim()}
-            className="mb-0.5 inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand text-white shadow-[0_2px_10px_var(--brand-shadow)] transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-45"
-            aria-label="Send"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-          </button>
+          {loading && onCancel ? (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="mb-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-neutral-200 bg-white text-body shadow-sm transition-all active:scale-95 hover:bg-neutral-50 sm:h-12 sm:w-12"
+              aria-label="Stop generating"
+              title="Stop generating"
+            >
+              <span className="h-3.5 w-3.5 rounded-sm bg-neutral-700" aria-hidden />
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={loading || !query.trim()}
+              className="mb-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-base text-white shadow-[0_2px_10px_var(--brand-shadow)] transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-45 sm:h-12 sm:w-12"
+              aria-label="Send"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
         </form>
 
         <p className="mt-1.5 text-center text-[10px] text-muted">

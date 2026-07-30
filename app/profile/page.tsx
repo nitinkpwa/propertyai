@@ -143,6 +143,14 @@ export default function ProfilePage() {
         <div>
           <h1 className="text-[32px] font-bold tracking-tight text-heading-primary">Settings</h1>
           <p className="mt-1 text-base text-muted">Account, security, and preferences</p>
+          {profile?.role === "buyer" ? (
+            <p className="mt-3 text-sm text-body">
+              Looking for buyer preferences (budget, localities, purpose)?{" "}
+              <Link href="/buyer/profile" className="font-semibold text-emerald-700 underline">
+                Open buyer profile
+              </Link>
+            </p>
+          ) : null}
         </div>
 
         {error ? <AuthAlert type="error" message={error} /> : null}

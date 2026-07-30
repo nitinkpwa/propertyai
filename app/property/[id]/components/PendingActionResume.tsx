@@ -62,6 +62,15 @@ export default function PendingActionResume({ propertyId, onAskAi }: Props) {
           case "download_brochure":
           case "share_inquiry":
             clearPendingAuthIntent();
+            // Resume to the primary on-page CTA instead of silently clearing.
+            window.dispatchEvent(
+              new CustomEvent("areaiq:pending-contact-resume", {
+                detail: { action, propertyId },
+              }),
+            );
+            document
+              .getElementById("property-booking-cta")
+              ?.scrollIntoView({ behavior: "smooth", block: "center" });
             break;
           default:
             clearPendingAuthIntent();

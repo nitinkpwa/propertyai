@@ -6,7 +6,6 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   getNotificationIcon,
   groupNotificationsByDate,
-  requestBrowserNotificationPermission,
   showBrowserNotification,
   useBuyerNotifications,
 } from "@/lib/buyer/notifications";
@@ -57,10 +56,6 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
   const [panelStyle, setPanelStyle] = useState<CSSProperties>({});
 
   useEffect(() => {
-    void requestBrowserNotificationPermission();
-  }, []);
-
-  useEffect(() => {
     if (unreadCount > prevUnread.current && notifications.length > 0) {
       const latest = notifications.find((n) => !n.read_at);
       if (latest) {
@@ -94,9 +89,10 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
     left = Math.max(gutter, Math.min(left, window.innerWidth - width - gutter));
     setPanelStyle({
       position: "fixed",
-      top: Math.min(rect.bottom + 8, window.innerHeight - 120),
+      top: Math.min(rect.bottom + 8, window.innerHeight - 160),
       left,
       width,
+      maxHeight: Math.min(420, window.innerHeight - rect.bottom - 24),
       zIndex: 80,
     });
   }, [open]);
@@ -128,7 +124,7 @@ export default function NotificationBell({ className = "" }: NotificationBellPro
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-body shadow-sm transition-all hover:bg-neutral-50 hover:text-heading-primary"
+        className="relative inline-flex h-11 w-11 items-center justify-center rounded-xl border border-neutral-200 bg-white text-body shadow-sm transition-all hover:bg-neutral-50 hover:text-heading-primary"
         aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`}
         aria-expanded={open}
       >

@@ -75,19 +75,19 @@
   --z-toast: 110;
   --z-system: 200;
 
-  /* Fluid typography roles */
-  --type-display: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
-  --type-heading: clamp(1.5rem, 1.3rem + 1vw, 2rem);
-  --type-title: clamp(1.125rem, 1.05rem + 0.4vw, 1.25rem);
-  --type-body: 1rem;
-  --type-caption: 0.875rem;
-  --type-label: 0.8125rem;
-  --type-micro: 0.75rem;
-  --leading-display: 1.15;
-  --leading-heading: 1.2;
-  --leading-title: 1.3;
-  --leading-body: 1.55;
-  --leading-caption: 1.4;
+  /* Fluid typography roles — older-buyer readable (body 16–18, titles 22+) */
+  --type-display: clamp(1.875rem, 1.5rem + 1.6vw, 2.625rem);
+  --type-heading: clamp(1.625rem, 1.4rem + 1.1vw, 2.125rem);
+  --type-title: clamp(1.375rem, 1.25rem + 0.5vw, 1.5rem);
+  --type-body: 1.0625rem;
+  --type-caption: 0.9375rem;
+  --type-label: 0.875rem;
+  --type-micro: 0.8125rem;
+  --leading-display: 1.18;
+  --leading-heading: 1.25;
+  --leading-title: 1.35;
+  --leading-body: 1.65;
+  --leading-caption: 1.45;
 
   /* Remap legacy emerald scale to AreaIQ brand */
   --emerald-50: #f3faef;
@@ -419,6 +419,19 @@ html {
   overscroll-behavior-y: auto;
   touch-action: pan-x pan-y;
   scrollbar-width: thin;
+}
+
+/* Premium micro-interactions */
+@media (prefers-reduced-motion: no-preference) {
+  .ask-md a {
+    transition: color 150ms ease;
+  }
+  button:not(:disabled),
+  a[href] {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: 160ms;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  }
 }
 
 /* Admin CRM shell — full viewport, no public-site container caps */

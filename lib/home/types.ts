@@ -50,6 +50,13 @@ export interface SearchChip {
   href: string;
 }
 
+export interface HeroUspItem {
+  id: string;
+  eyebrow: string;
+  title: string;
+  description: string;
+}
+
 export interface WhyAreaIQItem {
   id: string;
   title: string;

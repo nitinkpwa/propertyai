@@ -16,7 +16,12 @@ import {
   resolvePostAuthDestination,
 } from "@/lib/auth/pendingIntent";
 import { getDashboardPath } from "@/lib/auth/profile";
-import { validateRegistration } from "@/lib/auth/validation";
+import {
+  focusFirstFieldError,
+  hasFieldErrors,
+  validateRegistrationFields,
+  type RegistrationFieldErrors,
+} from "@/lib/auth/validation";
 
 function RegisterForm() {
   const router = useRouter();
@@ -32,7 +37,7 @@ function RegisterForm() {
   const [accountType, setAccountType] = useState<AccountType>("buyer");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldError, setFieldError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<RegistrationFieldErrors>({});
 
   const isBuyer = accountType === "buyer";
 
@@ -44,11 +49,18 @@ function RegisterForm() {
     ? `/login?redirect=${encodeURIComponent(redirectTo)}`
     : "/login";
 
+  const clearField = (key: keyof RegistrationFieldErrors) => {
+    setFieldErrors((prev) => {
+      if (!prev[key]) return prev;
+      return { ...prev, [key]: undefined };
+    });
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
 
-    const validationError = validateRegistration({
+    const nextErrors = validateRegistrationFields({
       fullName,
       username: isBuyer ? undefined : username,
       mobile,
@@ -58,12 +70,20 @@ function RegisterForm() {
       email: isBuyer ? email : undefined,
     });
 
-    if (validationError) {
-      setFieldError(validationError);
+    if (hasFieldErrors(nextErrors)) {
+      setFieldErrors(nextErrors);
+      focusFirstFieldError(nextErrors, [
+        "fullName",
+        "username",
+        "mobile",
+        "email",
+        "password",
+        "confirmPassword",
+      ]);
       return;
     }
 
-    setFieldError(null);
+    setFieldErrors({});
     setLoading(true);
 
     try {
@@ -76,7 +96,6 @@ function RegisterForm() {
         contactEmail: isBuyer && email.trim() ? email.trim() : undefined,
       });
 
-      // Buyers with a pending protected action return to the property; others use role dashboard.
       const destination =
         accountType === "buyer"
           ? resolvePostAuthDestination(getDashboardPath(accountType), redirectTo)
@@ -100,7 +119,7 @@ function RegisterForm() {
           : "Join AreaIQ and start listing smarter"
       }
       footer={
-        <p className="text-sm text-muted">
+        <p className="text-base text-muted">
           Already have an account?{" "}
           <Link
             href={loginHref}
@@ -114,74 +133,121 @@ function RegisterForm() {
       {error ? <AuthAlert type="error" message={error} /> : null}
 
       {redirectTo && isBuyer ? (
-        <p className="mb-4 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
+        <p className="mb-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
           Create your account to continue where you left off.
         </p>
       ) : null}
 
-      <form onSubmit={handleSubmit} className="space-y-1">
+      <form onSubmit={handleSubmit} className="space-y-1" noValidate>
         <AuthInput
+          fieldKey="fullName"
           label="Full Name"
           autoComplete="name"
+          enterKeyHint="next"
           placeholder="Your full name"
           value={fullName}
-          onChange={(event) => setFullName(event.target.value)}
+          onChange={(event) => {
+            setFullName(event.target.value);
+            clearField("fullName");
+          }}
+          error={fieldErrors.fullName}
         />
 
         {!isBuyer ? (
           <AuthInput
+            fieldKey="username"
             label="Username"
             autoComplete="username"
+            enterKeyHint="next"
             placeholder="yourname"
             value={username}
-            onChange={(event) => setUsername(event.target.value.toLowerCase())}
+            onChange={(event) => {
+              setUsername(event.target.value.toLowerCase());
+              clearField("username");
+            }}
+            error={fieldErrors.username}
           />
         ) : null}
 
-        <AccountTypeSelector value={accountType} onChange={setAccountType} />
+        <div data-field="accountType">
+          <AccountTypeSelector value={accountType} onChange={setAccountType} />
+          {fieldErrors.accountType ? (
+            <p className="mb-3 text-sm font-medium text-rose-600" role="alert">
+              {fieldErrors.accountType}
+            </p>
+          ) : null}
+        </div>
 
         <AuthInput
+          fieldKey="mobile"
           label="Mobile Number"
           type="tel"
           autoComplete="tel"
           inputMode="numeric"
+          enterKeyHint="next"
           placeholder="98765 43210"
           value={mobile}
-          onChange={(event) => setMobile(event.target.value)}
+          onChange={(event) => {
+            setMobile(event.target.value);
+            clearField("mobile");
+          }}
+          error={fieldErrors.mobile}
         />
 
         {isBuyer ? (
-          <AuthInput
-            label="Email (optional)"
-            type="email"
-            autoComplete="email"
-            placeholder="you@email.com"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
+          <>
+            <AuthInput
+              fieldKey="email"
+              label="Contact email (optional — not for login)"
+              type="email"
+              autoComplete="email"
+              enterKeyHint="next"
+              placeholder="you@email.com"
+              value={email}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                clearField("email");
+              }}
+              error={fieldErrors.email}
+            />
+            <p className="mb-3 -mt-2 text-sm leading-relaxed text-muted">
+              Sign in with your mobile number. This email is only for updates and support.
+            </p>
+          </>
         ) : null}
 
         <AuthInput
+          fieldKey="password"
           label="Password"
           type="password"
           autoComplete="new-password"
+          enterKeyHint="next"
           placeholder="At least 8 characters"
           value={password}
-          onChange={(event) => setPassword(event.target.value)}
+          onChange={(event) => {
+            setPassword(event.target.value);
+            clearField("password");
+          }}
+          error={fieldErrors.password}
         />
 
         <AuthInput
+          fieldKey="confirmPassword"
           label="Confirm Password"
           type="password"
           autoComplete="new-password"
+          enterKeyHint="go"
           placeholder="Re-enter your password"
           value={confirmPassword}
-          onChange={(event) => setConfirmPassword(event.target.value)}
-          error={fieldError}
+          onChange={(event) => {
+            setConfirmPassword(event.target.value);
+            clearField("confirmPassword");
+          }}
+          error={fieldErrors.confirmPassword}
         />
 
         {isBuyer ? (
-          <p className="pb-2 text-xs leading-relaxed text-muted">
+          <p className="pb-2 text-sm leading-relaxed text-muted">
             Budget, preferences, and timeline are collected later as you explore — keeping signup fast.
           </p>
         ) : null}
@@ -200,7 +266,7 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <AuthLayout title="Create your account" subtitle="Join AreaIQ">
+        <AuthLayout title="Create your account" subtitle="Join AreaIQ and start listing smarter">
           <div className="flex justify-center py-8">
             <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
           </div>

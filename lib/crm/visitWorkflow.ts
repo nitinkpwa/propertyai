@@ -64,20 +64,40 @@ export function isActiveVisitPipelineStatus(status: string): boolean {
 }
 
 function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function addDaysIso(isoDate: string, days: number): string {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  dt.setDate(dt.getDate() + days);
+  const yy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
+export function getVisitDateIso(visit: { visit_date?: string | null }): string | null {
+  const date = (visit.visit_date ?? "").slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : null;
 }
 
 /**
  * Upcoming = still in pipeline AND visit_date >= today.
  * Past-dated pending/approved visits automatically move to History.
+ * Expired / completed / cancelled never appear in Upcoming.
  */
 export function isVisitUpcoming(visit: {
   status: string;
   visit_date?: string | null;
 }): boolean {
   if (!isActiveVisitPipelineStatus(visit.status)) return false;
-  const date = (visit.visit_date ?? "").slice(0, 10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+  const date = getVisitDateIso(visit);
+  if (!date) return false;
   return date >= todayIsoDate();
 }
 
@@ -86,6 +106,45 @@ export function isVisitPast(visit: {
   visit_date?: string | null;
 }): boolean {
   return !isVisitUpcoming(visit);
+}
+
+export function isVisitToday(visit: {
+  status: string;
+  visit_date?: string | null;
+}): boolean {
+  if (!isVisitUpcoming(visit)) return false;
+  return getVisitDateIso(visit) === todayIsoDate();
+}
+
+export function isVisitTomorrow(visit: {
+  status: string;
+  visit_date?: string | null;
+}): boolean {
+  if (!isVisitUpcoming(visit)) return false;
+  return getVisitDateIso(visit) === addDaysIso(todayIsoDate(), 1);
+}
+
+/** Later than tomorrow but still upcoming (not expired). */
+export function isVisitLaterUpcoming(visit: {
+  status: string;
+  visit_date?: string | null;
+}): boolean {
+  if (!isVisitUpcoming(visit)) return false;
+  const date = getVisitDateIso(visit);
+  if (!date) return false;
+  return date > addDaysIso(todayIsoDate(), 1);
+}
+
+export type VisitBucket = "today" | "tomorrow" | "upcoming" | "history";
+
+export function getVisitBucket(visit: {
+  status: string;
+  visit_date?: string | null;
+}): VisitBucket {
+  if (isVisitToday(visit)) return "today";
+  if (isVisitTomorrow(visit)) return "tomorrow";
+  if (isVisitUpcoming(visit)) return "upcoming";
+  return "history";
 }
 
 /** Upcoming sort: date ASC, then Approved before Pending, then time ASC. */

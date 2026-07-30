@@ -6,7 +6,6 @@ import type { AdminTab } from "@/lib/admin/types";
 import BottomNav from "@/components/layout/BottomNav";
 import MobileTopBar from "@/components/layout/MobileTopBar";
 import MenuSheet from "@/components/layout/MenuSheet";
-import NotificationBar from "@/components/notifications/NotificationBar";
 import { ADMIN_BOTTOM_NAV, type BottomNavItem } from "@/lib/design/bottomNav";
 
 export interface AdminNavItem {
@@ -126,7 +125,6 @@ export default function AdminShell({
             ) : undefined
           }
         />
-        <NotificationBar variant="sticky" />
       </div>
 
       {/* Edge-to-edge fixed header */}

@@ -98,6 +98,37 @@ function getAreaSqft(property: ListingProperty): number {
   return property.areaUnit === "sqyd" ? property.area * 9 : property.area;
 }
 
+function matchesLocation(
+  property: ListingProperty,
+  location: string,
+): boolean {
+  const needle = location.trim().toLowerCase();
+  if (!needle) return true;
+
+  const haystack = [
+    property.city,
+    property.location,
+    property.name,
+    property.builderName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  // Exact city match or substring across locality / project / builder text
+  if (property.city?.toLowerCase() === needle) return true;
+  return haystack.includes(needle);
+}
+
+function matchesBuilder(
+  property: ListingProperty,
+  builder: string,
+): boolean {
+  const needle = builder.trim().toLowerCase();
+  if (!needle) return true;
+  return property.builderName.toLowerCase().includes(needle);
+}
+
 /** Client-side filter — swap the data source for Supabase results later. */
 export function filterProperties(
   properties: ListingProperty[],
@@ -127,17 +158,11 @@ export function filterProperties(
 
     if (!matchesBhk(property, active.bhk)) return false;
 
-    if (
-      active.location &&
-      property.city?.toLowerCase() !== active.location.toLowerCase()
-    ) {
+    if (active.location && !matchesLocation(property, active.location)) {
       return false;
     }
 
-    if (
-      active.builder &&
-      property.builderName.toLowerCase() !== active.builder.toLowerCase()
-    ) {
+    if (active.builder && !matchesBuilder(property, active.builder)) {
       return false;
     }
 

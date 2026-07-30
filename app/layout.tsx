@@ -48,11 +48,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
-      { url: BRAND.assets.favicon, sizes: "any" },
+      { url: BRAND.assets.favicon, sizes: "any", type: "image/png" },
+      { url: BRAND.assets.faviconIco, sizes: "any" },
       { url: BRAND.assets.favicon16, sizes: "16x16", type: "image/png" },
       { url: BRAND.assets.favicon32, sizes: "32x32", type: "image/png" },
+      { url: BRAND.assets.android192, sizes: "192x192", type: "image/png" },
     ],
-    shortcut: BRAND.assets.favicon,
+    shortcut: [BRAND.assets.favicon, BRAND.assets.faviconIco],
     apple: [{ url: BRAND.assets.appleTouch, sizes: "180x180", type: "image/png" }],
   },
   openGraph: {

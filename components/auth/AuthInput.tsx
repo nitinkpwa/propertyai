@@ -6,6 +6,8 @@ import { ui } from "@/lib/design/tokens";
 interface AuthInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string | null;
+  /** Stable key for scroll-to-error / focusFirstFieldError */
+  fieldKey?: string;
 }
 
 function EyeIcon({ open }: { open: boolean }) {
@@ -37,6 +39,7 @@ function EyeIcon({ open }: { open: boolean }) {
 export default function AuthInput({
   label,
   error,
+  fieldKey,
   type = "text",
   className = "",
   id,
@@ -46,18 +49,20 @@ export default function AuthInput({
   const [visible, setVisible] = useState(false);
   const autoId = useId();
   const inputId = id ?? autoId;
+  const errorId = `${inputId}-error`;
   const isPassword = type === "password";
   const inputType = isPassword && visible ? "text" : type;
 
   return (
-    <div className="mb-4">
+    <div className="mb-4" data-field={fieldKey}>
       <div className="relative">
         <input
           id={inputId}
           type={inputType}
           placeholder={placeholder}
           aria-invalid={Boolean(error)}
-          className={`${ui.input} ${
+          aria-describedby={error ? errorId : undefined}
+          className={`${ui.input} text-[16px] sm:text-base ${
             error ? "border-rose-300 focus:border-rose-400 focus:ring-rose-500/10" : ""
           } ${isPassword ? "pr-12" : ""} ${className}`}
           {...props}
@@ -77,7 +82,7 @@ export default function AuthInput({
         ) : null}
       </div>
       {error ? (
-        <p className="mt-1.5 text-xs font-medium text-rose-600" role="alert">
+        <p id={errorId} className="mt-1.5 text-sm font-medium leading-snug text-rose-600" role="alert">
           {error}
         </p>
       ) : null}

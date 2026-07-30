@@ -21,13 +21,13 @@ export const space = {
 } as const;
 
 export const typeScale = {
-  h1: 32,
+  h1: 34,
   h2: 28,
   h3: 24,
-  h4: 20,
-  body: 16,
-  caption: 14,
-  small: 12,
+  h4: 22,
+  body: 17,
+  caption: 15,
+  small: 13,
 } as const;
 
 /** Semantic typography roles — prefer these over ad-hoc text sizes */
@@ -71,7 +71,7 @@ export const layout = {
 /** Shared class strings for mobile-first UI */
 export const ui = {
   btnBase:
-    "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-base font-semibold transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-400 disabled:shadow-none lg:w-auto",
+    "inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-base font-semibold leading-snug transition-all duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-neutral-200 disabled:text-neutral-400 disabled:shadow-none lg:w-auto",
   btnPrimary:
     "bg-brand text-white shadow-[0_2px_8px_var(--brand-shadow)] hover:bg-brand-hover",
   btnSecondary:
