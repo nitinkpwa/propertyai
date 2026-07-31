@@ -7,11 +7,67 @@ import { useComparedProperty } from "@/lib/buyer/useComparedProperty";
 import LegalTrustBadge from "@/components/property/LegalTrustBadge";
 import { formatPriceShort } from "@/lib/home/marketSignals";
 import type { IntelligencePropertyCardModel } from "@/lib/home/types";
+import {
+  CONFIDENCE_TOOLTIP,
+  SCORE_TONE_COLORS,
+  scoreToneFromValue,
+} from "@/lib/scoring/score-utils";
 import { IQ_GREEN } from "./theme";
 
 type Props = {
   property: IntelligencePropertyCardModel;
 };
+
+function CompactScore({
+  title,
+  score,
+  label,
+  kind,
+  confidence,
+}: {
+  title: string;
+  score: number | null | undefined;
+  label: string | null | undefined;
+  kind: "quality" | "legal";
+  confidence?: number | null;
+}) {
+  const available = score != null && Number.isFinite(score);
+  const tone = scoreToneFromValue(available ? score : null, kind);
+  const colors = SCORE_TONE_COLORS[tone];
+
+  if (!available) {
+    return (
+      <div>
+        <p className="text-muted">{title}</p>
+        <p className="mt-0.5 text-[11px] font-semibold leading-snug text-neutral-500">
+          Insufficient Data
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="text-muted">{title}</p>
+      <p className="font-bold tabular-nums text-heading-primary">
+        {kind === "legal" ? `${Math.round(score)}%` : Math.round(score)}
+      </p>
+      {label ? (
+        <p className="text-[10px] font-semibold" style={{ color: colors.text }}>
+          {label}
+        </p>
+      ) : null}
+      {kind === "quality" && confidence != null ? (
+        <p
+          className="mt-0.5 cursor-help text-[10px] font-medium text-neutral-500 underline decoration-dotted decoration-neutral-300 underline-offset-2"
+          title={`Confidence\n${Math.round(confidence)}%\n\n${CONFIDENCE_TOOLTIP}`}
+        >
+          Confidence {Math.round(confidence)}%
+        </p>
+      ) : null}
+    </div>
+  );
+}
 
 export default function IntelligencePropertyCard({ property }: Props) {
   const { isSaved, handleFavoriteToggle } = useSavedPropertyToggle();
@@ -86,26 +142,19 @@ export default function IntelligencePropertyCard({ property }: Props) {
         </p>
 
         <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-[#F7F9FB] p-3 text-xs">
-          <div>
-            <p className="text-muted">AreaIQ / Investment</p>
-            <p className="font-bold tabular-nums text-heading-primary">
-              {property.investmentScore != null ? Math.round(property.investmentScore) : "—"}
-            </p>
-          </div>
-          <div>
-            <p className="text-muted">Legal compliance</p>
-            <p
-              className="font-bold tabular-nums"
-              style={{
-                color:
-                  property.legalCompliance?.colors.text ?? "var(--heading-primary, #111)",
-              }}
-            >
-              {property.legalCompliance
-                ? `${property.legalCompliance.compliancePercentage}% ${property.legalCompliance.label}`
-                : "—"}
-            </p>
-          </div>
+          <CompactScore
+            title="AreaIQ Score"
+            score={property.areaIqScore}
+            label={property.areaIqLabel}
+            kind="quality"
+            confidence={property.areaIqConfidence}
+          />
+          <CompactScore
+            title="Legal"
+            score={property.legalScore}
+            label={property.legalScoreLabel}
+            kind="legal"
+          />
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">

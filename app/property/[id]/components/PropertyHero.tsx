@@ -158,19 +158,15 @@ export default function PropertyHero({ property, onAskAi }: PropertyHeroProps) {
               value={scores.investment.value}
               available={scores.investment.available}
             />
+            <ScoreChip label="Legal" value={scores.legal.value} available={scores.legal.available} />
             <ScoreChip label="Builder" value={scores.builder.value} available={scores.builder.available} />
+            <ScoreChip label="Location" value={scores.location.value} available={scores.location.available} />
             <ScoreChip label="Rental" value={scores.rental.value} available={scores.rental.available} />
             <ScoreChip
               label="Appreciation"
               value={scores.futureGrowth.value}
               available={scores.futureGrowth.available}
               displayValue={scores.futureGrowth.displayValue}
-            />
-            <ScoreChip label="Demand" value={scores.demand.value} available={scores.demand.available} />
-            <ScoreChip
-              label="Liquidity"
-              value={scores.liquidity.value}
-              available={scores.liquidity.available}
             />
           </div>
         ) : null}

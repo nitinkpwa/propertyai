@@ -1,4 +1,9 @@
 import {
+  isLocationRelevant,
+  resolvePlace,
+  scoreLocationMatch,
+} from "@/lib/location";
+import {
   AREA_MAX,
   AREA_MIN,
   BUDGET_MAX,
@@ -102,9 +107,25 @@ function matchesLocation(
   property: ListingProperty,
   location: string,
 ): boolean {
-  const needle = location.trim().toLowerCase();
+  const needle = location.trim();
   if (!needle) return true;
 
+  const place = resolvePlace(needle);
+  if (place) {
+    const score = scoreLocationMatch(
+      {
+        id: property.id,
+        title: property.name,
+        location: property.location,
+        city: property.city,
+        builder_name: property.builderName,
+      },
+      place,
+    );
+    return isLocationRelevant(score, { minScore: 55, maxDistanceKm: 25 });
+  }
+
+  const lower = needle.toLowerCase();
   const haystack = [
     property.city,
     property.location,
@@ -115,9 +136,8 @@ function matchesLocation(
     .join(" ")
     .toLowerCase();
 
-  // Exact city match or substring across locality / project / builder text
-  if (property.city?.toLowerCase() === needle) return true;
-  return haystack.includes(needle);
+  if (property.city?.toLowerCase() === lower) return true;
+  return haystack.includes(lower);
 }
 
 function matchesBuilder(
@@ -276,7 +296,10 @@ export function buildSupabasePropertyQuery<
     );
   }
   if (filters.location) {
-    next = next.eq("city", filters.location);
+    // Multi-field location match (city / locality / sector) — not exact city only
+    next = next.or(
+      `city.ilike.%${filters.location}%,location.ilike.%${filters.location}%,sector.ilike.%${filters.location}%,title.ilike.%${filters.location}%`,
+    );
   }
   if (filters.builder) {
     next = next.eq("builder_name", filters.builder);

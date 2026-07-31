@@ -20,6 +20,7 @@ import MobileActionBar from "./components/MobileActionBar";
 import MobileDetailExtras from "./components/MobileDetailExtras";
 import PropertyAskPanel from "./components/PropertyAskPanel";
 import PropertyHero from "./components/PropertyHero";
+import PropertyIntelligencePanel from "./components/PropertyIntelligencePanel";
 import Recommendations from "./components/Recommendations";
 import RentalIntelligence from "./components/RentalIntelligence";
 import ReportSidebar from "./components/ReportSidebar";
@@ -149,6 +150,7 @@ export default function PropertyDetailView({ property }: PropertyDetailViewProps
 
               {bundle ? (
                 <>
+                  <PropertyIntelligencePanel report={bundle.scoringReport} />
                   <HealthScoreDashboard scores={bundle.scores} />
                   <PriceAnalysis data={bundle.priceAnalysis} />
 

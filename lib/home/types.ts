@@ -3,6 +3,8 @@ import type {
   LegalVerificationFlags,
 } from "@/lib/properties/legalCompliance";
 import type { ListingProperty } from "@/lib/properties/types";
+import { scorePropertyCardFromListing } from "@/lib/scoring/engine";
+import { areaIqLabel, legalLabel } from "@/lib/scoring/score-utils";
 
 export type MarketSignalKind =
   | "metric"
@@ -76,6 +78,12 @@ export interface IntelligencePropertyCardModel {
   areaUnit?: "sqft" | "sqyd";
   investmentScore: number | null;
   rentalYield: number | null;
+  /** V1 Property Intelligence card scores — never display "—" */
+  areaIqScore?: number | null;
+  areaIqLabel?: string | null;
+  areaIqConfidence?: number | null;
+  legalScore?: number | null;
+  legalScoreLabel?: string | null;
   imageUrl?: string | null;
   imageAlt?: string;
   aiVerified?: boolean;
@@ -89,6 +97,53 @@ export interface IntelligencePropertyCardModel {
 export function listingToIntelligenceCard(
   listing: ListingProperty,
 ): IntelligencePropertyCardModel {
+  const verifiedCount = listing.legalCompliance?.verifiedCount ?? 0;
+  const cardScores = scorePropertyCardFromListing({
+    propertyId: listing.id,
+    amenities: (listing.amenities ?? []).map(String),
+    legalFlags: listing.legalFlags ?? null,
+    legalVerificationAttempted:
+      verifiedCount > 0 || Boolean(listing.reraVerified),
+    reraNumber: listing.reraVerified ? "verified" : null,
+    growthScore: listing.growthScore,
+    possession: listing.possession ?? null,
+    status: null,
+    builderName: listing.builderName,
+    city: listing.city,
+    location: listing.location,
+    price: listing.price,
+    areaSqft: listing.area > 0 ? listing.area : null,
+    bedrooms: listing.bhk > 0 ? listing.bhk : null,
+    imageCount: listing.imageUrl ? 1 : 0,
+  });
+
+  const cachedAreaIq =
+    typeof (listing as { areaiqScore?: number | null }).areaiqScore === "number"
+      ? (listing as { areaiqScore?: number | null }).areaiqScore!
+      : null;
+  const cachedLegal =
+    typeof (listing as { legalScore?: number | null }).legalScore === "number"
+      ? (listing as { legalScore?: number | null }).legalScore!
+      : null;
+
+  // Prefer engine scores — compliance % is fallback for Legal only when engine lacks docs
+  const areaIqScore = cachedAreaIq ?? cardScores.areaIq.score;
+  const legalScore = cachedLegal ?? cardScores.legal.score;
+
+  const areaIqLabelValue =
+    cardScores.areaIq.available && cardScores.areaIq.label
+      ? cardScores.areaIq.label
+      : areaIqScore != null
+        ? areaIqLabel(areaIqScore)
+        : "Insufficient Data";
+
+  const legalLabelValue =
+    cardScores.legal.available && cardScores.legal.label
+      ? cardScores.legal.label
+      : legalScore != null
+        ? legalLabel(legalScore)
+        : "Insufficient Data";
+
   return {
     id: listing.id,
     name: listing.name,
@@ -101,6 +156,11 @@ export function listingToIntelligenceCard(
     areaUnit: listing.areaUnit,
     investmentScore: listing.growthScore,
     rentalYield: listing.rentalYield,
+    areaIqScore,
+    areaIqLabel: areaIqLabelValue,
+    areaIqConfidence: cardScores.areaIq.confidence,
+    legalScore,
+    legalScoreLabel: legalLabelValue,
     imageUrl: listing.imageUrl,
     imageAlt: listing.imageAlt,
     aiVerified: listing.aiVerified,

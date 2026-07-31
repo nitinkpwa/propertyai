@@ -58,6 +58,8 @@ type PropertyRow = Omit<Property, "contact_name" | "contact_phone"> & {
   fire_clearance?: boolean | null;
   bank_approved?: boolean | null;
   govt_layout_approved?: boolean | null;
+  legal_verification_updated_at?: string | null;
+  views?: number | null;
 };
 
 const GALLERY_GRADIENTS = [
@@ -523,6 +525,9 @@ export function mapPropertyRowToDetail(
       avgViews: null,
     } satisfies MarketContext);
 
+  const legalFlags = resolveLegalFlagsFromProperty(row);
+  const legalCompliance = calculateLegalComplianceFromProperty(row);
+
   const intelligenceBundle = buildPropertyIntelligenceBundle({
     id: row.id,
     name: row.title?.trim() || "Property",
@@ -543,6 +548,12 @@ export function mapPropertyRowToDetail(
     similarProperties: similarProperties ?? [],
     nearbyPlaces,
     analytics: analytics ?? null,
+    legalFlags,
+    reraNumber: row.rera_number ?? null,
+    legalVerificationAttempted: Boolean(row.legal_verification_updated_at),
+    views: typeof row.views === "number" ? row.views : null,
+    bedrooms: bedrooms > 0 ? bedrooms : null,
+    imageCount: Array.isArray(row.photos) ? row.photos.length : 0,
   });
 
   const fallbackSummary = buildAiSummary(row, intelligenceReport);
@@ -556,9 +567,6 @@ export function mapPropertyRowToDetail(
     structuredMeta?.ai?.compiled?.propertySummary?.trim() ||
     row.description?.trim() ||
     `${row.title} is listed in ${row.location}, ${row.city}. Contact the seller for full details, site visit scheduling, and documentation.`;
-
-  const legalFlags = resolveLegalFlagsFromProperty(row);
-  const legalCompliance = calculateLegalComplianceFromProperty(row);
 
   return {
     id: row.id,
@@ -624,14 +632,51 @@ export async function fetchSimilarListingProperties(
   limit = 4,
   client?: { from: typeof supabase.from },
 ): Promise<PropertyCardProps[]> {
-  const rows = await getLiveProperties({
+  const { resolvePlace, scoreLocationMatch, isLocationRelevant } =
+    await import("@/lib/location");
+  const place = resolvePlace(city);
+  const cities = place?.cityValues?.length
+    ? place.cityValues
+    : city
+      ? [city]
+      : undefined;
+
+  let rows = await getLiveProperties({
     client,
     includeSeller: true,
-    city,
+    cities,
+    city: cities ? undefined : city,
     excludeId,
-    limit,
+    limit: Math.max(limit * 6, 24),
   });
-  return rows.map((row) => mapPropertyRowToCardProps(row as PropertyRow));
+
+  if (place) {
+    const scored = rows
+      .map((row) => {
+        const r = row as PropertyRow;
+        const loc = scoreLocationMatch(
+          {
+            id: r.id,
+            title: r.title,
+            location: r.location,
+            sector: r.sector,
+            city: r.city,
+            builder_name: r.builder_name,
+            nearby_places: r.nearby_places,
+            lat: r.lat,
+            lng: r.lng,
+          },
+          place,
+        );
+        return { row, loc };
+      })
+      .filter((x) => isLocationRelevant(x.loc, { minScore: 50, maxDistanceKm: 30 }))
+      .sort((a, b) => b.loc.matchScore - a.loc.matchScore)
+      .map((x) => x.row);
+    if (scored.length) rows = scored;
+  }
+
+  return rows.slice(0, limit).map((row) => mapPropertyRowToCardProps(row as PropertyRow));
 }
 
 export function extractBuilderOptions(properties: ListingProperty[]): string[] {

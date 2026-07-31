@@ -23,3 +23,8 @@ export { formatTimeAgo, countUnread, toDisplayItem } from "./service";
 export { useSmartNotifications, useNotificationRotation } from "./hooks";
 export { createBroadcastNotification } from "./broadcasts";
 export { recordIntelligenceSeen, getIntelligenceHistory } from "./engine/history";
+export {
+  ANNOUNCEMENT_BAR_VERSION,
+  dismissAnnouncementBar,
+  isAnnouncementBarHidden,
+} from "./storage";

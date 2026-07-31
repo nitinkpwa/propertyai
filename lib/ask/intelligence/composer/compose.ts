@@ -30,6 +30,9 @@ function formatListingsBlock(rows: RankedListing[], label: string): string {
         `area=${l.area} sqft`,
         `yield=${l.rentalYield ?? "n/a"}`,
         `growth=${l.growthScore ?? "n/a"}`,
+        `locationMatch=${r.locationMatchScore ?? "n/a"}`,
+        `distanceKm=${r.distanceKm ?? "n/a"}`,
+        `tier=${r.locationTier ?? "n/a"}`,
         `matchReasons=${r.matchReasons.join("; ") || "n/a"}`,
       ].join(" | ");
     }),
@@ -68,6 +71,20 @@ export async function composeIntelligenceAnswer(
 
   const responseLanguage = detectConversationLanguage(bundle.userQuery, history);
 
+  const report = bundle.search.locationReport;
+  const locationReportBlock = report
+    ? [
+        `query=${report.query}`,
+        `resolved=${report.resolvedPlace?.displayName ?? "n/a"}`,
+        `expanded=${report.expandedLocations.slice(0, 14).join(" | ")}`,
+        `matchedCount=${report.matchedCount}`,
+        ...report.properties.slice(0, 6).map(
+          (p, i) =>
+            `${i + 1}. ${p.title} @ ${p.locationLabel} | match=${p.matchScore} | distKm=${p.distanceKm ?? "n/a"} | distScore=${p.distanceScore} | final=${p.finalRankingScore} | tier=${p.tier} | why=${p.why.join("; ")}`,
+        ),
+      ].join("\n")
+    : null;
+
   const userPayload = buildComposerUserPayload({
     userQuery: bundle.userQuery,
     intentJson: JSON.stringify(bundle.intent, null, 2),
@@ -81,6 +98,7 @@ export async function composeIntelligenceAnswer(
     confidenceScore: bundle.confidenceScore,
     sources: bundle.sources,
     responseLanguage,
+    locationReportBlock,
   });
 
   let markdown: string;
@@ -96,14 +114,25 @@ export async function composeIntelligenceAnswer(
 
   markdown = markdown.trim();
 
-  // Safety: ensure no-exact-match is stated without adding a second Summary section
-  if (bundle.search.noExactMatch && !/no exact match|exact match (nahi|nahin)|bilkul match/i.test(markdown)) {
+  // Safety: ensure nearby-match framing when exact locality is empty
+  if (
+    bundle.search.noExactMatch &&
+    displayRows.length > 0 &&
+    !/no exact match|exact match (nahi|nahin)|bilkul match|couldn't find an exact|nearby verified/i.test(
+      markdown,
+    )
+  ) {
+    const place =
+      bundle.intent.resolvedPlace?.displayName ||
+      bundle.intent.locality ||
+      bundle.intent.city ||
+      "your preferred location";
     const preamble =
       responseLanguage === "hindi"
-        ? "Exact match available nahi hai."
+        ? `${place} में exact property नहीं मिली, लेकिन पास के verified options हैं।`
         : responseLanguage === "hinglish"
-          ? "Exact match nahi mila."
-          : "I couldn't find an exact match, but these verified alternatives are worth considering.";
+          ? `${place} mein exact property nahi mili, lekin nearby verified options hain.`
+          : `I couldn't find an exact property inside ${place} today. However I found verified projects very close to your preferred location.`;
     markdown = `${preamble} ${markdown}`;
   }
 
@@ -161,9 +190,14 @@ function buildDeterministicFallback(
   }
 
   if (bundle.search.noExactMatch) {
+    const place =
+      bundle.intent.resolvedPlace?.displayName ||
+      bundle.intent.locality ||
+      bundle.intent.city ||
+      "your preferred location";
     return top
-      ? `I couldn't find an exact match, but these verified alternatives are worth considering. ${top.name} (${top.bhk} BHK, ${formatPrice(top.price)}, ${top.city}) looks like a solid option — details are in the cards below. Want to adjust budget or locality?`
-      : `I couldn't find an exact match, and there are no verified listings for this filter yet. Can we loosen budget, BHK, or locality?`;
+      ? `I couldn't find an exact property inside ${place} today. However I found verified projects very close to your preferred location. ${top.name} (${top.bhk} BHK, ${formatPrice(top.price)}, ${top.location || top.city}) looks like a solid nearby option — details are in the cards below. Want to adjust budget or BHK?`
+      : `I couldn't find an exact property inside ${place} today. Share budget and BHK and I'll keep searching nearby verified corridors.`;
   }
 
   return top

@@ -105,6 +105,7 @@ export const CMS_SECTIONS = [
   { id: "connect", label: "Connect Partner", icon: "🤝" },
   { id: "publishing", label: "Publishing", icon: "🚀" },
   { id: "ai", label: "AI Intelligence", icon: "🤖" },
+  { id: "scoring", label: "Score Engine", icon: "📊" },
 ] as const;
 
 export const ADMIN_FORM_STYLES = {

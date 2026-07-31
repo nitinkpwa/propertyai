@@ -1,3 +1,8 @@
+import {
+  expandLocations,
+  resolvePlace,
+  resolvePlaceFromQuery,
+} from "@/lib/location";
 import type { IntentEntities, IntentClassification } from "../../engine/types";
 import type { PossessionIntent } from "../../types";
 import {
@@ -31,6 +36,8 @@ const EMPTY_INTENT = (rawQuery: string): StructuredIntent => ({
   rentalFocus: false,
   rawQuery,
   confidence: 0.4,
+  resolvedPlace: null,
+  expandedLocations: [],
 });
 
 function parseBudget(text: string): { min: number | null; max: number | null } {
@@ -81,16 +88,71 @@ function parsePropertyType(text: string): StructuredPropertyType | null {
   return null;
 }
 
-function parseCity(text: string): { city: string | null; cityGroup: string[] | null } {
-  if (/\btricity\b|\btri\s*city\b/i.test(text)) {
-    return { city: "Tricity", cityGroup: [...TRICITY_CITIES] };
+function parseCity(text: string): {
+  city: string | null;
+  cityGroup: string[] | null;
+  locality: string | null;
+  sector: string | null;
+  resolvedPlace: ReturnType<typeof resolvePlaceFromQuery>;
+  expandedLocations: string[];
+} {
+  const resolved = resolvePlaceFromQuery(text);
+  if (resolved) {
+    const isSector = resolved.kind === "sector";
+    const isCity = resolved.kind === "city" || resolved.canonicalId === "tricity";
+    return {
+      city: isCity
+        ? resolved.displayName === "Tricity"
+          ? "Tricity"
+          : resolved.displayName
+        : resolved.parentCity,
+      cityGroup:
+        resolved.canonicalId === "tricity"
+          ? [...TRICITY_CITIES]
+          : resolved.cityValues.length > 1
+            ? resolved.cityValues
+            : null,
+      locality: isCity ? null : resolved.displayName,
+      sector: isSector ? resolved.displayName : null,
+      resolvedPlace: resolved,
+      expandedLocations: expandLocations(resolved),
+    };
   }
+
+  if (/\btricity\b|\btri\s*city\b/i.test(text)) {
+    const place = resolvePlace("Tricity");
+    return {
+      city: "Tricity",
+      cityGroup: [...TRICITY_CITIES],
+      locality: null,
+      sector: null,
+      resolvedPlace: place,
+      expandedLocations: place ? expandLocations(place) : [...TRICITY_CITIES],
+    };
+  }
+
   for (const city of TRICITY_CITIES) {
     if (new RegExp(`\\b${city.replace(/\s+/g, "\\s+")}\\b`, "i").test(text)) {
-      return { city, cityGroup: null };
+      const place = resolvePlace(city);
+      return {
+        city,
+        cityGroup: place && place.cityValues.length > 1 ? place.cityValues : null,
+        locality: null,
+        sector: null,
+        resolvedPlace: place,
+        expandedLocations: place ? expandLocations(place) : [city],
+      };
     }
   }
-  return { city: null, cityGroup: null };
+
+  return {
+    city: null,
+    cityGroup: null,
+    locality: null,
+    sector: null,
+    resolvedPlace: null,
+    expandedLocations: [],
+  };
 }
 
 function parsePossession(text: string): PossessionIntent | null {
@@ -116,12 +178,17 @@ export function parseIntentFromText(query: string): StructuredIntent {
 
   const lower = text.toLowerCase();
 
-  // Transaction
-  if (/\brent\b|\brental\b|\blease\b/.test(lower)) intent.transaction = "rent";
-  else if (/\bsell\b|\bselling\b/.test(lower)) intent.transaction = "sell";
+  // Transaction (includes Hinglish buy/rent cues)
+  if (/\brent\b|\brental\b|\blease\b|\bkiraye\b|\bkiraya\b/.test(lower)) {
+    intent.transaction = "rent";
+  } else if (/\bsell\b|\bselling\b/.test(lower)) intent.transaction = "sell";
   else if (/\bcommercial\b|\bsco\b|\boffice\b|\bwarehouse\b|\bshop\b/.test(lower)) {
     intent.transaction = "commercial";
-  } else if (/\bbuy\b|\bpurchase\b|\bbhk\b|\bflat\b|\bapartment\b|\bvilla\b|\bplot\b/.test(lower)) {
+  } else if (
+    /\bbuy\b|\bpurchase\b|\bbhk\b|\bflat\b|\bapartment\b|\bvilla\b|\bplot\b|\blena\b|\ble\s*na\b|\bchahiye\b|\bkharid/.test(
+      lower,
+    )
+  ) {
     intent.transaction = "buy";
   }
 
@@ -144,11 +211,14 @@ export function parseIntentFromText(query: string): StructuredIntent {
   intent.budgetMin = budget.min;
   intent.budgetMax = budget.max;
 
-  // Location
+  // Location — Location Intelligence Engine (never exact-string only)
   const cityInfo = parseCity(text);
   intent.city = cityInfo.city;
   intent.cityGroup = cityInfo.cityGroup;
-  intent.sector = parseSector(text);
+  intent.locality = cityInfo.locality;
+  intent.sector = cityInfo.sector ?? parseSector(text);
+  intent.resolvedPlace = cityInfo.resolvedPlace;
+  intent.expandedLocations = cityInfo.expandedLocations;
 
   // Style / purpose
   if (/\bluxury\b|\bpremium\b|\bhigh[\s-]?end\b/.test(lower)) intent.intentStyle = "luxury";
@@ -156,7 +226,9 @@ export function parseIntentFromText(query: string): StructuredIntent {
     intent.intentStyle = "affordable";
   }
 
-  if (/\binvest(?:ment|or)?\b|\byield\b|\bappreciation\b|\broi\b/.test(lower)) {
+  if (
+    /\binvest(?:ment|or)?\b|\byield\b|\bappreciation\b|\broi\b|\binvestment\b/.test(lower)
+  ) {
     intent.investment = true;
     intent.selfUse = false;
   }
@@ -213,12 +285,45 @@ export function mergeClassifierIntoIntent(
     if (loc && /tricity/i.test(loc)) {
       merged.city = "Tricity";
       merged.cityGroup = [...TRICITY_CITIES];
-    } else {
-      merged.city = loc;
+      const place = resolvePlace("Tricity");
+      merged.resolvedPlace = place;
+      merged.expandedLocations = place ? expandLocations(place) : [...TRICITY_CITIES];
+    } else if (loc) {
+      const place = resolvePlace(loc) ?? resolvePlaceFromQuery(loc);
+      if (place) {
+        merged.resolvedPlace = place;
+        merged.expandedLocations = expandLocations(place);
+        merged.city =
+          place.kind === "city" ? place.displayName : place.parentCity ?? loc;
+        if (place.kind !== "city") merged.locality = place.displayName;
+        if (place.cityValues.length > 1) merged.cityGroup = place.cityValues;
+      } else {
+        merged.city = loc;
+      }
     }
   }
 
-  if (!merged.locality && e.locality) merged.locality = e.locality;
+  if (!merged.resolvedPlace && (merged.city || merged.locality)) {
+    const place =
+      resolvePlace(merged.locality ?? merged.city ?? "") ??
+      resolvePlaceFromQuery(merged.rawQuery);
+    if (place) {
+      merged.resolvedPlace = place;
+      merged.expandedLocations = expandLocations(place);
+      if (!merged.cityGroup && place.cityValues.length > 1) {
+        merged.cityGroup = place.cityValues;
+      }
+    }
+  }
+
+  if (!merged.locality && e.locality) {
+    merged.locality = e.locality;
+    const place = resolvePlace(e.locality);
+    if (place) {
+      merged.resolvedPlace = place;
+      merged.expandedLocations = expandLocations(place);
+    }
+  }
   if (!merged.builder && (e.builder || classification.builder)) {
     merged.builder = e.builder ?? classification.builder;
   }

@@ -55,6 +55,7 @@ export type MarketPosition =
   | "Undervalued"
   | "Fair Value"
   | "Fairly Priced"
+  | "Slightly Premium"
   | "Overpriced"
   | "Unknown"
   | "Insufficient verified data";
@@ -228,6 +229,8 @@ export interface PropertyIntelligenceBundle {
     demand: ScoreMetric;
     availability: ScoreMetric;
   };
+  /** Full V1 scoring engine report — explanations, confidence, factor breakdown */
+  scoringReport?: import("@/lib/scoring/types").PropertyIntelligenceReport | null;
   priceAnalysis: PriceAnalysisData;
   appreciation: AppreciationData;
   rental: RentalIntelData;

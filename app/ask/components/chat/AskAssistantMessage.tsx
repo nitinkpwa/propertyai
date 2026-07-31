@@ -102,6 +102,14 @@ export function AskAssistantMessage({
             <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">
               {turn.intent}
             </span>
+            {turn.intelligenceLevel === "partial" ? (
+              <span
+                className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-800"
+                title="Verified facts only — gaps listed, with next steps to continue"
+              >
+                🟡 Partial Intelligence
+              </span>
+            ) : null}
             {turn.isSimilar ? (
               <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                 Closest matches
@@ -122,6 +130,24 @@ export function AskAssistantMessage({
             {turn.headline}
           </h3>
           {turn.subtext ? <p className="mt-1 text-sm text-muted">{turn.subtext}</p> : null}
+
+          {turn.intelligenceLevel === "partial" &&
+          turn.missingSignals &&
+          turn.missingSignals.length > 0 &&
+          !streaming ? (
+            <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50/60 px-3 py-2.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
+                Still collecting
+              </p>
+              <ul className="mt-1.5 space-y-0.5">
+                {turn.missingSignals.slice(0, 5).map((signal) => (
+                  <li key={signal} className="text-xs text-amber-900/90">
+                    • {signal}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
 
           {turn.stats ? (
             <div className="mt-3 grid grid-cols-3 gap-2">
@@ -290,17 +316,24 @@ export function AskAssistantMessage({
         </div>
 
         {streaming ? null : (
-        <div className="flex flex-wrap gap-2 pl-1">
-          {(actions.length > 0 ? actions : chips).slice(0, 5).map((action) => (
-            <button
-              key={action}
-              type="button"
-              onClick={() => onAction(action)}
-              className="min-h-11 rounded-full border border-neutral-200 bg-white px-3.5 py-2 text-sm font-semibold text-body shadow-sm transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
-            >
-              {action}
-            </button>
-          ))}
+        <div className="space-y-2 pl-1">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-label">
+            {turn.intelligenceLevel === "partial"
+              ? "Suggested next questions"
+              : "Continue"}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(actions.length > 0 ? actions : chips).slice(0, 5).map((action) => (
+              <button
+                key={action}
+                type="button"
+                onClick={() => onAction(action)}
+                className="min-h-11 rounded-full border border-neutral-200 bg-white px-3.5 py-2 text-sm font-semibold text-body shadow-sm transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
+              >
+                {action}
+              </button>
+            ))}
+          </div>
         </div>
         )}
       </div>

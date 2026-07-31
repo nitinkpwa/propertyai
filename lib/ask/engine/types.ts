@@ -102,6 +102,8 @@ export interface PropertyContext {
   analytics?: PropertyAnalyticsContext | null;
 }
 
+export type AskIntelligenceLevel = "full" | "partial";
+
 export interface AskEngineResponse {
   intent: AskEngineIntent;
   answer: string;
@@ -116,6 +118,10 @@ export interface AskEngineResponse {
   stats: AskSearchStats | null;
   searchedDatabase: boolean;
   isSimilar: boolean;
+  /** full = normal answer; partial = verified slice + next actions (never a dead end) */
+  intelligenceLevel?: AskIntelligenceLevel;
+  confidenceOverall?: number | null;
+  missingSignals?: string[];
 }
 
 export interface HandlerContext {
@@ -169,5 +175,8 @@ export function emptyEngineResponse(intent: AskEngineIntent): AskEngineResponse 
     stats: null,
     searchedDatabase: false,
     isSimilar: false,
+    intelligenceLevel: "full",
+    confidenceOverall: null,
+    missingSignals: [],
   };
 }

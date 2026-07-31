@@ -2,6 +2,12 @@ import { searchPropertiesByBuilder } from "../../search";
 import type { AskEngineResponse, HandlerContext } from "../types";
 import { classificationToResponseFields } from "../types";
 import { resolveBuilderName } from "../classifier";
+import {
+  assessConfidence,
+  intelligenceLevelForConfidence,
+  missingSignals,
+  nextActionsForIntent,
+} from "../confidence";
 import { buildMemoryContext } from "../memory";
 import { logAsk } from "../logger";
 import { buildListingsContext, generateAreaIQResponse, BUILDER_PROMPT } from "../openai";
@@ -10,12 +16,14 @@ export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineRespo
   const builderName = resolveBuilderName(ctx.classification);
   const baseFields = classificationToResponseFields(ctx.classification);
   const memoryContext = buildMemoryContext(ctx.classification, ctx.propertyContext);
+  const actions = nextActionsForIntent(ctx.classification);
 
   if (!builderName) {
     const answer = await generateAreaIQResponse(BUILDER_PROMPT, ctx.message, {
       history: ctx.history,
       memoryContext,
     });
+    const confidence = assessConfidence(ctx.classification, { hasBuilderData: false });
 
     return {
       intent: "BUILDER",
@@ -23,15 +31,14 @@ export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineRespo
       ...baseFields,
       properties: [],
       propertyRationales: {},
-      suggestions: [],
-      followUpQuestions: [
-        "Is DLF a good builder?",
-        "Tell me about Omaxe",
-        "Show properties in Mohali",
-      ],
+      suggestions: actions.slice(0, 5),
+      followUpQuestions: actions.slice(0, 5),
       stats: null,
       searchedDatabase: false,
       isSimilar: false,
+      intelligenceLevel: "partial",
+      confidenceOverall: confidence.overall,
+      missingSignals: missingSignals(confidence),
     };
   }
 
@@ -60,25 +67,11 @@ export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineRespo
     listingsContext,
   });
 
-  if (listings.length === 0) {
-    return {
-      intent: "BUILDER",
-      answer,
-      ...baseFields,
-      builder: builderName,
-      properties: [],
-      propertyRationales: {},
-      suggestions: [],
-      followUpQuestions: [
-        "Show properties in Mohali",
-        "Compare DLF vs SBP",
-        "Best builders in Tricity",
-      ],
-      stats: null,
-      searchedDatabase: true,
-      isSimilar: false,
-    };
-  }
+  const confidence = assessConfidence(ctx.classification, {
+    propertyCount: listings.length,
+    hasBuilderData: true,
+    hasAnalytics: listings.length >= 2,
+  });
 
   return {
     intent: "BUILDER",
@@ -87,14 +80,23 @@ export async function handleBuilder(ctx: HandlerContext): Promise<AskEngineRespo
     builder: builderName,
     properties: listings,
     propertyRationales: {},
-    suggestions: ["Compare these", "Lowest Price", "Ready to Move"],
+    suggestions:
+      listings.length > 0
+        ? ["Compare these", "Lowest Price", "Ready to Move", "Compare similar builders"]
+        : actions.slice(0, 5),
     followUpQuestions: [
-      "Compare with other builders",
-      "Show cheaper options",
-      "Highest rental yield",
+      listings.length > 0
+        ? `Show more projects by ${builderName}`
+        : "Show trusted builders in Mohali",
+      "Compare similar builders",
+      ...actions.slice(0, 2),
     ],
     stats: null,
     searchedDatabase: true,
     isSimilar: false,
+    intelligenceLevel: intelligenceLevelForConfidence(confidence.overall),
+    confidenceOverall: confidence.overall,
+    missingSignals:
+      confidence.overall >= 70 ? [] : missingSignals(confidence),
   };
 }

@@ -191,17 +191,31 @@ export function mapEngineResponseToTurn(
   const uiIntent = mapEngineIntentToUi(response.intent);
   const sections = parseMarkdownSections(response.answer);
 
+  const intelligenceLevel = response.intelligenceLevel ?? "full";
+  const headline =
+    intelligenceLevel === "partial"
+      ? response.intent === "MARKET_TREND" || response.intent === "LOCALITY"
+        ? "Here's what we can verify"
+        : response.intent === "BUILDER"
+          ? "Builder intel (partial)"
+          : response.intent === "PROPERTY_SEARCH" || response.intent === "INVESTMENT"
+            ? "Let's keep narrowing this down"
+            : extractHeadline(response.answer, response.intent)
+      : extractHeadline(response.answer, response.intent);
+
   return {
     id: crypto.randomUUID(),
     userQuery,
     intent: uiIntent,
-    headline: extractHeadline(response.answer, response.intent),
+    headline,
     subtext:
-      response.searchedDatabase && response.isSimilar
-        ? "Closest verified alternatives — not exact matches."
-        : response.searchedDatabase && response.properties.length > 0
-          ? "Verified listings below."
-          : null,
+      intelligenceLevel === "partial"
+        ? "Partial intelligence — verified facts plus next steps. Nothing invented."
+        : response.searchedDatabase && response.isSimilar
+          ? "Closest verified alternatives — not exact matches."
+          : response.searchedDatabase && response.properties.length > 0
+            ? "Verified listings below."
+            : null,
     aiContent: response.answer,
     sections,
     stats: response.stats,
@@ -210,5 +224,8 @@ export function mapEngineResponseToTurn(
     isSimilar: response.isSimilar,
     quickActions: response.suggestions,
     followUps: response.followUpQuestions,
+    intelligenceLevel,
+    confidenceOverall: response.confidenceOverall ?? null,
+    missingSignals: response.missingSignals ?? [],
   };
 }

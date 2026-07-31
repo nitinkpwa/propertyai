@@ -3,8 +3,7 @@ import { detectIntent } from "./classifier";
 import {
   assessConfidence,
   intentRequiresStrongEvidence,
-  isBelowConfidenceThreshold,
-  lowConfidenceResponse,
+  partialIntelligenceResponse,
 } from "./confidence";
 import { isClearlyUnrelated } from "./domainGuard";
 import { handleBuilder } from "./handlers/builder";
@@ -123,13 +122,23 @@ function attachClassificationFields(
   };
 }
 
-function shouldRefuseForLowConfidence(
+/**
+ * Only short-circuit when we lack the minimum anchor to run a handler.
+ * Never refuse market/locality/investment solely for thin analytics —
+ * handlers answer the verified slice and offer next steps.
+ */
+function shouldUsePartialIntelligence(
   classification: IntentClassification,
   propertyContext?: PropertyContext | null,
 ): ReturnType<typeof assessConfidence> | null {
   if (!intentRequiresStrongEvidence(classification.intent)) return null;
-  // Search can discover listings — never refuse before DB.
-  if (classification.intent === "PROPERTY_SEARCH") return null;
+  // Search / investment with filters can discover listings — never block before DB.
+  if (
+    classification.intent === "PROPERTY_SEARCH" ||
+    classification.intent === "INVESTMENT"
+  ) {
+    return null;
+  }
 
   const hasLocation = Boolean(
     classification.location ||
@@ -147,44 +156,17 @@ function shouldRefuseForLowConfidence(
     (classification.intent === "MARKET_TREND" && !hasLocation) ||
     (classification.intent === "LOCALITY" && !hasLocation) ||
     (classification.intent === "COMPARE" && !hasCompareTargets) ||
-    (classification.intent === "INVESTMENT" &&
-      !classification.budget &&
-      !hasLocation &&
-      !propertyContext) ||
     (classification.intent === "FINANCE" && !hasFinanceAnchor);
 
-  const confidence = assessConfidence(classification, {
+  if (!missingAnchor) return null;
+
+  return assessConfidence(classification, {
     hasPropertyContext: Boolean(propertyContext),
     propertyCount: 0,
     hasBuilderData: Boolean(classification.builder),
     hasAnalytics: Boolean(propertyContext?.analytics),
-    pipelineConfidence: missingAnchor ? 28 : null,
+    pipelineConfidence: 28,
   });
-
-  if (missingAnchor) {
-    return confidence;
-  }
-
-  // Market trends invent easily without listing analytics — refuse.
-  if (classification.intent === "MARKET_TREND" && !propertyContext?.analytics) {
-    return assessConfidence(classification, {
-      hasPropertyContext: Boolean(propertyContext),
-      propertyCount: 0,
-      hasBuilderData: Boolean(classification.builder),
-      hasAnalytics: false,
-      pipelineConfidence: 25,
-    });
-  }
-
-  if (
-    classification.intent === "INVESTMENT" &&
-    !propertyContext?.analytics &&
-    isBelowConfidenceThreshold(confidence)
-  ) {
-    return confidence;
-  }
-
-  return null;
 }
 
 async function processAskMessageCore(
@@ -262,14 +244,14 @@ async function processAskMessageCore(
       intent: classification.intent,
     });
 
-    const low = shouldRefuseForLowConfidence(classification, propertyContext);
-    if (low) {
+    const partialGate = shouldUsePartialIntelligence(classification, propertyContext);
+    if (partialGate) {
       logAsk({
-        event: "confidence_gate_reject",
+        event: "confidence_partial_intelligence",
         intent: classification.intent,
-        overall: low.overall,
+        overall: partialGate.overall,
       });
-      const response = lowConfidenceResponse(ctx, low);
+      const response = partialIntelligenceResponse(ctx, partialGate);
       emitStreamToken(response.answer);
       return response;
     }
@@ -279,21 +261,52 @@ async function processAskMessageCore(
       classification,
     );
 
-    // Post-search confidence: empty DB results for search / compare
+    // Empty search/compare: keep helping — never a dead-end refuse
     if (
       response.searchedDatabase &&
       response.properties.length === 0 &&
-      (classification.intent === "PROPERTY_SEARCH" || classification.intent === "COMPARE")
+      (classification.intent === "PROPERTY_SEARCH" ||
+        classification.intent === "COMPARE" ||
+        classification.intent === "INVESTMENT")
     ) {
       const confidence = assessConfidence(classification, {
         propertyCount: 0,
         hasPropertyContext: Boolean(propertyContext),
-        pipelineConfidence: 30,
+        pipelineConfidence: 35,
       });
-      if (isBelowConfidenceThreshold(confidence)) {
-        response = { ...response, answer: lowConfidenceResponse(ctx, confidence).answer };
-        emitStreamToken(response.answer);
-      }
+      const partial = partialIntelligenceResponse(ctx, confidence, {
+        emptySearch: true,
+      });
+      response = {
+        ...response,
+        answer: partial.answer,
+        suggestions:
+          response.suggestions.length > 0 ? response.suggestions : partial.suggestions,
+        followUpQuestions:
+          response.followUpQuestions.length > 0
+            ? response.followUpQuestions
+            : partial.followUpQuestions,
+        intelligenceLevel: "partial",
+        confidenceOverall: confidence.overall,
+        missingSignals: partial.missingSignals,
+      };
+      emitStreamToken(response.answer);
+    } else if (!response.intelligenceLevel) {
+      const confidence = assessConfidence(classification, {
+        propertyCount: response.properties.length,
+        hasPropertyContext: Boolean(propertyContext),
+        hasBuilderData: Boolean(classification.builder),
+        hasAnalytics: Boolean(propertyContext?.analytics),
+      });
+      response = {
+        ...response,
+        intelligenceLevel: confidence.overall >= 70 ? "full" : "partial",
+        confidenceOverall: confidence.overall,
+        missingSignals:
+          confidence.overall >= 70
+            ? []
+            : (partialIntelligenceResponse(ctx, confidence).missingSignals ?? []),
+      };
     }
 
     logAsk({

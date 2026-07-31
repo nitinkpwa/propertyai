@@ -52,12 +52,15 @@ export async function runIntelligencePipeline(
       bedrooms: intent.bedrooms,
       budgetMax: intent.budgetMax,
       city: intent.city,
+      locality: intent.locality,
       propertyType: intent.propertyType,
       style: intent.intentStyle,
+      resolvedPlace: intent.resolvedPlace?.displayName ?? null,
+      expandedLocations: intent.expandedLocations?.slice(0, 12) ?? [],
     },
   });
 
-  // STEP 2–3 — Structured search + labeled fallback
+  // STEP 2–3 — Location Intelligence search + labeled fallback
   const search = await executeStructuredSearch(intent, excludePropertyIds);
 
   logAsk({
@@ -65,6 +68,22 @@ export async function runIntelligencePipeline(
     exactCount: search.exactCount,
     alternatives: search.alternatives.length,
     noExactMatch: search.noExactMatch,
+    locationReport: search.locationReport
+      ? {
+          query: search.locationReport.query,
+          expandedLocations: search.locationReport.expandedLocations.slice(0, 16),
+          matchedCount: search.locationReport.matchedCount,
+          top: search.locationReport.properties.slice(0, 8).map((p) => ({
+            title: p.title,
+            location: p.locationLabel,
+            matchScore: p.matchScore,
+            distanceKm: p.distanceKm,
+            distanceScore: p.distanceScore,
+            finalRankingScore: p.finalRankingScore,
+            tier: p.tier,
+          })),
+        }
+      : null,
   });
 
   const displayListings = (

@@ -437,22 +437,59 @@ export async function fetchRecommendedPropertyCards(
   limit = 4,
 ) {
   const { getLiveProperties } = await import("@/lib/properties/getLiveProperties");
-  const city =
-    preferredLocations.length === 1 ? preferredLocations[0] : undefined;
+  const {
+    resolvePlace,
+    scoreLocationMatch,
+    isLocationRelevant,
+  } = await import("@/lib/location");
+
+  const places = preferredLocations
+    .map((loc) => resolvePlace(loc))
+    .filter(Boolean);
+  const cityValues = [
+    ...new Set(places.flatMap((p) => p!.cityValues.length ? p!.cityValues : [p!.displayName])),
+  ];
+
   let rows = await getLiveProperties({
     includeSeller: true,
-    limit: preferredLocations.length > 1 ? limit * 4 : limit,
-    city,
+    limit: preferredLocations.length ? limit * 8 : limit,
+    cities: cityValues.length ? cityValues : undefined,
+    city:
+      !cityValues.length && preferredLocations.length === 1
+        ? preferredLocations[0]
+        : undefined,
   });
 
-  if (preferredLocations.length > 1) {
-    const allowed = new Set(preferredLocations.map((c) => c.toLowerCase()));
-    rows = rows
-      .filter((r) => allowed.has((r.city || "").toLowerCase()))
-      .slice(0, limit);
+  if (places.length) {
+    const scored = rows
+      .map((r) => {
+        let best = 0;
+        for (const place of places) {
+          const loc = scoreLocationMatch(
+            {
+              id: r.id,
+              title: r.title,
+              location: r.location,
+              sector: r.sector,
+              city: r.city,
+              lat: r.lat,
+              lng: r.lng,
+            },
+            place!,
+          );
+          if (isLocationRelevant(loc, { minScore: 50, maxDistanceKm: 30 })) {
+            best = Math.max(best, loc.matchScore);
+          }
+        }
+        return { r, best };
+      })
+      .filter((x) => x.best > 0)
+      .sort((a, b) => b.best - a.best)
+      .map((x) => x.r);
+    if (scored.length) rows = scored;
   }
 
-  return rows.map((row) => rowToCard(row as PropertyRow));
+  return rows.slice(0, limit).map((row) => rowToCard(row as PropertyRow));
 }
 
 export async function fetchSiteVisits(userId: string): Promise<SiteVisitRow[]> {

@@ -15,6 +15,7 @@ import type { AdminPropertyFormState } from "@/lib/admin/property/types";
 import type { WizardStepId } from "@/lib/admin/property/types";
 import ConnectAssignmentCenter from "./ConnectAssignmentCenter";
 import PropertyLivePreview from "./PropertyLivePreview";
+import ScoreBreakdownCard from "./ScoreBreakdownCard";
 import WizardStepContent from "./wizard/WizardStepContent";
 
 interface Props {
@@ -35,6 +36,7 @@ const SECTION_TO_STEP: Record<string, WizardStepId> = {
   connect: "connect",
   publishing: "publishing",
   ai: "basic",
+  scoring: "basic",
 };
 
 export default function PropertyCmsEditor({
@@ -175,6 +177,12 @@ export default function PropertyCmsEditor({
         <main className="min-w-0 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm sm:p-6">
           {section === "connect" ? (
             <ConnectAssignmentCenter form={form} setForm={setForm} />
+          ) : section === "scoring" ? (
+            <ScoreBreakdownCard
+              form={form}
+              propertyId={propertyId}
+              adminUserId={adminUserId}
+            />
           ) : section === "ai" ? (
             <div className="space-y-6">
               <div className="flex flex-wrap items-start justify-between gap-3">

@@ -1,4 +1,10 @@
 import type { PropertyCardProps } from "@/app/components/PropertyCard";
+import {
+  buildLocationOrFilter,
+  isLocationRelevant,
+  resolvePlace,
+  scoreLocationMatch,
+} from "@/lib/location";
 import { mapPropertyRowToCardProps, mapPropertyRowToListing } from "@/lib/properties/queries";
 import type { ListingProperty } from "@/lib/properties/types";
 import {
@@ -61,8 +67,29 @@ interface QueryOptions {
 }
 
 function matchesLocality(row: PropertyRow, locality: string): boolean {
+  const place = resolvePlace(locality);
+  if (place) {
+    return isLocationRelevant(
+      scoreLocationMatch(
+        {
+          id: row.id,
+          title: row.title,
+          project_name: row.project_name,
+          builder_name: row.builder_name,
+          location: row.location,
+          sector: row.sector,
+          city: row.city,
+          description: row.description,
+          lat: row.lat,
+          lng: row.lng,
+        },
+        place,
+      ),
+      { minScore: 55, maxDistanceKm: 25 },
+    );
+  }
   const needle = locality.toLowerCase();
-  const haystack = `${row.title} ${row.location} ${row.sector ?? ""} ${row.description ?? ""}`.toLowerCase();
+  const haystack = `${row.title} ${row.location} ${row.sector ?? ""} ${row.description ?? ""} ${row.city ?? ""}`.toLowerCase();
   return haystack.includes(needle);
 }
 
@@ -118,7 +145,18 @@ async function runQuery(filters: PropertySearchFilters, options: QueryOptions) {
     if (filters.minPrice !== null) query = query.gte("price", filters.minPrice);
     if (filters.bhk !== null) query = query.eq("bedrooms", filters.bhk);
     if (filters.subType) query = query.eq("sub_type", filters.subType);
-    if (filters.city) query = query.ilike("city", `%${filters.city}%`);
+
+    const place =
+      (filters.locality && resolvePlace(filters.locality)) ||
+      (filters.city && resolvePlace(filters.city)) ||
+      null;
+    if (place) {
+      query = query.or(buildLocationOrFilter(place, 12));
+    } else if (filters.city) {
+      query = query.or(
+        `city.ilike.%${filters.city}%,location.ilike.%${filters.city}%,sector.ilike.%${filters.city}%,title.ilike.%${filters.city}%`,
+      );
+    }
 
     return query
       .order("created_at", { ascending: false })
@@ -294,18 +332,23 @@ export async function searchPropertiesByBuilder(
 export async function searchPropertiesByLocality(
   locality: string,
 ): Promise<AskSearchResult> {
+  const place = resolvePlace(locality);
   const filters: PropertySearchFilters = {
     bhk: null,
     minPrice: null,
     maxPrice: null,
-    city: null,
-    locality,
+    city: place?.parentCity ?? null,
+    locality: place?.displayName ?? locality,
     subType: null,
     listingType: null,
     possession: null,
     investment: false,
     builder: null,
   };
+
+  const orFilter = place
+    ? buildLocationOrFilter(place, 14)
+    : `location.ilike.%${locality}%,title.ilike.%${locality}%,city.ilike.%${locality}%,sector.ilike.%${locality}%`;
 
   const { data, error } = await selectLiveProperties(
     (select) =>
@@ -314,11 +357,9 @@ export async function searchPropertiesByLocality(
         .select(select)
         .eq("status", "active")
         .is("deleted_at", null)
-        .or(
-          `location.ilike.%${locality}%,title.ilike.%${locality}%,city.ilike.%${locality}%,sector.ilike.%${locality}%`,
-        )
+        .or(orFilter)
         .order("created_at", { ascending: false })
-        .limit(RESULT_LIMIT),
+        .limit(RESULT_LIMIT * 2),
     "searchPropertiesByLocality",
   );
 
@@ -329,21 +370,46 @@ export async function searchPropertiesByLocality(
 
   let rows = (data as PropertyRow[]) ?? [];
   rows = rows.filter((row) => matchesLocality(row, locality));
-  rows.sort((a, b) => scoreProperty(b, filters) - scoreProperty(a, filters));
+  if (place) {
+    rows.sort((a, b) => {
+      const sa = scoreLocationMatch(
+        { id: a.id, title: a.title, location: a.location, sector: a.sector, city: a.city, lat: a.lat, lng: a.lng },
+        place,
+      );
+      const sb = scoreLocationMatch(
+        { id: b.id, title: b.title, location: b.location, sector: b.sector, city: b.city, lat: b.lat, lng: b.lng },
+        place,
+      );
+      return sb.matchScore - sa.matchScore || scoreProperty(b, filters) - scoreProperty(a, filters);
+    });
+  } else {
+    rows.sort((a, b) => scoreProperty(b, filters) - scoreProperty(a, filters));
+  }
 
   if (rows.length === 0) {
     return searchPropertiesFromIntent(filters);
   }
 
   const mapped = mapRows(rows.slice(0, RESULT_LIMIT));
+  const noExact =
+    place != null &&
+    !rows.some((row) => {
+      const tier = scoreLocationMatch(
+        { id: row.id, title: row.title, location: row.location, city: row.city },
+        place,
+      ).tier;
+      return tier === "exact" || tier === "alias";
+    });
 
   return {
     properties: mapped.cards,
     listings: mapped.listings,
     filters,
-    isSimilar: false,
-    similarReason: null,
-    totalExact: mapped.cards.length,
+    isSimilar: noExact,
+    similarReason: noExact
+      ? `I couldn't find an exact property inside ${place?.displayName ?? locality} today. However I found verified projects very close to your preferred location.`
+      : null,
+    totalExact: noExact ? 0 : mapped.cards.length,
   };
 }
 

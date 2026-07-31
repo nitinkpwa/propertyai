@@ -62,6 +62,8 @@ export interface AskSection {
   content: string;
 }
 
+export type AskTurnIntelligenceLevel = "full" | "partial";
+
 export interface AskTurn {
   id: string;
   userQuery: string;
@@ -76,6 +78,10 @@ export interface AskTurn {
   isSimilar: boolean;
   quickActions: readonly string[];
   followUps: readonly string[];
+  /** partial = verified slice + next actions (UI shows Partial Intelligence) */
+  intelligenceLevel?: AskTurnIntelligenceLevel;
+  confidenceOverall?: number | null;
+  missingSignals?: string[];
 }
 
 export interface AskSessionState {

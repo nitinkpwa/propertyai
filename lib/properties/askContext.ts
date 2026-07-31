@@ -145,6 +145,7 @@ async function fetchPropertyAskContextUncached(
       similarProperties: [],
       nearbyPlaces: [],
       analytics,
+      reraNumber: row.rera_number ?? null,
     });
 
     const priceAnalysis = bundle.priceAnalysis;

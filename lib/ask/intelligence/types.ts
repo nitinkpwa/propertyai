@@ -1,4 +1,5 @@
 import type { ListingProperty } from "@/lib/properties/types";
+import type { LocationSearchReport, ResolvedPlace } from "@/lib/location";
 import type { PossessionIntent, PropertySearchFilters } from "../types";
 
 /** Structured intent extracted from a user query (never invented by the LLM). */
@@ -37,12 +38,19 @@ export interface StructuredIntent {
   rentalFocus: boolean;
   rawQuery: string;
   confidence: number;
+  /** Location Intelligence Engine resolution (synonyms + nearby expansion). */
+  resolvedPlace?: ResolvedPlace | null;
+  expandedLocations?: string[];
 }
 
 export interface RankedListing {
   listing: ListingProperty;
   rankScore: number;
   matchReasons: string[];
+  locationMatchScore?: number;
+  distanceKm?: number | null;
+  distanceScore?: number;
+  locationTier?: string;
 }
 
 export interface SearchMatchResult {
@@ -52,6 +60,8 @@ export interface SearchMatchResult {
   filtersApplied: PropertySearchFilters;
   noExactMatch: boolean;
   alternativeReason: string | null;
+  /** Location Intelligence Engine debug / transparency report. */
+  locationReport?: LocationSearchReport | null;
 }
 
 export interface AreaIntelligence {

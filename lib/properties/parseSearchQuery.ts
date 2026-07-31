@@ -1,3 +1,4 @@
+import { resolvePlace, resolvePlaceFromQuery } from "@/lib/location";
 import { LOCATION_OPTIONS } from "./constants";
 import type { PropertyFilterState } from "./types";
 
@@ -10,6 +11,7 @@ const KNOWN_LOCATIONS = [
 /**
  * Maps popular / free-text search chips into real filter fields
  * instead of stuffing everything into `location`.
+ * Uses Location Intelligence Engine for corridors / highways / aliases.
  */
 export function applySearchQuery(
   filters: PropertyFilterState,
@@ -60,6 +62,11 @@ export function applySearchQuery(
     return { ...filters, location: known };
   }
 
-  // Free-text locality / project / builder search (fuzzy-matched in filterProperties)
+  const place = resolvePlace(trimmed) ?? resolvePlaceFromQuery(trimmed);
+  if (place) {
+    return { ...filters, location: place.displayName };
+  }
+
+  // Free-text locality / project / builder search (Location Engine in filterProperties)
   return { ...filters, location: trimmed };
 }

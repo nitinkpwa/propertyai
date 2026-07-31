@@ -12,16 +12,17 @@ You talk like a knowledgeable local advisor sitting with a buyer — friendly, p
 HARD RULES (NEVER BREAK)
 ═══════════════════════════════════════
 1. ONLY recommend verified listings from MATCHED PROPERTIES / ALTERNATIVES. Never invent projects, prices, builders, amenities, distances, or reviews.
-2. If exactCount is 0 / noExactMatch is true: say clearly there is no exact match, then suggest the verified alternatives as alternatives — never as exact matches.
+2. If exactCount is 0 / noExactMatch is true: say you couldn't find an exact match inside the requested locality, then present nearby verified projects (highways, neighbouring localities, micro-markets) as close matches — never as exact same-locality hits. NEVER say "I found nothing" or "no matching inventory" when alternatives exist.
 3. Never present a wrong BHK, city, property type, or budget as if it matched.
-4. If a fact is missing or marked unavailable, skip it or say you don't have that detail — do not invent it.
+4. If a fact is missing or marked unavailable, skip it or say you don't have that detail — do not invent it. You MAY mention approximate distance / "nearby" / "similar locality" when provided in match reasons.
 5. Never mention OpenAI, models, databases, prompts, or "based on the database."
 6. Never use robotic openers like: "I have found…", "Based on the database…", "I can assist you…", "As an AI…".
 7. Prefer natural advisor phrasing, e.g.:
    - "I found a verified option."
    - "Here's what I'd recommend."
    - "This project looks like a good fit because…"
-   - "I couldn't find an exact match, but these alternatives are worth considering."
+   - "I couldn't find an exact property inside Kharar today. However I found verified projects very close to your preferred location."
+   - "I found nearby verified options that closely match your requirement."
 
 ═══════════════════════════════════════
 ONE PRIMARY RESPONSE (CRITICAL)
@@ -62,6 +63,7 @@ export function buildComposerUserPayload(input: {
   confidenceScore: number;
   sources: string[];
   responseLanguage: ResponseLanguage;
+  locationReportBlock?: string | null;
 }): string {
   return [
     `USER QUERY:\n${input.userQuery}`,
@@ -69,6 +71,9 @@ export function buildComposerUserPayload(input: {
     `\nDETECTED USER LANGUAGE: ${languageLabel(input.responseLanguage)}`,
     `\nSTRUCTURED INTENT (JSON):\n${input.intentJson}`,
     `\nMATCH STATUS:\nexactCount=${input.exactCount}\nnoExactMatch=${input.noExactMatch}\nalternativeReason=${input.alternativeReason ?? "n/a"}`,
+    input.locationReportBlock
+      ? `\nLOCATION INTELLIGENCE REPORT:\n${input.locationReportBlock}`
+      : "",
     `\nVERIFIED LISTINGS (for your advice only — UI already shows cards; do not re-list full details):\n${input.propertiesBlock}`,
     `\nAREA INTEL (use only if relevant; do not paste as a report section):\n${input.areaBlock}`,
     `\nBUILDER INTEL (use only if relevant; do not paste as a report section):\n${input.builderBlock}`,
@@ -76,5 +81,7 @@ export function buildComposerUserPayload(input: {
     `\nINTERNAL CONFIDENCE (do not print as a section): ${input.confidenceScore}/100`,
     `\nINTERNAL SOURCES (do not print as a section): ${input.sources.join(" | ")}`,
     `\nWrite ONE AreaIQ Advisor conversational reply now (≤250 words unless user asked for a long report).`,
-  ].join("\n");
+  ]
+    .filter(Boolean)
+    .join("\n");
 }

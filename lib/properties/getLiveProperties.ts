@@ -44,7 +44,10 @@ export interface GetLivePropertiesOptions {
   };
   includeSeller?: boolean;
   limit?: number;
+  /** Exact city equality (legacy). Prefer `cities` for location expansion. */
   city?: string;
+  /** Multi-city / expanded locality parent cities (ILIKE OR). */
+  cities?: string[];
   excludeId?: string;
   orderBy?: "created_at" | "price";
   ascending?: boolean;
@@ -83,8 +86,17 @@ async function runLiveQuery(
     .eq("status", "active")
     .is("deleted_at", null);
 
-  if (options.city) {
-    query = query.eq("city", options.city);
+  if (options.cities?.length) {
+    const parts = options.cities.flatMap((c) => [
+      `city.ilike.%${c}%`,
+      `location.ilike.%${c}%`,
+      `sector.ilike.%${c}%`,
+    ]);
+    query = query.or(parts.join(","));
+  } else if (options.city) {
+    query = query.or(
+      `city.ilike.%${options.city}%,location.ilike.%${options.city}%,sector.ilike.%${options.city}%`,
+    );
   }
   if (options.excludeId) {
     query = query.neq("id", options.excludeId);

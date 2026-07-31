@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
 import { useChromeElement } from "@/components/layout/engine";
 import {
   useNotificationRotation,
@@ -21,6 +22,11 @@ interface NotificationBarProps {
   className?: string;
   visible?: boolean;
 }
+
+const COLLAPSE_TRANSITION = {
+  duration: 0.25,
+  ease: "easeOut" as const,
+};
 
 /**
  * Smart Intelligence Bar — part of the top chrome stack (below navbar).
@@ -49,6 +55,8 @@ export default function NotificationBar({
   } = useSmartNotifications();
 
   const [paused, setPaused] = useState(false);
+  /** Stay true through exit animation so chrome height tracks the collapse. */
+  const [chromeActive, setChromeActive] = useState(false);
   const { current, goNext, goPrev } = useNotificationRotation(
     items,
     ROTATE_MS,
@@ -56,9 +64,14 @@ export default function NotificationBar({
   );
 
   const show = Boolean(visible && showBar && current);
+
+  useEffect(() => {
+    if (show) setChromeActive(true);
+  }, [show]);
+
   const measureRef = useChromeElement<HTMLDivElement>(
     "notification",
-    show,
+    chromeActive,
     "smart-notification-bar",
   );
 
@@ -98,29 +111,19 @@ export default function NotificationBar({
 
   return (
     <>
-      <AnimatePresence initial={false}>
+      <AnimatePresence
+        initial={false}
+        onExitComplete={() => setChromeActive(false)}
+      >
         {show && current ? (
           <motion.div
             key="smart-notification-bar"
             ref={measureRef}
             className={`${positionClass} overflow-hidden border-b border-brand-border/80 bg-brand-muted/95 backdrop-blur-md ${className}`}
-            style={{ height: SMART_BAR_HEIGHT_PX }}
-            initial={
-              variant === "inline"
-                ? { height: 0, opacity: 0 }
-                : { y: -12, opacity: 0 }
-            }
-            animate={
-              variant === "inline"
-                ? { height: SMART_BAR_HEIGHT_PX, opacity: 1 }
-                : { y: 0, opacity: 1 }
-            }
-            exit={
-              variant === "inline"
-                ? { height: 0, opacity: 0 }
-                : { y: -12, opacity: 0 }
-            }
-            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: SMART_BAR_HEIGHT_PX, opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={COLLAPSE_TRANSITION}
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
             role="region"
@@ -139,7 +142,7 @@ export default function NotificationBar({
               <button
                 type="button"
                 onClick={handleActivate}
-                className="flex min-w-0 flex-1 items-center gap-2 rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
+                className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-lg text-left outline-none focus-visible:ring-2 focus-visible:ring-brand/40"
               >
                 {isLoggedIn ? (
                   <PersonalUpdates
@@ -156,46 +159,32 @@ export default function NotificationBar({
                 )}
               </button>
 
-              <div className="hidden shrink-0 items-center gap-1 sm:flex">
+              <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
                 <button
                   type="button"
                   onClick={() => setDrawerOpen(true)}
-                  className="inline-flex min-h-9 items-center rounded-lg px-2.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100/80"
+                  className="hidden min-h-9 items-center rounded-lg px-2.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100/80 sm:inline-flex"
                 >
                   View All
                   <span aria-hidden className="ml-0.5">
                     →
                   </span>
                 </button>
+
+                <NotificationBarBell
+                  unreadCount={unreadCount}
+                  onClick={() => setDrawerOpen(true)}
+                />
+
                 <button
                   type="button"
                   onClick={hideBar}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-emerald-800/70 transition hover:bg-emerald-100/80 hover:text-emerald-900"
-                  aria-label="Dismiss bar for today"
-                  title="Dismiss for today"
+                  className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-200/70 hover:text-neutral-800"
+                  aria-label="Dismiss announcement"
+                  title="Dismiss announcement"
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
-                  </svg>
+                  <X size={18} strokeWidth={2} aria-hidden />
                 </button>
-                <NotificationBarBell
-                  unreadCount={unreadCount}
-                  onClick={() => setDrawerOpen(true)}
-                />
-              </div>
-
-              <div className="flex shrink-0 sm:hidden">
-                <NotificationBarBell
-                  unreadCount={unreadCount}
-                  onClick={() => setDrawerOpen(true)}
-                />
               </div>
             </div>
 

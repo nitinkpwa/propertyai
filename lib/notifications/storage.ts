@@ -5,6 +5,13 @@ const READ_KEY = "areaiq_smart_bar_read";
 const BROADCAST_KEY = "areaiq_admin_broadcasts";
 const BAR_HIDDEN_KEY = "areaiq_smart_bar_hidden_until";
 
+/** Bump this when the announcement content/campaign changes — bar reappears. */
+export const ANNOUNCEMENT_BAR_VERSION = "v1";
+
+const ANNOUNCEMENT_DISMISSED_KEY = "areaiq_announcement_dismissed";
+const ANNOUNCEMENT_VERSION_KEY = "areaiq_announcement_version";
+const ANNOUNCEMENT_UNTIL_KEY = "areaiq_announcement_dismissed_until";
+
 function safeParse<T>(raw: string | null, fallback: T): T {
   if (!raw) return fallback;
   try {
@@ -67,14 +74,60 @@ export function removeStoredBroadcast(id: string) {
   saveBroadcasts(getStoredBroadcasts().filter((b) => b.id !== id));
 }
 
-/** Hide the entire bar until timestamp (session dismiss). */
+/** Hide the entire bar until timestamp (legacy key — still cleared on read). */
 export function hideBarUntil(ts: number) {
   if (typeof window === "undefined") return;
   localStorage.setItem(BAR_HIDDEN_KEY, String(ts));
 }
 
+/**
+ * Versioned announcement dismiss.
+ * Hidden while dismissed=true AND stored version matches current version AND before until.
+ * Changing ANNOUNCEMENT_BAR_VERSION shows the bar again automatically.
+ */
+export function isAnnouncementBarHidden(
+  currentVersion: string = ANNOUNCEMENT_BAR_VERSION,
+): boolean {
+  if (typeof window === "undefined") return false;
+
+  const storedVersion = localStorage.getItem(ANNOUNCEMENT_VERSION_KEY);
+  if (storedVersion !== currentVersion) return false;
+
+  if (localStorage.getItem(ANNOUNCEMENT_DISMISSED_KEY) !== "true") return false;
+
+  const untilRaw = localStorage.getItem(ANNOUNCEMENT_UNTIL_KEY);
+  if (untilRaw) {
+    const until = Number(untilRaw);
+    if (!Number.isNaN(until) && Date.now() > until) {
+      localStorage.removeItem(ANNOUNCEMENT_DISMISSED_KEY);
+      localStorage.removeItem(ANNOUNCEMENT_UNTIL_KEY);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function dismissAnnouncementBar(
+  currentVersion: string = ANNOUNCEMENT_BAR_VERSION,
+): void {
+  if (typeof window === "undefined") return;
+  const end = new Date();
+  end.setHours(23, 59, 59, 999);
+  localStorage.setItem(ANNOUNCEMENT_DISMISSED_KEY, "true");
+  localStorage.setItem(ANNOUNCEMENT_VERSION_KEY, currentVersion);
+  localStorage.setItem(ANNOUNCEMENT_UNTIL_KEY, String(end.getTime()));
+  // Keep legacy key in sync for older readers
+  hideBarUntil(end.getTime());
+}
+
 export function isBarHidden(): boolean {
   if (typeof window === "undefined") return false;
+
+  // Prefer versioned announcement dismiss
+  if (isAnnouncementBarHidden()) return true;
+
+  // Legacy fallback
   const raw = localStorage.getItem(BAR_HIDDEN_KEY);
   if (!raw) return false;
   const until = Number(raw);
@@ -86,9 +139,7 @@ export function isBarHidden(): boolean {
   return true;
 }
 
-/** Hide for rest of day. */
+/** Hide for rest of day (and current announcement version). */
 export function dismissBarForToday() {
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
-  hideBarUntil(end.getTime());
+  dismissAnnouncementBar();
 }
