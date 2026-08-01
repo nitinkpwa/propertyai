@@ -61,6 +61,9 @@ export function AskIntelPanel({
   const areaName =
     latestAssistant?.location ||
     extractEntity(latestAssistant?.content ?? "", [
+      "Panchkula Extension 2",
+      "Panchkula Extension 1",
+      "Amravati Enclave",
       "Aerocity",
       "Mohali",
       "New Chandigarh",

@@ -19,7 +19,8 @@ export default function PublicBottomNav() {
     pathname.startsWith("/reset-password") ||
     pathname.startsWith("/connect/login") ||
     pathname.startsWith("/property/") ||
-    pathname.startsWith("/ask")
+    pathname.startsWith("/ask") ||
+    pathname.startsWith("/intelligence-map")
   ) {
     return null;
   }

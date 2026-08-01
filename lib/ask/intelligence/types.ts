@@ -130,4 +130,6 @@ export interface ComposedAnswer {
   propertyRationales: Record<string, string>;
   suggestions: string[];
   followUpQuestions: string[];
+  /** True when the answer was built from live data because the LLM failed */
+  aiDegraded?: boolean;
 }

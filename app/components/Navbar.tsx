@@ -3,23 +3,19 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import UserMenu from "./UserMenu";
 import MobileNavPanel from "./MobileNavPanel";
 import Logo from "@/components/common/Logo";
 import { useChromeElement } from "@/components/layout/engine";
 import { zClass } from "@/lib/layout/zIndex";
-import { EMERALD } from "@/lib/auth/constants";
-
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "Buy", href: "/properties?type=buy" },
   { label: "Rent", href: "/properties?type=rent" },
   { label: "Commercial", href: "/properties?type=commercial" },
+  { label: "Intelligence Map", href: "/intelligence-map" },
   { label: "AreaIQ Intelligence", href: "/ask" },
-  {
-    label: "Market Intelligence",
-    href: "/ask?q=Latest+market+trends+in+Tricity+2025",
-  },
 ] as const;
 
 function isLinkActive(
@@ -45,6 +41,11 @@ function isLinkActive(
   return true;
 }
 
+const INDICATOR_TRANSITION = {
+  duration: 0.25,
+  ease: [0.22, 1, 0.36, 1] as const,
+};
+
 function NavLink({
   href,
   label,
@@ -59,24 +60,44 @@ function NavLink({
   return (
     <Link
       href={href}
-      className={`group relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+      aria-current={active ? "page" : undefined}
+      className={`relative px-3 py-2 text-sm transition-colors duration-200 ${
         active
           ? light
-            ? "text-white"
-            : "text-heading-primary"
+            ? "font-semibold text-white"
+            : "font-semibold text-heading-primary"
           : light
-            ? "text-white/70 hover:text-white"
-            : "text-body hover:text-heading-primary"
+            ? "font-medium text-white/70 hover:text-white"
+            : "font-medium text-body hover:text-heading-primary"
       }`}
     >
       {label}
-      <span
-        className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full transition-all duration-300 ${
-          active ? "opacity-100 scale-x-100" : "opacity-0 scale-x-0 group-hover:opacity-60 group-hover:scale-x-100"
-        }`}
-        style={{ backgroundColor: EMERALD }}
-        aria-hidden
-      />
+      {active ? (
+        <span
+          className="pointer-events-none absolute inset-x-0 -bottom-3 flex justify-center"
+          aria-hidden
+        >
+          <motion.span
+            layoutId="navbar-active-indicator"
+            transition={INDICATOR_TRANSITION}
+            className="h-[3px] w-full min-w-[60px] max-w-[90px] rounded-full"
+            style={
+              light
+                ? {
+                    background:
+                      "linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.95) 50%, rgba(255,255,255,0.3) 100%)",
+                    boxShadow: "0 2px 10px rgba(255,255,255,0.32)",
+                  }
+                : {
+                    background:
+                      "linear-gradient(90deg, rgba(74,170,39,0.3) 0%, #4AAA27 42%, #5BBF35 62%, rgba(74,170,39,0.3) 100%)",
+                    boxShadow:
+                      "0 2px 10px rgba(74,170,39,0.26), 0 1px 3px rgba(74,170,39,0.16)",
+                  }
+            }
+          />
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -125,13 +146,13 @@ function NavbarInner() {
         ref={chromeRef}
         className={`fixed inset-x-0 top-0 ${zClass.dropdown} transition-all duration-500 ease-out ${
           scrolled
-            ? "border-b border-neutral-200/80 bg-white/95 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.04)] backdrop-blur-xl"
+            ? "border-b border-neutral-200/80 bg-white/95 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur-xl"
             : isHomeHero
               ? "border-b border-transparent bg-transparent"
-              : "border-b border-transparent bg-white/80 backdrop-blur-md"
+              : "border-b border-neutral-200/60 bg-white/95 backdrop-blur-xl"
         }`}
       >
-        <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 py-2 pl-6 pr-4 sm:gap-4 sm:pr-6 lg:pr-8">
+        <div className="relative mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 pb-2 pl-6 pr-4 pt-2 sm:gap-4 sm:pr-6 lg:min-h-[76px] lg:pb-5 lg:pr-8">
           <Logo
             size="navbar"
             showTagline={false}
@@ -140,7 +161,7 @@ function NavbarInner() {
           />
 
           <nav
-            className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 lg:flex"
+            className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 overflow-visible lg:flex"
             aria-label="Main navigation"
           >
             {NAV_LINKS.map((link) => (

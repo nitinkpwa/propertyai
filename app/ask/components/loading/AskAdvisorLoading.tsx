@@ -50,10 +50,10 @@ export function AskAdvisorLoading({ active = true }: { active?: boolean }) {
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
-                AreaIQ Advisor
+                AreaIQ Intelligence
               </p>
               <p className="mt-0.5 text-sm font-semibold text-heading-primary">
-                Researching your brief
+                We&apos;re still searching verified inventory…
               </p>
             </div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800">

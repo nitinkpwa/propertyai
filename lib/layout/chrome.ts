@@ -50,7 +50,9 @@ export function resolveChromeMode(pathname: string): ChromeMode {
     return "auth";
   }
   if (pathname.startsWith("/property/")) return "property";
-  if (pathname.startsWith("/ask")) return "ask";
+  if (pathname.startsWith("/ask") || pathname.startsWith("/intelligence-map")) {
+    return "ask";
+  }
   if (PORTAL_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return "portal";
   }

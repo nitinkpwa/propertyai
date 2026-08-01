@@ -1,13 +1,7 @@
-export const LOCATIONS = [
-  "Chandigarh",
-  "Mohali",
-  "Panchkula",
-  "Zirakpur",
-  "Kharar",
-  "New Chandigarh",
-  "Aerocity",
-  "IT City",
-];
+import { getExploreAreaOptions } from "@/lib/location/registry";
+
+/** Derived from Area Registry — do not hardcode new areas here. */
+export const LOCATIONS = getExploreAreaOptions();
 
 export const BUDGETS = [
   { label: "Under ₹30L", min: 0, max: 3000000 },
@@ -112,6 +106,9 @@ export const EXPLORE_AREAS_EXTENDED = [
   { name: "Aerocity", score: 92, tag: "Airport corridor", href: "/ask?q=Aerocity+area+intelligence" },
   { name: "New Chandigarh", score: 87, tag: "Master planned", href: "/ask?q=New+Chandigarh+area+intelligence" },
   { name: "Zirakpur", score: 85, tag: "Value segment", href: "/ask?q=Zirakpur+area+intelligence" },
+  { name: "Panchkula Extension 1", score: 78, tag: "Growth pocket", href: "/ask?q=Panchkula+Extension+1+area+intelligence" },
+  { name: "Panchkula Extension 2", score: 79, tag: "Emerging", href: "/ask?q=Panchkula+Extension+2+area+intelligence" },
+  { name: "Amravati Enclave", score: 77, tag: "Enclave", href: "/ask?q=Amravati+Enclave+area+intelligence" },
   { name: "Panchkula", score: 74, tag: "Established", href: "/ask?q=Panchkula+area+intelligence" },
   { name: "PR7", score: 90, tag: "High growth", href: "/ask?q=PR7+area+intelligence" },
   { name: "IT City", score: 89, tag: "Employment hub", href: "/ask?q=IT+City+Mohali+intelligence" },
@@ -122,6 +119,9 @@ export const EXPLORE_AREAS_EXTENDED = [
 export const HEATMAP_ZONES = [
   { area: "Aerocity", status: "Hot" as const, reason: "Airport expansion + commercial demand", href: "/ask?q=Aerocity+investment+outlook" },
   { area: "PR7 Corridor", status: "Hot" as const, reason: "Infrastructure pipeline driving appreciation", href: "/ask?q=PR7+investment+outlook" },
+  { area: "Panchkula Extension 2", status: "Growing" as const, reason: "New inventory + extension corridor demand", href: "/ask?q=Panchkula+Extension+2+investment" },
+  { area: "Panchkula Extension 1", status: "Growing" as const, reason: "Emerging PKL micro-market with buyer interest", href: "/ask?q=Panchkula+Extension+1+investment" },
+  { area: "Amravati Enclave", status: "Growing" as const, reason: "Enclave living near Panchkula extensions", href: "/ask?q=Amravati+Enclave+investment" },
   { area: "IT City Mohali", status: "Growing" as const, reason: "Employment hub with steady rental demand", href: "/ask?q=IT+City+Mohali+investment" },
   { area: "New Chandigarh", status: "Growing" as const, reason: "Planned development with selective upside", href: "/ask?q=New+Chandigarh+investment" },
   { area: "Panchkula", status: "Stable" as const, reason: "Mature market with predictable returns", href: "/ask?q=Panchkula+investment+outlook" },
@@ -312,6 +312,9 @@ export const EXPLORE_AREAS = [
   { name: "Aerocity", score: 92, href: "/properties?type=buy&city=Aerocity" },
   { name: "PR7", score: 90, href: "/ask?q=PR7+Airport+Road+properties" },
   { name: "Zirakpur", score: 85, href: "/properties?type=buy&city=Zirakpur" },
+  { name: "Panchkula Extension 1", score: 78, href: "/properties?type=buy&city=Panchkula+Extension+1" },
+  { name: "Panchkula Extension 2", score: 79, href: "/properties?type=buy&city=Panchkula+Extension+2" },
+  { name: "Amravati Enclave", score: 77, href: "/properties?type=buy&city=Amravati+Enclave" },
   { name: "New Chandigarh", score: 87, href: "/properties?type=buy&city=New+Chandigarh" },
   { name: "Panchkula", score: 74, href: "/properties?type=buy&city=Panchkula" },
 ];
@@ -404,8 +407,8 @@ export const POPULAR_SEARCHES = [
 
 export const HOME_NAV_LINKS = [
   { label: "Explore", href: "/properties?type=buy" },
+  { label: "Intelligence Map", href: "/intelligence-map" },
   { label: "AreaIQ Intelligence", href: "/ask" },
   { label: "Properties", href: "/properties" },
-  { label: "Insights", href: "/ask?q=Latest+Tricity+market+insights" },
   { label: "Connect", href: "/connect" },
 ];

@@ -421,6 +421,29 @@ html {
   scrollbar-width: thin;
 }
 
+/**
+ * Intelligence Map preview (homepage dashboard):
+ * page scroll always wins — do not trap vertical touch.
+ * Explore mode uses MapLibre defaults (touch-action: none).
+ */
+.areaiq-map-container.areaiq-map--preview:not(.areaiq-map--focused),
+.areaiq-map-container.areaiq-map--preview:not(.areaiq-map--focused)
+  .maplibregl-canvas-container,
+.areaiq-map-container.areaiq-map--preview:not(.areaiq-map--focused)
+  .maplibregl-canvas {
+  touch-action: pan-y !important;
+}
+
+.areaiq-map-container.areaiq-map--preview.areaiq-map--focused,
+.areaiq-map-container.areaiq-map--preview.areaiq-map--focused
+  .maplibregl-canvas-container,
+.areaiq-map-container.areaiq-map--preview.areaiq-map--focused .maplibregl-canvas,
+.areaiq-map-container.areaiq-map--explore,
+.areaiq-map-container.areaiq-map--explore .maplibregl-canvas-container,
+.areaiq-map-container.areaiq-map--explore .maplibregl-canvas {
+  touch-action: none !important;
+}
+
 /* Premium micro-interactions */
 @media (prefers-reduced-motion: no-preference) {
   .ask-md a {

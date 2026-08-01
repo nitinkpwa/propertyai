@@ -53,6 +53,66 @@ export function listingsForArea(
   return listings.filter((l) => l.areaId === areaId && !l.isNearby);
 }
 
+/**
+ * Rank listings for the floating “best in area” card.
+ * Score → verified docs → confidence (legal %) → stable id (newer proxy).
+ */
+export function compareBestListings(
+  a: MapPointFeature,
+  b: MapPointFeature,
+): number {
+  const scoreA = a.score ?? -1;
+  const scoreB = b.score ?? -1;
+  if (scoreB !== scoreA) return scoreB - scoreA;
+
+  const verA = a.verified ? 1 : 0;
+  const verB = b.verified ? 1 : 0;
+  if (verB !== verA) return verB - verA;
+
+  const confA = a.legalPercent ?? -1;
+  const confB = b.legalPercent ?? -1;
+  if (confB !== confA) return confB - confA;
+
+  // Prefer lexicographically greater property ids as a stable “newer” proxy
+  return (b.propertyId ?? b.id).localeCompare(a.propertyId ?? a.id);
+}
+
+export function rankAreaListings(
+  listings: MapPointFeature[],
+): MapPointFeature[] {
+  return [...listings].sort(compareBestListings);
+}
+
+export function pickBestAreaListing(
+  listings: MapPointFeature[],
+): MapPointFeature | null {
+  if (listings.length === 0) return null;
+  return rankAreaListings(listings)[0] ?? null;
+}
+
+/** Approximate distance in km between two WGS84 points. */
+export function distanceKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number },
+): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+export function formatDistanceKm(km: number): string {
+  if (!Number.isFinite(km)) return "";
+  if (km < 1) return `${Math.max(100, Math.round(km * 1000))} m away`;
+  return `${km.toFixed(1)} km away`;
+}
+
 /** Nearby verified inventory for empty / expanding coverage areas. */
 export function nearbyListingsForArea(
   all: MapPointFeature[],

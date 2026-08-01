@@ -92,12 +92,32 @@ export function resolvePlaceFromQuery(query: string): ResolvedPlace | null {
   const text = normalizeText(query);
   if (!text) return null;
 
-  // Explicit sector
+  // Prefer longest place alias before bare sector parsing so
+  // "Panchkula Extension 2" is not misread as Sector 2.
+  for (const alias of ALL_ALIAS_KEYS) {
+    if (alias.length < 5) continue;
+    if (text.includes(alias)) {
+      const place = getPlaceByAlias(alias);
+      // Skip bare sector aliases here — handled below with city context
+      if (place && place.kind !== "sector") {
+        return toResolved(place, place.displayName, 0.94);
+      }
+    }
+  }
+
+  // Explicit sector (Panchkula Sector 20, Mohali Sector 82, …)
   const sectorMatch = SECTOR_RE.exec(query);
   if (sectorMatch) {
-    const label = `Sector ${sectorMatch[1]}`;
-    const node = getPlaceByAlias(label);
-    if (node) return toResolved(node, label, 0.95);
+    const num = sectorMatch[1];
+    const label = `Sector ${num}`;
+    // Prefer city-qualified alias when query mentions the parent city
+    const qualified =
+      getPlaceByAlias(`sector ${num} panchkula`) ??
+      getPlaceByAlias(`panchkula sector ${num}`) ??
+      getPlaceByAlias(`sector ${num} mohali`) ??
+      getPlaceByAlias(`mohali sector ${num}`);
+    const node = qualified ?? getPlaceByAlias(label);
+    if (node) return toResolved(node, node.displayName, 0.95);
     // Synthetic sector node
     return {
       canonicalId: `sector-${sectorMatch[1].toLowerCase()}`,
@@ -165,12 +185,25 @@ export function resolvePlace(token: string): ResolvedPlace | null {
       displayName: "Tricity",
       kind: "district",
       aliases: ["tricity", "tri city"],
-      nearby: ["Mohali", "Chandigarh", "Panchkula", "Zirakpur", "Kharar", "Aerocity"],
+      nearby: [
+        "Mohali",
+        "Chandigarh",
+        "Panchkula",
+        "Panchkula Extension 1",
+        "Panchkula Extension 2",
+        "Amravati Enclave",
+        "Zirakpur",
+        "Kharar",
+        "Aerocity",
+      ],
       parentCity: null,
       cityValues: [
         "Mohali",
         "Chandigarh",
         "Panchkula",
+        "Panchkula Extension 1",
+        "Panchkula Extension 2",
+        "Amravati Enclave",
         "Zirakpur",
         "Kharar",
         "New Chandigarh",

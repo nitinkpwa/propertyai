@@ -203,13 +203,18 @@ export function mapEngineResponseToTurn(
             : extractHeadline(response.answer, response.intent)
       : extractHeadline(response.answer, response.intent);
 
+  const aiDegraded = Boolean(response.aiDegraded);
+
   return {
     id: crypto.randomUUID(),
     userQuery,
     intent: uiIntent,
-    headline,
-    subtext:
-      intelligenceLevel === "partial"
+    headline: aiDegraded
+      ? "AreaIQ Intelligence"
+      : headline,
+    subtext: aiDegraded
+      ? "Built from live verified inventory — AI reasoning is catching up."
+      : intelligenceLevel === "partial"
         ? "Partial intelligence — verified facts plus next steps. Nothing invented."
         : response.searchedDatabase && response.isSimilar
           ? "Closest verified alternatives — not exact matches."
@@ -224,8 +229,11 @@ export function mapEngineResponseToTurn(
     isSimilar: response.isSimilar,
     quickActions: response.suggestions,
     followUps: response.followUpQuestions,
-    intelligenceLevel,
+    intelligenceLevel: aiDegraded ? "partial" : intelligenceLevel,
     confidenceOverall: response.confidenceOverall ?? null,
     missingSignals: response.missingSignals ?? [],
+    aiDegraded,
+    aiNotice: response.aiNotice ?? null,
+    intelligenceDigest: response.intelligenceDigest ?? null,
   };
 }

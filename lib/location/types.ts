@@ -26,6 +26,17 @@ export type LocationMatchTier =
   | "geo"
   | "none";
 
+/** Which product surfaces expose this place as a first-class option. */
+export type AreaSurface =
+  | "map"
+  | "forms"
+  | "filters"
+  | "preferred"
+  | "admin"
+  | "connect"
+  | "ai"
+  | "explore";
+
 export interface PlaceNode {
   id: string;
   displayName: string;
@@ -38,6 +49,16 @@ export interface PlaceNode {
   /** Approximate centroid for distance ranking. */
   lat: number | null;
   lng: number | null;
+  /**
+   * Optional registry surfaces. Prefer setting these on first-class areas
+   * so new micro-markets only need a PLACE_GRAPH entry (+ surfaces).
+   * When omitted, Area Registry applies kind-based defaults.
+   */
+  surfaces?: AreaSurface[];
+  /** Map polygon radius (km). Used when `"map"` is in surfaces. */
+  mapRadiusKm?: number;
+  /** Autocomplete rank boost (higher = earlier). Default by specificity. */
+  suggestPriority?: number;
 }
 
 export interface ResolvedPlace {

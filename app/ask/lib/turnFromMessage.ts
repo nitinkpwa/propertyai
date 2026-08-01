@@ -5,25 +5,31 @@ import type { AskTurn } from "@/lib/ask/types";
 export function turnFromMessage(message: AskChatMessage, userQuery = ""): AskTurn {
   const content = message.content ?? "";
   const sections = message.streaming ? [] : parseMarkdownSections(content);
+  const aiDegraded = Boolean(message.aiDegraded);
+
   const headline = message.streaming
-    ? "AreaIQ Advisor"
-    : content
-        .split("\n")
-        .find((l) => l.startsWith("##"))
-        ?.replace(/^##\s+/, "")
-        .replace(/^[✅⚠️📊🏗️💰]\s*/, "")
-        .trim() || "AreaIQ Intelligence";
+    ? "AreaIQ Intelligence"
+    : aiDegraded
+      ? "AreaIQ Intelligence"
+      : content
+          .split("\n")
+          .find((l) => l.startsWith("##"))
+          ?.replace(/^##\s+/, "")
+          .replace(/^[✅⚠️📊🏗️💰]\s*/, "")
+          .trim() || "AreaIQ Intelligence";
 
   return {
     id: message.id,
     userQuery,
     intent: message.uiIntent ?? "knowledge",
     headline,
-    subtext: message.isSimilar
-      ? "Showing closest matches from AreaIQ database."
-      : message.streaming
-        ? "Writing…"
-        : null,
+    subtext: message.streaming
+      ? "We're still searching verified inventory…"
+      : aiDegraded
+        ? "Built from live verified inventory — AI reasoning is catching up."
+        : message.isSimilar
+          ? "Showing closest matches from AreaIQ database."
+          : null,
     aiContent: content,
     sections,
     stats: message.stats ?? null,
@@ -32,6 +38,11 @@ export function turnFromMessage(message: AskChatMessage, userQuery = ""): AskTur
     isSimilar: message.isSimilar ?? false,
     quickActions: message.streaming ? [] : message.quickActions ?? [],
     followUps: message.streaming ? [] : message.followUps ?? [],
+    intelligenceLevel: message.intelligenceLevel,
+    missingSignals: message.missingSignals,
+    aiDegraded,
+    aiNotice: message.aiNotice ?? null,
+    intelligenceDigest: message.intelligenceDigest ?? null,
   };
 }
 

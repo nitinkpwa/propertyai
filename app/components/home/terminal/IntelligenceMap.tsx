@@ -7,7 +7,6 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { Layers, Plane } from "lucide-react";
 import type {
   IntelligenceMapLayers,
-  MapPointFeature,
   TricityMapNode,
 } from "@/lib/home/terminalTypes";
 import {
@@ -31,9 +30,13 @@ import {
   setMapProviderMeta,
   type MapProviderId,
 } from "@/lib/home/mapBootstrap";
+import {
+  installMapInteractionMode,
+  type MapInteractionMode,
+} from "@/lib/home/mobileMapGestures";
 import { IQ_GREEN } from "../theme";
 import StaticTricityMapFallback from "./StaticTricityMapFallback";
-import ListingPopup from "./ListingPopup";
+import BestPropertyFloatCard from "./BestPropertyFloatCard";
 import {
   createListingMarkerController,
   type ListingMarkerController,
@@ -88,6 +91,20 @@ type HoverTip = {
 
 type RenderMode = "loading" | "map" | "static";
 
+export type MapLayerPreset = "inventory" | "heat" | "builders" | "infra";
+
+function enabledForPreset(
+  preset: MapLayerPreset | undefined,
+  fallback: Record<LayerKey, boolean>,
+): Record<LayerKey, boolean> {
+  if (!preset) return fallback;
+  const off = { ...fallback, polygons: true, heatmap: false, listings: true, builders: false, premium: false, roads: false, airport: false, infra: false };
+  if (preset === "inventory") return { ...off, listings: true, polygons: true, heatmap: true };
+  if (preset === "heat") return { ...off, heatmap: true, polygons: true, listings: true };
+  if (preset === "builders") return { ...off, builders: true, listings: true, premium: true };
+  return { ...off, roads: true, airport: true, infra: true, listings: true };
+}
+
 export default function IntelligenceMap({
   nodes,
   layers,
@@ -95,6 +112,13 @@ export default function IntelligenceMap({
   selectedPropertyId,
   onSelect,
   onSelectProperty,
+  variant = "preview",
+  className,
+  hideChrome = false,
+  layerPreset,
+  activeTool = "navigate",
+  onMeasureChange,
+  floatCardClassName,
 }: {
   nodes: TricityMapNode[];
   layers: IntelligenceMapLayers;
@@ -102,6 +126,16 @@ export default function IntelligenceMap({
   selectedPropertyId?: string | null;
   onSelect: (id: string) => void;
   onSelectProperty?: (propertyId: string | null) => void;
+  /** preview = homepage dashboard embed; explore = full Intelligence Map page */
+  variant?: MapInteractionMode;
+  className?: string;
+  /** Hide in-map layer menu / summary (explorer shell owns chrome) */
+  hideChrome?: boolean;
+  layerPreset?: MapLayerPreset;
+  activeTool?: "navigate" | "measure";
+  onMeasureChange?: (label: string | null) => void;
+  /** Extra classes for the floating property preview card */
+  floatCardClassName?: string;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
@@ -117,22 +151,31 @@ export default function IntelligenceMap({
   const mapReadyRef = useRef(false);
   const lastFitKeyRef = useRef<string | null>(null);
   const lastSelectedPropertyRef = useRef<string | null>(null);
+  const previewFocusRef = useRef<{
+    setFocused: (focused: boolean) => void;
+    isFocused: () => boolean;
+  } | null>(null);
+  const variantRef = useRef(variant);
+  const activeToolRef = useRef(activeTool);
+  const onMeasureChangeRef = useRef(onMeasureChange);
+  const measurePointsRef = useRef<[number, number][]>([]);
 
   const [renderMode, setRenderMode] = useState<RenderMode>("loading");
   const [mapReady, setMapReady] = useState(false);
   const [provider, setProvider] = useState<MapProviderId | null>(null);
   const [failReason, setFailReason] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mapFocused, setMapFocused] = useState(false);
+  const [mapBusy, setMapBusy] = useState(false);
   const [hoverTip, setHoverTip] = useState<HoverTip | null>(null);
   const [emptyLayerNote, setEmptyLayerNote] = useState<string | null>(null);
-  const [popupListing, setPopupListing] = useState<MapPointFeature | null>(null);
-  const [enabled, setEnabled] = useState<Record<LayerKey, boolean>>({
+  const mapBusyTimerRef = useRef<number | undefined>(undefined);
+  const defaultEnabled: Record<LayerKey, boolean> = {
     polygons: true,
     heatmap: true,
     listings: true,
     builders: false,
     premium: false,
-    // Roads/infra demoted — inventory is the hero
     roads: false,
     airport: false,
     infra: false,
@@ -143,12 +186,28 @@ export default function IntelligenceMap({
     luxury: false,
     rental: false,
     future: false,
-  });
+  };
+
+  const [enabled, setEnabled] = useState<Record<LayerKey, boolean>>(() =>
+    enabledForPreset(layerPreset, defaultEnabled),
+  );
+
+  useEffect(() => {
+    if (!layerPreset) return;
+    setEnabled(enabledForPreset(layerPreset, defaultEnabled));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- preset-driven defaults only
+  }, [layerPreset]);
 
   nodesRef.current = nodes;
   layersRef.current = layers;
   onSelectRef.current = onSelect;
   onSelectPropertyRef.current = onSelectProperty;
+  variantRef.current = variant;
+  activeToolRef.current = activeTool;
+  onMeasureChangeRef.current = onMeasureChange;
+
+  const isPreview = variant === "preview";
+  const showChrome = !hideChrome;
 
   const active = useMemo(
     () => nodes.find((n) => n.id === activeId) ?? null,
@@ -173,6 +232,33 @@ export default function IntelligenceMap({
     [active, areaListings],
   );
 
+  useEffect(() => {
+    console.info("[AreaIQ Map] Selected Area", {
+      activeId,
+      areaName: active?.name ?? null,
+      layerCount: layers.verifiedListings.length,
+      areaListings: areaListings.length,
+      nearby: renderable.nearby.length,
+      selectedPropertyId: selectedPropertyId ?? null,
+      sample: areaListings.slice(0, 3).map((l) => ({
+        name: l.name,
+        areaId: l.areaId,
+        score: l.score,
+        lat: l.lat,
+        lng: l.lng,
+      })),
+      mapReady,
+    });
+  }, [
+    activeId,
+    active?.name,
+    layers.verifiedListings.length,
+    areaListings,
+    renderable.nearby.length,
+    selectedPropertyId,
+    mapReady,
+  ]);
+
   // ── Bootstrap MapLibre once ─────────────────────────────────
   useEffect(() => {
     let cancelled = false;
@@ -181,6 +267,7 @@ export default function IntelligenceMap({
     let fallbackTimer: number | undefined;
     let hardFailTimer: number | undefined;
     let removeDebug: (() => void) | undefined;
+    let removeInteractions: (() => void) | undefined;
 
     const markStatic = (reason: string) => {
       if (cancelled) return;
@@ -203,14 +290,9 @@ export default function IntelligenceMap({
           onSelectArea: (id) => {
             onSelectRef.current(id);
             onSelectPropertyRef.current?.(null);
-            setPopupListing(null);
           },
           onSelectListing: (propertyId) => {
-            const listing =
-              layersRef.current.verifiedListings.find(
-                (l) => l.propertyId === propertyId,
-              ) ?? null;
-            setPopupListing(listing);
+            // Float card is the preview — marker click updates it
             onSelectPropertyRef.current?.(propertyId);
             markerCtrlRef.current?.setSelectedId(propertyId);
           },
@@ -222,11 +304,6 @@ export default function IntelligenceMap({
           instance,
           "listings",
           (propertyId) => {
-            const listing =
-              layersRef.current.verifiedListings.find(
-                (l) => l.propertyId === propertyId,
-              ) ?? null;
-            setPopupListing(listing);
             onSelectPropertyRef.current?.(propertyId);
             markerCtrlRef.current?.setSelectedId(propertyId);
           },
@@ -355,6 +432,10 @@ export default function IntelligenceMap({
         typeof initial.style === "string" ? initial.style : initial.provider,
       );
 
+      const interaction = installMapInteractionMode(map, variantRef.current);
+      removeInteractions = interaction.destroy;
+      previewFocusRef.current = interaction.preview ?? null;
+
       // Register load ASAP — inline styles can fire quickly
       map.on("load", () => {
         idleSeenRef.current = false;
@@ -376,6 +457,20 @@ export default function IntelligenceMap({
         idleSeenRef.current = true;
         mapDiag("map_idle", true);
         resizeAll();
+        if (mapBusyTimerRef.current) window.clearTimeout(mapBusyTimerRef.current);
+        mapBusyTimerRef.current = window.setTimeout(() => setMapBusy(false), 120);
+      });
+
+      const markBusy = () => {
+        setMapBusy(true);
+        if (mapBusyTimerRef.current) window.clearTimeout(mapBusyTimerRef.current);
+      };
+      map.on("movestart", markBusy);
+      map.on("zoomstart", markBusy);
+      map.on("dragstart", markBusy);
+      map.on("moveend", () => {
+        if (mapBusyTimerRef.current) window.clearTimeout(mapBusyTimerRef.current);
+        mapBusyTimerRef.current = window.setTimeout(() => setMapBusy(false), 180);
       });
 
       map.on("error", (e) => {
@@ -455,9 +550,13 @@ export default function IntelligenceMap({
       cancelled = true;
       if (fallbackTimer) window.clearTimeout(fallbackTimer);
       if (hardFailTimer) window.clearTimeout(hardFailTimer);
+      if (mapBusyTimerRef.current) window.clearTimeout(mapBusyTimerRef.current);
       resizeObserver?.disconnect();
       window.removeEventListener("resize", resizeAll);
       document.removeEventListener("visibilitychange", resizeAll);
+      removeInteractions?.();
+      removeInteractions = undefined;
+      previewFocusRef.current = null;
       removeDebug?.();
       markerCtrlRef.current?.destroy();
       markerCtrlRef.current = null;
@@ -503,12 +602,11 @@ export default function IntelligenceMap({
     return () => window.clearTimeout(t);
   }, [active, mapPins, mapReady]);
 
-  // Keep marker selected state + popup in sync with drawer
+  // Keep marker selection + camera in sync with drawer / float card
   useEffect(() => {
     markerCtrlRef.current?.setSelectedId(selectedPropertyId ?? null);
     if (!selectedPropertyId) {
       lastSelectedPropertyRef.current = null;
-      setPopupListing(null);
       return;
     }
     const listing =
@@ -516,7 +614,6 @@ export default function IntelligenceMap({
       layers.verifiedListings.find((l) => l.propertyId === selectedPropertyId) ??
       null;
     if (!listing) return;
-    setPopupListing(listing);
 
     const changed = lastSelectedPropertyRef.current !== selectedPropertyId;
     lastSelectedPropertyRef.current = selectedPropertyId;
@@ -524,10 +621,11 @@ export default function IntelligenceMap({
 
     const map = mapRef.current;
     if (!map || !mapReady) return;
+    // Snappy pan — keep the map alive; browse feels instant from the float card
     map.easeTo({
       center: [listing.lng, listing.lat],
       zoom: Math.max(map.getZoom(), 13.4),
-      duration: 700,
+      duration: 200,
       essential: true,
     });
   }, [selectedPropertyId, areaListings, layers.verifiedListings, mapReady]);
@@ -565,6 +663,153 @@ export default function IntelligenceMap({
       markerCtrlRef.current?.setListings([]);
     }
   }, [enabled, mapReady, mapPins, areaListings.length]);
+
+  // Simple two-click measure tool (explore mode)
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || variant !== "explore") return;
+
+    const SRC = "areaiq-measure";
+    const LINE = "areaiq-measure-line";
+    const PTS = "areaiq-measure-points";
+
+    type FC = {
+      type: "FeatureCollection";
+      features: Array<{
+        type: "Feature";
+        properties: { kind: string };
+        geometry:
+          | { type: "Point"; coordinates: [number, number] }
+          | { type: "LineString"; coordinates: [number, number][] };
+      }>;
+    };
+
+    const clearMeasure = () => {
+      measurePointsRef.current = [];
+      onMeasureChangeRef.current?.(null);
+      try {
+        if (map.getSource(SRC)) {
+          (map.getSource(SRC) as unknown as { setData: (d: FC) => void }).setData({
+            type: "FeatureCollection",
+            features: [],
+          });
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+
+    const ensureSource = () => {
+      if (map.getSource(SRC)) return;
+      map.addSource(SRC, {
+        type: "geojson",
+        data: { type: "FeatureCollection", features: [] },
+      });
+      map.addLayer({
+        id: LINE,
+        type: "line",
+        source: SRC,
+        filter: ["==", ["get", "kind"], "line"],
+        paint: {
+          "line-color": "#4AAA27",
+          "line-width": 3,
+          "line-dasharray": [1.5, 1.2],
+        },
+      });
+      map.addLayer({
+        id: PTS,
+        type: "circle",
+        source: SRC,
+        filter: ["==", ["get", "kind"], "point"],
+        paint: {
+          "circle-radius": 6,
+          "circle-color": "#4AAA27",
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#fff",
+        },
+      });
+    };
+
+    const haversineKm = (
+      a: [number, number],
+      b: [number, number],
+    ): number => {
+      const toRad = (d: number) => (d * Math.PI) / 180;
+      const R = 6371;
+      const dLat = toRad(b[1] - a[1]);
+      const dLng = toRad(b[0] - a[0]);
+      const lat1 = toRad(a[1]);
+      const lat2 = toRad(b[1]);
+      const h =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(h));
+    };
+
+    const onClick = (e: { lngLat: { lng: number; lat: number } }) => {
+      if (activeToolRef.current !== "measure") return;
+      ensureSource();
+      const pt: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+      const pts = measurePointsRef.current;
+      if (pts.length >= 2) {
+        measurePointsRef.current = [pt];
+        onMeasureChangeRef.current?.("Tap second point…");
+      } else {
+        pts.push(pt);
+        measurePointsRef.current = pts;
+      }
+
+      const current = measurePointsRef.current;
+      const features: FC["features"] = current.map((c) => ({
+        type: "Feature" as const,
+        properties: { kind: "point" },
+        geometry: { type: "Point" as const, coordinates: c },
+      }));
+      if (current.length === 2) {
+        features.push({
+          type: "Feature",
+          properties: { kind: "line" },
+          geometry: { type: "LineString", coordinates: current },
+        });
+        const km = haversineKm(current[0]!, current[1]!);
+        const label =
+          km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(2)} km`;
+        onMeasureChangeRef.current?.(label);
+      } else if (current.length === 1) {
+        onMeasureChangeRef.current?.("Tap second point…");
+      }
+
+      try {
+        (map.getSource(SRC) as unknown as { setData: (d: FC) => void }).setData({
+          type: "FeatureCollection",
+          features,
+        });
+      } catch {
+        /* ignore */
+      }
+    };
+
+    if (activeTool !== "measure") {
+      clearMeasure();
+      map.getCanvas().style.cursor = "";
+      return;
+    }
+
+    map.getCanvas().style.cursor = "crosshair";
+    map.on("click", onClick);
+    return () => {
+      map.off("click", onClick);
+      map.getCanvas().style.cursor = "";
+      clearMeasure();
+      try {
+        if (map.getLayer(LINE)) map.removeLayer(LINE);
+        if (map.getLayer(PTS)) map.removeLayer(PTS);
+        if (map.getSource(SRC)) map.removeSource(SRC);
+      } catch {
+        /* ignore */
+      }
+    };
+  }, [mapReady, variant, activeTool]);
 
   // Pulse (skip if reduced motion)
   useEffect(() => {
@@ -604,6 +849,11 @@ export default function IntelligenceMap({
     setEnabled((e) => ({ ...e, [key]: !e[key] }));
   };
 
+  const setPreviewFocus = (next: boolean) => {
+    previewFocusRef.current?.setFocused(next);
+    setMapFocused(next);
+  };
+
   // Static SVG fallback — never blank
   if (renderMode === "static") {
     return (
@@ -616,21 +866,43 @@ export default function IntelligenceMap({
     );
   }
 
+  const shellClass = isPreview
+    ? "relative h-[420px] w-full overflow-hidden rounded-3xl border border-neutral-200/80 bg-[#F3F5F7] shadow-[0_16px_48px_rgba(0,0,0,0.06)] sm:h-[480px]"
+    : "relative h-full min-h-[420px] w-full overflow-hidden bg-[#F3F5F7]";
+
   return (
     <div
-      className="relative h-[720px] w-full overflow-hidden rounded-3xl border border-neutral-200/80 bg-[#F3F5F7] shadow-[0_20px_60px_rgba(0,0,0,0.08)] sm:h-[780px]"
+      className={[shellClass, className].filter(Boolean).join(" ")}
       data-map-provider={provider ?? "booting"}
+      data-map-variant={variant}
     >
       <div
         ref={containerRef}
         className="areaiq-map-container absolute inset-0 h-full w-full"
-        style={{ width: "100%", height: "100%", minHeight: 720 }}
+        style={{
+          width: "100%",
+          height: "100%",
+          minHeight: isPreview ? 420 : undefined,
+        }}
         role="img"
-        aria-label="AreaIQ Tricity intelligence command map"
+        aria-label="AreaIQ Tricity intelligence map"
       />
 
+      {/* Preview: tap to allow a short visual pan — page scroll otherwise wins */}
+      {isPreview && mapReady ? (
+        <div className="pointer-events-none absolute bottom-3 right-3 z-[3] sm:bottom-auto sm:right-3 sm:top-3">
+          <button
+            type="button"
+            onClick={() => setPreviewFocus(!mapFocused)}
+            className="pointer-events-auto rounded-full border border-white/80 bg-white/95 px-3 py-1.5 text-[11px] font-semibold text-heading-primary shadow-md backdrop-blur"
+          >
+            {mapFocused ? "Map focused" : "Peek map"}
+          </button>
+        </div>
+      ) : null}
+
       {/* Area intelligence summary */}
-      {areaSummary && mapReady ? (
+      {showChrome && areaSummary && mapReady ? (
         <div className="absolute left-3 right-3 top-3 z-[3] flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-2xl border border-white/70 bg-white/95 px-3.5 py-2.5 shadow-md backdrop-blur sm:right-auto sm:max-w-[min(100%-1.5rem,520px)]">
           <div className="min-w-0">
             <p className="truncate text-sm font-bold text-heading-primary">
@@ -641,90 +913,108 @@ export default function IntelligenceMap({
               {areaSummary.verifiedCount === 1 ? "" : "s"}
             </p>
           </div>
-          <div className="hidden h-8 w-px bg-neutral-200 sm:block" />
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold text-body">
-            <span>
-              Average Price{" "}
-              <strong className="text-heading-primary">
-                {areaSummary.averagePriceLabel}
-              </strong>
-            </span>
-            <span>
-              Best Score{" "}
-              <strong style={{ color: IQ_GREEN }}>
-                {areaSummary.bestScoreLabel}
-              </strong>
-            </span>
-            <span>
-              Builder Count{" "}
-              <strong className="text-heading-primary">
-                {areaSummary.builderCount}
-              </strong>
-            </span>
-          </div>
+          {!isPreview ? (
+            <>
+              <div className="hidden h-8 w-px bg-neutral-200 sm:block" />
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-semibold text-body">
+                <span>
+                  Average Price{" "}
+                  <strong className="text-heading-primary">
+                    {areaSummary.averagePriceLabel}
+                  </strong>
+                </span>
+                <span>
+                  Best Score{" "}
+                  <strong style={{ color: IQ_GREEN }}>
+                    {areaSummary.bestScoreLabel}
+                  </strong>
+                </span>
+                <span>
+                  Builder Count{" "}
+                  <strong className="text-heading-primary">
+                    {areaSummary.builderCount}
+                  </strong>
+                </span>
+              </div>
+            </>
+          ) : null}
         </div>
       ) : null}
 
-      {/* Layers control */}
-      <div className="absolute left-3 top-[4.75rem] z-[2] max-w-[min(100%-1.5rem,340px)]">
-        <button
-          type="button"
-          onClick={() => setMenuOpen((v) => !v)}
-          className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-heading-primary shadow-md backdrop-blur"
+      {/* Layers — explore always; preview keeps a compact strip */}
+      {showChrome ? (
+        <div
+          className={`absolute left-3 z-[2] max-w-[min(100%-1.5rem,340px)] ${
+            isPreview ? "top-16" : "top-[4.75rem]"
+          }`}
         >
-          <Layers className="h-3.5 w-3.5" style={{ color: IQ_GREEN }} aria-hidden />
-          Layers
-        </button>
-        {menuOpen ? (
-          <div className="mt-2 flex flex-wrap gap-1.5 rounded-2xl border border-neutral-200/80 bg-white/95 p-2 shadow-lg backdrop-blur">
-            {LAYER_LABELS.map((l) => (
-              <button
-                key={l.key}
-                type="button"
-                onClick={() => toggleLayer(l.key, l.live)}
-                className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
-                  enabled[l.key]
-                    ? "bg-[#4AAA27] text-white"
-                    : "bg-neutral-100 text-body hover:bg-neutral-200"
-                }`}
-              >
-                {l.label}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {LAYER_LABELS.filter((l) => l.live)
-              .slice(0, 6)
-              .map((l) => (
+          {!isPreview ? (
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-heading-primary shadow-md backdrop-blur"
+            >
+              <Layers
+                className="h-3.5 w-3.5"
+                style={{ color: IQ_GREEN }}
+                aria-hidden
+              />
+              Layers
+            </button>
+          ) : null}
+          {menuOpen && !isPreview ? (
+            <div className="mt-2 flex flex-wrap gap-1.5 rounded-2xl border border-neutral-200/80 bg-white/95 p-2 shadow-lg backdrop-blur">
+              {LAYER_LABELS.map((l) => (
                 <button
                   key={l.key}
                   type="button"
                   onClick={() => toggleLayer(l.key, l.live)}
-                  className={`rounded-full px-2.5 py-1 text-[10px] font-semibold shadow-sm backdrop-blur ${
+                  className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition-colors ${
                     enabled[l.key]
                       ? "bg-[#4AAA27] text-white"
-                      : "bg-white/90 text-body"
+                      : "bg-neutral-100 text-body hover:bg-neutral-200"
                   }`}
                 >
                   {l.label}
                 </button>
               ))}
-          </div>
-        )}
-      </div>
-
-      {areaSummary?.empty && mapReady && !popupListing ? (
-        <div className="absolute bottom-5 left-1/2 z-[3] w-[min(100%-2rem,340px)] -translate-x-1/2 rounded-2xl border border-neutral-200/80 bg-white/96 px-4 py-3 text-center shadow-lg backdrop-blur">
-          <p className="text-sm font-bold text-heading-primary">
-            AreaIQ is expanding coverage here.
-          </p>
-          <p className="mt-1 text-[11px] text-muted">
-            {renderable.nearby.length > 0
-              ? "Nearby verified projects shown in grey for context."
-              : "Empty intelligence state — live listings appear when geocoded."}
-          </p>
+            </div>
+          ) : (
+            <div className={`${isPreview ? "" : "mt-2"} flex flex-wrap gap-1.5`}>
+              {LAYER_LABELS.filter((l) => l.live)
+                .slice(0, isPreview ? 4 : 6)
+                .map((l) => (
+                  <button
+                    key={l.key}
+                    type="button"
+                    onClick={() => toggleLayer(l.key, l.live)}
+                    className={`rounded-full px-2.5 py-1 text-[10px] font-semibold shadow-sm backdrop-blur ${
+                      enabled[l.key]
+                        ? "bg-[#4AAA27] text-white"
+                        : "bg-white/90 text-body"
+                    }`}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+            </div>
+          )}
         </div>
+      ) : null}
+
+      {/* Compact map preview — never dominate the canvas */}
+      {activeId ? (
+        <BestPropertyFloatCard
+          areaId={activeId}
+          areaNode={active}
+          areaListings={areaListings}
+          allListings={layers.verifiedListings}
+          nearbyListings={renderable.nearby}
+          selectedPropertyId={selectedPropertyId}
+          mapBusy={mapBusy}
+          onSelectListing={(id) => onSelectPropertyRef.current?.(id)}
+          className={floatCardClassName}
+        />
       ) : null}
 
       {emptyLayerNote ? (
@@ -733,27 +1023,16 @@ export default function IntelligenceMap({
         </div>
       ) : null}
 
-      {popupListing ? (
-        <ListingPopup
-          listing={popupListing}
-          onClose={() => {
-            setPopupListing(null);
-            onSelectPropertyRef.current?.(null);
-            markerCtrlRef.current?.setSelectedId(null);
-          }}
-        />
-      ) : null}
-
-      {layers.airport && enabled.airport && mapReady ? (
-        <div className="pointer-events-none absolute bottom-4 left-3 z-[2] hidden items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5 text-[10px] font-semibold text-body shadow-sm sm:inline-flex">
+      {!isPreview && layers.airport && enabled.airport && mapReady ? (
+        <div className="pointer-events-none absolute bottom-[9.5rem] left-3 z-[2] hidden items-center gap-1.5 rounded-full border border-white/50 bg-white/75 px-3.5 py-2 text-[10px] font-medium text-neutral-600 shadow-[0_8px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:inline-flex">
           <Plane className="h-3 w-3" style={{ color: IQ_GREEN }} aria-hidden />
           {layers.airport.name}
         </div>
       ) : null}
 
-      {hoverTip ? (
+      {hoverTip && !isPreview ? (
         <div
-          className="pointer-events-none absolute z-[4] max-w-[220px] rounded-xl border border-neutral-200 bg-white/95 px-3 py-2 shadow-lg backdrop-blur"
+          className="pointer-events-none absolute z-[4] max-w-[220px] rounded-[20px] border border-white/50 bg-white/80 px-3.5 py-2.5 shadow-[0_12px_32px_rgba(15,23,42,0.12)] backdrop-blur-xl"
           style={{
             left: Math.min(
               hoverTip.x + 14,
@@ -775,7 +1054,6 @@ export default function IntelligenceMap({
         </div>
       ) : null}
 
-      {/* Loading overlay — clears as soon as mapReady; never blocks forever */}
       {!mapReady ? (
         <div className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center bg-[#F3F5F7]/80">
           <div className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-muted shadow-sm">

@@ -5,6 +5,8 @@ import type { AskEngineResponse, HandlerContext } from "../types";
 import { classificationToResponseFields } from "../types";
 import { wantsAlternativeProperties } from "../memory";
 import { logAsk } from "../logger";
+import { intelligenceDigestFromBundle } from "../dataAnswer";
+import { AI_REASONING_UNAVAILABLE_NOTICE } from "../prompts";
 
 export async function handleInvestment(ctx: HandlerContext): Promise<AskEngineResponse> {
   const wantsAlternative = wantsAlternativeProperties(ctx.message);
@@ -58,6 +60,8 @@ export async function handleInvestment(ctx: HandlerContext): Promise<AskEngineRe
     baseFields.budget = result.intent.budgetMax;
   }
 
+  const aiDegraded = Boolean(result.composed.aiDegraded);
+
   return {
     intent: "INVESTMENT",
     answer: result.composed.markdown,
@@ -69,5 +73,10 @@ export async function handleInvestment(ctx: HandlerContext): Promise<AskEngineRe
     stats: listings.length ? computeSearchStats(listings) : null,
     searchedDatabase: true,
     isSimilar: result.isSimilar,
+    intelligenceLevel: aiDegraded ? "partial" : undefined,
+    aiDegraded,
+    aiNotice: aiDegraded ? AI_REASONING_UNAVAILABLE_NOTICE : null,
+    intelligenceDigest: intelligenceDigestFromBundle(result.bundle),
+    missingSignals: aiDegraded ? ["AI narrative reasoning"] : undefined,
   };
 }

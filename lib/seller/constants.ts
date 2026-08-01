@@ -4,6 +4,7 @@ import {
   type PropertyStatus,
 } from "@/lib/properties/status";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
+import { getFormCityOptions } from "@/lib/location/registry";
 import type { PropertyListingStatus } from "./types";
 
 export { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
@@ -119,20 +120,8 @@ export function statusBadgeClass(status: PropertyListingStatus | string): string
   }
 }
 
-export const CITIES = [
-  "Chandigarh",
-  "Mohali",
-  "Panchkula",
-  "Zirakpur",
-  "Kharar",
-  "New Chandigarh",
-  "Derabassi",
-  "Landran",
-  "Aerocity",
-  "Banur",
-  "Baltana",
-  "Peer Muchalla",
-];
+/** Derived from Area Registry — do not hardcode new areas here. */
+export const CITIES = getFormCityOptions();
 
 export const TYPES = [
   { value: "buy", label: "🏠 For Sale" },

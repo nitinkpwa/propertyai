@@ -277,28 +277,28 @@ export const TIMELINE_STEPS: TimelineStepDef[] = [
   },
   {
     id: "search",
-    activeLabel: "Searching live listings…",
-    doneLabel: "Live listings reviewed",
+    activeLabel: "Searching verified listings…",
+    doneLabel: "Verified listings searched",
   },
   {
     id: "compare",
     activeLabel: "Comparing nearby projects…",
-    doneLabel: "Locality compared",
+    doneLabel: "Nearby corridors compared",
   },
   {
     id: "builder",
-    activeLabel: "Checking builder profile…",
-    doneLabel: "Builder signals checked",
+    activeLabel: "Checking builders…",
+    doneLabel: "Builders checked",
   },
   {
     id: "investment",
-    activeLabel: "Evaluating investment potential…",
-    doneLabel: "Investment angles weighed",
+    activeLabel: "Analyzing market signals…",
+    doneLabel: "Market signals analyzed",
   },
   {
     id: "recommend",
-    activeLabel: "Preparing recommendation…",
-    doneLabel: "Recommendation ready",
+    activeLabel: "Loading AI reasoning…",
+    doneLabel: "Intelligence ready",
   },
 ];
 

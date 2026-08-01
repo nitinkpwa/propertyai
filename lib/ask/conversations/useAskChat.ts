@@ -388,17 +388,21 @@ export function useAskChat(initialPropertyContext?: PropertyContext | null) {
           return;
         }
         console.error("Ask engine error:", error);
-        const friendly =
-          error instanceof Error && error.message
-            ? error.message
-            : "Something went wrong while processing your request. Please try again.";
         const errorMessage: AskChatMessage = {
           id: assistantId,
           role: "assistant",
-          content: friendly,
+          content: [
+            "AreaIQ is still searching verified inventory for you.",
+            "",
+            "Live listings, builders, and market signals remain available — try refining budget, BHK, or locality.",
+          ].join("\n"),
           timestamp: new Date().toISOString(),
           streaming: false,
-          followUps: ["Try again", "3 BHK in Mohali"],
+          aiDegraded: true,
+          aiNotice: "⚡ AI reasoning is temporarily unavailable.",
+          intelligenceLevel: "partial",
+          followUps: ["3 BHK in Mohali", "Under 80 lakh", "Aerocity projects"],
+          quickActions: ["Show verified listings", "Best areas under 1 Cr"],
         };
         await persistConversation({
           ...withUser,

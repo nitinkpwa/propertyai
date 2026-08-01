@@ -1,3 +1,5 @@
+import { getFormCityOptions } from "@/lib/location/registry";
+
 export const BUYER_NAV = [
   { href: "/buyer", label: "Dashboard", icon: "dashboard" as const },
   { href: "/buyer/crm", label: "My CRM", icon: "crm" as const },
@@ -17,16 +19,8 @@ export const BUDGET_PRESETS = [
   { label: "Above ₹2Cr", min: 20_000_000, max: null },
 ] as const;
 
-export const CITY_OPTIONS = [
-  "Chandigarh",
-  "Mohali",
-  "Panchkula",
-  "Zirakpur",
-  "Kharar",
-  "New Chandigarh",
-  "Aerocity",
-  "Derabassi",
-] as const;
+/** Derived from Area Registry — do not hardcode new areas here. */
+export const CITY_OPTIONS = getFormCityOptions();
 
 export const PROPERTY_TYPE_PRESETS = [
   { value: "apartment", label: "Apartment" },

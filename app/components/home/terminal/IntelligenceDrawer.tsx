@@ -1,10 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  BarChart3,
-  Building2,
   GitCompareArrows,
   MessageSquare,
   Search,
@@ -15,42 +14,47 @@ import { scoreBandColor } from "@/lib/home/areaListingMarkers";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import AnimatedCounter from "../AnimatedCounter";
 import { IQ_GREEN } from "../theme";
-import { BandDot, ProgressBar } from "./primitives";
 
 function fmtBand(v: string): string {
-  if (v === "unknown") return "Collecting Intelligence";
+  if (v === "unknown") return "—";
   return v.charAt(0).toUpperCase() + v.slice(1);
 }
 
-function MetricRow({
+function MetricCard({
   label,
   value,
+  trend,
   accent,
-  band,
 }: {
   label: string;
-  value: string;
+  value: ReactNode;
+  trend?: string;
   accent?: boolean;
-  band?: string;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-neutral-100 py-2.5 last:border-0">
-      <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
-        {band ? <BandDot band={band} /> : null}
+    <div className="rounded-[20px] px-1 py-3 transition-colors duration-200">
+      <p className="text-[10px] font-normal uppercase tracking-[0.16em] text-neutral-400">
         {label}
-      </span>
-      <span
-        className="text-sm font-bold tabular-nums text-heading-primary"
+      </p>
+      <p
+        className="mt-2 text-[1.75rem] font-semibold leading-none tracking-tight tabular-nums text-neutral-900"
         style={accent ? { color: IQ_GREEN } : undefined}
       >
         {value}
-      </span>
+      </p>
+      <p className="mt-1.5 text-[11px] font-normal text-neutral-400">
+        {trend ?? "\u00a0"}
+      </p>
     </div>
   );
 }
 
-function Collecting() {
-  return <span className="text-sm font-semibold text-muted">Collecting Intelligence</span>;
+function scoreStatus(score: number | null | undefined): string {
+  if (score == null) return "Collecting";
+  if (score >= 80) return "Excellent";
+  if (score >= 65) return "Strong";
+  if (score >= 50) return "Fair";
+  return "Developing";
 }
 
 export default function IntelligenceDrawer({
@@ -58,15 +62,26 @@ export default function IntelligenceDrawer({
   listings = [],
   selectedListing = null,
   onSelectListing,
+  variant = "panel",
 }: {
   node: TricityMapNode | null;
   listings?: MapPointFeature[];
   selectedListing?: MapPointFeature | null;
   onSelectListing?: (propertyId: string | null) => void;
+  /** floating = glass parent; panel = solid homepage card */
+  variant?: "panel" | "floating";
 }) {
+  const floating = variant === "floating";
+
   if (!node) {
     return (
-      <div className="flex h-full min-h-[420px] items-center justify-center rounded-3xl border border-neutral-200/80 bg-white p-6 text-sm text-muted">
+      <div
+        className={`flex h-full min-h-[280px] items-center justify-center p-8 text-sm text-neutral-400 ${
+          floating
+            ? ""
+            : "rounded-[24px] border border-neutral-200/60 bg-white shadow-[0_12px_40px_rgba(15,23,42,0.06)]"
+        }`}
+      >
         Select an area
       </div>
     );
@@ -77,240 +92,200 @@ export default function IntelligenceDrawer({
   );
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-[0_12px_40px_rgba(0,0,0,0.06)]">
-      <div className="border-b border-neutral-100 bg-gradient-to-br from-[#F3FAEF] via-white to-white px-5 py-4">
-        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#4AAA27]">
-          Live Intelligence
-        </p>
-        <AnimatePresence mode="wait">
-          <motion.h3
-            key={node.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.28 }}
-            className="mt-1 text-2xl font-bold tracking-tight text-heading-primary"
-          >
-            {node.name}
-          </motion.h3>
-        </AnimatePresence>
-      </div>
+    <div
+      className={`flex h-full flex-col overflow-hidden ${
+        floating
+          ? ""
+          : "rounded-[24px] border border-neutral-200/60 bg-white shadow-[0_16px_48px_rgba(15,23,42,0.07)]"
+      }`}
+    >
+      {!floating ? (
+        <div className="px-6 pb-2 pt-5">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-400">
+            Intelligence
+          </p>
+          <AnimatePresence mode="wait">
+            <motion.h3
+              key={node.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.28 }}
+              className="mt-1 text-2xl font-semibold tracking-tight text-neutral-900"
+            >
+              {node.name}
+            </motion.h3>
+          </AnimatePresence>
+        </div>
+      ) : null}
 
-      <div className="flex-1 overflow-y-auto px-5 py-4">
+      <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1 sm:px-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={node.id}
-            initial={{ opacity: 0, x: 12 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -8 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-5"
           >
             {selectedListing ? (
-              <div className="mb-4 rounded-2xl border border-emerald-200 bg-[#F3FAEF] p-3">
+              <div className="rounded-[20px] bg-black/[0.03] p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-[#326F1A]">
-                      Selected Listing
+                    <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-400">
+                      Selected
                     </p>
-                    <p className="mt-0.5 truncate text-sm font-bold text-heading-primary">
+                    <p className="mt-1 truncate text-[15px] font-semibold text-neutral-900">
                       {selectedListing.name}
                     </p>
-                    <p className="truncate text-xs text-muted">
+                    <p className="truncate text-[12px] text-neutral-400">
                       {selectedListing.builderName || "—"}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => onSelectListing?.(null)}
-                    className="text-[10px] font-semibold text-muted hover:text-heading-primary"
+                    className="text-[11px] font-medium text-neutral-400 transition hover:text-neutral-700"
                   >
                     Clear
                   </button>
                 </div>
-                <div className="mt-2 flex items-center justify-between text-xs">
-                  <span className="font-bold tabular-nums" style={{ color: scoreBandColor(selectedListing.score) }}>
-                    Score {selectedListing.score ?? "—"}
-                  </span>
-                  <span className="font-semibold text-heading-primary">
+                <div className="mt-3 flex items-end justify-between">
+                  <p className="text-xl font-semibold tabular-nums text-neutral-900">
                     {selectedListing.price != null
                       ? formatInrAmount(selectedListing.price)
                       : "—"}
-                  </span>
+                  </p>
+                  <p
+                    className="text-sm font-semibold tabular-nums"
+                    style={{ color: scoreBandColor(selectedListing.score) }}
+                  >
+                    {selectedListing.score ?? "—"}★
+                  </p>
                 </div>
-                <div className="mt-2 grid grid-cols-2 gap-2">
+                <div className="mt-3 grid grid-cols-2 gap-2">
                   <Link
                     href={selectedListing.bookVisitHref || selectedListing.href}
-                    className="inline-flex min-h-9 items-center justify-center rounded-lg text-[11px] font-bold text-white no-underline"
+                    className="inline-flex min-h-10 items-center justify-center rounded-[14px] text-[12px] font-semibold text-white no-underline"
                     style={{ backgroundColor: IQ_GREEN }}
                   >
                     Book Visit
                   </Link>
                   <Link
                     href={selectedListing.href}
-                    className="inline-flex min-h-9 items-center justify-center rounded-lg border border-neutral-200 bg-white text-[11px] font-semibold text-label no-underline"
+                    className="inline-flex min-h-10 items-center justify-center rounded-[14px] bg-black/[0.05] text-[12px] font-semibold text-neutral-700 no-underline"
                   >
-                    View Property
+                    View
                   </Link>
                 </div>
               </div>
             ) : null}
 
             {!node.hasIntelligence ? (
-              <div className="rounded-2xl border border-dashed border-neutral-200 bg-[#F7F9FB] px-4 py-8 text-center">
-                <p className="text-sm font-semibold text-heading-primary">
-                  Collecting Intelligence
+              <div className="rounded-[20px] bg-black/[0.03] px-5 py-10 text-center">
+                <p className="text-sm font-semibold text-neutral-800">
+                  Collecting intelligence
                 </p>
-                <p className="mt-2 text-xs text-muted">
-                  Area remains visible — metrics unlock from live inventory.
+                <p className="mt-2 text-[12px] leading-relaxed text-neutral-400">
+                  This area stays on the map — metrics unlock from live inventory.
                 </p>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl bg-[#F3FAEF] p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted">
-                      AreaIQ Score
-                    </p>
-                    <p className="mt-1 text-3xl font-bold tabular-nums" style={{ color: IQ_GREEN }}>
-                      {node.avgAreaIqScore != null ? (
+                <div className="grid grid-cols-2 gap-x-6 gap-y-1">
+                  <MetricCard
+                    label="AreaIQ Score"
+                    accent
+                    value={
+                      node.avgAreaIqScore != null ? (
                         <AnimatedCounter value={Math.round(node.avgAreaIqScore)} />
                       ) : (
                         "—"
-                      )}
-                    </p>
-                  </div>
-                  <div className="rounded-2xl bg-[#F7F9FB] p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted">
-                      Grade
-                    </p>
-                    <p className="mt-1 text-3xl font-bold tabular-nums text-heading-primary">
-                      {node.investmentGrade ?? "—"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <MetricRow
-                    label="Market Confidence"
+                      )
+                    }
+                    trend={scoreStatus(
+                      node.avgAreaIqScore != null
+                        ? Math.round(node.avgAreaIqScore)
+                        : null,
+                    )}
+                  />
+                  <MetricCard
+                    label="Grade"
+                    value={node.investmentGrade ?? "—"}
+                    trend="Investment grade"
+                  />
+                  <MetricCard
+                    label="Confidence"
+                    accent
                     value={
                       node.marketConfidence != null
                         ? `${node.marketConfidence}%`
-                        : "Collecting Intelligence"
+                        : "—"
                     }
-                    accent
+                    trend={
+                      node.marketConfidence != null && node.marketConfidence >= 70
+                        ? "High"
+                        : "Live market"
+                    }
                   />
-                  <MetricRow
-                    label="Demand"
-                    value={fmtBand(node.demand)}
-                    band={node.demand}
-                  />
-                  <MetricRow
-                    label="Supply"
-                    value={fmtBand(node.supply)}
-                    band={node.supply}
-                  />
-                  <MetricRow
-                    label="Inventory"
-                    value={String(node.listingCount)}
-                  />
-                  <MetricRow
-                    label="Verified Listings"
-                    value={String(node.verifiedCount)}
-                  />
-                  <MetricRow
-                    label="Builders"
-                    value={String(node.builderCount)}
-                  />
-                  <MetricRow
+                  <MetricCard
                     label="Avg Price"
                     value={
                       node.averagePrice != null
                         ? formatInrAmount(node.averagePrice)
-                        : "Collecting Intelligence"
+                        : "—"
                     }
-                    accent
+                    trend={`${node.listingCount} listings`}
                   />
-                  <MetricRow
-                    label="Rental Yield"
-                    value={
-                      node.avgRentalYield != null
-                        ? `${node.avgRentalYield.toFixed(1)}%`
-                        : "Collecting Intelligence"
-                    }
+                  <MetricCard
+                    label="Demand"
+                    value={fmtBand(node.demand)}
+                    trend={`Supply · ${fmtBand(node.supply)}`}
                   />
-                  <MetricRow
-                    label="Growth"
-                    value={
-                      node.avgGrowthScore != null
-                        ? String(Math.round(node.avgGrowthScore))
-                        : "Collecting Intelligence"
-                    }
+                  <MetricCard
+                    label="Builders"
+                    value={String(node.builderCount)}
+                    trend={`${node.verifiedCount} verified`}
                   />
-                  <MetricRow
-                    label="Legal"
-                    value={
-                      node.legalConfidence != null
-                        ? `${node.legalConfidence}%`
-                        : "Collecting Intelligence"
-                    }
-                  />
-                  <MetricRow
-                    label="Risk"
-                    value={fmtBand(node.risk)}
-                    band={node.risk === "low" ? "high" : node.risk === "high" ? "low" : node.risk}
-                  />
-                  <div className="border-b border-neutral-100 py-2.5 last:border-0">
-                    <div className="mb-1.5 flex items-center justify-between">
-                      <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">
-                        Price Trend
-                      </span>
-                      <Collecting />
-                    </div>
-                    <p className="text-[10px] text-muted">
-                      Snapshot only — no fabricated time series.
-                    </p>
-                  </div>
                 </div>
 
                 {node.topProject ? (
-                  <div className="mt-4 rounded-2xl border border-neutral-100 bg-[#F7F9FB] p-3">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-muted">
-                      Best Property
+                  <div className="rounded-[20px] bg-black/[0.03] p-4">
+                    <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-400">
+                      Best match
                     </p>
                     <Link
                       href={node.topProject.href}
-                      className="mt-1 block text-sm font-bold text-heading-primary no-underline hover:text-emerald-700"
+                      className="mt-1.5 block text-[15px] font-semibold text-neutral-900 no-underline transition hover:opacity-70"
                     >
                       {node.topProject.name}
                     </Link>
-                    <div className="mt-2 flex items-center justify-between text-xs text-muted">
-                      <span>
-                        Score{" "}
-                        <strong className="text-heading-primary">
-                          {node.topProject.score ?? "—"}
-                        </strong>
+                    <div className="mt-2 flex items-center justify-between text-[13px]">
+                      <span
+                        className="font-semibold tabular-nums"
+                        style={{
+                          color: scoreBandColor(node.topProject.score),
+                        }}
+                      >
+                        {node.topProject.score ?? "—"}★
                       </span>
-                      <span>
+                      <span className="font-semibold tabular-nums text-neutral-900">
                         {node.topProject.price != null
                           ? formatInrAmount(node.topProject.price)
                           : "—"}
                       </span>
                     </div>
-                    {node.topProject.score != null ? (
-                      <div className="mt-2">
-                        <ProgressBar value={node.topProject.score} />
-                      </div>
-                    ) : null}
                   </div>
                 ) : null}
 
                 {ranked.length > 0 ? (
-                  <div className="mt-5">
-                    <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted">
-                      Mapped Listings
+                  <div>
+                    <p className="mb-2.5 px-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-400">
+                      On map
                     </p>
-                    <ul className="space-y-1.5">
-                      {ranked.slice(0, 8).map((listing) => {
+                    <ul className="space-y-1">
+                      {ranked.slice(0, 6).map((listing) => {
                         const on =
                           selectedListing?.propertyId === listing.propertyId;
                         return (
@@ -320,22 +295,17 @@ export default function IntelligenceDrawer({
                               onClick={() =>
                                 onSelectListing?.(listing.propertyId ?? null)
                               }
-                              className={`flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-left transition-colors ${
+                              className={`flex w-full items-center justify-between gap-3 rounded-[16px] px-3 py-2.5 text-left transition-all duration-200 ${
                                 on
-                                  ? "bg-[#F3FAEF] ring-1 ring-emerald-200"
-                                  : "hover:bg-[#F7F9FB]"
+                                  ? "bg-[#4AAA27]/10"
+                                  : "hover:bg-black/[0.03]"
                               }`}
                             >
                               <span className="min-w-0">
-                                <span className="block truncate text-xs font-bold text-heading-primary">
+                                <span className="block truncate text-[13px] font-semibold text-neutral-900">
                                   {listing.name}
-                                  {listing.isBestMatch ? (
-                                    <span className="ml-1 text-[9px] font-bold uppercase text-[#326F1A]">
-                                      Best
-                                    </span>
-                                  ) : null}
                                 </span>
-                                <span className="block truncate text-[10px] text-muted">
+                                <span className="block truncate text-[11px] text-neutral-400">
                                   {listing.builderName || "—"}
                                   {listing.price != null
                                     ? ` · ${formatInrAmount(listing.price)}`
@@ -343,9 +313,9 @@ export default function IntelligenceDrawer({
                                 </span>
                               </span>
                               <span
-                                className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white"
+                                className="shrink-0 text-[13px] font-semibold tabular-nums"
                                 style={{
-                                  backgroundColor: scoreBandColor(listing.score),
+                                  color: scoreBandColor(listing.score),
                                 }}
                               >
                                 {listing.score ?? "—"}
@@ -357,102 +327,64 @@ export default function IntelligenceDrawer({
                     </ul>
                   </div>
                 ) : (
-                  <div className="mt-5 rounded-2xl border border-dashed border-neutral-200 bg-[#F7F9FB] px-3 py-4 text-center">
-                    <p className="text-xs font-semibold text-heading-primary">
-                      AreaIQ is expanding coverage here.
+                  <div className="rounded-[20px] bg-black/[0.03] px-4 py-6 text-center">
+                    <p className="text-[13px] font-semibold text-neutral-800">
+                      Expanding coverage here
                     </p>
-                    <p className="mt-1 text-[11px] text-muted">
-                      Nearby verified projects stay visible on the map in grey.
+                    <p className="mt-1 text-[11px] text-neutral-400">
+                      Nearby verified projects stay visible in muted markers.
                     </p>
                   </div>
                 )}
 
-                {node.recentActivity.length > 0 ? (
-                  <div className="mt-5">
-                    <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted">
-                      Recent Activity
+                {node.suggestedQuestions.length > 0 ? (
+                  <div>
+                    <p className="mb-2.5 px-1 text-[10px] font-medium uppercase tracking-[0.14em] text-neutral-400">
+                      Ask next
                     </p>
-                    <ul className="space-y-2">
-                      {node.recentActivity.map((a) => (
-                        <li key={a.id}>
-                          <Link
-                            href={a.href}
-                            className="flex items-start gap-2 rounded-xl px-2 py-1.5 text-xs no-underline hover:bg-[#F3FAEF]"
-                          >
-                            <ShieldCheck
-                              className="mt-0.5 h-3.5 w-3.5 shrink-0"
-                              style={{ color: IQ_GREEN }}
-                              aria-hidden
-                            />
-                            <span>
-                              <span className="font-semibold text-heading-primary">
-                                {a.label}
-                              </span>
-                              <span className="mt-0.5 block text-muted">{a.detail}</span>
-                            </span>
-                          </Link>
-                        </li>
+                    <div className="flex flex-col gap-1">
+                      {node.suggestedQuestions.slice(0, 3).map((q) => (
+                        <Link
+                          key={q.id}
+                          href={q.href}
+                          className="rounded-[16px] px-3 py-2.5 text-[13px] font-medium text-neutral-600 no-underline transition hover:bg-black/[0.03] hover:text-neutral-900"
+                        >
+                          {q.label}
+                        </Link>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 ) : null}
-
-                <div className="mt-5">
-                  <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted">
-                    Suggested
-                  </p>
-                  <div className="flex flex-col gap-1.5">
-                    {node.suggestedQuestions.map((q) => (
-                      <Link
-                        key={q.id}
-                        href={q.href}
-                        className="rounded-xl border border-neutral-100 px-3 py-2 text-xs font-medium text-body no-underline hover:border-emerald-200 hover:bg-[#F3FAEF]"
-                      >
-                        {q.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
               </>
             )}
           </motion.div>
         </AnimatePresence>
       </div>
 
-      <div className="grid gap-2 border-t border-neutral-100 bg-[#F7F9FB] p-4">
+      <div className="shrink-0 space-y-2 px-5 pb-5 pt-2">
         <Link
           href={node.href}
-          className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl text-sm font-bold text-white no-underline"
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-[16px] text-[13px] font-semibold text-white no-underline shadow-sm transition-transform duration-200 hover:scale-[1.01]"
           style={{ backgroundColor: IQ_GREEN }}
         >
-          <MessageSquare className="h-4 w-4" aria-hidden />
+          <MessageSquare className="h-3.5 w-3.5" aria-hidden />
           Ask AreaIQ
         </Link>
         <div className="grid grid-cols-2 gap-2">
           <Link
             href={node.listingsHref}
-            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-label no-underline hover:bg-neutral-50"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-[16px] bg-black/[0.04] text-[12px] font-medium text-neutral-600 no-underline transition duration-200 hover:bg-black/[0.06]"
           >
             <Search className="h-3.5 w-3.5" aria-hidden />
             Explore
           </Link>
           <Link
             href={node.compareHref}
-            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-label no-underline hover:bg-neutral-50"
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-[16px] bg-black/[0.04] text-[12px] font-medium text-neutral-600 no-underline transition duration-200 hover:bg-black/[0.06]"
           >
             <GitCompareArrows className="h-3.5 w-3.5" aria-hidden />
             Compare
           </Link>
-        </div>
-        <div className="flex items-center justify-center gap-3 pt-1 text-[10px] font-semibold uppercase tracking-wide text-muted">
-          <span className="inline-flex items-center gap-1">
-            <Building2 className="h-3 w-3" aria-hidden />
-            {node.builderCount} builders
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <BarChart3 className="h-3 w-3" aria-hidden />
-            {node.listingCount} listings
-          </span>
         </div>
       </div>
     </div>

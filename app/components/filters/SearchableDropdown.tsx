@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { suggestAreas } from "@/lib/location/registry";
 import { cn } from "./utils";
 
 interface SearchableDropdownProps {
@@ -27,9 +28,18 @@ export default function SearchableDropdown({
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return options;
-    return options.filter((option) =>
-      option.toLowerCase().includes(normalized),
+
+    // Prefer Area Registry ranking so micro-markets beat parent cities
+    const suggested = suggestAreas(normalized, 24).map((s) => s.displayName);
+    const optionSet = new Set(options);
+    const ranked = suggested.filter((name) => optionSet.has(name));
+    const rankedSet = new Set(ranked);
+    const rest = options.filter(
+      (option) =>
+        !rankedSet.has(option) &&
+        option.toLowerCase().includes(normalized),
     );
+    return [...ranked, ...rest];
   }, [options, query]);
 
   return (

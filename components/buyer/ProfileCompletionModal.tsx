@@ -19,6 +19,7 @@ import {
 } from "@/lib/buyer/profileFields";
 import { patchBuyerProfile } from "@/lib/buyer/profilePatch";
 import { formatBudgetRange } from "@/lib/properties/pricingDisplay";
+import { getFormCityOptions } from "@/lib/location/registry";
 import type { Profile } from "@/lib/supabase";
 
 const TOTAL_STEPS = 6;
@@ -51,14 +52,7 @@ const STEPS = [
 ] as const;
 
 const CITY_OPTIONS = [
-  "Chandigarh",
-  "Mohali",
-  "Panchkula",
-  "Zirakpur",
-  "Kharar",
-  "New Chandigarh",
-  "Aerocity",
-  "Derabassi",
+  ...getFormCityOptions(),
   "Delhi",
   "Gurgaon",
   "Other",

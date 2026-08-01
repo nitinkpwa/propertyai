@@ -1,3 +1,5 @@
+import { getConnectCityOptions } from "@/lib/location/registry";
+
 export { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
 
 export const CONNECT_FEATURES = [
@@ -117,12 +119,5 @@ export const CONNECT_FAQ = [
   },
 ] as const;
 
-export const CONNECT_CITIES = [
-  "Chandigarh",
-  "Mohali",
-  "Panchkula",
-  "Zirakpur",
-  "Kharar",
-  "New Chandigarh",
-  "Aerocity",
-] as const;
+/** Derived from Area Registry — do not hardcode new areas here. */
+export const CONNECT_CITIES = getConnectCityOptions();

@@ -1,3 +1,5 @@
+import { getPreferredAreaOptions } from "@/lib/location/registry";
+
 export const BUYING_PURPOSE_OPTIONS = [
   { value: "self", label: "Self Use", icon: "🏠" },
   { value: "investment", label: "Investment", icon: "📈" },
@@ -29,19 +31,8 @@ export const PROPERTY_TYPE_OPTIONS = [
   { value: "office", label: "Office" },
 ] as const;
 
-export const PREFERRED_AREA_OPTIONS = [
-  "Mohali",
-  "Chandigarh",
-  "Panchkula",
-  "Zirakpur",
-  "Kharar",
-  "New Chandigarh",
-  "Aerocity",
-  "Derabassi",
-  "Landran",
-  "Sector 82 Mohali",
-  "IT City Mohali",
-] as const;
+/** Derived from Area Registry — do not hardcode new areas here. */
+export const PREFERRED_AREA_OPTIONS = getPreferredAreaOptions();
 
 export type ProfileFieldKey =
   | "buying_purpose"

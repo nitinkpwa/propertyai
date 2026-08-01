@@ -25,7 +25,11 @@ function NavbarWrapperInner() {
 
   // Portal (buyer/seller/builder) + Ask: desktop chrome only.
   // Buyer portal uses CRM NotificationBell only — skip intelligence bar to avoid duplicate bells.
-  if (isPortalPath(pathname) || pathname.startsWith("/ask")) {
+  if (
+    isPortalPath(pathname) ||
+    pathname.startsWith("/ask") ||
+    pathname.startsWith("/intelligence-map")
+  ) {
     if (!isDesktop) return null;
     if (pathname.startsWith("/buyer")) {
       return <Navbar />;

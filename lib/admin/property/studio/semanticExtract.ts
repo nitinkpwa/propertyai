@@ -644,7 +644,7 @@ export function semanticExtractFromText(
   else if (extras?.googleMapsUrl) set("googleMapsUrl", extras.googleMapsUrl, 90);
 
   const city = firstMatch(trimmed, [
-    /\b(Mohali|Zirakpur|Chandigarh|Kharar|Panchkula|New Chandigarh|Banur|Derabassi|Ludhiana|Ambala)\b/i,
+    /\b(Mohali|Zirakpur|Chandigarh|Kharar|Panchkula Extension [12]|Panchkula Ext\.? [12]|Amravati Enclave|Amravati|Panchkula|New Chandigarh|Banur|Derabassi|Ludhiana|Ambala)\b/i,
   ]);
   if (city?.[1]) set("city", city[1], 88, city[0]);
 

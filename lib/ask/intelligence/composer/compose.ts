@@ -1,6 +1,8 @@
 import { extractPropertyRationales } from "../../markdown";
 import { detectConversationLanguage } from "../../language";
 import { completeText } from "../../engine/openai";
+import { buildRichDataAnswer } from "../../engine/dataAnswer";
+import { logAsk } from "../../engine/logger";
 import { formatAreaForComposer } from "../area/service";
 import { formatBuilderForComposer } from "../builder/service";
 import { formatInvestmentForComposer } from "../investment/service";
@@ -102,14 +104,21 @@ export async function composeIntelligenceAnswer(
   });
 
   let markdown: string;
+  let aiDegraded = false;
   try {
     markdown = await completeText(ANSWER_COMPOSER_SYSTEM, userPayload, {
       history,
       maxTokens: 550,
       temperature: 0.55,
     });
-  } catch {
-    markdown = buildDeterministicFallback(bundle, responseLanguage);
+  } catch (error) {
+    logAsk({
+      event: "composer_ai_fallback",
+      level: "warn",
+      error: error instanceof Error ? error.message : String(error),
+    });
+    markdown = buildRichDataAnswer(bundle, responseLanguage);
+    aiDegraded = true;
   }
 
   markdown = markdown.trim();
@@ -155,52 +164,6 @@ export async function composeIntelligenceAnswer(
     propertyRationales,
     suggestions: DEFAULT_SUGGESTIONS,
     followUpQuestions: DEFAULT_FOLLOW_UPS,
+    aiDegraded,
   };
-}
-
-function buildDeterministicFallback(
-  bundle: IntelligenceBundle,
-  language: import("../../language").ResponseLanguage,
-): string {
-  const rows = bundle.search.noExactMatch
-    ? bundle.search.alternatives
-    : bundle.search.exact;
-  const top = rows[0]?.listing;
-
-  if (language === "hindi") {
-    if (bundle.search.noExactMatch) {
-      return top
-        ? `Exact match उपलब्ध नहीं है, लेकिन verified विकल्प हैं। ${top.name} (${top.bhk} BHK, ${formatPrice(top.price)}, ${top.city}) देखने लायक है। नीचे cards में details हैं — budget या locality adjust करनी है?`
-        : `Exact match उपलब्ध नहीं है, और इस filter पर verified listing भी नहीं मिली। Budget, BHK, या locality थोड़ी flexible कर सकते हैं?`;
-    }
-    return top
-      ? `मैंने verified विकल्प निकाले हैं। ${top.name} अच्छा fit लगता है — ${top.bhk} BHK, ${formatPrice(top.price)}, ${top.city}। नीचे cards में details हैं। किस पर focus करें — price, rental, या ready-to-move?`
-      : `इस filter पर अभी कोई verified listing नहीं मिली। Budget, BHK, या area adjust करके फिर try करें?`;
-  }
-
-  if (language === "hinglish") {
-    if (bundle.search.noExactMatch) {
-      return top
-        ? `Exact match nahi mila, but yeh verified alternatives worth considering hain. ${top.name} (${top.bhk} BHK, ${formatPrice(top.price)}, ${top.city}) ek solid option lagta hai. Cards mein details hain — budget ya locality thodi adjust karein?`
-        : `Exact match nahi mila, aur is filter pe verified listing bhi nahi hai. Budget, BHK, ya locality flexible kar sakte ho?`;
-    }
-    return top
-      ? `Maine kuch verified options find kiye. ${top.name} achha fit lag raha hai — ${top.bhk} BHK, ${formatPrice(top.price)}, ${top.city}. Neeche cards mein details hain. Price pe focus karna hai, rental pe, ya ready-to-move?`
-      : `Is filter pe abhi koi verified listing nahi mili. Budget, BHK, ya area adjust karke try karein?`;
-  }
-
-  if (bundle.search.noExactMatch) {
-    const place =
-      bundle.intent.resolvedPlace?.displayName ||
-      bundle.intent.locality ||
-      bundle.intent.city ||
-      "your preferred location";
-    return top
-      ? `I couldn't find an exact property inside ${place} today. However I found verified projects very close to your preferred location. ${top.name} (${top.bhk} BHK, ${formatPrice(top.price)}, ${top.location || top.city}) looks like a solid nearby option — details are in the cards below. Want to adjust budget or BHK?`
-      : `I couldn't find an exact property inside ${place} today. Share budget and BHK and I'll keep searching nearby verified corridors.`;
-  }
-
-  return top
-    ? `Here's what I'd recommend from the verified options. ${top.name} looks like a good fit — ${top.bhk} BHK at ${formatPrice(top.price)} in ${top.city}. Property cards below have the details. Want to focus on price, rental yield, or ready-to-move?`
-    : `I couldn't find verified listings for this filter yet. Shall we adjust budget, BHK, or area?`;
 }

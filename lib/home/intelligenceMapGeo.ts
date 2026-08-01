@@ -1,10 +1,16 @@
 /**
  * Geographic anchors for the homepage Intelligence Map.
- * Area centroids + road corridors come from AreaIQ PLACE_GRAPH (deterministic).
+ * Area centroids + chips come from the AreaIQ Area Registry / PLACE_GRAPH.
  * Airport is a fixed real landmark for map context — not a market statistic.
  */
 
 import { getPlaceById } from "@/lib/location/synonyms";
+import {
+  getMapAreaRadiusKm,
+  getMapAreas,
+} from "@/lib/location/registry";
+
+export { getMapAreaRadiusKm };
 
 export type MapAreaDef = {
   id: string;
@@ -15,47 +21,17 @@ export type MapAreaDef = {
   lng: number;
 };
 
-/** Required Tricity intelligence nodes — coords from PLACE_GRAPH only. */
-const AREA_SPECS: { id: string; placeId: string; extraAliases?: string[] }[] = [
-  { id: "chandigarh", placeId: "chandigarh" },
-  { id: "mohali", placeId: "mohali" },
-  { id: "aerocity", placeId: "aerocity" },
-  { id: "airport-road", placeId: "airport-road" },
-  { id: "pr7", placeId: "pr7" },
-  { id: "zirakpur", placeId: "zirakpur" },
-  { id: "panchkula", placeId: "panchkula" },
-  { id: "new-chandigarh", placeId: "new-chandigarh", extraAliases: ["mullanpur"] },
-  { id: "kharar", placeId: "kharar" },
-  { id: "kurali", placeId: "kurali" },
-  { id: "derabassi", placeId: "derabassi", extraAliases: ["dera bassi"] },
-];
+/** Required Tricity intelligence nodes — derived from Area Registry (`surfaces: map`). */
+export const INTELLIGENCE_MAP_AREAS: MapAreaDef[] = getMapAreas().map((a) => ({
+  id: a.id,
+  name: a.name,
+  placeId: a.placeId,
+  aliases: a.aliases,
+  lat: a.lat,
+  lng: a.lng,
+}));
 
-function requirePlaceCoords(placeId: string): { lat: number; lng: number; name: string; aliases: string[] } {
-  const place = getPlaceById(placeId);
-  if (!place || place.lat == null || place.lng == null) {
-    throw new Error(`PLACE_GRAPH missing coords for ${placeId}`);
-  }
-  return {
-    lat: place.lat,
-    lng: place.lng,
-    name: place.displayName,
-    aliases: place.aliases,
-  };
-}
-
-export const INTELLIGENCE_MAP_AREAS: MapAreaDef[] = AREA_SPECS.map((spec) => {
-  const place = requirePlaceCoords(spec.placeId);
-  return {
-    id: spec.id,
-    name: place.name,
-    placeId: spec.placeId,
-    aliases: [...place.aliases, ...(spec.extraAliases ?? [])],
-    lat: place.lat,
-    lng: place.lng,
-  };
-});
-
-/** Sort aliases longest-first so "airport road" wins over "airport". */
+/** Sort aliases longest-first so "panchkula extension 2" wins over "panchkula". */
 export const MAP_AREA_MATCHERS = INTELLIGENCE_MAP_AREAS.map((a) => ({
   id: a.id,
   aliases: [...a.aliases].sort((x, y) => y.length - x.length),
@@ -68,21 +44,6 @@ export const TRICITY_MAP_ZOOM = 10.55;
 export const TRICITY_MAP_MIN_ZOOM = 9.2;
 export const TRICITY_MAP_MAX_ZOOM = 15.5;
 
-/** Radius (km) for approximate locality polygons — cities larger than corridors. */
-const AREA_RADIUS_KM: Record<string, number> = {
-  chandigarh: 4.2,
-  mohali: 3.8,
-  panchkula: 3.4,
-  zirakpur: 3.2,
-  "new-chandigarh": 3.6,
-  kharar: 3.0,
-  kurali: 2.6,
-  derabassi: 2.8,
-  aerocity: 2.2,
-  "airport-road": 2.0,
-  pr7: 2.0,
-};
-
 /** Build a closed regular polygon around a centroid (deterministic geo approx). */
 export function buildAreaPolygon(
   lat: number,
@@ -90,7 +51,7 @@ export function buildAreaPolygon(
   areaId: string,
   sides = 8,
 ): [number, number][] {
-  const radiusKm = AREA_RADIUS_KM[areaId] ?? 2.4;
+  const radiusKm = getMapAreaRadiusKm(areaId);
   const ring: [number, number][] = [];
   const latRad = (lat * Math.PI) / 180;
   const degLat = radiusKm / 110.574;
@@ -145,6 +106,16 @@ const ROAD_SPECS: RoadDef[] = [
     id: "vip-road-corridor",
     name: "VIP Road",
     placeIds: ["zirakpur", "vip-road", "peer-muchalla"],
+  },
+  {
+    id: "panchkula-extension-corridor",
+    name: "Panchkula Extension",
+    placeIds: [
+      "panchkula",
+      "panchkula-extension-1",
+      "amravati-enclave",
+      "panchkula-extension-2",
+    ],
   },
 ];
 

@@ -21,7 +21,11 @@ import { handleUnknown } from "./handlers/unknown";
 import { handleUnrelated } from "./handlers/unrelated";
 import { logAsk } from "./logger";
 import { AskAIError } from "./openai";
-import { AI_UNAVAILABLE_MESSAGE } from "./prompts";
+import {
+  classificationFromRules,
+  respondWithDataFallback,
+} from "./dataFallback";
+import { AI_REASONING_UNAVAILABLE_NOTICE } from "./prompts";
 import { emitStreamToken, runWithStreamHooks } from "./streamSink";
 import type {
   AskEngineResponse,
@@ -228,7 +232,21 @@ async function processAskMessageCore(
   }
 
   try {
-    const classification = await detectIntent(trimmed, history);
+    let classification: IntentClassification;
+    try {
+      classification = await detectIntent(trimmed, history);
+    } catch (classifierError) {
+      logAsk({
+        event: "intent_classification_rules_fallback",
+        level: "warn",
+        error:
+          classifierError instanceof Error
+            ? classifierError.message
+            : String(classifierError),
+      });
+      classification = classificationFromRules(trimmed);
+    }
+
     const ctx: HandlerContext = {
       message: trimmed,
       history,
@@ -321,30 +339,25 @@ async function processAskMessageCore(
 
     return response;
   } catch (error) {
-    const answer =
-      error instanceof AskAIError ? error.message : AI_UNAVAILABLE_MESSAGE;
-
     logAsk({
       event: "ask_request_error",
       level: "error",
       userMessage: trimmed,
       error: error instanceof Error ? error.message : String(error),
+      kind: error instanceof AskAIError ? error.kind : "unknown",
+      apiError: true,
     });
 
+    // Never show a broken chatbot — serve live inventory intelligence instead
+    const fallback = await respondWithDataFallback(trimmed, history, {
+      classification: classificationFromRules(trimmed),
+      excludePropertyIds,
+    });
+    emitStreamToken(fallback.answer);
     return {
-      intent: "UNKNOWN",
-      answer,
-      location: null,
-      builder: null,
-      budget: null,
-      bedrooms: null,
-      properties: [],
-      propertyRationales: {},
-      suggestions: [],
-      followUpQuestions: ["Try again", "3 BHK in Mohali", "Tell me about Aerocity"],
-      stats: null,
-      searchedDatabase: false,
-      isSimilar: false,
+      ...fallback,
+      aiNotice: fallback.aiNotice ?? AI_REASONING_UNAVAILABLE_NOTICE,
+      aiDegraded: true,
     };
   }
 }

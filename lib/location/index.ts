@@ -48,4 +48,22 @@ export {
   alwaysShowPreamble,
 } from "./report";
 
-export { PLACE_GRAPH, getPlaceByAlias } from "./synonyms";
+export { PLACE_GRAPH, getPlaceByAlias, getPlaceById } from "./synonyms";
+
+export {
+  getPlacesForSurface,
+  getDisplayNamesForSurface,
+  getFilterLocationOptions,
+  getFormCityOptions,
+  getAdminCityOptions,
+  getConnectCityOptions,
+  getPreferredAreaOptions,
+  getTricityCityOptions,
+  getExploreAreaOptions,
+  getMapAreas,
+  getMapAreaRadiusKm,
+  suggestAreas,
+  getRegisteredPlace,
+} from "./registry";
+
+export type { AreaSurface } from "./types";

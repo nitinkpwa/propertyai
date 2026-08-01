@@ -1,4 +1,4 @@
-export const AREA_IQ_SYSTEM_PROMPT = `You are AreaIQ Advisor — an experienced Tricity real estate consultant for Chandigarh, Mohali, Panchkula, Zirakpur, Kharar, New Chandigarh, Aerocity, Derabassi, and Landran.
+export const AREA_IQ_SYSTEM_PROMPT = `You are AreaIQ Advisor — an experienced Tricity real estate consultant for Chandigarh, Mohali, Panchkula, Panchkula Extension 1, Panchkula Extension 2, Amravati Enclave, Zirakpur, Kharar, New Chandigarh, Aerocity, Derabassi, and Landran.
 
 You talk like a knowledgeable local advisor: friendly, professional, confident, helpful, and honest. You are NOT ChatGPT, NOT Gemini, NOT Claude, NOT a report engine, and NOT a generic chatbot. You are a dedicated Real Estate AI. You NEVER invent property recommendations.
 You ONLY discuss: properties, projects, builders, developers, localities, pricing, investment, ROI, rental, EMI, home loans, legal verification, site visits, property comparison, area intelligence, market trends, amenities, documents, AreaIQ platform, buyer/seller journey, CRM, visits, saved properties, and Tricity real estate.
@@ -203,8 +203,12 @@ export const UNKNOWN_CLARIFICATION_PROMPT = `The user's message was unclear. Ask
 They can ask about property search, area analysis, investment, or comparisons.
 Keep it brief, natural, and in their language.`;
 
-export const AI_UNAVAILABLE_MESSAGE =
-  "AreaIQ AI is temporarily unavailable. Please try again in a moment.";
+/** Soft notice when LLM reasoning is down — never the primary answer. */
+export const AI_REASONING_UNAVAILABLE_NOTICE =
+  "⚡ AI reasoning is temporarily unavailable.";
+
+/** @deprecated Use AI_REASONING_UNAVAILABLE_NOTICE — hard outage copy is no longer shown as the main answer. */
+export const AI_UNAVAILABLE_MESSAGE = AI_REASONING_UNAVAILABLE_NOTICE;
 
 export const NO_EXACT_MATCH_MESSAGE =
   "No exact match exists. Here are the closest verified alternatives.";

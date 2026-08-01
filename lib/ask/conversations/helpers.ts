@@ -36,6 +36,11 @@ export function buildAssistantMessage(
     suggestedPropertyIds,
     location: response.location,
     builder: response.builder,
+    aiDegraded: response.aiDegraded,
+    aiNotice: response.aiNotice,
+    intelligenceLevel: response.intelligenceLevel,
+    missingSignals: response.missingSignals,
+    intelligenceDigest: response.intelligenceDigest,
   };
 
   return { turn, message };

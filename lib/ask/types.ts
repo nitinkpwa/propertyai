@@ -82,6 +82,14 @@ export interface AskTurn {
   intelligenceLevel?: AskTurnIntelligenceLevel;
   confidenceOverall?: number | null;
   missingSignals?: string[];
+  /** LLM offline — answer still from live AreaIQ data */
+  aiDegraded?: boolean;
+  aiNotice?: string | null;
+  intelligenceDigest?: {
+    listingsSearched: number;
+    buildersChecked: number;
+    marketSignalsAnalyzed: number;
+  } | null;
 }
 
 export interface AskSessionState {

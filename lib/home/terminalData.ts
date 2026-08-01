@@ -29,14 +29,29 @@ import type {
   TrendingLocationCard,
   TricityMapNode,
 } from "./terminalTypes";
-import { buildBuilderLinks } from "./areaListingMarkers";
+import {
+  buildBuilderLinks,
+  compareBestListings,
+  distanceKm,
+} from "./areaListingMarkers";
 import {
   CHANDIGARH_AIRPORT,
   INTELLIGENCE_MAP_AREAS,
   MAP_AREA_MATCHERS,
   buildAreaPolygon,
   buildMajorRoadLines,
+  getMapAreaRadiusKm,
 } from "./intelligenceMapGeo";
+import {
+  collectCoordsToCache,
+  persistListingCoords,
+  resolveListingCoords,
+  type CoordCachePayload,
+} from "./listingCoords";
+import {
+  resolvePlace,
+  resolvePlaceFromQuery,
+} from "@/lib/location/resolve";
 
 /** Grid positions for non-map heatmap UI (derived from lat/lng rank). */
 function gridXY(lat: number, lng: number): { x: number; y: number } {
@@ -92,12 +107,70 @@ function normalizeText(s: string): string {
   return s.toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-function matchZone(listing: ListingProperty): string | null {
-  const hay = normalizeText(`${listing.city ?? ""} ${listing.location ?? ""} ${listing.name ?? ""}`);
+function matchZoneByAlias(listing: ListingProperty): string | null {
+  const hay = normalizeText(
+    `${listing.city ?? ""} ${listing.location ?? ""} ${listing.name ?? ""} ${listing.builderName ?? ""}`,
+  );
   for (const zone of MAP_AREA_MATCHERS) {
     if (zone.aliases.some((a) => hay.includes(normalizeText(a)))) return zone.id;
   }
   return null;
+}
+
+function matchZoneByPlaceGraph(listing: ListingProperty): string | null {
+  const token = [listing.city, listing.location].filter(Boolean).join(" ");
+  if (!token.trim()) return null;
+  const place =
+    resolvePlace(listing.city || "") ??
+    resolvePlace(listing.location || "") ??
+    resolvePlaceFromQuery(token);
+  if (!place) return null;
+
+  const direct = INTELLIGENCE_MAP_AREAS.find(
+    (a) => a.id === place.canonicalId || a.placeId === place.canonicalId,
+  );
+  if (direct) return direct.id;
+
+  if (place.parentCity) {
+    const parent = INTELLIGENCE_MAP_AREAS.find(
+      (a) => normalizeText(a.name) === normalizeText(place.parentCity!),
+    );
+    if (parent) return parent.id;
+  }
+
+  // Display name / cityValues may still map onto a map chip
+  for (const name of [place.displayName, ...place.cityValues]) {
+    const hit = INTELLIGENCE_MAP_AREAS.find(
+      (a) => normalizeText(a.name) === normalizeText(name),
+    );
+    if (hit) return hit.id;
+  }
+  return null;
+}
+
+function matchZoneByProximity(listing: ListingProperty): string | null {
+  if (!hasCoords(listing)) return null;
+  let best: { id: string; d: number } | null = null;
+  for (const area of INTELLIGENCE_MAP_AREAS) {
+    const d = distanceKm(
+      { lat: listing.lat, lng: listing.lng },
+      { lat: area.lat, lng: area.lng },
+    );
+    const radius = getMapAreaRadiusKm(area.id) * 1.35;
+    if (d <= radius && (!best || d < best.d)) {
+      best = { id: area.id, d };
+    }
+  }
+  return best?.id ?? null;
+}
+
+/** Resolve listing → Intelligence Map area id (alias → place graph → proximity). */
+function matchZone(listing: ListingProperty): string | null {
+  return (
+    matchZoneByAlias(listing) ??
+    matchZoneByPlaceGraph(listing) ??
+    matchZoneByProximity(listing)
+  );
 }
 
 function hasCoords(listing: ListingProperty): listing is ListingProperty & { lat: number; lng: number } {
@@ -245,6 +318,10 @@ export function buildHeroStats(listings: ListingProperty[], scored: ScoredListin
     scored.map((s) => s.areaIq).filter((n): n is number => n != null),
   );
 
+  // Same live AreaIQ signal used for map-node marketConfidence — never fabricated
+  const marketConfidence =
+    avgScore != null ? Math.round(avgScore) : null;
+
   return [
     {
       id: "verified",
@@ -280,6 +357,14 @@ export function buildHeroStats(listings: ListingProperty[], scored: ScoredListin
       value: avgPrice != null ? Math.round(avgPrice) : null,
       display: avgPrice != null ? formatInrAmount(avgPrice) : null,
       href: "/properties",
+    },
+    {
+      id: "market-confidence",
+      label: "Market Confidence",
+      value: marketConfidence,
+      display: marketConfidence != null ? `${marketConfidence}%` : null,
+      subtitle: marketConfidence != null ? "LIVE" : null,
+      href: "/ask?q=Market+confidence+Tricity+real+estate",
     },
   ];
 }
@@ -442,22 +527,23 @@ export function buildTricityMapNodes(
 function listingPointFromScored(
   s: ScoredListing,
   kind: "listing" | "premium",
-): MapPointFeature | null {
+): MapPointFeature {
   const l = s.listing;
-  if (!hasCoords(l)) return null;
+  const areaId = matchZone(l);
+  const coords = resolveListingCoords(l, areaId);
   const verified = isVerifiedListing(l);
   return {
     id: `${kind === "premium" ? "p" : "v"}-${l.id}`,
     propertyId: l.id,
     name: l.name,
-    lat: l.lat,
-    lng: l.lng,
+    lat: coords.lat,
+    lng: coords.lng,
     href: `/property/${l.id}`,
     score: s.areaIq != null ? Math.round(s.areaIq) : null,
     price: l.price > 0 ? l.price : null,
     builderName: l.builderName || null,
     kind,
-    areaId: matchZone(l),
+    areaId,
     imageUrl: l.imageUrl ?? null,
     bhk: l.bhk > 0 ? l.bhk : null,
     areaSize: l.area > 0 ? l.area : null,
@@ -481,49 +567,61 @@ export function buildIntelligenceMapLayers(
     string,
     { lats: number[]; lngs: number[]; score: number[]; href: string }
   >();
-  const bestByArea = new Map<string, { propertyId: string; score: number }>();
+  const bestByArea = new Map<string, MapPointFeature>();
+
+  let liveCoords = 0;
+  let inferredCoords = 0;
+  let estimatedCoords = 0;
+  let skippedNoArea = 0;
+  const cachePayload: CoordCachePayload[] = [];
 
   for (const s of scored) {
     const l = s.listing;
-    if (!hasCoords(l)) continue;
+    const areaId = matchZone(l);
+    const resolved = resolveListingCoords(l, areaId);
+    if (resolved.source === "live") liveCoords += 1;
+    else if (resolved.source === "inferred") inferredCoords += 1;
+    else estimatedCoords += 1;
 
-    // Markers: verified AreaIQ listings with live coordinates only
-    if (isVerifiedListing(l)) {
-      const point = listingPointFromScored(s, "listing");
-      if (point) {
-        verifiedListings.push(point);
-        if (point.areaId && point.score != null) {
-          const prev = bestByArea.get(point.areaId);
-          if (!prev || point.score > prev.score) {
-            bestByArea.set(point.areaId, {
-              propertyId: l.id,
-              score: point.score,
-            });
-          }
-        }
+    // Never drop area listings for missing DB coordinates — resolve or estimate.
+    const point = listingPointFromScored(s, "listing");
+    if (!point.areaId) skippedNoArea += 1;
+    verifiedListings.push(point);
+    cachePayload.push({
+      id: l.id,
+      lat: point.lat,
+      lng: point.lng,
+      source: resolved.source,
+    });
+    if (point.areaId) {
+      const prev = bestByArea.get(point.areaId);
+      if (!prev || compareBestListings(point, prev) < 0) {
+        bestByArea.set(point.areaId, point);
       }
     }
 
     if (s.areaIq != null && s.areaIq >= 75) {
-      const premium = listingPointFromScored(s, "premium");
-      if (premium) premiumProjects.push(premium);
+      premiumProjects.push(listingPointFromScored(s, "premium"));
     }
 
     const builder = (l.builderName || "").trim();
     if (builder && builder.toLowerCase() !== "unknown") {
       const key = builder.toLowerCase();
       const bucket = builderBuckets.get(key) ?? {
-        lats: [],
-        lngs: [],
-        score: [],
+        lats: [] as number[],
+        lngs: [] as number[],
+        score: [] as number[],
         href: `/ask?q=${encodeURIComponent(`${builder} builder review Tricity`)}`,
       };
-      bucket.lats.push(l.lat);
-      bucket.lngs.push(l.lng);
+      bucket.lats.push(point.lat);
+      bucket.lngs.push(point.lng);
       if (s.builder != null) bucket.score.push(s.builder);
       builderBuckets.set(key, bucket);
     }
   }
+
+  // Persist inferred/estimated coords (NULL-only in DB) so next load is live.
+  persistListingCoords(collectCoordsToCache(cachePayload));
 
   for (const point of verifiedListings) {
     if (!point.areaId || !point.propertyId) continue;
@@ -552,6 +650,32 @@ export function buildIntelligenceMapLayers(
       kind: "builder",
     });
     if (builderHeadquarters.length >= 24) break;
+  }
+
+  if (typeof console !== "undefined") {
+    const byArea = new Map<string, number>();
+    for (const p of verifiedListings) {
+      const key = p.areaId ?? "(unassigned)";
+      byArea.set(key, (byArea.get(key) ?? 0) + 1);
+    }
+    console.info("[AreaIQ Map Pipeline]", {
+      stage: "map-layers",
+      scoredFromSupabase: scored.length,
+      afterCoordResolve: verifiedListings.length,
+      liveCoords,
+      inferredCoords,
+      estimatedCoords,
+      skippedNoArea,
+      byArea: Object.fromEntries(byArea),
+      mohaliCount: byArea.get("mohali") ?? 0,
+      bestMohali: bestByArea.get("mohali")?.name ?? null,
+      whyZero:
+        verifiedListings.length === 0
+          ? scored.length === 0
+            ? "No listings returned from Supabase"
+            : "All listings failed area assignment AND coordinate resolve"
+          : null,
+    });
   }
 
   return {

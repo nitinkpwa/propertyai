@@ -4,6 +4,8 @@ import type { AskEngineResponse, HandlerContext } from "../types";
 import { classificationToResponseFields } from "../types";
 import { wantsAlternativeProperties } from "../memory";
 import { logAsk } from "../logger";
+import { intelligenceDigestFromBundle } from "../dataAnswer";
+import { AI_REASONING_UNAVAILABLE_NOTICE } from "../prompts";
 
 export async function handlePropertySearch(
   ctx: HandlerContext,
@@ -47,6 +49,8 @@ export async function handlePropertySearch(
     baseFields.location = result.intent.city;
   }
 
+  const aiDegraded = Boolean(result.composed.aiDegraded);
+
   return {
     intent: "PROPERTY_SEARCH",
     answer: result.composed.markdown,
@@ -58,5 +62,10 @@ export async function handlePropertySearch(
     stats: result.listings.length ? computeSearchStats(result.listings) : null,
     searchedDatabase: true,
     isSimilar: result.isSimilar,
+    intelligenceLevel: aiDegraded ? "partial" : undefined,
+    aiDegraded,
+    aiNotice: aiDegraded ? AI_REASONING_UNAVAILABLE_NOTICE : null,
+    intelligenceDigest: intelligenceDigestFromBundle(result.bundle),
+    missingSignals: aiDegraded ? ["AI narrative reasoning"] : undefined,
   };
 }

@@ -9,8 +9,10 @@ export interface HeroStat {
   label: string;
   /** Numeric value for animated counters; null when unknown */
   value: number | null;
-  /** Optional display override (e.g. ₹94L) */
+  /** Optional display override (e.g. ₹94L, 87%) */
   display: string | null;
+  /** Optional live/status line under the value (e.g. LIVE) */
+  subtitle?: string | null;
   href: string;
 }
 

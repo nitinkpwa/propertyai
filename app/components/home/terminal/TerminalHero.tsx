@@ -109,16 +109,16 @@ export default function TerminalHero() {
                 </div>
               </form>
 
-              <div className="mt-6 grid w-full max-w-2xl grid-cols-3 gap-2 sm:mt-8 sm:grid-cols-5 sm:gap-3">
+              <div className="mt-6 grid w-full max-w-2xl grid-cols-3 gap-2 sm:mt-8 sm:gap-3">
                 {loading && stats.length === 0
-                  ? Array.from({ length: 5 }).map((_, i) => (
-                      <SkeletonBlock key={i} className="h-16 bg-white/15" />
+                  ? Array.from({ length: 6 }).map((_, i) => (
+                      <SkeletonBlock key={i} className="h-[4.75rem] bg-white/15" />
                     ))
                   : stats.map((stat) => (
                       <Link
                         key={stat.id}
                         href={stat.href}
-                        className="rounded-xl border border-white/20 bg-white/10 px-2 py-2.5 no-underline backdrop-blur-md transition-colors hover:bg-white/18 sm:px-3"
+                        className="flex h-full min-h-[4.75rem] flex-col rounded-xl border border-white/20 bg-white/10 px-2 py-2.5 no-underline backdrop-blur-md transition-colors hover:bg-white/18 sm:px-3"
                       >
                         <p className="text-[10px] font-semibold uppercase tracking-wide text-white/70">
                           {stat.label}
@@ -129,11 +129,30 @@ export default function TerminalHero() {
                         >
                           {stat.id === "avg-price" ? (
                             stat.display ?? "—"
+                          ) : stat.id === "market-confidence" ? (
+                            stat.value != null ? (
+                              <>
+                                <AnimatedCounter value={stat.value} />%
+                              </>
+                            ) : (
+                              "Collecting"
+                            )
                           ) : stat.value != null ? (
                             <AnimatedCounter value={stat.value} />
                           ) : (
                             "—"
                           )}
+                        </p>
+                        {/* Shared footer slot keeps all six tiles the same height */}
+                        <p
+                          className={`mt-auto pt-1 text-[9px] font-bold uppercase tracking-[0.14em] ${
+                            stat.subtitle
+                              ? "text-[#8BE05A]"
+                              : "invisible select-none"
+                          }`}
+                          aria-hidden={!stat.subtitle}
+                        >
+                          {stat.subtitle ?? "LIVE"}
                         </p>
                       </Link>
                     ))}

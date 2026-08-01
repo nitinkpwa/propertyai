@@ -4,6 +4,7 @@ import type {
   PossessionStatus,
   PropertyType,
 } from "./types";
+import { getFilterLocationOptions } from "@/lib/location/registry";
 
 export { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
 
@@ -31,16 +32,8 @@ export const BHK_OPTIONS: { value: number; label: string }[] = [
   { value: 5, label: "5+ BHK" },
 ];
 
-export const LOCATION_OPTIONS = [
-  "Mohali",
-  "Chandigarh",
-  "Aerocity",
-  "Zirakpur",
-  "Panchkula",
-  "New Chandigarh",
-  "Kharar",
-  "Derabassi",
-];
+/** Derived from Area Registry — do not hardcode new areas here. */
+export const LOCATION_OPTIONS = getFilterLocationOptions();
 
 export const POSSESSION_OPTIONS: {
   value: PossessionStatus;

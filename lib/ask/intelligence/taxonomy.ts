@@ -3,6 +3,8 @@
  * Used by the Intent Parser and validation rules — not for LLM hallucination.
  */
 
+import { getTricityCityOptions } from "@/lib/location/registry";
+
 export const PROPERTY_TYPE_ALIASES: Record<string, StructuredPropertyType> = {
   apartment: "apartment",
   apartments: "apartment",
@@ -71,18 +73,8 @@ export function toDbSubType(
   }
 }
 
-export const TRICITY_CITIES = [
-  "Mohali",
-  "Chandigarh",
-  "Panchkula",
-  "Zirakpur",
-  "Kharar",
-  "New Chandigarh",
-  "Aerocity",
-  "Derabassi",
-  "Landran",
-  "Banur",
-] as const;
+/** Derived from Area Registry — do not hardcode new areas here. */
+export const TRICITY_CITIES = getTricityCityOptions();
 
 export const CONFIGURATION_PATTERN =
   /\b([1-5])\s*(?:bhk|b\.?h\.?k|rk|bedroom|bed)\b/i;

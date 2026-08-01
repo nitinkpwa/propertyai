@@ -13,32 +13,36 @@ import { isModuleActive } from "./modules/registry";
 import { executeStructuredSearch } from "./search/structuredSearch";
 import type { ComposedAnswer, IntelligenceBundle, StructuredIntent } from "./types";
 
-export interface RunIntelligenceOptions {
+export interface GatherIntelligenceOptions {
   message: string;
   history?: ConversationMessage[];
   classification?: IntentClassification | null;
   excludePropertyIds?: string[];
 }
 
-export interface IntelligencePipelineResult {
+export type RunIntelligenceOptions = GatherIntelligenceOptions;
+
+export interface GatheredIntelligence {
   intent: StructuredIntent;
   bundle: IntelligenceBundle;
-  composed: ComposedAnswer;
   listings: IntelligenceBundle["search"]["exact"][number]["listing"][];
   isSimilar: boolean;
   searchedDatabase: boolean;
 }
 
+export interface IntelligencePipelineResult extends GatheredIntelligence {
+  composed: ComposedAnswer;
+}
+
 /**
- * AreaIQ Intelligence Engine pipeline.
- * Intent → Structured SQL → Ranking → Knowledge modules → Answer Composer.
- * The LLM never invents recommendations.
+ * Gather live AreaIQ data without calling the LLM.
+ * Used by the full pipeline and by offline data fallback.
  */
-export async function runIntelligencePipeline(
-  options: RunIntelligenceOptions,
-): Promise<IntelligencePipelineResult> {
-  const { message, history = [], classification = null, excludePropertyIds } =
-    options;
+export async function gatherIntelligenceBundle(
+  options: GatherIntelligenceOptions,
+): Promise<GatheredIntelligence> {
+  const { message, classification = null, excludePropertyIds } = options;
+  const searchStarted = Date.now();
 
   // STEP 1 — Intent Detection (rules first, classifier merge second)
   let intent = parseIntentFromText(message);
@@ -65,6 +69,8 @@ export async function runIntelligencePipeline(
 
   logAsk({
     event: "intelligence_search_complete",
+    supabaseQuery: true,
+    latencyMs: Date.now() - searchStarted,
     exactCount: search.exactCount,
     alternatives: search.alternatives.length,
     noExactMatch: search.noExactMatch,
@@ -130,15 +136,31 @@ export async function runIntelligencePipeline(
     sources,
   };
 
-  // STEP 7 — Answer Composer (LLM writes only)
-  const composed = await composeIntelligenceAnswer(bundle, history);
-
   return {
     intent,
     bundle,
-    composed,
     listings: displayListings,
     isSimilar: search.noExactMatch && search.alternatives.length > 0,
     searchedDatabase: true,
+  };
+}
+
+/**
+ * AreaIQ Intelligence Engine pipeline.
+ * Intent → Structured SQL → Ranking → Knowledge modules → Answer Composer.
+ * The LLM never invents recommendations.
+ */
+export async function runIntelligencePipeline(
+  options: RunIntelligenceOptions,
+): Promise<IntelligencePipelineResult> {
+  const { history = [] } = options;
+  const gathered = await gatherIntelligenceBundle(options);
+
+  // STEP 7 — Answer Composer (LLM writes; falls back to live data if offline)
+  const composed = await composeIntelligenceAnswer(gathered.bundle, history);
+
+  return {
+    ...gathered,
+    composed,
   };
 }

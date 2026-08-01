@@ -22,17 +22,99 @@ import {
   SELLING_PROMPT,
   UNRELATED_PROMPT,
   UNKNOWN_CLARIFICATION_PROMPT,
-  AI_UNAVAILABLE_MESSAGE,
+  AI_REASONING_UNAVAILABLE_NOTICE,
 } from "./prompts";
 import { detectConversationLanguage, languageInstruction } from "../language";
 import { logAsk } from "./logger";
 import { emitStreamToken, getStreamHooks, isStreamAborted } from "./streamSink";
+import {
+  classifyOpenAIError,
+  OPENAI_RETRY_DELAYS_MS,
+  sleep,
+} from "./openaiErrors";
 
 export class AskAIError extends Error {
-  constructor(message: string) {
+  readonly kind: string;
+  readonly degraded: boolean;
+
+  constructor(
+    message: string,
+    options?: { kind?: string; degraded?: boolean },
+  ) {
     super(message);
     this.name = "AskAIError";
+    this.kind = options?.kind ?? "unknown";
+    this.degraded = options?.degraded ?? true;
   }
+}
+
+async function withOpenAIRetries<T>(
+  label: string,
+  run: () => Promise<T>,
+  options?: { allowRetry?: (error: unknown, attempt: number) => boolean },
+): Promise<T> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= OPENAI_RETRY_DELAYS_MS.length; attempt++) {
+    if (isStreamAborted()) {
+      throw new AskAIError("Request aborted", { kind: "abort", degraded: false });
+    }
+
+    const started = Date.now();
+    try {
+      const result = await run();
+      logAsk({
+        event: "openai_latency",
+        label,
+        latencyMs: Date.now() - started,
+        attempt,
+        model: OPENAI_MODEL,
+      });
+      return result;
+    } catch (error) {
+      lastError = error;
+      const classified = classifyOpenAIError(error);
+      logAsk({
+        event: "openai_error",
+        level: "error",
+        label,
+        kind: classified.kind,
+        retryable: classified.retryable,
+        status: classified.status,
+        message: classified.message,
+        latencyMs: Date.now() - started,
+        attempt,
+        apiError: classified.kind === "api",
+        timeout: classified.kind === "timeout",
+        tokenError: classified.kind === "token",
+        rateLimit: classified.kind === "rate_limit",
+      });
+
+      const canRetry =
+        classified.retryable &&
+        attempt < OPENAI_RETRY_DELAYS_MS.length &&
+        (options?.allowRetry?.(error, attempt) ?? true) &&
+        !isStreamAborted();
+
+      if (!canRetry) break;
+
+      const delay = OPENAI_RETRY_DELAYS_MS[attempt];
+      logAsk({
+        event: "openai_retry_scheduled",
+        label,
+        attempt: attempt + 1,
+        delayMs: delay,
+        kind: classified.kind,
+      });
+      await sleep(delay);
+    }
+  }
+
+  const classified = classifyOpenAIError(lastError);
+  throw new AskAIError(AI_REASONING_UNAVAILABLE_NOTICE, {
+    kind: classified.kind,
+    degraded: true,
+  });
 }
 
 export async function completeJSON<T>(
@@ -46,7 +128,7 @@ export async function completeJSON<T>(
     { role: "user", content: user },
   ];
 
-  try {
+  return withOpenAIRetries("completeJSON", async () => {
     const response = await createChatCompletion({
       model: OPENAI_MODEL,
       temperature: 0.1,
@@ -57,7 +139,9 @@ export async function completeJSON<T>(
 
     const raw = response.choices[0]?.message?.content;
     if (!raw) {
-      throw new AskAIError("OpenAI returned an empty classification response");
+      throw new AskAIError("OpenAI returned an empty classification response", {
+        kind: "empty",
+      });
     }
 
     logAsk({
@@ -67,15 +151,7 @@ export async function completeJSON<T>(
     });
 
     return JSON.parse(raw) as T;
-  } catch (error) {
-    logAsk({
-      event: "openai_json_error",
-      level: "error",
-      error: error instanceof Error ? error.message : String(error),
-    });
-    if (error instanceof AskAIError) throw error;
-    throw new AskAIError(AI_UNAVAILABLE_MESSAGE);
-  }
+  });
 }
 
 export async function completeText(
@@ -104,34 +180,49 @@ export async function completeText(
   const hooks = getStreamHooks();
   const shouldStream = Boolean(hooks?.onToken);
 
-  try {
-    if (shouldStream) {
-      let content = "";
-      for await (const delta of createChatCompletionStream(
-        {
+  if (shouldStream) {
+    let emittedAny = false;
+    return withOpenAIRetries(
+      "completeText:stream",
+      async () => {
+        let content = "";
+        for await (const delta of createChatCompletionStream(
+          {
+            model: OPENAI_MODEL,
+            temperature,
+            max_tokens: maxTokens,
+            messages,
+          },
+          hooks?.signal,
+        )) {
+          if (isStreamAborted()) break;
+          content += delta;
+          if (delta) {
+            emittedAny = true;
+            emitStreamToken(delta);
+          }
+        }
+        const trimmed = content.trim();
+        if (!trimmed && !isStreamAborted()) {
+          throw new AskAIError("OpenAI returned an empty text response", {
+            kind: "empty",
+          });
+        }
+        logAsk({
+          event: "openai_text_stream_complete",
           model: OPENAI_MODEL,
-          temperature,
-          max_tokens: maxTokens,
-          messages,
-        },
-        hooks?.signal,
-      )) {
-        if (isStreamAborted()) break;
-        content += delta;
-        emitStreamToken(delta);
-      }
-      const trimmed = content.trim();
-      if (!trimmed && !isStreamAborted()) {
-        throw new AskAIError("OpenAI returned an empty text response");
-      }
-      logAsk({
-        event: "openai_text_stream_complete",
-        model: OPENAI_MODEL,
-        chars: trimmed.length,
-      });
-      return trimmed;
-    }
+          chars: trimmed.length,
+        });
+        return trimmed;
+      },
+      {
+        // Never retry after tokens already reached the client
+        allowRetry: () => !emittedAny,
+      },
+    );
+  }
 
+  return withOpenAIRetries("completeText", async () => {
     const response = await createChatCompletion({
       model: OPENAI_MODEL,
       temperature,
@@ -141,7 +232,9 @@ export async function completeText(
 
     const content = response.choices[0]?.message?.content?.trim();
     if (!content) {
-      throw new AskAIError("OpenAI returned an empty text response");
+      throw new AskAIError("OpenAI returned an empty text response", {
+        kind: "empty",
+      });
     }
 
     logAsk({
@@ -151,15 +244,7 @@ export async function completeText(
     });
 
     return content;
-  } catch (error) {
-    logAsk({
-      event: "openai_text_error",
-      level: "error",
-      error: error instanceof Error ? error.message : String(error),
-    });
-    if (error instanceof AskAIError) throw error;
-    throw new AskAIError(AI_UNAVAILABLE_MESSAGE);
-  }
+  });
 }
 
 export function buildListingsContext(

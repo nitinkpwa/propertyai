@@ -40,6 +40,9 @@ import PropertyCardsGrid from "./components/PropertyCardsGrid";
 const TRENDING_LOCALITIES = [
   { name: "New Chandigarh", note: "Infra-led appreciation" },
   { name: "Mohali Airport Road", note: "Strong rental demand" },
+  { name: "Panchkula Extension 1", note: "Emerging PKL growth pocket" },
+  { name: "Panchkula Extension 2", note: "Expanding inventory belt" },
+  { name: "Amravati Enclave", note: "Panchkula enclave demand" },
   { name: "Zirakpur", note: "Value corridor" },
   { name: "Kharar", note: "Affordable growth" },
 ];

@@ -78,6 +78,15 @@ export function AskAssistantMessage({
   const matchSubtitle =
     matchCount === 1 ? "1 Matching Property" : `${matchCount} Properties Found`;
 
+  const hasValidAnswer = Boolean(
+    (primaryContent && primaryContent.trim().length > 40) ||
+      turn.listings.length > 0,
+  );
+  // Hide Copy on hard failure (no useful body). Data-backed degraded answers stay copyable.
+  const showCopy = hasValidAnswer && Boolean(primaryContent);
+  // Continue only when a substantial answer exists
+  const showContinue = Boolean(isLatest && onContinue && hasValidAnswer);
+
   const handleCopy = async () => {
     const text = primaryContent || turn.aiContent || "";
     if (!text) return;
@@ -131,10 +140,32 @@ export function AskAssistantMessage({
           </h3>
           {turn.subtext ? <p className="mt-1 text-sm text-muted">{turn.subtext}</p> : null}
 
+          {turn.intelligenceDigest && !streaming ? (
+            <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50/50 px-3 py-2.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                Verified inventory scan
+              </p>
+              <ul className="mt-1.5 space-y-0.5 text-xs text-emerald-900/90">
+                <li>
+                  ✓ {turn.intelligenceDigest.listingsSearched} verified listings
+                  searched
+                </li>
+                <li>
+                  ✓ {turn.intelligenceDigest.buildersChecked} builders checked
+                </li>
+                <li>
+                  ✓ {turn.intelligenceDigest.marketSignalsAnalyzed} market
+                  signals analyzed
+                </li>
+              </ul>
+            </div>
+          ) : null}
+
           {turn.intelligenceLevel === "partial" &&
           turn.missingSignals &&
           turn.missingSignals.length > 0 &&
-          !streaming ? (
+          !streaming &&
+          !turn.aiDegraded ? (
             <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50/60 px-3 py-2.5">
               <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800">
                 Still collecting
@@ -182,8 +213,14 @@ export function AskAssistantMessage({
           ) : streaming ? (
             <div className="mt-3 flex items-center gap-2 text-sm text-muted">
               <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-              Thinking…
+              Loading AI reasoning…
             </div>
+          ) : null}
+
+          {turn.aiDegraded && turn.aiNotice && !streaming ? (
+            <p className="mt-3 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2 text-sm font-medium text-amber-900">
+              {turn.aiNotice}
+            </p>
           ) : null}
 
           {hasListings && !streaming ? (
@@ -261,25 +298,27 @@ export function AskAssistantMessage({
 
           {streaming ? null : (
           <div className="mt-4 flex flex-wrap items-center gap-1 border-t border-neutral-100 pt-3">
-            <button
-              type="button"
-              onClick={() => void handleCopy()}
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted transition hover:bg-neutral-50 hover:text-heading-primary"
-              aria-label="Copy answer"
-            >
-              {copied ? "Copied" : "Copy"}
-            </button>
+            {showCopy ? (
+              <button
+                type="button"
+                onClick={() => void handleCopy()}
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted transition hover:bg-neutral-50 hover:text-heading-primary"
+                aria-label="Copy answer"
+              >
+                {copied ? "Copied" : "Copy"}
+              </button>
+            ) : null}
             {isLatest && onRetry ? (
               <button
                 type="button"
                 onClick={onRetry}
-                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-muted transition hover:bg-neutral-50 hover:text-heading-primary"
-                aria-label="Retry"
+                className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-3 text-sm font-medium text-emerald-800 transition hover:bg-emerald-50"
+                aria-label="Refresh Intelligence"
               >
-                Retry
+                Refresh Intelligence
               </button>
             ) : null}
-            {isLatest && onContinue ? (
+            {showContinue ? (
               <button
                 type="button"
                 onClick={onContinue}

@@ -27,6 +27,35 @@ export const HERO_GLASS_STYLE: CSSProperties = {
   boxShadow: "0 8px 40px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.15)",
 };
 
+/** Floating map chrome — translucent white over live map */
+export const MAP_GLASS_STYLE: CSSProperties = {
+  background: "rgba(255,255,255,0.78)",
+  backdropFilter: "blur(24px) saturate(1.4)",
+  WebkitBackdropFilter: "blur(24px) saturate(1.4)",
+  border: "1px solid rgba(255,255,255,0.65)",
+  boxShadow:
+    "0 1px 0 rgba(255,255,255,0.7) inset, 0 8px 28px rgba(15,23,42,0.08), 0 2px 6px rgba(15,23,42,0.03)",
+};
+
+/** Dark frosted glass for map chrome on imagery */
+export const MAP_GLASS_DARK_STYLE: CSSProperties = {
+  background: "rgba(18,22,20,0.48)",
+  backdropFilter: "blur(22px) saturate(1.2)",
+  WebkitBackdropFilter: "blur(22px) saturate(1.2)",
+  border: "1px solid rgba(255,255,255,0.12)",
+  boxShadow:
+    "0 1px 0 rgba(255,255,255,0.08) inset, 0 16px 48px rgba(0,0,0,0.28)",
+};
+
+export const MAP_RADIUS = {
+  panel: "28px",
+  card: "24px",
+  property: "24px",
+  button: "16px",
+  map: "26px",
+  pill: "999px",
+} as const;
+
 /** Soft white lift + ambient — white/light hero typography */
 export const HERO_TEXT_SHADOW = TEXT_SHADOW_PREMIUM;
 

@@ -104,6 +104,12 @@ export interface PropertyContext {
 
 export type AskIntelligenceLevel = "full" | "partial";
 
+export interface AskIntelligenceDigest {
+  listingsSearched: number;
+  buildersChecked: number;
+  marketSignalsAnalyzed: number;
+}
+
 export interface AskEngineResponse {
   intent: AskEngineIntent;
   answer: string;
@@ -122,6 +128,12 @@ export interface AskEngineResponse {
   intelligenceLevel?: AskIntelligenceLevel;
   confidenceOverall?: number | null;
   missingSignals?: string[];
+  /** LLM reasoning unavailable — answer still built from live AreaIQ data */
+  aiDegraded?: boolean;
+  /** Soft notice shown under a valid data-backed answer */
+  aiNotice?: string | null;
+  /** Counts for the intelligence progress / digest UI */
+  intelligenceDigest?: AskIntelligenceDigest | null;
 }
 
 export interface HandlerContext {

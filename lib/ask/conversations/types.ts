@@ -22,6 +22,16 @@ export interface AskChatMessage {
   builder?: string | null;
   /** True while tokens are still streaming in */
   streaming?: boolean;
+  /** LLM offline — answer still from live AreaIQ data */
+  aiDegraded?: boolean;
+  aiNotice?: string | null;
+  intelligenceLevel?: "full" | "partial";
+  missingSignals?: string[];
+  intelligenceDigest?: {
+    listingsSearched: number;
+    buildersChecked: number;
+    marketSignalsAnalyzed: number;
+  } | null;
 }
 
 export interface AskConversation {

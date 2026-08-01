@@ -1,22 +1,11 @@
 import type { CSSProperties } from "react";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
+import { getAdminCityOptions } from "@/lib/location/registry";
 
 export { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
 
-export const ADMIN_CITIES = [
-  "Chandigarh",
-  "Mohali",
-  "Panchkula",
-  "Zirakpur",
-  "Kharar",
-  "New Chandigarh",
-  "Aerocity",
-  "IT City",
-  "Landran",
-  "Derabassi",
-  "Banur",
-  "Pinjore",
-];
+/** Derived from Area Registry — do not hardcode new areas here. */
+export const ADMIN_CITIES = getAdminCityOptions();
 
 export const ADMIN_SUB_TYPES = [
   "flat",
