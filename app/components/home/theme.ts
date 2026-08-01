@@ -5,10 +5,13 @@ import {
   TEXT_SHADOW_PREMIUM,
 } from "@/lib/design/text";
 
-/** AreaIQ homepage design tokens */
+/** AreaIQ homepage design tokens — Bloomberg terminal surface */
 export { BRAND_PRIMARY as IQ_GREEN } from "@/lib/design/colors";
 export const IQ_BG = "#FFFFFF";
 export const IQ_BG_SECONDARY = "#F7F9FB";
+export const IQ_TERMINAL_BORDER = "border-neutral-200/80";
+export const IQ_TERMINAL_SHADOW =
+  "shadow-[0_2px_12px_rgba(0,0,0,0.03)]";
 
 /** Premium glass card — light sections */
 export const GLASS_CARD_CLASS =

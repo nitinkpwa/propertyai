@@ -402,6 +402,10 @@ export function mapPropertyRowToListing(row: PropertyRow): ListingProperty {
     reraVerified: isReraApproved(row),
     legalFlags,
     legalCompliance,
+    lat:
+      typeof row.lat === "number" && Number.isFinite(row.lat) ? row.lat : null,
+    lng:
+      typeof row.lng === "number" && Number.isFinite(row.lng) ? row.lng : null,
     propertyType: mapPropertyType(row.sub_type),
     listingType: mapListingType(row.type),
     possession,
@@ -436,6 +440,8 @@ export function mapPropertyRowToCardProps(row: PropertyRow): PropertyCardProps {
       reraVerified: listing.reraVerified,
       legalFlags: listing.legalFlags,
       legalCompliance: listing.legalCompliance,
+      lat: listing.lat,
+      lng: listing.lng,
       href: `/property/${listing.id}`,
     };
   } catch (err) {

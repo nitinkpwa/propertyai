@@ -25,40 +25,42 @@ export type SiteVisitErrorCode =
   | "INSERT_FAILED"
   | "PERMISSION_DENIED"
   | "CONSTRAINT_FAILED"
-  | "SCHEMA_NOT_READY";
+  | "SCHEMA_NOT_READY"
+  | "MISSING_PHONE";
 
 export interface SiteVisitErrorBody {
   error?: string;
   code?: SiteVisitErrorCode | string;
+  details?: Record<string, unknown> | null;
   dev?: Record<string, unknown>;
 }
 
 const CODE_MESSAGES: Partial<Record<SiteVisitErrorCode, string>> = {
-  MISSING_PROPERTY_ID: "Unable to identify this property. Please refresh the page.",
-  INVALID_PROPERTY_ID: "Unable to identify this property. Please refresh the page.",
-  PROPERTY_UNAVAILABLE: "Property not found.",
-  UNAUTHORIZED: "Please sign in to book a site visit.",
+  MISSING_PROPERTY_ID: "Selected property not found. Please refresh the page.",
+  INVALID_PROPERTY_ID: "Selected property not found. Invalid property id.",
+  PROPERTY_UNAVAILABLE: "Selected property not found.",
+  UNAUTHORIZED: "Please sign in to request a property visit.",
   VALIDATION: "Please fill in all required fields.",
   BUYER_PROFILE_MISSING: "Buyer profile missing. Please sign out and sign in again.",
   BUYER_NOT_BUYER_ROLE: "Please continue as a Buyer to book a site visit.",
-  CONNECT_PARTNER_MISSING:
-    "This property is not ready for site visits yet. Please try again later.",
+  CONNECT_PARTNER_MISSING: "Builder unavailable for site visits on this property.",
   SITE_VISITS_DISABLED: "Site visits are temporarily unavailable for this property.",
   DUPLICATE_VISIT: "You already have an active site visit request for this property.",
-  SELLER_NOT_FOUND: "Property owner not found.",
-  SELLER_PROFILE_MISSING: "Seller profile missing.",
-  PROPERTY_OWNER_NOT_FOUND: "Property owner not found.",
-  SITE_VISIT_FAILED: "Unable to create site visit.",
-  CRM_LEAD_FAILED: "Unable to create CRM lead.",
-  CRM_ACTIVITY_FAILED: "Unable to create CRM activity.",
+  SELLER_NOT_FOUND: "Builder unavailable. Property owner was not found.",
+  SELLER_PROFILE_MISSING: "Builder unavailable. Seller profile is missing.",
+  PROPERTY_OWNER_NOT_FOUND: "Builder unavailable. Property owner was not found.",
+  SITE_VISIT_FAILED: "Unable to create site visit in the database.",
+  CRM_LEAD_FAILED: "Unable to create CRM lead for this visit.",
+  CRM_ACTIVITY_FAILED: "Unable to create CRM activity for this visit.",
   INSERT_FAILED: "Unable to save your site visit request.",
-  PERMISSION_DENIED: "Permission denied. Your account cannot create this booking.",
-  CONSTRAINT_FAILED: "Database constraint failed. Please contact support.",
+  PERMISSION_DENIED: "Database permission denied. Your account cannot create this booking.",
+  CONSTRAINT_FAILED: "Database constraint failed. Date may already be booked or schema is outdated.",
   SCHEMA_NOT_READY:
     "Site visit booking is not configured yet. Ask your administrator to run the database migration.",
-  DATABASE: "An unexpected error occurred while saving your request.",
+  MISSING_PHONE: "Missing phone number. Please add a phone number to your profile.",
+  DATABASE: "Database error while saving your request.",
   NETWORK: "Connection lost. Please retry.",
-  UNKNOWN: "An unexpected error occurred. Please try again.",
+  UNKNOWN: "Booking failed. See details below.",
 };
 
 function asSiteVisitErrorCode(code: string | undefined): SiteVisitErrorCode | undefined {
@@ -67,72 +69,105 @@ function asSiteVisitErrorCode(code: string | undefined): SiteVisitErrorCode | un
   return undefined;
 }
 
+function detailSnippet(body: SiteVisitErrorBody | null): string | null {
+  const details = body?.details ?? body?.dev;
+  if (!details || typeof details !== "object") return null;
+  const supabaseError =
+    typeof details.supabaseError === "string" ? details.supabaseError : null;
+  const message = typeof details.message === "string" ? details.message : null;
+  return supabaseError || message;
+}
+
+/**
+ * Map API failure → buyer-facing message.
+ * Prefer the server's real error string; never hide Supabase/RLS details.
+ */
 export function mapSiteVisitError(
   status: number,
   body: SiteVisitErrorBody | null,
   cause?: unknown,
-): { message: string; code: SiteVisitErrorCode } {
+): { message: string; code: SiteVisitErrorCode; details: Record<string, unknown> | null } {
   const rawCode = body?.code;
   const code = asSiteVisitErrorCode(typeof rawCode === "string" ? rawCode : undefined);
   const serverMessage = body?.error?.trim();
+  const detail = detailSnippet(body);
+  const details =
+    (body?.details as Record<string, unknown> | null | undefined) ??
+    (body?.dev as Record<string, unknown> | null | undefined) ??
+    null;
 
-  if (code && CODE_MESSAGES[code]) {
-    let message = CODE_MESSAGES[code]!;
-    if (
-      process.env.NODE_ENV === "development" &&
-      body?.dev &&
-      typeof body.dev.supabaseError === "string"
-    ) {
-      message = `${message} (${body.dev.supabaseError})`;
-    } else if (process.env.NODE_ENV === "development" && serverMessage) {
-      message = serverMessage;
-    }
-    return { code, message };
+  const withDetail = (base: string) =>
+    detail && !base.includes(detail) ? `${base} (${detail})` : base;
+
+  if (cause instanceof TypeError && /fetch|network/i.test(String(cause.message))) {
+    return { code: "NETWORK", message: CODE_MESSAGES.NETWORK!, details };
   }
 
-  if (code === "VALIDATION" || status === 400) {
-    return {
-      code: "VALIDATION",
-      message: serverMessage ?? CODE_MESSAGES.VALIDATION!,
-    };
-  }
-
-  if (status === 401) {
+  if (status === 401 || code === "UNAUTHORIZED") {
     return {
       code: "UNAUTHORIZED",
       message: serverMessage ?? CODE_MESSAGES.UNAUTHORIZED!,
+      details,
+    };
+  }
+
+  if (code) {
+    const mapped = CODE_MESSAGES[code] ?? serverMessage ?? CODE_MESSAGES.UNKNOWN!;
+    return {
+      code,
+      message: withDetail(serverMessage && serverMessage.length > 8 ? serverMessage : mapped),
+      details,
+    };
+  }
+
+  if (status === 400) {
+    return {
+      code: "VALIDATION",
+      message: withDetail(serverMessage ?? CODE_MESSAGES.VALIDATION!),
+      details,
     };
   }
 
   if (status === 403) {
     return {
-      code: "BUYER_NOT_BUYER_ROLE",
-      message: serverMessage ?? CODE_MESSAGES.BUYER_NOT_BUYER_ROLE!,
+      code: "PERMISSION_DENIED",
+      message: withDetail(serverMessage ?? CODE_MESSAGES.PERMISSION_DENIED!),
+      details,
     };
   }
 
   if (status === 409) {
     return {
       code: "DUPLICATE_VISIT",
-      message: serverMessage ?? CODE_MESSAGES.DUPLICATE_VISIT!,
+      message: withDetail(serverMessage ?? CODE_MESSAGES.DUPLICATE_VISIT!),
+      details,
     };
   }
 
-  if (cause instanceof TypeError && /fetch|network/i.test(String(cause.message))) {
-    return { code: "NETWORK", message: CODE_MESSAGES.NETWORK! };
+  if (serverMessage) {
+    return {
+      code: "UNKNOWN",
+      message: withDetail(serverMessage),
+      details,
+    };
   }
 
-  if (serverMessage) {
-    return { code: code ?? "UNKNOWN", message: serverMessage };
+  if (cause instanceof Error && cause.message) {
+    return {
+      code: "UNKNOWN",
+      message: `Booking failed: ${cause.message}`,
+      details: { ...(details ?? {}), clientError: cause.message },
+    };
   }
 
   return {
     code: "UNKNOWN",
-    message: CODE_MESSAGES.UNKNOWN!,
+    message: `Booking failed (HTTP ${status || "network"}). Check the browser console for details.`,
+    details: { ...(details ?? {}), httpStatus: status },
   };
 }
 
 export function devLogSiteVisit(label: string, data: Record<string, unknown>): void {
-  if (process.env.NODE_ENV !== "development") return;
-  console.debug(`[SiteVisit] ${label}`, data);
+  // Always log booking diagnostics — this flow must never hide failures.
+  console.error(`[SiteVisit] ${label}`, data);
 }

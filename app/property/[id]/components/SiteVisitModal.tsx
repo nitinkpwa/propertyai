@@ -230,6 +230,7 @@ export default function SiteVisitModal({
     setError(null);
 
     if (!user) {
+      setError("Please sign in to request a property visit.");
       onClose();
       redirectToLogin();
       return;
@@ -241,7 +242,7 @@ export default function SiteVisitModal({
     }
 
     if (!normalizedId || !PROPERTY_UUID_RE.test(normalizedId)) {
-      setError("Unable to identify this property. Please refresh the page.");
+      setError("Selected property not found. Please refresh the page.");
       return;
     }
 
@@ -274,13 +275,43 @@ export default function SiteVisitModal({
     });
 
     const payload = {
+      property_id: normalizedId,
       propertyId: normalizedId,
+      buyer_id: user.id,
+      preferred_date: visitDate,
+      preferred_time: visitTime,
       visitDate,
       visitTime,
+      loan_required: loanAssist === "yes",
+      preferred_language: language || null,
+      transport_mode: transport || null,
+      notes: buyerNotes || null,
+      contact_name: displayName || null,
+      phone: displayPhone || null,
       purpose,
-      builderName,
+      builderName: builderName || null,
+      visitors: visitors || null,
     };
 
+    // STEP 2 — never submit with undefined critical fields
+    const requiredCheck: Record<string, unknown> = {
+      property_id: payload.property_id,
+      buyer_id: payload.buyer_id,
+      preferred_date: payload.preferred_date,
+      preferred_time: payload.preferred_time,
+    };
+    const missing = Object.entries(requiredCheck)
+      .filter(([, v]) => v === undefined || v === null || v === "")
+      .map(([k]) => k);
+    if (missing.length) {
+      console.error("[SiteVisit] Payload missing required fields", { missing, payload });
+      setError(`Missing required fields: ${missing.join(", ")}`);
+      submittingRef.current = false;
+      setSubmitting(false);
+      return;
+    }
+
+    console.error("[SiteVisit] Submitting payload", payload);
     devLogSiteVisit("Submitting concierge booking", {
       propertyId: normalizedId,
       buyerId: user.id,
@@ -294,14 +325,32 @@ export default function SiteVisitModal({
         body: JSON.stringify(payload),
       });
 
-      let data: { error?: string; code?: string; visitId?: string } = {};
+      const rawText = await res.text();
+      let data: {
+        error?: string;
+        code?: string;
+        visitId?: string;
+        details?: Record<string, unknown> | null;
+        redirectTo?: string;
+      } = {};
       try {
-        data = await res.json();
+        data = rawText ? JSON.parse(rawText) : {};
       } catch {
-        data = {};
+        data = {
+          error: rawText?.slice(0, 280) || `Non-JSON response (HTTP ${res.status})`,
+          code: "UNKNOWN",
+        };
       }
 
+      console.error("[SiteVisit] API response", {
+        status: res.status,
+        ok: res.ok,
+        body: data,
+        rawPreview: rawText.slice(0, 500),
+      });
+
       if (res.status === 401) {
+        setError("Please sign in to request a property visit.");
         onClose();
         redirectToLogin();
         return;
@@ -311,7 +360,11 @@ export default function SiteVisitModal({
         const mapped = mapSiteVisitError(res.status, data);
         const friendly = friendlyBookingError(mapped.code, mapped.message);
         if (friendly.availability) setAvailability(friendly.availability);
-        setError(friendly.message);
+        const detailLine =
+          mapped.details && typeof mapped.details.supabaseError === "string"
+            ? `\nDetails: ${mapped.details.supabaseError}`
+            : "";
+        setError(`${friendly.message}${detailLine}`);
         submittingRef.current = false;
         setSubmitting(false);
         return;
@@ -329,8 +382,17 @@ export default function SiteVisitModal({
       submittingRef.current = false;
       setSubmitting(false);
       void profilePrompt?.promptIfNeeded("site_visit");
+
+      // After success modal is visible, take buyer to My Visits
+      window.setTimeout(() => {
+        router.push(data.redirectTo || "/buyer/site-visits");
+      }, 1800);
     } catch (cause) {
-      devLogSiteVisit("Network error", { cause, propertyId: normalizedId });
+      console.error("[SiteVisit] Network/client exception", cause);
+      devLogSiteVisit("Network error", {
+        cause: cause instanceof Error ? cause.message : String(cause),
+        propertyId: normalizedId,
+      });
       const mapped = mapSiteVisitError(0, null, cause);
       const friendly = friendlyBookingError(mapped.code, mapped.message);
       setError(friendly.message);

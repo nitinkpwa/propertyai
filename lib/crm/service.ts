@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { logPartnerEngagementFromProperty } from "@/lib/connect/partners/propagate";
-import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { tryCreateSupabaseServiceClient } from "@/lib/supabase/service";
 import { ACTIVITY_STATUS_MAP, LEAD_STATUS_ORDER } from "./constants";
 import { getAdminUserIds, getPropertyOwner } from "./routing";
 import { runWorkflowSideEffects } from "./workflowOrchestrator";
@@ -49,8 +49,15 @@ export interface EnsureLeadOptions {
  */
 export async function getPropertyConnectPartnerId(
   propertyId: string,
+  fallbackClient?: SupabaseClient,
 ): Promise<string | null> {
-  const supabase = createSupabaseServiceClient();
+  const supabase = tryCreateSupabaseServiceClient() ?? fallbackClient;
+  if (!supabase) {
+    console.error(
+      "getPropertyConnectPartnerId: no service role or fallback client available",
+    );
+    return null;
+  }
   const { data, error } = await supabase
     .from("properties")
     .select("connect_partner_id")
@@ -90,16 +97,17 @@ export async function ensureLead(
   const existing = await findLead(supabase);
   if (existing) return existing;
 
-  // Partner-scoped leads must be written with the service role: the crm_leads
-  // guard trigger strips connect columns from non-privileged inserts.
-  const writer = partnerId ? createSupabaseServiceClient() : supabase;
+  // Partner-scoped leads preferably use the service role (crm_leads guard may
+  // strip connect columns from non-privileged inserts). Fall back to user client.
+  const service = partnerId ? tryCreateSupabaseServiceClient() : null;
+  const writer = service ?? supabase;
 
   const insertBody: Record<string, unknown> = {
     buyer_id: buyerId,
     status: initialStatus,
   };
 
-  if (partnerId) {
+  if (partnerId && service) {
     insertBody.connect_partner_id = partnerId;
     insertBody.connect_assignment_source = "auto";
     if (options.primaryPropertyId) {
@@ -113,6 +121,10 @@ export async function ensureLead(
     if (partner?.profile_id) {
       insertBody.assigned_connect_id = partner.profile_id;
     }
+  } else if (partnerId && !service) {
+    console.warn(
+      "ensureLead: SUPABASE_SERVICE_ROLE_KEY missing — creating general lead without partner stamp",
+    );
   }
 
   const { data, error } = await writer
@@ -124,6 +136,18 @@ export async function ensureLead(
   if (error) {
     if (error.code === "23505") {
       return findLead(writer);
+    }
+    // Last resort: general lead without partner fields
+    if (partnerId) {
+      const { data: fallback, error: fallbackError } = await supabase
+        .from("crm_leads")
+        .insert({ buyer_id: buyerId, status: initialStatus })
+        .select("*")
+        .single();
+      if (!fallbackError && fallback) return fallback as CrmLead;
+      if (fallbackError?.code === "23505") return findLead(supabase);
+      console.error("ensureLead fallback:", fallbackError?.message ?? error.message);
+      return null;
     }
     console.error("ensureLead:", error.message);
     return null;
@@ -238,7 +262,14 @@ export async function createNotification(
   // Write through the service role so the hardened RLS INSERT policy
   // (self-or-admin only) cannot be abused to spoof notifications from a client
   // session, while legitimate cross-user delivery still works server-side.
-  const supabase = createSupabaseServiceClient();
+  const supabase = tryCreateSupabaseServiceClient();
+  if (!supabase) {
+    console.error(
+      "createNotification: skipped — SUPABASE_SERVICE_ROLE_KEY missing",
+      { type: input.type, userId: input.userId },
+    );
+    return;
+  }
   const { error } = await supabase.from("crm_notifications").insert({
     user_id: input.userId,
     type: input.type,
@@ -248,7 +279,7 @@ export async function createNotification(
     property_id: input.propertyId ?? null,
   });
 
-  if (error) console.error("createNotification:", error.message);
+  if (error) console.error("createNotification:", error.message, error.code);
 }
 
 async function notifyForPropertyActivity(
@@ -298,7 +329,7 @@ export async function recordLeadActivity(
   // attach to that partner's lead for this buyer; everything else goes to the
   // buyer's general (partner-less) lead.
   const connectPartnerId = input.propertyId
-    ? await getPropertyConnectPartnerId(input.propertyId)
+    ? await getPropertyConnectPartnerId(input.propertyId, supabase)
     : null;
 
   const lead = await ensureLead(supabase, input.buyerId, "new", {

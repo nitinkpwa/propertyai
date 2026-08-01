@@ -35,8 +35,8 @@ export default function SectionHeader({
         </h2>
         {description ? (
           <p
-            className={`mt-2 text-sm leading-relaxed sm:text-base ${
-              isDark ? "text-white/60" : "text-muted"
+            className={`mt-1.5 max-w-xl text-xs leading-snug sm:text-sm ${
+              isDark ? "text-white/55" : "text-muted"
             }`}
           >
             {description}

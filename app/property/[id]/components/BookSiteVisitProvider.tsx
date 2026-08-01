@@ -176,7 +176,9 @@ function BookVisitResumeEffect({
   useEffect(() => {
     if (!authReady || handledRef.current) return;
 
-    const fromQuery = searchParams.get(BOOK_VISIT_QUERY) === "1";
+    const fromQuery =
+      searchParams.get(BOOK_VISIT_QUERY) === "1" ||
+      searchParams.get("action") === "book";
     const fromIntent = matchPendingIntentForProperty(propertyId, "book_visit");
     if (!fromQuery && !fromIntent) return;
 
@@ -193,6 +195,7 @@ function BookVisitResumeEffect({
     if (fromQuery) {
       const params = new URLSearchParams(searchParams.toString());
       params.delete(BOOK_VISIT_QUERY);
+      params.delete("action");
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     }

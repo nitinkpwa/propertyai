@@ -59,11 +59,12 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
-              "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com",
-              // Allow Google Maps embed in footer contact section
+              "font-src 'self' data: https://tiles.openfreemap.org https://*.openfreemap.org",
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openai.com https://tiles.openfreemap.org https://*.openfreemap.org https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://basemaps.cartocdn.com https://*.basemaps.cartocdn.com",
+              "worker-src 'self' blob: data:",
+              // Allow Google Maps embed in footer contact section + MapLibre workers
               "frame-src 'self' https://www.google.com https://maps.google.com https://www.google.co.in",
-              "child-src 'self' https://www.google.com https://maps.google.com https://www.google.co.in",
+              "child-src 'self' blob: https://www.google.com https://maps.google.com https://www.google.co.in",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
@@ -107,6 +108,8 @@ const nextConfig: NextConfig = {
       "framer-motion",
       "@supabase/supabase-js",
       "@supabase/ssr",
+      "lucide-react",
+      "recharts",
     ],
   },
   compiler: {

@@ -45,6 +45,9 @@ export interface PropertyCardProps {
   legalFlags?: Partial<LegalVerificationFlags> | null;
   /** Precomputed compliance (preferred). */
   legalCompliance?: LegalComplianceResult | null;
+  /** Optional listing coordinates from DB (never invented). */
+  lat?: number | null;
+  lng?: number | null;
   featured?: boolean;
   isFavorite?: boolean;
   isCompared?: boolean;

@@ -155,27 +155,53 @@ export function friendlyBookingError(
 ): { availability?: AvailabilityStatus; message: string } {
   switch (code) {
     case "SITE_VISITS_DISABLED":
+      return {
+        availability: "unavailable",
+        message: fallback || "Site visits are temporarily unavailable for this property.",
+      };
     case "PROPERTY_UNAVAILABLE":
+      return {
+        availability: "unavailable",
+        message: fallback || "Selected property not found.",
+      };
     case "SCHEMA_NOT_READY":
       return {
         availability: "unavailable",
-        message: "Site visits are temporarily unavailable for this property.",
+        message: fallback || "Site visit booking is not configured yet.",
       };
     case "DUPLICATE_VISIT":
       return {
         availability: "limited",
-        message: "You already have an active visit request for this property.",
+        message: fallback || "You already have an active visit request for this property.",
+      };
+    case "UNAUTHORIZED":
+      return {
+        message: fallback || "Please sign in to request a property visit.",
       };
     case "BUYER_NOT_BUYER_ROLE":
       return {
-        message: "Please continue as a Buyer to book a site visit.",
+        message: fallback || "Please continue as a Buyer to book a site visit.",
+      };
+    case "PERMISSION_DENIED":
+      return {
+        message: fallback || "Database permission denied.",
+      };
+    case "MISSING_PHONE":
+      return {
+        message: fallback || "Missing phone number. Please add a phone number to your profile.",
       };
     case "NETWORK":
       return {
         message: "Connection lost. Please check your network and try again.",
       };
     default:
-      return { message: fallback || "We couldn’t submit your request. Please try again." };
+      // Never replace a specific server message with a generic one
+      return {
+        message:
+          fallback && fallback !== "An unexpected error occurred. Please try again."
+            ? fallback
+            : "We couldn’t submit your request. Check the error details and try again.",
+      };
   }
 }
 

@@ -61,7 +61,56 @@ function isMissingTableError(message?: string | null): boolean {
 
 function isMissingColumnError(message?: string | null): boolean {
   if (!message) return false;
-  return message.includes("lead_id") || message.includes("inquiry_id");
+  return (
+    /column|does not exist|schema cache/i.test(message) &&
+    /lead_id|inquiry_id|checklist|purpose|connect_partner_id|builder_name/i.test(
+      message,
+    )
+  );
+}
+
+function classifyInsertFailure(message: string, code?: string): {
+  code: SiteVisitErrorCode;
+  message: string;
+} {
+  const lower = message.toLowerCase();
+  if (code === "42501" || /row-level security|permission denied|rls/i.test(message)) {
+    return {
+      code: "PERMISSION_DENIED",
+      message: "Database permission denied. Your account cannot create this booking.",
+    };
+  }
+  if (code === "23503" || /foreign key/i.test(lower)) {
+    return {
+      code: "CONSTRAINT_FAILED",
+      message: "Selected property or buyer reference is invalid.",
+    };
+  }
+  if (code === "23505" || /duplicate|unique/i.test(lower)) {
+    return {
+      code: "DUPLICATE_VISIT",
+      message: "You already have an active site visit request for this property.",
+    };
+  }
+  if (
+    /status.*check|site_visits_status_check|invalid input value for enum/i.test(lower)
+  ) {
+    return {
+      code: "CONSTRAINT_FAILED",
+      message:
+        "Visit status is not allowed by the database. Ask admin to apply site visit status migrations.",
+    };
+  }
+  if (/not null/i.test(lower)) {
+    return {
+      code: "VALIDATION",
+      message: `Missing required database field: ${message}`,
+    };
+  }
+  return {
+    code: "SITE_VISIT_FAILED",
+    message: message || "Unable to create site visit.",
+  };
 }
 
 async function probeSiteVisitsTable(
@@ -141,73 +190,84 @@ async function insertSiteVisit(
   supabase: SupabaseClient,
   payload: Record<string, unknown>,
 ): Promise<{ visitId: string } | BookSiteVisitFailure> {
-  devLogSiteVisit("Site visit insert payload", payload);
+  console.error("[SiteVisit] insert payload", payload);
 
   const tryInsert = async (body: Record<string, unknown>) => {
     return supabase.from("site_visits").insert(body).select("id").single();
   };
 
-  let { data: visit, error } = await tryInsert(payload);
+  const attempts: Record<string, unknown>[] = [payload];
 
-  if (error && isMissingColumnError(error.message)) {
-    const { lead_id: _l, inquiry_id: _i, ...withoutLinks } = payload;
-    ({ data: visit, error } = await tryInsert(withoutLinks));
-  }
-
-  if (!error && visit) {
-    return { visitId: visit.id };
-  }
-
-  const errMsg = error?.message ?? "";
-
-  if (
-    errMsg.includes("checklist") ||
-    errMsg.includes("pending_approval") ||
-    errMsg.includes("purpose") ||
-    errMsg.includes("connect_partner_id")
-  ) {
-    const legacyPayload: Record<string, unknown> = {
-      user_id: payload.user_id,
-      property_id: payload.property_id,
-      visit_date: payload.visit_date,
-      visit_time: payload.visit_time,
-      status: "scheduled",
+  // Drop optional CRM columns if schema is older
+  {
+    const {
+      lead_id: _l,
+      inquiry_id: _i,
+      connect_partner_id: _c,
+      checklist: _ch,
+      purpose: _p,
+      ...core
+    } = payload;
+    attempts.push({
+      ...core,
+      status: payload.status,
       builder_name: payload.builder_name ?? null,
-    };
-    if (payload.lead_id) legacyPayload.lead_id = payload.lead_id;
-    if (payload.inquiry_id) legacyPayload.inquiry_id = payload.inquiry_id;
-    if (payload.connect_partner_id) legacyPayload.connect_partner_id = payload.connect_partner_id;
-
-    devLogSiteVisit("Retrying legacy site visit insert", legacyPayload);
-
-    const { data: legacyVisit, error: legacyError } = await tryInsert(legacyPayload);
-
-    if (!legacyError && legacyVisit) {
-      return { visitId: legacyVisit.id };
-    }
-
-    return {
-      ok: false,
-      status: 500,
-      code: "SITE_VISIT_FAILED",
-      message: "Unable to create site visit.",
-      dev: {
-        step: "insertSiteVisit.legacy",
-        supabaseError: legacyError?.message ?? errMsg,
-        supabaseCode: legacyError?.code ?? error?.code,
-      },
-    };
+    });
   }
+
+  // Legacy status for DBs that never got pending_approval migration
+  attempts.push({
+    user_id: payload.user_id,
+    property_id: payload.property_id,
+    visit_date: payload.visit_date,
+    visit_time: payload.visit_time,
+    status: "scheduled",
+    builder_name: payload.builder_name ?? null,
+  });
+
+  let lastError: { message?: string; code?: string } | null = null;
+
+  for (let i = 0; i < attempts.length; i++) {
+    const body = attempts[i];
+    const { data: visit, error } = await tryInsert(body);
+    if (!error && visit) {
+      if (i > 0) {
+        console.warn("[SiteVisit] insert succeeded on fallback attempt", i, {
+          status: body.status,
+        });
+      }
+      return { visitId: visit.id };
+    }
+    lastError = error;
+    console.error("[SiteVisit] insert attempt failed", {
+      attempt: i,
+      supabaseError: error?.message,
+      supabaseCode: error?.code,
+      bodyKeys: Object.keys(body),
+    });
+
+    const msg = error?.message ?? "";
+    const shouldRetry =
+      i < attempts.length - 1 &&
+      (isMissingColumnError(msg) ||
+        /status|check constraint|pending_approval|checklist|purpose|connect_partner|lead_id|inquiry_id|column/i.test(
+          msg,
+        ));
+    if (!shouldRetry) break;
+  }
+
+  const errMsg = lastError?.message ?? "Unknown insert failure";
+  const classified = classifyInsertFailure(errMsg, lastError?.code);
 
   return {
     ok: false,
-    status: 500,
-    code: "SITE_VISIT_FAILED",
-    message: "Unable to create site visit.",
+    status: classified.code === "PERMISSION_DENIED" ? 403 : 500,
+    code: classified.code,
+    message: classified.message,
     dev: {
       step: "insertSiteVisit",
       supabaseError: errMsg,
-      supabaseCode: error?.code,
+      supabaseCode: lastError?.code,
     },
   };
 }
@@ -282,12 +342,40 @@ export async function bookSiteVisit(
   supabase: SupabaseClient,
   input: BookSiteVisitInput,
 ): Promise<BookSiteVisitResult> {
+  try {
+    return await bookSiteVisitInner(supabase, input);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : undefined;
+    console.error("[SiteVisit] UNCAUGHT bookSiteVisit exception", {
+      message,
+      stack,
+      input,
+    });
+    return {
+      ok: false,
+      status: 500,
+      code: message.includes("SUPABASE_SERVICE_ROLE_KEY")
+        ? "SCHEMA_NOT_READY"
+        : "UNKNOWN",
+      message: message.includes("SUPABASE_SERVICE_ROLE_KEY")
+        ? "Server is missing SUPABASE_SERVICE_ROLE_KEY. Add it in .env.local and restart."
+        : `Booking failed: ${message}`,
+      dev: { uncaught: true, message, stack },
+    };
+  }
+}
+
+async function bookSiteVisitInner(
+  supabase: SupabaseClient,
+  input: BookSiteVisitInput,
+): Promise<BookSiteVisitResult> {
   const propertyId = input.propertyId.trim();
   const visitDate = input.visitDate.trim();
   const visitTime = normalizeVisitTime(input.visitTime);
   const purpose = input.purpose?.trim() ?? "";
 
-  devLogSiteVisit("bookSiteVisit start", {
+  console.error("[SiteVisit] bookSiteVisit start", {
     propertyId,
     buyerId: input.buyerId,
     visitDate,
@@ -428,35 +516,35 @@ export async function bookSiteVisit(
     connectPartnerId,
     primaryPropertyId: propertyId,
   });
+  let leadId = lead?.id ?? "";
   if (!lead) {
-    return {
-      ok: false,
-      status: 500,
-      code: "CRM_LEAD_FAILED",
-      message: "Unable to create CRM lead.",
-      dev: { step: "ensureLead", buyerId: input.buyerId },
-    };
+    // Soft-fail CRM lead — still attempt the visit insert (primary success).
+    console.error("[SiteVisit] ensureLead failed — continuing without lead_id", {
+      buyerId: input.buyerId,
+      connectPartnerId,
+    });
   }
 
   const inquiryMessage =
     purpose ||
     `Site visit requested for ${property.title ?? "property"} on ${visitDate}`;
 
-  const inquiryId = await ensureInquiry(supabase, {
-    buyerId: input.buyerId,
-    propertyId,
-    sellerId: property.seller_id,
-    message: inquiryMessage,
-  });
-
+  let inquiryId: string | null = null;
+  try {
+    inquiryId = await ensureInquiry(supabase, {
+      buyerId: input.buyerId,
+      propertyId,
+      sellerId: property.seller_id,
+      message: inquiryMessage,
+    });
+  } catch (err) {
+    console.error("[SiteVisit] ensureInquiry threw", err);
+  }
   if (!inquiryId) {
-    return {
-      ok: false,
-      status: 500,
-      code: "CRM_ACTIVITY_FAILED",
-      message: "Unable to create inquiry for this visit.",
-      dev: { step: "ensureInquiry", buyerId: input.buyerId, propertyId },
-    };
+    console.error("[SiteVisit] ensureInquiry failed — continuing without inquiry_id", {
+      buyerId: input.buyerId,
+      propertyId,
+    });
   }
 
   const resolvedBuilderName =
@@ -481,14 +569,16 @@ export async function bookSiteVisit(
     purpose: purpose || null,
     builder_name: resolvedBuilderName,
     checklist,
-    lead_id: lead.id,
-    inquiry_id: inquiryId,
-    connect_partner_id: connectPartnerId,
+    ...(leadId ? { lead_id: leadId } : {}),
+    ...(inquiryId ? { inquiry_id: inquiryId } : {}),
+    ...(connectPartnerId ? { connect_partner_id: connectPartnerId } : {}),
   });
 
   if (!("visitId" in visitInsert)) return visitInsert;
 
-  await linkSiteVisitIds(supabase, visitInsert.visitId, lead.id, inquiryId);
+  if (leadId && inquiryId) {
+    await linkSiteVisitIds(supabase, visitInsert.visitId, leadId, inquiryId);
+  }
 
   const dateLabel = new Date(`${visitDate}T00:00:00`).toLocaleDateString("en-IN", {
     weekday: "short",
@@ -498,97 +588,131 @@ export async function bookSiteVisit(
 
   const activityDescription = `${property.title} — ${dateLabel} at ${visitTime.slice(0, 5)}${purpose ? ` · ${purpose}` : ""}`;
 
-  const activityResult = await recordLeadActivity(supabase, {
-    buyerId: input.buyerId,
-    activityType: "visit_requested",
-    title: "Site visit requested",
-    description: activityDescription,
-    propertyId,
-    inquiryId,
-    siteVisitId: visitInsert.visitId,
-    metadata: { purpose, checklist, source: "site_visit" },
-    skipNotifications: true,
-  });
+  // CRM activity + notifications are secondary — never roll back a created visit.
+  try {
+    const activityResult = await recordLeadActivity(supabase, {
+      buyerId: input.buyerId,
+      activityType: "visit_requested",
+      title: "Site visit requested",
+      description: activityDescription,
+      propertyId,
+      inquiryId: inquiryId ?? undefined,
+      siteVisitId: visitInsert.visitId,
+      metadata: { purpose, checklist, source: "site_visit" },
+      skipNotifications: true,
+    });
 
-  if (!activityResult) {
-    await supabase.from("site_visits").delete().eq("id", visitInsert.visitId);
-    return {
-      ok: false,
-      status: 500,
-      code: "CRM_ACTIVITY_FAILED",
-      message: "Unable to create CRM activity.",
-      dev: { step: "recordLeadActivity", leadId: lead.id },
-    };
+    if (!activityResult) {
+      // Retry with legacy activity type if visit_requested is not in CHECK constraint
+      const legacy = await recordLeadActivity(supabase, {
+        buyerId: input.buyerId,
+        activityType: "site_visit_booked",
+        title: "Site visit requested",
+        description: activityDescription,
+        propertyId,
+        inquiryId: inquiryId ?? undefined,
+        siteVisitId: visitInsert.visitId,
+        metadata: { purpose, checklist, source: "site_visit" },
+        skipNotifications: true,
+      });
+      if (!legacy) {
+        console.error("[SiteVisit] CRM activity failed after visit insert", {
+          visitId: visitInsert.visitId,
+          leadId,
+        });
+      } else if (!leadId) {
+        leadId = legacy.leadId;
+      }
+    } else if (!leadId) {
+      leadId = activityResult.leadId;
+    }
+
+    await recordLeadActivity(supabase, {
+      buyerId: input.buyerId,
+      activityType: "visit_checklist_generated",
+      title: "Visit checklist ready",
+      description: `${checklist.length} items to verify during your visit`,
+      propertyId,
+      siteVisitId: visitInsert.visitId,
+      skipStatusAdvance: true,
+      skipNotifications: true,
+    });
+  } catch (err) {
+    console.error("[SiteVisit] CRM activity threw after visit insert", {
+      visitId: visitInsert.visitId,
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+    });
   }
-
-  await recordLeadActivity(supabase, {
-    buyerId: input.buyerId,
-    activityType: "visit_checklist_generated",
-    title: "Visit checklist ready",
-    description: `${checklist.length} items to verify during your visit`,
-    propertyId,
-    siteVisitId: visitInsert.visitId,
-    skipStatusAdvance: true,
-    skipNotifications: true,
-  });
 
   const buyerLabel = buyerCheck.profile.full_name ?? buyerCheck.profile.email ?? "A buyer";
   const propertyTitle = property.title ?? "a property";
 
-  const sellerNotification = await notifyPropertyOwner(supabase, {
-    propertyId,
-    leadId: lead.id,
-    title: "Site visit requested",
-    message: `${buyerLabel} requested a visit — ${activityDescription}`,
-    buyerName: buyerCheck.profile.full_name,
-    ownerId: ownerProfile.id,
-    ownerRole: ownerProfile.role,
-  });
+  try {
+    if (leadId) {
+      const sellerNotification = await notifyPropertyOwner(supabase, {
+        propertyId,
+        leadId,
+        title: "Site visit requested",
+        message: `${buyerLabel} requested a visit — ${activityDescription}`,
+        buyerName: buyerCheck.profile.full_name,
+        ownerId: ownerProfile.id,
+        ownerRole: ownerProfile.role,
+      });
+      console.error("[SiteVisit] Seller notification result", sellerNotification);
 
-  devLogSiteVisit("Seller notification result", sellerNotification);
+      await notifyAdminsOfLead(supabase, {
+        title: "New site visit lead",
+        message: `${buyerLabel} booked a site visit for ${propertyTitle}.`,
+        leadId,
+        propertyId,
+      });
+    }
 
-  await notifyAdminsOfLead(supabase, {
-    title: "New site visit lead",
-    message: `${buyerLabel} booked a site visit for ${propertyTitle}.`,
-    leadId: lead.id,
-    propertyId,
-  });
+    const partnerProfileId = await resolveConnectPartnerProfileId(
+      supabase,
+      connectPartnerId,
+    );
+    if (partnerProfileId) {
+      await createNotification(supabase, {
+        userId: partnerProfileId,
+        type: "site_visit_booked",
+        title: "Site visit requested",
+        message: `${buyerLabel} requested a visit for ${propertyTitle} — ${activityDescription}`,
+        leadId: leadId || undefined,
+        propertyId,
+      });
+    }
 
-  const partnerProfileId = await resolveConnectPartnerProfileId(supabase, connectPartnerId);
-  if (partnerProfileId) {
     await createNotification(supabase, {
-      userId: partnerProfileId,
+      userId: input.buyerId,
       type: "site_visit_booked",
-      title: "Site visit requested",
-      message: `${buyerLabel} requested a visit for ${propertyTitle} — ${activityDescription}`,
-      leadId: lead.id,
+      title: "Site visit request submitted",
+      message: `Your visit request for ${propertyTitle} on ${dateLabel} at ${visitTime.slice(0, 5)} is pending confirmation.`,
+      leadId: leadId || undefined,
       propertyId,
+    });
+  } catch (err) {
+    console.error("[SiteVisit] Notification phase threw (visit already saved)", {
+      visitId: visitInsert.visitId,
+      error: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
     });
   }
 
-  await createNotification(supabase, {
-    userId: input.buyerId,
-    type: "site_visit_booked",
-    title: "Site visit request submitted",
-    message: `Your visit request for ${propertyTitle} on ${dateLabel} at ${visitTime.slice(0, 5)} is pending confirmation.`,
-    leadId: lead.id,
-    propertyId,
-  });
-
-  devLogSiteVisit("bookSiteVisit success", {
+  console.error("[SiteVisit] bookSiteVisit SUCCESS", {
     visitId: visitInsert.visitId,
-    leadId: lead.id,
+    leadId: leadId || null,
     inquiryId,
     propertyId,
     connectPartnerId,
-    partnerProfileId,
   });
 
   return {
     ok: true,
     visitId: visitInsert.visitId,
     checklist,
-    leadId: lead.id,
-    inquiryId,
+    leadId,
+    inquiryId: inquiryId ?? "",
   };
 }

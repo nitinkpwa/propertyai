@@ -560,35 +560,53 @@ export async function bookSiteVisit(input: {
   };
 
   try {
+    console.error("[SiteVisit] client bookSiteVisit payload", {
+      ...payload,
+      buyer_id: input.userId,
+    });
+
     const res = await fetch("/api/crm/site-visit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    let data: { error?: string; code?: string; visitId?: string; checklist?: string[] } = {};
+    const rawText = await res.text();
+    let data: {
+      error?: string;
+      code?: string;
+      visitId?: string;
+      checklist?: string[];
+      details?: Record<string, unknown> | null;
+    } = {};
     try {
-      data = await res.json();
+      data = rawText ? JSON.parse(rawText) : {};
     } catch {
-      data = {};
+      data = {
+        error: rawText?.slice(0, 280) || `Non-JSON response (HTTP ${res.status})`,
+        code: "UNKNOWN",
+      };
     }
 
-    if (process.env.NODE_ENV === "development") {
-      console.debug("[SiteVisit] bookSiteVisit response", {
-        propertyId,
-        buyerId: input.userId,
-        status: res.status,
-        data,
-      });
-    }
+    console.error("[SiteVisit] client bookSiteVisit response", {
+      propertyId,
+      buyerId: input.userId,
+      status: res.status,
+      data,
+    });
 
     if (!res.ok) {
       const mapped = mapSiteVisitError(res.status, data);
-      return { error: mapped.message };
+      const detail =
+        mapped.details && typeof mapped.details.supabaseError === "string"
+          ? ` (${mapped.details.supabaseError})`
+          : "";
+      return { error: `${mapped.message}${detail}` };
     }
 
     return { visitId: data.visitId!, checklist: data.checklist };
   } catch (cause) {
+    console.error("[SiteVisit] client bookSiteVisit exception", cause);
     const mapped = mapSiteVisitError(0, null, cause);
     return { error: mapped.message };
   }

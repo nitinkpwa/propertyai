@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
+import { Building2, ChevronDown, Heart, Scale, Sparkles } from "lucide-react";
 import { useSavedPropertyToggle } from "@/lib/buyer/useSavedProperty";
 import { useComparedProperty } from "@/lib/buyer/useComparedProperty";
 import LegalTrustBadge from "@/components/property/LegalTrustBadge";
@@ -18,54 +20,33 @@ type Props = {
   property: IntelligencePropertyCardModel;
 };
 
-function CompactScore({
-  title,
-  score,
+function ScoreBadge({
   label,
+  score,
   kind,
-  confidence,
 }: {
-  title: string;
+  label: string;
   score: number | null | undefined;
-  label: string | null | undefined;
   kind: "quality" | "legal";
-  confidence?: number | null;
 }) {
   const available = score != null && Number.isFinite(score);
   const tone = scoreToneFromValue(available ? score : null, kind);
   const colors = SCORE_TONE_COLORS[tone];
-
-  if (!available) {
-    return (
-      <div>
-        <p className="text-muted">{title}</p>
-        <p className="mt-0.5 text-[11px] font-semibold leading-snug text-neutral-500">
-          Insufficient Data
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div>
-      <p className="text-muted">{title}</p>
-      <p className="font-bold tabular-nums text-heading-primary">
-        {kind === "legal" ? `${Math.round(score)}%` : Math.round(score)}
-      </p>
-      {label ? (
-        <p className="text-[10px] font-semibold" style={{ color: colors.text }}>
-          {label}
-        </p>
-      ) : null}
-      {kind === "quality" && confidence != null ? (
-        <p
-          className="mt-0.5 cursor-help text-[10px] font-medium text-neutral-500 underline decoration-dotted decoration-neutral-300 underline-offset-2"
-          title={`Confidence\n${Math.round(confidence)}%\n\n${CONFIDENCE_TOOLTIP}`}
-        >
-          Confidence {Math.round(confidence)}%
-        </p>
-      ) : null}
-    </div>
+    <span
+      className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wide backdrop-blur-md"
+      style={{
+        backgroundColor: available ? "rgba(255,255,255,0.95)" : "rgba(0,0,0,0.45)",
+        color: available ? colors.text : "#fff",
+      }}
+    >
+      {kind === "quality" ? (
+        <Sparkles className="h-3 w-3" aria-hidden />
+      ) : (
+        <Scale className="h-3 w-3" aria-hidden />
+      )}
+      {label} {available ? Math.round(score!) : "—"}
+    </span>
   );
 }
 
@@ -73,6 +54,7 @@ export default function IntelligencePropertyCard({ property }: Props) {
   const { isSaved, handleFavoriteToggle } = useSavedPropertyToggle();
   const { compared, addAndGo, busy } = useComparedProperty(property.id);
   const saved = isSaved(property.id);
+  const [expanded, setExpanded] = useState(false);
 
   const onSave = async () => {
     await handleFavoriteToggle(property.id, !saved);
@@ -82,9 +64,15 @@ export default function IntelligencePropertyCard({ property }: Props) {
     await addAndGo();
   };
 
+  const tone = scoreToneFromValue(property.areaIqScore ?? null, "quality");
+  const toneColor = SCORE_TONE_COLORS[tone].text;
+
   return (
     <article className="group flex w-[min(320px,85vw)] shrink-0 flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.1)] sm:w-[340px]">
-      <Link href={property.href} className="relative block aspect-[4/3] overflow-hidden bg-neutral-100 no-underline">
+      <Link
+        href={property.href}
+        className="relative block aspect-[4/3] overflow-hidden bg-neutral-100 no-underline"
+      >
         {property.imageUrl ? (
           <Image
             src={property.imageUrl}
@@ -104,16 +92,19 @@ export default function IntelligencePropertyCard({ property }: Props) {
           </div>
         )}
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+          <ScoreBadge label="AreaIQ" score={property.areaIqScore} kind="quality" />
+          <ScoreBadge label="Legal" score={property.legalScore} kind="legal" />
+        </div>
+        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2">
+          <span className="inline-flex max-w-[60%] items-center gap-1 truncate rounded-md bg-black/55 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+            <Building2 className="h-3 w-3 shrink-0" aria-hidden />
+            {property.builderName}
+          </span>
           <LegalTrustBadge
             compliance={property.legalCompliance}
             flags={property.legalFlags}
             size="sm"
           />
-          {property.aiVerified ? (
-            <span className="rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase text-heading-primary">
-              AreaIQ Intelligence
-            </span>
-          ) : null}
         </div>
       </Link>
 
@@ -131,35 +122,17 @@ export default function IntelligencePropertyCard({ property }: Props) {
               {property.city ? ` · ${property.city}` : ""}
             </p>
           </div>
-          <p className="shrink-0 text-sm font-bold tabular-nums" style={{ color: IQ_GREEN }}>
+          <p
+            className="shrink-0 text-base font-bold tabular-nums"
+            style={{ color: IQ_GREEN }}
+          >
             {formatPriceShort(property.price)}
           </p>
         </div>
 
-        <p className="mt-2 text-xs text-body">
-          {property.builderName} · {property.bhk} BHK
-          {property.area ? ` · ${property.area.toLocaleString("en-IN")} ${property.areaUnit ?? "sqft"}` : ""}
-        </p>
-
-        <div className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-[#F7F9FB] p-3 text-xs">
-          <CompactScore
-            title="AreaIQ Score"
-            score={property.areaIqScore}
-            label={property.areaIqLabel}
-            kind="quality"
-            confidence={property.areaIqConfidence}
-          />
-          <CompactScore
-            title="Legal"
-            score={property.legalScore}
-            label={property.legalScoreLabel}
-            kind="legal"
-          />
-        </div>
-
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Link
-            href={`${property.href}?action=book`}
+            href={`${property.href}?bookVisit=1`}
             className="inline-flex min-h-10 items-center justify-center rounded-xl text-xs font-bold text-white no-underline"
             style={{ backgroundColor: IQ_GREEN }}
           >
@@ -169,7 +142,7 @@ export default function IntelligencePropertyCard({ property }: Props) {
             href={property.askHref}
             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-label no-underline hover:bg-neutral-50"
           >
-            Ask AreaIQ
+            Ask AI
           </Link>
           <button
             type="button"
@@ -186,15 +159,76 @@ export default function IntelligencePropertyCard({ property }: Props) {
           <button
             type="button"
             onClick={onSave}
-            className={`inline-flex min-h-10 items-center justify-center rounded-xl border text-xs font-semibold ${
+            className={`inline-flex min-h-10 items-center justify-center gap-1 rounded-xl border text-xs font-semibold ${
               saved
                 ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                 : "border-neutral-200 bg-white text-label hover:bg-neutral-50"
             }`}
           >
+            <Heart
+              className="h-3.5 w-3.5"
+              fill={saved ? "currentColor" : "none"}
+              aria-hidden
+            />
             {saved ? "Saved" : "Save"}
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="mt-3 inline-flex items-center justify-center gap-1 text-[11px] font-semibold text-muted"
+          aria-expanded={expanded}
+        >
+          Details
+          <ChevronDown
+            className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
+            aria-hidden
+          />
+        </button>
+
+        {expanded ? (
+          <div className="mt-2 space-y-2 rounded-xl bg-[#F7F9FB] p-3 text-xs">
+            <p className="text-body">
+              {property.bhk} BHK
+              {property.area
+                ? ` · ${property.area.toLocaleString("en-IN")} ${property.areaUnit ?? "sqft"}`
+                : ""}
+            </p>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-muted">AreaIQ</span>
+              <span className="font-bold tabular-nums" style={{ color: toneColor }}>
+                {property.areaIqScore != null
+                  ? `${Math.round(property.areaIqScore)} · ${property.areaIqLabel ?? ""}`
+                  : "Insufficient Data"}
+              </span>
+            </div>
+            {property.areaIqConfidence != null ? (
+              <p
+                className="cursor-help text-[10px] text-neutral-500 underline decoration-dotted"
+                title={`Confidence\n${Math.round(property.areaIqConfidence)}%\n\n${CONFIDENCE_TOOLTIP}`}
+              >
+                Confidence {Math.round(property.areaIqConfidence)}%
+              </p>
+            ) : null}
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-muted">Legal</span>
+              <span className="font-bold tabular-nums">
+                {property.legalScore != null
+                  ? `${Math.round(property.legalScore)}% · ${property.legalScoreLabel ?? ""}`
+                  : "Insufficient Data"}
+              </span>
+            </div>
+            {property.rentalYield != null ? (
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-muted">Yield</span>
+                <span className="font-bold tabular-nums">
+                  {property.rentalYield.toFixed(1)}%
+                </span>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </article>
   );
