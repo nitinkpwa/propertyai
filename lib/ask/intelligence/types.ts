@@ -81,7 +81,7 @@ export interface AreaIntelligence {
   builderActivity: string | null;
   riskLevel: string | null;
   suitableFor: string[];
-  source: "database" | "unavailable";
+  source: "database" | "unavailable" | "placeholder";
 }
 
 export interface BuilderIntelligence {

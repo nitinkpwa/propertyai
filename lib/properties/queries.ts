@@ -264,13 +264,24 @@ function formatPossessionLabel(possession: PossessionStatus): string {
   return "Ready to Move";
 }
 
-function buildGalleryImages(photos: string[] | null | undefined) {
-  const urls = resolvePhotoUrls(photos);
+function buildGalleryImages(
+  photos: string[] | null | undefined,
+  featuredImage?: string | null,
+) {
+  const ordered = (() => {
+    const list = [...(photos ?? [])].filter(Boolean);
+    const cover = featuredImage?.trim();
+    if (cover && list.includes(cover)) {
+      return [cover, ...list.filter((p) => p !== cover)];
+    }
+    return list;
+  })();
+  const urls = resolvePhotoUrls(ordered);
 
   if (urls.length) {
     return urls.map((url, index) => ({
       id: String(index + 1),
-      label: index === 0 ? "Main View" : `Photo ${index + 1}`,
+      label: index === 0 ? "Cover Photo" : `Photo ${index + 1}`,
       gradient: GALLERY_GRADIENTS[index % GALLERY_GRADIENTS.length],
       url,
     }));
@@ -396,7 +407,8 @@ export function mapPropertyRowToListing(row: PropertyRow): ListingProperty {
     areaUnit: priced.isPlot && priced.normalized.plotSizeUnit === "Sq Yard" ? "sqyd" : "sqft",
     growthScore: getGrowthScore(row),
     rentalYield: getRentalYield(row),
-    imageUrl: resolvePhotoUrl(row.photos?.[0] ?? "") ?? null,
+    imageUrl:
+      resolvePhotoUrl(row.featured_image || row.photos?.[0] || "") ?? null,
     imageAlt: row.title,
     aiVerified: Boolean(row.ai_verified),
     reraVerified: isReraApproved(row),
@@ -612,7 +624,7 @@ export function mapPropertyRowToDetail(
     reraVerified: isReraApproved(row),
     legalFlags,
     legalCompliance,
-    images: buildGalleryImages(row.photos),
+    images: buildGalleryImages(row.photos, row.featured_image),
     amenities,
     intelligenceReport,
     intelligenceBundle,

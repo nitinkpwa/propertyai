@@ -14,6 +14,7 @@ import {
 import type { AdminPropertyFormState, WizardStepId } from "@/lib/admin/property/types";
 import ConnectAssignmentCenter from "../ConnectAssignmentCenter";
 import LegalVerificationCard from "../LegalVerificationCard";
+import PropertyMediaManager from "../PropertyMediaManager";
 import {
   Field,
   FieldGrid,
@@ -29,8 +30,6 @@ interface Props {
   step: WizardStepId;
   form: AdminPropertyFormState;
   setForm: (form: AdminPropertyFormState) => void;
-  onUploadPhotos?: (files: FileList) => void;
-  uploadingPhotos?: boolean;
   propertyId?: string | null;
   adminUserId?: string | null;
   adminDisplayName?: string | null;
@@ -42,8 +41,6 @@ export default function WizardStepContent({
   step,
   form,
   setForm,
-  onUploadPhotos,
-  uploadingPhotos,
   propertyId,
   adminUserId,
   adminDisplayName,
@@ -86,7 +83,17 @@ export default function WizardStepContent({
             <TextInput value={form.title} onChange={(v) => setRoot("title", v)} placeholder="Premium 3BHK in Sector 82" />
           </Field>
           <Field label="Builder">
-            <TextInput value={form.basic.builder} onChange={(v) => { setNested("basic", "builder", v); setRoot("builder_name", v); }} />
+            <TextInput
+              value={form.builder_name}
+              onChange={(v) =>
+                setForm({
+                  ...form,
+                  builder_name: v,
+                  basic: { ...form.basic, builder: v },
+                })
+              }
+              placeholder="Builder / developer name"
+            />
           </Field>
           <Field label="Seller">
             <TextInput value={form.basic.seller} onChange={(v) => { setNested("basic", "seller", v); setRoot("contact_name", v); }} />
@@ -257,23 +264,18 @@ export default function WizardStepContent({
   if (step === "media") {
     return (
       <>
-        <SectionHeader title="Media" description="Photos and video assets." />
+        <SectionHeader title="Media" description="Photos, cover image, and video assets." />
+        <div className="mb-6">
+          <PropertyMediaManager
+            photos={form.photos}
+            featuredImage={form.featured_image}
+            adminUserId={adminUserId || ""}
+            onChange={({ photos, featured_image }) =>
+              setForm({ ...form, photos, featured_image })
+            }
+          />
+        </div>
         <FieldGrid>
-          <Field label="Photos" span={2}>
-            <div className="flex flex-wrap gap-3">
-              {form.photos.map((url, i) => (
-                <div key={url + i} className="relative h-24 w-32 overflow-hidden rounded-xl border border-neutral-200">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="h-full w-full object-cover" />
-                  <button type="button" onClick={() => setRoot("photos", form.photos.filter((_, idx) => idx !== i))} className="absolute right-1 top-1 rounded-full bg-black/60 px-1.5 text-xs text-white">×</button>
-                </div>
-              ))}
-              <label className="flex h-24 w-32 cursor-pointer items-center justify-center rounded-xl border-2 border-dashed border-neutral-200 bg-neutral-50 text-xs text-muted hover:border-emerald-300">
-                {uploadingPhotos ? "Uploading..." : "+ Upload"}
-                <input type="file" accept="image/*" multiple hidden onChange={(e) => e.target.files && onUploadPhotos?.(e.target.files)} />
-              </label>
-            </div>
-          </Field>
           <Field label="Virtual Tour URL"><TextInput value={form.media.virtualTourUrl} onChange={(v) => setNested("media", "virtualTourUrl", v)} /></Field>
           <Field label="YouTube"><TextInput value={form.media.youtube} onChange={(v) => setNested("media", "youtube", v)} /></Field>
           <Field label="360° Tour"><TextInput value={form.media.tour360} onChange={(v) => setNested("media", "tour360", v)} /></Field>

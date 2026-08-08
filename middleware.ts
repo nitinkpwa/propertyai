@@ -64,6 +64,35 @@ function withPerfHeaders(response: NextResponse) {
   return response;
 }
 
+/**
+ * Redirects must carry refreshed auth cookies from updateSession.
+ * Dropping them causes random logouts / profile_missing loops after JWT refresh.
+ */
+function redirectWithSession(
+  request: NextRequest,
+  supabaseResponse: NextResponse,
+  absoluteOrPath: string | URL,
+) {
+  const url =
+    typeof absoluteOrPath === "string"
+      ? absoluteOrPath.startsWith("http")
+        ? new URL(absoluteOrPath)
+        : (() => {
+            const next = request.nextUrl.clone();
+            const parsed = new URL(absoluteOrPath, request.url);
+            next.pathname = parsed.pathname;
+            next.search = parsed.search;
+            return next;
+          })()
+      : absoluteOrPath;
+
+  const response = NextResponse.redirect(url);
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    response.cookies.set(cookie.name, cookie.value);
+  });
+  return withPerfHeaders(response);
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   startPerfRequest(pathname);
@@ -75,7 +104,8 @@ export async function middleware(request: NextRequest) {
   if (pathname === "/connect/register" || pathname.startsWith("/connect/register/")) {
     const url = request.nextUrl.clone();
     url.pathname = "/connect";
-    return withPerfHeaders(NextResponse.redirect(url));
+    url.search = "";
+    return redirectWithSession(request, supabaseResponse, url);
   }
 
   if (isProtectedPath(pathname) && !user) {
@@ -85,8 +115,9 @@ export async function middleware(request: NextRequest) {
     } else {
       url.pathname = "/login";
     }
+    url.search = "";
     url.searchParams.set("redirect", pathname);
-    return withPerfHeaders(NextResponse.redirect(url));
+    return redirectWithSession(request, supabaseResponse, url);
   }
 
   // Authenticated but profile missing — stay on auth pages to recover; never bounce
@@ -94,9 +125,10 @@ export async function middleware(request: NextRequest) {
   if (user && !profileRole && isProtectedPath(pathname) && !isAuthPage(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.search = "";
     url.searchParams.set("redirect", pathname);
     url.searchParams.set("error", "profile_missing");
-    return withPerfHeaders(NextResponse.redirect(url));
+    return redirectWithSession(request, supabaseResponse, url);
   }
 
   if (user && profileRole) {
@@ -105,14 +137,15 @@ export async function middleware(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = unauthorizedRedirect;
       url.search = "";
-      return withPerfHeaders(NextResponse.redirect(url));
+      return redirectWithSession(request, supabaseResponse, url);
     }
   }
 
   if (isAdminPath(pathname) && user && profileRole !== "admin") {
     const url = request.nextUrl.clone();
     url.pathname = getDashboardPath(profileRole);
-    return withPerfHeaders(NextResponse.redirect(url));
+    url.search = "";
+    return redirectWithSession(request, supabaseResponse, url);
   }
 
   // Only auto-leave auth pages when role is known. Missing profile must see login recovery UI.
@@ -121,7 +154,11 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.searchParams.get("redirect"),
       getDashboardPath(profileRole),
     );
-    return withPerfHeaders(NextResponse.redirect(new URL(redirectTo, request.url)));
+    return redirectWithSession(
+      request,
+      supabaseResponse,
+      new URL(redirectTo, request.url),
+    );
   }
 
   if (isAuthPage(pathname) && user && profileRole) {
@@ -129,7 +166,11 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.searchParams.get("redirect"),
       getDashboardPath(profileRole),
     );
-    return withPerfHeaders(NextResponse.redirect(new URL(redirectTo, request.url)));
+    return redirectWithSession(
+      request,
+      supabaseResponse,
+      new URL(redirectTo, request.url),
+    );
   }
 
   return withPerfHeaders(supabaseResponse);

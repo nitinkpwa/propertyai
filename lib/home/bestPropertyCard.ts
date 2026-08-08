@@ -4,8 +4,9 @@
 
 import type { MapPointFeature, TricityMapNode } from "@/lib/home/terminalTypes";
 import {
-  distanceKm,
   formatDistanceKm,
+  getNearbyProperties,
+  isValidMapCoord,
   pickBestAreaListing,
   rankAreaListings,
 } from "@/lib/home/areaListingMarkers";
@@ -89,6 +90,40 @@ export function resolveFloatCardPool(
   };
 }
 
+/**
+ * Pick the geographically closest nearby listing (not highest score).
+ * Uses Haversine + radius — never a global inventory fallback.
+ */
+function pickNearestNearby(
+  areaNode: TricityMapNode | null,
+  allListings: MapPointFeature[],
+  _nearbyListings: MapPointFeature[],
+  excludeIds: Set<string>,
+): BestCardSelection["nearest"] {
+  if (!areaNode || !isValidMapCoord(areaNode.lat, areaNode.lng)) return null;
+
+  // Always compute from primary inventory (ignore isNearby-tagged copies).
+  const primary = allListings.filter((l) => !l.isNearby);
+  const matches = getNearbyProperties(areaNode, primary, {
+    excludePropertyIds: excludeIds,
+    verifiedOnly: true,
+    limit: 1,
+  });
+
+  const top = matches[0];
+  if (!top) return null;
+
+  return {
+    listing: {
+      ...top.listing,
+      id: `near-${top.listing.propertyId ?? top.listing.id}`,
+      isNearby: true,
+      isBestMatch: false,
+    },
+    distanceLabel: formatDistanceKm(top.distanceKm),
+  };
+}
+
 export function selectBestPropertyCard(input: {
   areaId: string | null;
   areaNode: TricityMapNode | null;
@@ -132,18 +167,22 @@ export function selectBestPropertyCard(input: {
     if (selected) best = selected;
   }
 
-  let nearest: BestCardSelection["nearest"] = null;
-  if (!best && areaNode && nearbyListings.length > 0) {
-    const verifiedNearby = nearbyListings.filter((l) => l.verified);
-    const nearPool =
-      verifiedNearby.length > 0 ? verifiedNearby : nearbyListings;
-    const pick = pickBestAreaListing(nearPool);
-    if (pick) {
-      nearest = {
-        listing: pick,
-        distanceLabel: formatDistanceKm(distanceKm(areaNode, pick)),
-      };
-    }
+  const excludeIds = new Set(
+    pool.map((l) => l.propertyId).filter((id): id is string => Boolean(id)),
+  );
+
+  // Empty area → geographically nearest verified listing within radius only
+  const nearest =
+    !best
+      ? pickNearestNearby(areaNode, allListings, nearbyListings, excludeIds)
+      : null;
+
+  if (!best && !nearest) {
+    whyEmpty =
+      whyEmpty ??
+      (areaNode && isValidMapCoord(areaNode.lat, areaNode.lng)
+        ? "No verified projects within nearby radius"
+        : "Area coordinates unavailable");
   }
 
   const nodeListingCount = areaNode?.listingCount ?? 0;
@@ -163,8 +202,8 @@ export function selectBestPropertyCard(input: {
   else if (hidden) cardHiddenReason = "Hidden (marker popup open)";
   else {
     cardMounted = true;
-    if (!best && nodeListingCount === 0) {
-      cardHiddenReason = "Empty area — expanding coverage";
+    if (!best && !nearest && nodeListingCount === 0) {
+      cardHiddenReason = "Empty area — no verified nearby";
     }
   }
 
@@ -177,7 +216,7 @@ export function selectBestPropertyCard(input: {
     chosenListing: best?.name ?? null,
     cardMounted,
     cardHiddenReason,
-    emptyWhy: best ? null : whyEmpty,
+    emptyWhy: best || nearest ? null : whyEmpty,
     nearestListing: nearest?.listing.name ?? null,
   };
 

@@ -10,8 +10,8 @@ I only answer questions related to properties, builders, localities, pricing, in
 export const AREA_IQ_DOMAIN_FOLLOW_UPS = [
   "3 BHK under 80 lakh in Mohali",
   "Tell me about Aerocity",
+  "Dhakoli vs Peer Muchalla",
   "Where should I invest 80 lakh?",
-  "Calculate EMI for 90 lakh",
   "Best localities in Zirakpur",
 ] as const;
 
@@ -35,7 +35,7 @@ const UNRELATED_PATTERNS: RegExp[] = [
 export const REAL_ESTATE_PATTERNS: RegExp[] = [
   /\b(propert(y|ies)|flat|apartment|villa|plot|bhk|sq\.?\s?(ft|yd)|carpet\s*area)\b/i,
   /\b(builder|developer|rera|registry|possession|under[\s-]?construction)\b/i,
-  /\b(mohali|chandigarh|panchkula|zirakpur|kharar|aerocity|tricity|derabassi|landran|new\s*chandigarh|panchkula\s*ext(?:ension)?\s*[12]|pkl\s*ext(?:ension)?\s*[12]|amravati(?:\s*enclave)?)\b/i,
+  /\b(mohali|chandigarh|panchkula|zirakpur|dhakoli|peer\s*muchalla|kharar|aerocity|tricity|derabassi|landran|new\s*chandigarh|panchkula\s*ext(?:ension)?\s*[12]|pkl\s*ext(?:ension)?\s*[12]|amravati(?:\s*enclave)?)\b/i,
   /\b(invest(ment)?|roi|rental|yield|emi|home\s*loan|down\s*payment|appreciation)\b/i,
   /\b(site\s*visit|localit(y|ies)|amenities|floor\s*plan|price(s|ing)?|budget|lakh|crore)\b/i,
   /\b(areaiq|compare|seller|buyer|crm|saved\s*propert|notification)\b/i,

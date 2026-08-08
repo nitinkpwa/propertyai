@@ -64,6 +64,8 @@ export function AskIntelPanel({
       "Panchkula Extension 2",
       "Panchkula Extension 1",
       "Amravati Enclave",
+      "Peer Muchalla",
+      "Dhakoli",
       "Aerocity",
       "Mohali",
       "New Chandigarh",

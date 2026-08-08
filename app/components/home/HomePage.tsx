@@ -9,14 +9,18 @@ const TricityMapTerminal = dynamic(
   () => import("./terminal/TricityMapTerminal"),
   { ssr: false },
 );
+const FeaturedProperties = dynamic(
+  () => import("./terminal/FeaturedProperties"),
+);
+const LiveAnalyticsSection = dynamic(
+  () => import("./terminal/LiveAnalyticsSection"),
+  { ssr: false },
+);
 const MarketGeographySection = dynamic(
   () => import("./terminal/MarketGeographySection"),
 );
 const TrustCapitalSection = dynamic(
   () => import("./terminal/TrustCapitalSection"),
-);
-const FeaturedProperties = dynamic(
-  () => import("./terminal/FeaturedProperties"),
 );
 const IntelligenceChartsSection = dynamic(
   () => import("./terminal/IntelligenceChartsSection"),
@@ -40,9 +44,10 @@ export default function HomePage() {
       <main>
         <TerminalHero />
         <TricityMapTerminal />
+        <FeaturedProperties />
+        <LiveAnalyticsSection />
         <MarketGeographySection />
         <TrustCapitalSection />
-        <FeaturedProperties />
         <IntelligenceChartsSection />
         <StructuredAISearch />
         <FinalCTA />

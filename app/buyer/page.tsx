@@ -43,6 +43,8 @@ const TRENDING_LOCALITIES = [
   { name: "Panchkula Extension 1", note: "Emerging PKL growth pocket" },
   { name: "Panchkula Extension 2", note: "Expanding inventory belt" },
   { name: "Amravati Enclave", note: "Panchkula enclave demand" },
+  { name: "Peer Muchalla", note: "VIP Road corridor" },
+  { name: "Dhakoli", note: "Patiala Road value pocket" },
   { name: "Zirakpur", note: "Value corridor" },
   { name: "Kharar", note: "Affordable growth" },
 ];

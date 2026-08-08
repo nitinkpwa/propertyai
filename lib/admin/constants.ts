@@ -26,7 +26,9 @@ export const ADMIN_TYPES = [
 
 export const BULK_TEMPLATE = `title,type,sub_type,price,area_sqft,bedrooms,city,location,contact_name,contact_phone,description
 3BHK Flat Phase 8 Mohali,buy,flat,6500000,1450,3,Mohali,Phase 8B Near IT City Mohali,Nitin Sharma,9817876600,Premium 3BHK with parking and lift
-SCO Aerocity Mohali,commercial,sco,8500000,800,,Mohali,Aerocity Main Road Near Airport,Raj Kumar,9876543210,Ground floor SCO prime location`;
+SCO Aerocity Mohali,commercial,sco,8500000,800,,Mohali,Aerocity Main Road Near Airport,Raj Kumar,9876543210,Ground floor SCO prime location
+2BHK Flat Dhakoli,buy,flat,4800000,1100,2,Dhakoli,Dhakoli Near Patiala Road,Anita Verma,9876501234,Value segment 2BHK in Dhakoli
+3BHK Peer Muchalla,buy,flat,6200000,1350,3,Peer Muchalla,Peer Muchalla VIP Road,Suresh Mehta,9812345678,Mid-premium flat on VIP Road belt`;
 
 export const inp: CSSProperties = {
   width: "100%",

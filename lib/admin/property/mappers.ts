@@ -1,6 +1,7 @@
 import type { PropertyDetail, AISummary } from "@/app/property/[id]/data";
 import type { AdminPropertyRow } from "@/lib/admin/types";
 import { runPropertyIntelligencePipeline } from "@/lib/admin/property/intelligence/pipeline";
+import { normalizePhotosWithCover } from "@/lib/admin/property/mediaHelpers";
 import {
   buildAiSummaryFromSources,
   buildPropertyIntelligenceBundle,
@@ -121,6 +122,53 @@ function mergeMetaIntoForm(
   };
 }
 
+/** Column `builder_name` is the source of truth; meta.basic.builder is a mirror. */
+export function resolveAdminBuilderName(
+  form: Pick<AdminPropertyFormState, "builder_name" | "basic">,
+): string {
+  return (form.builder_name || form.basic.builder || "").trim();
+}
+
+/** Keep root + nested builder fields identical so the CMS input and save payload agree. */
+export function withSyncedBuilderName(
+  form: AdminPropertyFormState,
+  builderName: string,
+): AdminPropertyFormState {
+  return {
+    ...form,
+    builder_name: builderName,
+    basic: { ...form.basic, builder: builderName },
+  };
+}
+
+/**
+ * After merging nearby_places.meta, restore identity fields from live columns
+ * when present so a marketing tagline in meta cannot hijack Builder / Seller.
+ */
+function syncIdentityFromColumns(
+  form: AdminPropertyFormState,
+  row: AdminPropertyFormSource,
+): AdminPropertyFormState {
+  const builder =
+    (row.builder_name || "").trim() ||
+    (form.builder_name || "").trim() ||
+    (form.basic.builder || "").trim();
+  const seller =
+    (row.contact_name || "").trim() ||
+    (form.contact_name || "").trim() ||
+    (form.basic.seller || "").trim();
+  return {
+    ...form,
+    builder_name: builder,
+    contact_name: seller,
+    basic: {
+      ...form.basic,
+      builder,
+      seller,
+    },
+  };
+}
+
 export function adminRowToForm(row: AdminPropertyFormSource): AdminPropertyFormState {
   const form = createEmptyAdminPropertyForm();
   const meta = extractPropertyMeta(row.nearby_places);
@@ -143,7 +191,13 @@ export function adminRowToForm(row: AdminPropertyFormSource): AdminPropertyFormS
     contact_name: row.contact_name || "",
     contact_phone: row.contact_phone || "",
     amenities: Array.isArray(row.amenities) ? row.amenities : [],
-    photos: Array.isArray(row.photos) ? row.photos : [],
+    ...(() => {
+      const media = normalizePhotosWithCover(
+        Array.isArray(row.photos) ? row.photos : [],
+        row.featured_image,
+      );
+      return { photos: media.photos, featured_image: media.featured_image };
+    })(),
     status: toPropertyStatus(row.status),
     is_featured: Boolean(row.is_featured),
     builder_name: row.builder_name || "",
@@ -153,7 +207,6 @@ export function adminRowToForm(row: AdminPropertyFormSource): AdminPropertyFormS
     // Prefer column; hydrate from import meta so CMS shows what buyers will see.
     rera_number: getReraStatus(row).number || row.rera_number || "",
     possession: row.possession || "",
-    featured_image: row.featured_image || "",
     connect_partner_id: row.connect_partner_id || "",
     site_visit_enabled: row.site_visit_enabled !== false,
     legal: resolveLegalVerificationFromProperty(row),
@@ -169,7 +222,7 @@ export function adminRowToForm(row: AdminPropertyFormSource): AdminPropertyFormS
     },
   };
 
-  return mergeMetaIntoForm(merged, meta);
+  return syncIdentityFromColumns(mergeMetaIntoForm(merged, meta), row);
 }
 
 export function formToDbPayload(
@@ -183,8 +236,9 @@ export function formToDbPayload(
   },
 ): Record<string, unknown> {
   const existingMeta = extractPropertyMeta(options?.existingNearbyPlaces ?? null);
+  const builderName = resolveAdminBuilderName(form);
   const meta = buildFactualMetaFromForm(
-    form,
+    withSyncedBuilderName(form, builderName),
     form.aiIntelligence ?? existingMeta?.ai ?? null,
     existingMeta,
   );
@@ -269,16 +323,21 @@ export function formToDbPayload(
     contact_name: form.contact_name || form.basic.seller,
     contact_phone: form.contact_phone,
     amenities: form.amenities,
-    photos: form.photos,
+    ...(() => {
+      const media = normalizePhotosWithCover(form.photos, form.featured_image);
+      return {
+        photos: media.photos,
+        featured_image: media.featured_image || null,
+      };
+    })(),
     status: dbStatus,
     is_featured: form.publishing.featured || form.is_featured,
-    builder_name: form.builder_name || form.basic.builder,
+    builder_name: builderName,
     furnishing: form.furnishing,
     parking: form.parking || form.pricing.parking,
     facing: form.facing,
     rera_number: resolveFormReraNumber(form),
     possession: form.possession || form.basic.propertyStatus,
-    featured_image: form.featured_image || form.photos[0] || null,
     nearby_places: buildNearbyPlacesPayload(places, meta),
     site_visit_enabled: form.site_visit_enabled !== false,
     approved_building_plan: Boolean(form.legal.approved_building_plan),
@@ -394,9 +453,10 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
     "from-stone-600/80 via-stone-500/60 to-amber-400/40",
   ];
 
+  const orderedPhotos = normalizePhotosWithCover(form.photos, form.featured_image).photos;
   const images =
-    form.photos.length > 0
-      ? form.photos.map((url, i) => ({
+    orderedPhotos.length > 0
+      ? orderedPhotos.map((url, i) => ({
           id: `img-${i}`,
           label: form.title || "Property",
           gradient: gradients[i % gradients.length],
@@ -422,7 +482,7 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
     }),
   );
   const meta = metaPreview;
-  const builderName = form.builder_name || form.basic.builder || "Builder";
+  const builderName = resolveAdminBuilderName(form) || "Builder";
   const intelligenceBundle = buildPropertyIntelligenceBundle({
     id,
     name: form.title || "Untitled Property",
@@ -525,14 +585,24 @@ export function syncLegacyFormFields(form: AdminPropertyFormState): AdminPropert
     publishing: { ...defaults.publishing, ...form.publishing },
     legal: { ...defaults.legal, ...(form.legal ?? {}) },
     amenities: Array.isArray(form.amenities) ? form.amenities : defaults.amenities,
-    photos: Array.isArray(form.photos) ? form.photos : defaults.photos,
+    ...(() => {
+      const media = normalizePhotosWithCover(
+        Array.isArray(form.photos) ? form.photos : defaults.photos,
+        form.featured_image,
+      );
+      return { photos: media.photos, featured_image: media.featured_image };
+    })(),
     nearbyPlaces: Array.isArray(form.nearbyPlaces) ? form.nearbyPlaces : defaults.nearbyPlaces,
   };
   if (!next.seo.slug && next.title) next.seo.slug = slugifyTitle(next.title);
   if (!next.pricing.currentPrice && next.price) next.pricing.currentPrice = next.price;
   if (!next.price && next.pricing.currentPrice) next.price = next.pricing.currentPrice;
-  if (!next.basic.builder && next.builder_name) next.basic.builder = next.builder_name;
+  // builder_name is canonical. Fill from nested meta only when the column is empty
+  // (legacy drafts), then mirror so they never diverge.
   if (!next.builder_name && next.basic.builder) next.builder_name = next.basic.builder;
+  next.basic.builder = next.builder_name;
+  if (!next.basic.seller && next.contact_name) next.basic.seller = next.contact_name;
+  if (!next.contact_name && next.basic.seller) next.contact_name = next.basic.seller;
   return next;
 }
 

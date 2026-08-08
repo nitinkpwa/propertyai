@@ -102,7 +102,7 @@ function LoginForm() {
   return (
     <AuthLayout
       title="Welcome back"
-      subtitle="Sign in with your mobile number or username"
+      subtitle="Sign in with your mobile number, username, or admin email"
       footer={
         <p className="text-base text-muted">
           Don&apos;t have an account?{" "}
@@ -129,7 +129,7 @@ function LoginForm() {
           label="Mobile, username, or contact email"
           autoComplete="username"
           enterKeyHint="next"
-          placeholder="9876543210 or yourname"
+          placeholder="9876543210, username, or admin@email.com"
           value={identifier}
           onChange={(event) => {
             setIdentifier(event.target.value);
@@ -178,7 +178,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <AuthLayout title="Welcome back" subtitle="Sign in with your mobile number or username">
+        <AuthLayout title="Welcome back" subtitle="Sign in with your mobile number, username, or admin email">
           <div className="flex justify-center py-8">
             <span className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-500" />
           </div>

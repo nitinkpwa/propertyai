@@ -428,10 +428,10 @@ export default function BestPropertyFloatCard({
             className="pointer-events-auto rounded-[24px] border border-black/[0.04] bg-white/90 px-5 py-4 shadow-[0_8px_30px_rgba(15,23,42,0.08)] backdrop-blur-2xl"
           >
             <p className="text-[14px] font-semibold text-neutral-900">
-              Expanding coverage here
+              No verified projects nearby
             </p>
             <p className="mt-1 text-[12px] font-normal text-neutral-400">
-              Nearby verified projects stay on the map.
+              Nearby verified inventory will appear here.
             </p>
           </motion.div>
         ) : null}

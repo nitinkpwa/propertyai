@@ -108,6 +108,11 @@ const ROAD_SPECS: RoadDef[] = [
     placeIds: ["zirakpur", "vip-road", "peer-muchalla"],
   },
   {
+    id: "patiala-road-corridor",
+    name: "Patiala Road",
+    placeIds: ["zirakpur", "dhakoli", "patiala-road", "baltana"],
+  },
+  {
     id: "panchkula-extension-corridor",
     name: "Panchkula Extension",
     placeIds: [

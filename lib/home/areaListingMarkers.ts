@@ -90,7 +90,7 @@ export function pickBestAreaListing(
   return rankAreaListings(listings)[0] ?? null;
 }
 
-/** Approximate distance in km between two WGS84 points. */
+/** Approximate Haversine distance in km between two WGS84 points. */
 export function distanceKm(
   a: { lat: number; lng: number },
   b: { lat: number; lng: number },
@@ -104,52 +104,114 @@ export function distanceKm(
   const h =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
+/**
+ * Max search radius for “Nearby” inventory when an area has 0 in-area listings.
+ * Far enough for adjacent Tricity micromarkets; short enough to exclude
+ * unrelated belts (e.g. Kharar inventory must not appear under Dhakoli).
+ */
+export const NEARBY_PROPERTY_RADIUS_KM = 12;
+
+/** Reject missing, NaN, null-island, and out-of-region coordinates. */
+export function isValidMapCoord(
+  lat: number | null | undefined,
+  lng: number | null | undefined,
+): boolean {
+  if (typeof lat !== "number" || typeof lng !== "number") return false;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  if (Math.abs(lat) < 0.01 && Math.abs(lng) < 0.01) return false;
+  // Rough northern-India / Tricity sanity band
+  if (lat < 28 || lat > 33 || lng < 74 || lng > 80) return false;
+  return true;
+}
+
+/**
+ * Display label from the same Haversine distance used for filtering.
+ * < 10 km → one decimal; ≥ 10 km → whole kilometres.
+ */
 export function formatDistanceKm(km: number): string {
-  if (!Number.isFinite(km)) return "";
-  if (km < 1) return `${Math.max(100, Math.round(km * 1000))} m away`;
-  return `${km.toFixed(1)} km away`;
+  if (!Number.isFinite(km) || km < 0) return "";
+  if (km < 10) return `${km.toFixed(1)} km away`;
+  return `${Math.round(km)} km away`;
 }
 
-/** Nearby verified inventory for empty / expanding coverage areas. */
+export type NearbyPropertyMatch = {
+  listing: MapPointFeature;
+  distanceKm: number;
+};
+
+export type GetNearbyPropertiesOptions = {
+  /** Override default {@link NEARBY_PROPERTY_RADIUS_KM}. */
+  radiusKm?: number;
+  limit?: number;
+  excludePropertyIds?: Iterable<string>;
+  /** Default true — Nearby card only shows verified inventory. */
+  verifiedOnly?: boolean;
+};
+
+/**
+ * Geographic nearby filter for Intelligence Map.
+ * Validates coords → Haversine distance → radius filter → sort ascending.
+ * Never returns a global “best listing” fallback outside the radius.
+ */
+export function getNearbyProperties(
+  area: { lat: number; lng: number } | null | undefined,
+  properties: MapPointFeature[],
+  options: GetNearbyPropertiesOptions = {},
+): NearbyPropertyMatch[] {
+  if (!area || !isValidMapCoord(area.lat, area.lng)) return [];
+
+  const radiusKm = options.radiusKm ?? NEARBY_PROPERTY_RADIUS_KM;
+  const limit = options.limit ?? 12;
+  const verifiedOnly = options.verifiedOnly !== false;
+  const exclude = new Set(
+    options.excludePropertyIds
+      ? [...options.excludePropertyIds].filter(Boolean)
+      : [],
+  );
+
+  const matches: NearbyPropertyMatch[] = [];
+  for (const listing of properties) {
+    const pid = listing.propertyId;
+    if (!pid || exclude.has(pid)) continue;
+    if (listing.isNearby) continue;
+    if (!isValidMapCoord(listing.lat, listing.lng)) continue;
+    if (verifiedOnly && !listing.verified) continue;
+
+    const d = distanceKm(area, listing);
+    if (!Number.isFinite(d) || d > radiusKm) continue;
+    matches.push({ listing, distanceKm: d });
+  }
+
+  matches.sort((a, b) => a.distanceKm - b.distanceKm || a.listing.id.localeCompare(b.listing.id));
+  return matches.slice(0, Math.max(0, limit));
+}
+
+/** Nearby verified inventory for empty / expanding coverage areas (map pins). */
 export function nearbyListingsForArea(
   all: MapPointFeature[],
   node: TricityMapNode | null,
   areaListings: MapPointFeature[],
   limit = 12,
 ): MapPointFeature[] {
-  if (!node) return [];
+  if (!node || !isValidMapCoord(node.lat, node.lng)) return [];
+
   const inArea = new Set(
-    areaListings.map((l) => l.propertyId).filter(Boolean) as string[],
+    areaListings.map((l) => l.propertyId).filter((id): id is string => Boolean(id)),
   );
-  const candidates = all.filter(
-    (l) =>
-      l.propertyId &&
-      !inArea.has(l.propertyId) &&
-      Number.isFinite(l.lat) &&
-      Number.isFinite(l.lng),
-  );
-  if (candidates.length === 0) return [];
 
-  const ranked = candidates
-    .map((l) => ({
-      listing: l,
-      dist:
-        (l.lat - node.lat) * (l.lat - node.lat) +
-        (l.lng - node.lng) * (l.lng - node.lng),
-    }))
-    .sort((a, b) => a.dist - b.dist)
-    .slice(0, limit)
-    .map(({ listing }) => ({
-      ...listing,
-      id: `near-${listing.propertyId}`,
-      isNearby: true,
-      isBestMatch: false,
-    }));
-
-  return ranked;
+  return getNearbyProperties(node, all, {
+    excludePropertyIds: inArea,
+    verifiedOnly: true,
+    limit,
+  }).map(({ listing }) => ({
+    ...listing,
+    id: `near-${listing.propertyId}`,
+    isNearby: true,
+    isBestMatch: false,
+  }));
 }
 
 /** Primary area pins + grey nearby context (empty areas). */

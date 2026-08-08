@@ -46,7 +46,7 @@ export async function updateSession(
 
   let profileRole: string | null = null;
   if (user && fetchProfileRole) {
-    const { data: profile } = await timed(
+    const { data: profile, error: profileError } = await timed(
       "middleware.profiles.selectRole",
       async () =>
         await supabase
@@ -55,6 +55,13 @@ export async function updateSession(
           .eq("id", user.id)
           .maybeSingle(),
     );
+    if (profileError) {
+      console.error(
+        "[middleware] profiles.role lookup failed:",
+        profileError.message,
+        { userId: user.id, path: request.nextUrl.pathname },
+      );
+    }
     profileRole = profile?.role ?? null;
   }
 

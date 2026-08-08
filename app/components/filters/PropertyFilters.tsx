@@ -29,6 +29,8 @@ const POPULAR = [
   "Mohali",
   "Chandigarh",
   "Zirakpur",
+  "Dhakoli",
+  "Peer Muchalla",
   "Panchkula Extension 1",
   "Panchkula Extension 2",
   "Amravati Enclave",

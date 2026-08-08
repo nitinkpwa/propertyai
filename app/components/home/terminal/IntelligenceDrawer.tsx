@@ -329,10 +329,10 @@ export default function IntelligenceDrawer({
                 ) : (
                   <div className="rounded-[20px] bg-black/[0.03] px-4 py-6 text-center">
                     <p className="text-[13px] font-semibold text-neutral-800">
-                      Expanding coverage here
+                      No verified projects nearby
                     </p>
                     <p className="mt-1 text-[11px] text-neutral-400">
-                      Nearby verified projects stay visible in muted markers.
+                      Nearby verified inventory will appear here.
                     </p>
                   </div>
                 )}

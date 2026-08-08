@@ -329,6 +329,7 @@ type PartnerPropertyDbRow = {
   type: string | null;
   sub_type: string | null;
   photos: string[] | null;
+  featured_image?: string | null;
   nearby_places: unknown | null;
   created_at: string | null;
   updated_at: string | null;
@@ -357,6 +358,7 @@ function toPartnerPropertyDbRow(raw: Record<string, unknown>): PartnerPropertyDb
     photos: Array.isArray(photos)
       ? photos.filter((p): p is string => typeof p === "string")
       : null,
+    featured_image: typeof raw.featured_image === "string" ? raw.featured_image : null,
     nearby_places: raw.nearby_places ?? null,
     created_at: typeof raw.created_at === "string" ? raw.created_at : null,
     updated_at: typeof raw.updated_at === "string" ? raw.updated_at : null,
@@ -370,9 +372,9 @@ export async function fetchPartnerProperties(
 ): Promise<ConnectPartnerPropertyRow[]> {
   // Official schema column is `area_sqft` (not built_up_area / carpet_area).
   const SELECT_FULL =
-    "id, title, city, location, price, calculated_price, area_sqft, status, type, sub_type, photos, nearby_places, created_at, updated_at";
+    "id, title, city, location, price, calculated_price, area_sqft, status, type, sub_type, photos, featured_image, nearby_places, created_at, updated_at";
   const SELECT_CORE =
-    "id, title, city, location, price, area_sqft, status, type, sub_type, photos, nearby_places, created_at, updated_at";
+    "id, title, city, location, price, area_sqft, status, type, sub_type, photos, featured_image, nearby_places, created_at, updated_at";
 
   const runQuery = async (select: string) => {
     let q = supabase
@@ -469,6 +471,7 @@ export async function fetchPartnerProperties(
     type: p.type ?? null,
     sub_type: p.sub_type ?? null,
     photos: p.photos ?? null,
+    featured_image: p.featured_image ?? null,
     nearby_places: p.nearby_places ?? null,
     created_at: p.created_at ?? "",
     updated_at: p.updated_at ?? "",

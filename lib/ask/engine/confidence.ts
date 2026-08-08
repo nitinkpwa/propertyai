@@ -150,7 +150,7 @@ export function knownSignals(
   }
   if (known.length === 0) {
     known.push(
-      "I can work from Tricity geography (Chandigarh, Mohali, Panchkula, Zirakpur, Kharar, New Chandigarh, Aerocity) without inventing project-level numbers.",
+      "I can work from Tricity geography (Chandigarh, Mohali, Panchkula, Zirakpur, Dhakoli, Peer Muchalla, Kharar, New Chandigarh, Aerocity) without inventing project-level numbers.",
     );
   }
   return known;

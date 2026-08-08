@@ -48,6 +48,7 @@ import {
   resolveListingCoords,
   type CoordCachePayload,
 } from "./listingCoords";
+import { getAreaPlaceholderIntel } from "./areaPlaceholderIntel";
 import {
   resolvePlace,
   resolvePlaceFromQuery,
@@ -412,25 +413,34 @@ export function buildTricityMapNodes(
     const verifiedRows = rows.filter((r) => isVerifiedListing(r.listing));
     const verifiedShare =
       rows.length > 0 ? verifiedRows.length / rows.length : null;
-    const avgAreaIq = average(areaIq);
-    const avgGrowth = average(growth);
-    const avgBuilder = average(builder);
-    const legalConfidence = average(legal);
-    const investment =
-      avgAreaIq != null && avgGrowth != null
-        ? Math.round(avgAreaIq * 0.6 + avgGrowth * 0.4)
-        : avgAreaIq != null
-          ? Math.round(avgAreaIq)
-          : avgGrowth != null
-            ? Math.round(avgGrowth)
+    const xy = gridXY(zone.lat, zone.lng);
+    const placeholder = rows.length === 0 ? getAreaPlaceholderIntel(zone.id) : null;
+    const hasIntelligence = rows.length > 0 || placeholder != null;
+
+    const liveAvgAreaIq = average(areaIq);
+    const liveAvgGrowth = average(growth);
+    const liveAvgBuilder = average(builder);
+    const liveLegalConfidence = average(legal);
+    const liveInvestment =
+      liveAvgAreaIq != null && liveAvgGrowth != null
+        ? Math.round(liveAvgAreaIq * 0.6 + liveAvgGrowth * 0.4)
+        : liveAvgAreaIq != null
+          ? Math.round(liveAvgAreaIq)
+          : liveAvgGrowth != null
+            ? Math.round(liveAvgGrowth)
             : null;
+
+    const avgAreaIq = liveAvgAreaIq ?? placeholder?.avgAreaIqScore ?? null;
+    const avgGrowth = liveAvgGrowth ?? placeholder?.avgGrowthScore ?? null;
+    const avgBuilder = liveAvgBuilder;
+    const legalConfidence = liveLegalConfidence;
+    const investment =
+      liveInvestment ?? placeholder?.investmentScore ?? null;
     const demandRatio = rows.length > 0 ? rows.length / maxCount : null;
     const supplyRatio =
       medianInventory != null && medianInventory > 0 && rows.length > 0
         ? Math.min(1, rows.length / (medianInventory * 1.4))
         : null;
-    const xy = gridXY(zone.lat, zone.lng);
-    const hasIntelligence = rows.length > 0;
 
     const rankedProjects: MapTopProject[] = [...rows]
       .sort(
@@ -478,6 +488,7 @@ export function buildTricityMapNodes(
       verifiedShare,
       avgBuilder != null ? avgBuilder / 100 : null,
       legalConfidence != null ? legalConfidence / 100 : null,
+      placeholder != null ? placeholder.investmentScore / 100 : null,
     ].filter((n): n is number => n != null);
     const heatWeight =
       heatWeightParts.length > 0
@@ -494,22 +505,25 @@ export function buildTricityMapNodes(
       y: xy.y,
       listingCount: rows.length,
       verifiedCount: verifiedRows.length,
-      averagePrice: average(prices),
+      averagePrice: average(prices) ?? placeholder?.averagePrice ?? null,
       avgGrowthScore: avgGrowth,
-      avgRentalYield: average(yields),
+      avgRentalYield: average(yields) ?? placeholder?.avgRentalYield ?? null,
       avgAreaIqScore: avgAreaIq,
       avgBuilderScore: avgBuilder,
       investmentScore: investment,
       investmentGrade: investmentGrade(investment),
       legalConfidence: legalConfidence != null ? Math.round(legalConfidence) : null,
-      marketConfidence: avgAreaIq != null ? Math.round(avgAreaIq) : null,
+      marketConfidence:
+        avgAreaIq != null
+          ? Math.round(avgAreaIq)
+          : placeholder?.marketConfidence ?? null,
       builderCount: builders.size,
       verificationConfidence:
         verifiedShare != null ? Math.round(verifiedShare * 100) : null,
-      demand: bandFromRatio(demandRatio),
-      supply: bandFromRatio(supplyRatio),
-      risk: riskFromLegal(legalConfidence),
-      heat: demandRatio ?? 0,
+      demand: rows.length > 0 ? bandFromRatio(demandRatio) : placeholder?.demand ?? "unknown",
+      supply: rows.length > 0 ? bandFromRatio(supplyRatio) : placeholder?.supply ?? "unknown",
+      risk: rows.length > 0 ? riskFromLegal(legalConfidence) : placeholder?.risk ?? "unknown",
+      heat: demandRatio ?? (placeholder != null ? 0.45 : 0),
       heatWeight,
       zoneTone: zoneToneFromInvestment(investment, hasIntelligence),
       topProject: rankedProjects[0] ?? null,

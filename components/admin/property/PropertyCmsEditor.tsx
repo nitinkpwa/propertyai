@@ -9,7 +9,6 @@ import {
   saveAdminProperty,
   savePropertyIntelligence,
   fetchAdminPropertyById,
-  uploadAdminPropertyPhoto,
 } from "@/lib/admin/property/saveProperty";
 import type { AdminPropertyFormState } from "@/lib/admin/property/types";
 import type { WizardStepId } from "@/lib/admin/property/types";
@@ -51,7 +50,6 @@ export default function PropertyCmsEditor({
   const [saving, setSaving] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [message, setMessage] = useState("");
-  const [uploadingPhotos, setUploadingPhotos] = useState(false);
 
   const stepId = SECTION_TO_STEP[section] ?? "basic";
 
@@ -99,20 +97,6 @@ export default function PropertyCmsEditor({
       if (row) setFormState(syncLegacyFormFields(adminRowToForm(row)));
     }
     setMessage(result.ok ? "✅ AI intelligence regenerated" : `Error: ${result.error}`);
-  };
-
-  const handleUploadPhotos = async (files: FileList) => {
-    if (!form) return;
-    setUploadingPhotos(true);
-    const uploaded: string[] = [];
-    for (const file of Array.from(files).slice(0, 8 - form.photos.length)) {
-      const url = await uploadAdminPropertyPhoto(file, adminUserId);
-      if (url) uploaded.push(url);
-    }
-    if (uploaded.length) {
-      setForm({ ...form, photos: [...form.photos, ...uploaded] });
-    }
-    setUploadingPhotos(false);
   };
 
   const ai = form?.aiIntelligence;
@@ -238,8 +222,6 @@ export default function PropertyCmsEditor({
               step={stepId}
               form={form}
               setForm={setForm}
-              onUploadPhotos={handleUploadPhotos}
-              uploadingPhotos={uploadingPhotos}
               propertyId={propertyId}
               adminUserId={adminUserId}
               adminDisplayName={adminDisplayName}

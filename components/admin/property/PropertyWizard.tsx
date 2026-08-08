@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { WIZARD_STEPS } from "@/lib/admin/property/constants";
 import { saveDraftToLocal, loadDraftFromLocal, clearDraftFromLocal } from "@/lib/admin/property/autosave";
 import { syncLegacyFormFields } from "@/lib/admin/property/mappers";
-import { saveAdminProperty, uploadAdminPropertyPhoto } from "@/lib/admin/property/saveProperty";
+import { saveAdminProperty } from "@/lib/admin/property/saveProperty";
 import { createEmptyAdminPropertyForm, type AdminPropertyFormState, type WizardStepId } from "@/lib/admin/property/types";
 import PropertyLivePreview from "./PropertyLivePreview";
 import WizardStepContent from "./wizard/WizardStepContent";
@@ -31,11 +31,10 @@ export default function PropertyWizard({
 }: Props) {
   const [stepIndex, setStepIndex] = useState(0);
   const [form, setFormState] = useState<AdminPropertyFormState>(
-    () => initialForm ?? createEmptyAdminPropertyForm(),
+    () => syncLegacyFormFields(initialForm ?? createEmptyAdminPropertyForm()),
   );
   const [history, setHistory] = useState<AdminPropertyFormState[]>([]);
   const [saving, setSaving] = useState(false);
-  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [message, setMessage] = useState("");
   const [lastSaved, setLastSaved] = useState<string | null>(null);
   const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -114,19 +113,6 @@ export default function PropertyWizard({
   };
 
   const goBack = () => setStepIndex((i) => Math.max(0, i - 1));
-
-  const handleUploadPhotos = async (files: FileList) => {
-    setUploadingPhotos(true);
-    const uploaded: string[] = [];
-    for (const file of Array.from(files).slice(0, 8 - form.photos.length)) {
-      const url = await uploadAdminPropertyPhoto(file, adminUserId);
-      if (url) uploaded.push(url);
-    }
-    if (uploaded.length) {
-      setForm({ ...form, photos: [...form.photos, ...uploaded], featured_image: form.featured_image || uploaded[0] });
-    }
-    setUploadingPhotos(false);
-  };
 
   const handleSave = async (asDraft = false) => {
     if (!form.title) {
@@ -237,16 +223,14 @@ export default function PropertyWizard({
               exit={{ opacity: 0, x: -12 }}
               transition={{ duration: 0.2 }}
             >
-              <WizardStepContent
-                step={stepId}
-                form={form}
-                setForm={setForm}
-                onUploadPhotos={handleUploadPhotos}
-                uploadingPhotos={uploadingPhotos}
-                propertyId={editId}
-                adminUserId={adminUserId}
-                adminDisplayName={adminDisplayName}
-              />
+                <WizardStepContent
+                  step={stepId}
+                  form={form}
+                  setForm={setForm}
+                  propertyId={editId}
+                  adminUserId={adminUserId}
+                  adminDisplayName={adminDisplayName}
+                />
             </motion.div>
           </AnimatePresence>
 

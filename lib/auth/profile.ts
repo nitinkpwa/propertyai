@@ -6,6 +6,24 @@ import { supabase, type Profile } from "@/lib/supabase";
 export { getDashboardPath } from "@/lib/auth/routes";
 
 export async function fetchProfile(userId: string): Promise<Profile | null> {
+  // Prefer a narrow select first — role gates must not fail because an
+  // unrelated column is missing/revoked on a hardened production schema.
+  const { data: roleRow, error: roleError } = await supabase
+    .from("profiles")
+    .select(
+      "id, email, full_name, phone, role, avatar_url, contact_email, created_at, city, connect_partner_id",
+    )
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (!roleError && roleRow) {
+    return roleRow as Profile;
+  }
+
+  if (roleError) {
+    console.error("Failed to fetch profile (narrow):", roleError.message);
+  }
+
   const { data, error } = await supabase
     .from("profiles")
     .select("*")

@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Building2, ChevronDown, Heart, Scale, Sparkles } from "lucide-react";
+import { ChevronDown, Heart, Scale, Sparkles } from "lucide-react";
 import { useSavedPropertyToggle } from "@/lib/buyer/useSavedProperty";
 import { useComparedProperty } from "@/lib/buyer/useComparedProperty";
 import LegalTrustBadge from "@/components/property/LegalTrustBadge";
+import PropertyCardMediaChrome from "@/components/property/PropertyCardMediaChrome";
 import { formatPriceShort } from "@/lib/home/marketSignals";
 import type { IntelligencePropertyCardModel } from "@/lib/home/types";
 import {
@@ -91,21 +92,25 @@ export default function IntelligencePropertyCard({ property }: Props) {
             </span>
           </div>
         )}
-        <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
-          <ScoreBadge label="AreaIQ" score={property.areaIqScore} kind="quality" />
-          <ScoreBadge label="Legal" score={property.legalScore} kind="legal" />
-        </div>
-        <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2">
-          <span className="inline-flex max-w-[60%] items-center gap-1 truncate rounded-md bg-black/55 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
-            <Building2 className="h-3 w-3 shrink-0" aria-hidden />
-            {property.builderName}
-          </span>
-          <LegalTrustBadge
-            compliance={property.legalCompliance}
-            flags={property.legalFlags}
-            size="sm"
-          />
-        </div>
+
+        {/* Four-zone overlays: scores · logo · builder · documents */}
+        <PropertyCardMediaChrome
+          brandMarkSize={26}
+          builderName={property.builderName}
+          topLeft={
+            <>
+              <ScoreBadge label="AreaIQ" score={property.areaIqScore} kind="quality" />
+              <ScoreBadge label="Legal" score={property.legalScore} kind="legal" />
+            </>
+          }
+          bottomRight={
+            <LegalTrustBadge
+              compliance={property.legalCompliance}
+              flags={property.legalFlags}
+              size="sm"
+            />
+          }
+        />
       </Link>
 
       <div className="flex flex-1 flex-col p-4">

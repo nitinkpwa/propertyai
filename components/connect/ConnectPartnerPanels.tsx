@@ -129,7 +129,15 @@ export function ConnectBuyersPanel({ buyers }: { buyers: ConnectPartnerBuyerRow[
 export function ConnectPropertiesPanel({
   properties,
 }: {
-  properties: Array<{ id: string; title: string; city: string; price: number; status: string; photos?: string[] }>;
+  properties: Array<{
+    id: string;
+    title: string;
+    city: string;
+    price: number;
+    status: string;
+    photos?: string[];
+    featured_image?: string | null;
+  }>;
 }) {
   if (properties.length === 0) {
     return (
@@ -141,28 +149,31 @@ export function ConnectPropertiesPanel({
 
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {properties.map((p) => (
-        <article key={p.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          <div className="aspect-[4/3] bg-neutral-100">
-            {p.photos?.[0] ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.photos[0]} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full items-center justify-center text-3xl text-muted">🏠</div>
-            )}
-          </div>
-          <div className="p-4">
-            <h3 className="font-semibold text-heading-primary">{p.title}</h3>
-            <p className="mt-1 text-sm text-muted">{p.city}</p>
-            <p className="mt-2 text-sm font-semibold text-emerald-700">
-              ₹{p.price.toLocaleString("en-IN")}
-            </p>
-            <span className="mt-2 inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-semibold capitalize text-body">
-              {p.status}
-            </span>
-          </div>
-        </article>
-      ))}
+      {properties.map((p) => {
+        const cover = p.featured_image || p.photos?.[0];
+        return (
+          <article key={p.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+            <div className="aspect-[4/3] bg-neutral-100">
+              {cover ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={cover} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center text-3xl text-muted">🏠</div>
+              )}
+            </div>
+            <div className="p-4">
+              <h3 className="font-semibold text-heading-primary">{p.title}</h3>
+              <p className="mt-1 text-sm text-muted">{p.city}</p>
+              <p className="mt-2 text-sm font-semibold text-emerald-700">
+                ₹{p.price.toLocaleString("en-IN")}
+              </p>
+              <span className="mt-2 inline-block rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] font-semibold capitalize text-body">
+                {p.status}
+              </span>
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }

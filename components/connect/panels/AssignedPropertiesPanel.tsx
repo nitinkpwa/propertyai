@@ -61,9 +61,13 @@ export default function AssignedPropertiesPanel({ properties, onRefresh }: Props
           return (
             <article key={p.id} className={`${connectTokens.card} overflow-hidden ${connectTokens.cardHover}`}>
               <div className="aspect-[16/10] bg-neutral-100">
-                {p.photos?.[0] ? (
+                {p.featured_image || p.photos?.[0] ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.photos[0]} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={p.featured_image || p.photos![0]}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <div className="flex h-full items-center justify-center text-4xl text-muted">🏠</div>
                 )}

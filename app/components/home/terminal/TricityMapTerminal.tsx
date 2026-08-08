@@ -6,7 +6,6 @@ import Link from "next/link";
 import { MapPinned, Sparkles } from "lucide-react";
 import LiveActivityTicker from "./LiveActivityTicker";
 import IntelligenceDrawer from "./IntelligenceDrawer";
-import MapMiniCharts from "./MapMiniCharts";
 import { SkeletonBlock, TerminalSectionHeader } from "./primitives";
 import { useTerminalData } from "./useTerminalData";
 import { mapRenderableListings } from "@/lib/home/areaListingMarkers";
@@ -154,21 +153,6 @@ export default function TricityMapTerminal() {
               />
             </div>
           </div>
-        </div>
-
-        <div className="mt-5">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-[#4AAA27]">
-            Live derived analytics
-          </p>
-          {loading && nodes.length === 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <SkeletonBlock key={i} className="h-[148px]" />
-              ))}
-            </div>
-          ) : (
-            <MapMiniCharts nodes={nodes} />
-          )}
         </div>
       </div>
     </section>

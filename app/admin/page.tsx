@@ -217,6 +217,17 @@ function AdminPageInner() {
         return;
       }
 
+      // Profile unreadable (RLS/network) — keep the session so retry works.
+      // Only destroy the session when we positively know the role is non-admin.
+      if (!profile) {
+        setAdminUserId(user.id);
+        setLoginError(
+          "Signed in, but your profile could not be loaded. Refresh the page. If this continues, confirm profiles.role = admin for your user id.",
+        );
+        setAccessState("signed_out");
+        return;
+      }
+
       await supabase.auth.signOut();
       setLoginError(
         `Access denied. Signed-in account does not have profiles.role = admin. ${ADMIN_SETUP_HINT}`,

@@ -106,6 +106,8 @@ export const EXPLORE_AREAS_EXTENDED = [
   { name: "Aerocity", score: 92, tag: "Airport corridor", href: "/ask?q=Aerocity+area+intelligence" },
   { name: "New Chandigarh", score: 87, tag: "Master planned", href: "/ask?q=New+Chandigarh+area+intelligence" },
   { name: "Zirakpur", score: 85, tag: "Value segment", href: "/ask?q=Zirakpur+area+intelligence" },
+  { name: "Peer Muchalla", score: 78, tag: "VIP Road corridor", href: "/ask?q=Peer+Muchalla+area+intelligence" },
+  { name: "Dhakoli", score: 76, tag: "Zirakpur growth pocket", href: "/ask?q=Dhakoli+area+intelligence" },
   { name: "Panchkula Extension 1", score: 78, tag: "Growth pocket", href: "/ask?q=Panchkula+Extension+1+area+intelligence" },
   { name: "Panchkula Extension 2", score: 79, tag: "Emerging", href: "/ask?q=Panchkula+Extension+2+area+intelligence" },
   { name: "Amravati Enclave", score: 77, tag: "Enclave", href: "/ask?q=Amravati+Enclave+area+intelligence" },
@@ -119,6 +121,8 @@ export const EXPLORE_AREAS_EXTENDED = [
 export const HEATMAP_ZONES = [
   { area: "Aerocity", status: "Hot" as const, reason: "Airport expansion + commercial demand", href: "/ask?q=Aerocity+investment+outlook" },
   { area: "PR7 Corridor", status: "Hot" as const, reason: "Infrastructure pipeline driving appreciation", href: "/ask?q=PR7+investment+outlook" },
+  { area: "Peer Muchalla", status: "Growing" as const, reason: "VIP Road corridor with rising mid-premium demand", href: "/ask?q=Peer+Muchalla+investment" },
+  { area: "Dhakoli", status: "Growing" as const, reason: "Patiala Road pocket with value-segment inventory", href: "/ask?q=Dhakoli+investment" },
   { area: "Panchkula Extension 2", status: "Growing" as const, reason: "New inventory + extension corridor demand", href: "/ask?q=Panchkula+Extension+2+investment" },
   { area: "Panchkula Extension 1", status: "Growing" as const, reason: "Emerging PKL micro-market with buyer interest", href: "/ask?q=Panchkula+Extension+1+investment" },
   { area: "Amravati Enclave", status: "Growing" as const, reason: "Enclave living near Panchkula extensions", href: "/ask?q=Amravati+Enclave+investment" },
@@ -312,6 +316,8 @@ export const EXPLORE_AREAS = [
   { name: "Aerocity", score: 92, href: "/properties?type=buy&city=Aerocity" },
   { name: "PR7", score: 90, href: "/ask?q=PR7+Airport+Road+properties" },
   { name: "Zirakpur", score: 85, href: "/properties?type=buy&city=Zirakpur" },
+  { name: "Peer Muchalla", score: 78, href: "/properties?type=buy&city=Peer+Muchalla" },
+  { name: "Dhakoli", score: 76, href: "/properties?type=buy&city=Dhakoli" },
   { name: "Panchkula Extension 1", score: 78, href: "/properties?type=buy&city=Panchkula+Extension+1" },
   { name: "Panchkula Extension 2", score: 79, href: "/properties?type=buy&city=Panchkula+Extension+2" },
   { name: "Amravati Enclave", score: 77, href: "/properties?type=buy&city=Amravati+Enclave" },
@@ -347,6 +353,17 @@ export const AREA_COMPARISONS = [
       { label: "Schools", a: "Medium", b: "High" },
       { label: "Metro", a: "Limited", b: "Planned" },
       { label: "Investment Score", a: "79", b: "85" },
+    ],
+  },
+  {
+    title: "Dhakoli vs Peer Muchalla",
+    href: "/ask?q=Compare+Dhakoli+vs+Peer+Muchalla",
+    metrics: [
+      { label: "Rental Yield", a: "3.9%", b: "4.0%" },
+      { label: "Price Growth", a: "+9%", b: "+11%" },
+      { label: "Schools", a: "Medium", b: "Medium" },
+      { label: "Connectivity", a: "Patiala Rd", b: "VIP Road" },
+      { label: "Investment Score", a: "75", b: "77" },
     ],
   },
 ];
@@ -401,6 +418,8 @@ export const POPULAR_SEARCHES = [
   { label: "Flats for rent in Mohali", href: "/properties?type=rent&city=Mohali" },
   { label: "SCO for sale in Aerocity", href: "/properties?type=commercial&city=Aerocity" },
   { label: "2BHK in Zirakpur", href: "/properties?type=buy&city=Zirakpur" },
+  { label: "Homes in Dhakoli", href: "/properties?type=buy&city=Dhakoli" },
+  { label: "Flats in Peer Muchalla", href: "/properties?type=buy&city=Peer+Muchalla" },
   { label: "Investment in Panchkula", href: "/properties?type=buy&city=Panchkula" },
   { label: "Rental yield areas Tricity", href: "/ask?q=Best+rental+yield+areas+in+Tricity+2025" },
 ];

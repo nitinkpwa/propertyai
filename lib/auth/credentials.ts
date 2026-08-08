@@ -7,14 +7,14 @@ import type { Profile } from "@/lib/supabase";
 import { supabase } from "@/lib/supabase/client";
 import type { AccountType } from "@/lib/auth/mobile";
 
+const EMAIL_LIKE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /** Resolve a login identifier to the Supabase Auth email address. */
 export async function resolveLoginAuthEmail(identifier: string): Promise<string | null> {
   const trimmed = identifier.trim();
   if (!trimmed) return null;
 
-  // Never treat arbitrary emails as Auth emails — buyers' contact_email is not
-  // the Auth mailbox. Always resolve via RPC (phone / username / contact_email).
-  // Exception: already-synthetic AreaIQ auth addresses.
+  // Synthetic AreaIQ auth mailbox — use as-is.
   if (/^[6-9]\d{9}@areaiq\.app$/i.test(trimmed)) {
     return trimmed.toLowerCase();
   }
@@ -29,11 +29,19 @@ export async function resolveLoginAuthEmail(identifier: string): Promise<string 
     if (/^[6-9]\d{9}$/.test(digits)) {
       return mobileToAuthEmail(digits);
     }
-    return null;
+    // Fall through — Dashboard-provisioned admins use a real Auth email that
+    // resolve_login_email intentionally does not map (it only maps phone /
+    // username / contact_email → phone@areaiq.app).
+  } else if (typeof data === "string" && data.includes("@")) {
+    return data;
   }
 
-  if (typeof data === "string" && data.includes("@")) {
-    return data;
+  // Admins (and any Auth users) provisioned with a real mailbox in Supabase
+  // Auth cannot be resolved via the phone/username RPC. Allow a direct Auth
+  // email attempt — signInWithPassword still enforces credentials.
+  // Buyer contact_email that is NOT an Auth mailbox simply fails Auth login.
+  if (EMAIL_LIKE.test(trimmed)) {
+    return trimmed.toLowerCase();
   }
 
   return null;

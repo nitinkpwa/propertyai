@@ -6,6 +6,7 @@ import {
   uploadAdminPropertyDocument,
   uploadAdminPropertyPhoto,
 } from "@/lib/admin/property/saveProperty";
+import { MAX_PROPERTY_PHOTOS } from "@/lib/admin/property/mediaHelpers";
 import type { StudioDocumentRef, StudioImageRef } from "@/lib/admin/property/studio/types";
 import DocumentList from "./DocumentList";
 import ImageSortableGrid from "./ImageSortableGrid";
@@ -57,7 +58,7 @@ export default function AiImportWorkspace({ adminUserId, onGenerate, generating 
     setError("");
     const accepted = files.filter((f) => /image\/(jpeg|png|webp)/i.test(f.type) || /\.(jpe?g|png|webp)$/i.test(f.name));
     const uploaded: StudioImageRef[] = [];
-    for (const file of accepted.slice(0, 20 - images.length)) {
+    for (const file of accepted.slice(0, MAX_PROPERTY_PHOTOS - images.length)) {
       const url = await uploadAdminPropertyPhoto(file, adminUserId);
       if (url) uploaded.push({ id: uid(), url, name: file.name });
     }

@@ -17,6 +17,7 @@ import Badge from "@/components/ui/Badge";
 import Price from "@/components/ui/Price";
 import Gallery from "@/components/ui/Gallery";
 import LegalTrustBadge from "@/components/property/LegalTrustBadge";
+import PropertyCardMediaChrome from "@/components/property/PropertyCardMediaChrome";
 
 export type BHKOption = 1 | 2 | 3 | 4 | 5;
 
@@ -222,11 +223,33 @@ export default function PropertyCard({
               🏠
             </div>
           )}
-          <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-wrap gap-1.5 p-3">
-            <LegalTrustBadge compliance={legalCompliance} size="sm" className="pointer-events-auto" />
-            {aiVerified ? <Badge variant="verified">Verified</Badge> : null}
-            {featured ? <Badge variant="featured">Featured</Badge> : null}
-          </div>
+          <PropertyCardMediaChrome
+            brandMarkSize={24}
+            builderName={builderName}
+            topLeft={
+              <>
+                {aiVerified ? <Badge variant="verified">Verified</Badge> : null}
+                {featured ? <Badge variant="featured">Featured</Badge> : null}
+              </>
+            }
+            bottomRight={
+              <LegalTrustBadge compliance={legalCompliance} size="sm" />
+            }
+          />
+          {/* Save — mid-right, clear of logo (top) and documents (bottom) */}
+          <button
+            type="button"
+            onClick={handleFavorite}
+            aria-label={isFavorite ? "Remove from saved" : "Save property"}
+            aria-pressed={isFavorite}
+            className={`absolute right-2 top-[3.25rem] z-30 inline-flex h-8 w-8 items-center justify-center rounded-full border bg-white/95 shadow-[0_2px_8px_rgba(0,0,0,0.12)] backdrop-blur-md transition-all duration-200 active:scale-95 sm:right-3 sm:h-9 sm:w-9 ${
+              isFavorite
+                ? "border-rose-200 text-rose-500"
+                : "border-transparent text-body"
+            }`}
+          >
+            <HeartIcon filled={isFavorite} />
+          </button>
         </div>
 
         <div className="relative hidden aspect-[4/3] overflow-hidden bg-neutral-100 lg:block">
@@ -246,33 +269,36 @@ export default function PropertyCard({
             </div>
           )}
 
-          <div className="absolute inset-x-0 top-0 flex items-start justify-between p-3">
-            <div className="flex flex-wrap gap-1.5">
-              <LegalTrustBadge compliance={legalCompliance} />
-              {aiVerified && (
+          <PropertyCardMediaChrome
+            brandMarkSize={26}
+            builderName={builderName}
+            topLeft={
+              aiVerified ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold tracking-wide text-heading-secondary shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
                   <span className="text-emerald-500">
                     <SparkIcon />
                   </span>
                   AreaIQ Intelligence
                 </span>
-              )}
-            </div>
+              ) : null
+            }
+            bottomRight={<LegalTrustBadge compliance={legalCompliance} />}
+          />
 
-            <button
-              type="button"
-              onClick={handleFavorite}
-              aria-label={isFavorite ? "Remove from saved" : "Save property"}
-              aria-pressed={isFavorite}
-              className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-white/95 shadow-[0_2px_8px_rgba(0,0,0,0.1)] backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 ${
-                isFavorite
-                  ? "border-rose-200 text-rose-500"
-                  : "border-transparent text-body hover:text-rose-500"
-              }`}
-            >
-              <HeartIcon filled={isFavorite} />
-            </button>
-          </div>
+          {/* Save — mid-right, clear of logo / builder / documents zones */}
+          <button
+            type="button"
+            onClick={handleFavorite}
+            aria-label={isFavorite ? "Remove from saved" : "Save property"}
+            aria-pressed={isFavorite}
+            className={`absolute right-3 top-[3.5rem] z-30 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-white/95 shadow-[0_2px_8px_rgba(0,0,0,0.12)] backdrop-blur-md transition-all duration-200 hover:scale-105 active:scale-95 ${
+              isFavorite
+                ? "border-rose-200 text-rose-500"
+                : "border-transparent text-body hover:text-rose-500"
+            }`}
+          >
+            <HeartIcon filled={isFavorite} />
+          </button>
         </div>
 
         {/* Content */}

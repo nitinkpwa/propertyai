@@ -19,6 +19,7 @@ export const HERO_PLACEHOLDERS = [
   "I have ₹1.5 Cr. Where should I invest?",
   "Best Villas near Airport Road",
   "Luxury 3BHK under ₹2Cr",
+  "Compare Dhakoli vs Peer Muchalla",
   "Properties with highest rental yield",
   "Compare Omaxe vs Smart World",
 ] as const;

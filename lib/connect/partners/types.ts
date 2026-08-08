@@ -85,6 +85,7 @@ export interface ConnectPartnerPropertyRow {
   type: string | null;
   sub_type: string | null;
   photos: string[] | null;
+  featured_image?: string | null;
   nearby_places: unknown | null;
   created_at: string;
   updated_at: string;
