@@ -69,10 +69,10 @@ export default function IntelligencePropertyCard({ property }: Props) {
   const toneColor = SCORE_TONE_COLORS[tone].text;
 
   return (
-    <article className="group flex w-[min(320px,85vw)] shrink-0 flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.1)] sm:w-[340px]">
+    <article className="group flex h-full w-[min(320px,85vw)] shrink-0 flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.1)] sm:w-[340px]">
       <Link
         href={property.href}
-        className="relative block aspect-[4/3] overflow-hidden bg-neutral-100 no-underline"
+        className="relative block aspect-[4/3] shrink-0 overflow-hidden bg-neutral-100 no-underline"
       >
         {property.imageUrl ? (
           <Image
@@ -93,10 +93,8 @@ export default function IntelligencePropertyCard({ property }: Props) {
           </div>
         )}
 
-        {/* Four-zone overlays: scores · logo · builder · documents */}
         <PropertyCardMediaChrome
           brandMarkSize={26}
-          builderName={property.builderName}
           topLeft={
             <>
               <ScoreBadge label="AreaIQ" score={property.areaIqScore} kind="quality" />
@@ -118,13 +116,16 @@ export default function IntelligencePropertyCard({ property }: Props) {
           <div className="min-w-0">
             <Link
               href={property.href}
-              className="line-clamp-2 text-[15px] font-bold text-heading-primary no-underline hover:text-emerald-700"
+              className="line-clamp-2 min-h-[2.75rem] text-[15px] font-bold leading-snug text-heading-primary no-underline hover:text-emerald-700"
             >
               {property.name}
             </Link>
-            <p className="mt-1 truncate text-xs text-muted">
+            <p className="mt-1 min-h-4 truncate text-xs text-muted">
               {property.location}
               {property.city ? ` · ${property.city}` : ""}
+            </p>
+            <p className="mt-1 min-h-4 truncate text-xs font-medium uppercase tracking-wider text-muted">
+              {property.builderName ? `by ${property.builderName}` : "\u00a0"}
             </p>
           </div>
           <p
@@ -135,7 +136,7 @@ export default function IntelligencePropertyCard({ property }: Props) {
           </p>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
           <Link
             href={`${property.href}?bookVisit=1`}
             className="inline-flex min-h-10 items-center justify-center rounded-xl text-xs font-bold text-white no-underline"

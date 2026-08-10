@@ -213,7 +213,7 @@ export default function PropertyCard({
 
   return (
     <>
-      <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] transition-all duration-200 active:scale-[0.99] lg:active:scale-100 lg:duration-300 lg:hover:-translate-y-0.5 lg:hover:border-neutral-300/80 lg:hover:shadow-[0_4px_12px_rgba(0,0,0,0.06),0_20px_48px_rgba(0,0,0,0.08)]">
+      <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.04)] transition-all duration-200 active:scale-[0.99] lg:active:scale-100 lg:duration-300 lg:hover:-translate-y-0.5 lg:hover:border-neutral-300/80 lg:hover:shadow-[0_4px_12px_rgba(0,0,0,0.06),0_20px_48px_rgba(0,0,0,0.08)]">
         {/* Mobile: 16:9 swipe gallery · Desktop: 4/3 single */}
         <div className="relative lg:hidden">
           {galleryImages.length > 0 ? (
@@ -225,7 +225,6 @@ export default function PropertyCard({
           )}
           <PropertyCardMediaChrome
             brandMarkSize={24}
-            builderName={builderName}
             topLeft={
               <>
                 {aiVerified ? <Badge variant="verified">Verified</Badge> : null}
@@ -252,7 +251,7 @@ export default function PropertyCard({
           </button>
         </div>
 
-        <div className="relative hidden aspect-[4/3] overflow-hidden bg-neutral-100 lg:block">
+        <div className="relative hidden aspect-[4/3] shrink-0 overflow-hidden bg-neutral-100 lg:block">
           {imageUrl ? (
             <Image
               src={imageUrl}
@@ -271,7 +270,6 @@ export default function PropertyCard({
 
           <PropertyCardMediaChrome
             brandMarkSize={26}
-            builderName={builderName}
             topLeft={
               aiVerified ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-xs font-semibold tracking-wide text-heading-secondary shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-md">
@@ -285,7 +283,7 @@ export default function PropertyCard({
             bottomRight={<LegalTrustBadge compliance={legalCompliance} />}
           />
 
-          {/* Save — mid-right, clear of logo / builder / documents zones */}
+          {/* Save — mid-right, clear of logo / documents zones */}
           <button
             type="button"
             onClick={handleFavorite}
@@ -310,15 +308,17 @@ export default function PropertyCard({
               {rateLabel && areaUnit === "sqyd" ? (
                 <p className="mt-1 text-sm text-muted">{rateLabel}</p>
               ) : null}
-              <p className="mt-2 text-sm font-medium text-label">by {builderName}</p>
-              <p className="mt-1 flex items-center gap-1 text-sm text-muted">
+              <p className="mt-2 min-h-4 truncate text-xs font-medium uppercase tracking-wider text-muted">
+                by {builderName}
+              </p>
+              <p className="mt-1 flex min-h-5 items-center gap-1 text-sm text-muted">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="shrink-0" aria-hidden>
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                <span className="line-clamp-1">{locationLabel}</span>
+                <span className="min-w-0 flex-1 truncate">{locationLabel}</span>
               </p>
-              <h3 className="mt-2 line-clamp-2 text-base font-semibold text-heading-primary">{name}</h3>
+              <h3 className="mt-2 min-h-[2.75rem] line-clamp-2 text-base font-semibold leading-snug text-heading-primary">{name}</h3>
               <div className="mt-3 flex flex-wrap gap-2 text-sm">
                 <span className="rounded-lg bg-neutral-100 px-2.5 py-1 font-semibold text-body">
                   {bhk > 0 ? `${bhk} BHK` : "—"}
@@ -339,17 +339,17 @@ export default function PropertyCard({
             </div>
 
             <div className="mb-3 hidden flex-1 lg:block">
-              <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-heading-primary sm:text-base">
+              <h3 className="min-h-[2.75rem] line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-heading-primary sm:text-base">
                 {name}
               </h3>
-              <p className="mt-1 flex items-center gap-1 text-sm text-muted">
+              <p className="mt-1 flex min-h-5 items-center gap-1 text-sm text-muted">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="shrink-0" aria-hidden>
                   <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" strokeLinecap="round" strokeLinejoin="round" />
                   <circle cx="12" cy="10" r="3" />
                 </svg>
-                <span className="line-clamp-1">{locationLabel}</span>
+                <span className="min-w-0 flex-1 truncate">{locationLabel}</span>
               </p>
-              <p className="mt-2 text-xs font-medium uppercase tracking-wider text-muted">
+              <p className="mt-2 min-h-4 truncate text-xs font-medium uppercase tracking-wider text-muted">
                 by {builderName}
               </p>
               <div className="mt-3 flex items-end justify-between gap-3">
@@ -419,7 +419,7 @@ export default function PropertyCard({
           </div>
 
           {/* Actions: mobile View + More · desktop Compare + View */}
-          <div className="flex gap-2">
+          <div className="mt-auto flex gap-2">
             <button
               type="button"
               onClick={handleCompare}
