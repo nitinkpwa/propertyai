@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Logo from "@/components/common/Logo";
 import SocialLinks from "@/components/common/SocialLinks";
+import RestartTourButton from "@/components/onboarding/RestartTourButton";
 import { BRAND } from "@/lib/brand";
 import FooterTech172Map from "./FooterTech172Map";
 
@@ -35,6 +36,9 @@ export default function HomeFooter() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <RestartTourButton />
+              </li>
             </ul>
           </div>
         </div>

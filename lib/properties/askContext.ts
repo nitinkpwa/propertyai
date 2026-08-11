@@ -3,6 +3,7 @@ import "server-only";
 import { cache } from "react";
 import type { PropertyContext } from "@/lib/ask/engine/types";
 import { recordPerf, timed } from "@/lib/perf/timing";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
 import {
   PROPERTIES_PUBLIC_BASE_SELECT,
@@ -125,9 +126,11 @@ async function fetchPropertyAskContextUncached(
       row.builder_name?.trim() || row.contact_name?.trim() || "Builder";
     const propertyType = SUB_TYPE_LABELS[row.sub_type ?? ""] ?? "Property";
 
+    const displayTitle = formatPropertyTitle(row.title) || "Property";
+
     const bundle = buildPropertyIntelligenceBundle({
       id: row.id,
-      name: row.title?.trim() || "Property",
+      name: displayTitle,
       price,
       pricePerSqFt,
       area,
@@ -154,7 +157,7 @@ async function fetchPropertyAskContextUncached(
 
     const context: PropertyContext = {
       id: row.id,
-      name: row.title?.trim() || "Property",
+      name: displayTitle,
       location: row.location?.trim() || "Location not specified",
       city: row.city?.trim() || "Tricity",
       price,

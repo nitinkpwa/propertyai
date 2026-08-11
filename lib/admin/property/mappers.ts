@@ -12,6 +12,7 @@ import {
   extractPropertyMeta,
   type PropertyStructuredMeta,
 } from "@/lib/properties/nearbyPlacesMeta";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
 import {
   getReraStatus,
@@ -483,9 +484,12 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
   );
   const meta = metaPreview;
   const builderName = resolveAdminBuilderName(form) || "Builder";
+  const displayTitle = formatPropertyTitle(form.title) || "Untitled Property";
+  const displayProject =
+    formatPropertyTitle(form.basic.project) || displayTitle;
   const intelligenceBundle = buildPropertyIntelligenceBundle({
     id,
-    name: form.title || "Untitled Property",
+    name: displayTitle,
     price,
     pricePerSqFt,
     area,
@@ -507,8 +511,8 @@ export function formToPropertyDetail(form: AdminPropertyFormState, id = "preview
 
   return {
     id,
-    name: form.title || "Untitled Property",
-    project: form.basic.project || form.title,
+    name: displayTitle,
+    project: displayProject,
     builder: {
       name: builderName,
       logoInitials: builderName.slice(0, 2).toUpperCase(),

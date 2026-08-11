@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import type { MapPointFeature, TricityMapNode } from "@/lib/home/terminalTypes";
 import { scoreBandColor } from "@/lib/home/areaListingMarkers";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import AnimatedCounter from "../AnimatedCounter";
 import { IQ_GREEN } from "../theme";
@@ -76,6 +77,7 @@ export default function IntelligenceDrawer({
   if (!node) {
     return (
       <div
+        data-tour="intelligence-panel"
         className={`flex h-full min-h-[280px] items-center justify-center p-8 text-sm text-neutral-400 ${
           floating
             ? ""
@@ -93,6 +95,7 @@ export default function IntelligenceDrawer({
 
   return (
     <div
+      data-tour="intelligence-panel"
       className={`flex h-full flex-col overflow-hidden ${
         floating
           ? ""
@@ -137,7 +140,7 @@ export default function IntelligenceDrawer({
                       Selected
                     </p>
                     <p className="mt-1 truncate text-[15px] font-semibold text-neutral-900">
-                      {selectedListing.name}
+                      {formatPropertyTitle(selectedListing.name) || selectedListing.name}
                     </p>
                     <p className="truncate text-[12px] text-neutral-400">
                       {selectedListing.builderName || "—"}
@@ -259,7 +262,7 @@ export default function IntelligenceDrawer({
                       href={node.topProject.href}
                       className="mt-1.5 block text-[15px] font-semibold text-neutral-900 no-underline transition hover:opacity-70"
                     >
-                      {node.topProject.name}
+                      {formatPropertyTitle(node.topProject.name) || node.topProject.name}
                     </Link>
                     <div className="mt-2 flex items-center justify-between text-[13px]">
                       <span
@@ -303,7 +306,7 @@ export default function IntelligenceDrawer({
                             >
                               <span className="min-w-0">
                                 <span className="block truncate text-[13px] font-semibold text-neutral-900">
-                                  {listing.name}
+                                  {formatPropertyTitle(listing.name) || listing.name}
                                 </span>
                                 <span className="block truncate text-[11px] text-neutral-400">
                                   {listing.builderName || "—"}

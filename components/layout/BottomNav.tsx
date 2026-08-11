@@ -31,6 +31,7 @@ export default function BottomNav({
     <nav
       className={`fixed bottom-0 left-0 right-0 ${zClass.nav} border-t border-neutral-200/80 bg-white/95 backdrop-blur-xl lg:hidden ${className}`}
       aria-label="Primary"
+      data-tour="public-bottom-nav"
       style={{ paddingBottom: "var(--safe-bottom)" }}
     >
       <div className="flex h-[var(--bottomnav-height)] items-stretch justify-around px-1">

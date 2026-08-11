@@ -15,6 +15,8 @@ export function OverlayHost({ children }: { children?: ReactNode }) {
       host = document.createElement("div");
       host.id = HOST_ID;
       host.setAttribute("data-layout", "overlay-host");
+      // Plain body mount — do NOT set transform/filter/perspective (breaks fixed coords)
+      // and do NOT create a low z-index stacking context that traps child overlays.
       document.body.appendChild(host);
     }
     setReady(true);

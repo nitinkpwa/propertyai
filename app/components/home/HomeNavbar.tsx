@@ -55,6 +55,7 @@ export default function HomeNavbar() {
     <>
       <header
         ref={chromeRef}
+        data-tour="home-navbar"
         className={`fixed inset-x-0 top-0 ${zClass.dropdown} transition-all duration-500 ${
           solid
             ? "border-b border-neutral-200/80 bg-white/95 shadow-[0_1px_3px_rgba(0,0,0,0.04)] backdrop-blur-xl"
@@ -70,7 +71,11 @@ export default function HomeNavbar() {
             priority
           />
 
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Main">
+          <nav
+            className="hidden items-center gap-1 lg:flex"
+            aria-label="Main"
+            data-tour="desktop-navigation"
+          >
             {HOME_NAV_LINKS.map((link) => (
               <Link
                 key={link.label}
@@ -85,6 +90,7 @@ export default function HomeNavbar() {
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/seller"
+              data-tour="list-property"
               className="hidden rounded-full border border-neutral-200/80 bg-white/80 px-4 py-2 text-sm font-medium text-label no-underline shadow-sm transition-all hover:shadow-md sm:inline-flex"
             >
               List Property
@@ -92,6 +98,7 @@ export default function HomeNavbar() {
             {!loading && !user ? (
               <Link
                 href="/login"
+                data-tour="sign-in"
                 className="hidden rounded-full px-5 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(74, 170, 39,0.35)] transition-transform hover:scale-[1.02] sm:inline-flex"
                 style={{ backgroundColor: IQ_GREEN }}
               >
@@ -102,6 +109,7 @@ export default function HomeNavbar() {
             )}
             <button
               type="button"
+              data-tour="mobile-menu"
               onClick={() => setMobileOpen((o) => !o)}
               className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200/80 bg-white/80 lg:hidden"
               aria-expanded={mobileOpen}

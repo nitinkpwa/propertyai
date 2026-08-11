@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import {
   calculateLegalCompliance,
@@ -138,6 +139,7 @@ export default function PropertyCard({
   onCompareToggle,
   onViewDetails,
 }: PropertyCardProps) {
+  const displayName = formatPropertyTitle(name) || name || "Property";
   const legalCompliance =
     legalComplianceProp ?? calculateLegalCompliance(legalFlags ?? null);
   const isControlled = onFavoriteToggle !== undefined;
@@ -166,9 +168,9 @@ export default function PropertyCard({
 
   const galleryImages =
     imageUrls && imageUrls.length > 0
-      ? imageUrls.map((src) => ({ src, alt: imageAlt ?? name }))
+      ? imageUrls.map((src) => ({ src, alt: imageAlt ? formatPropertyTitle(imageAlt) || imageAlt : displayName }))
       : imageUrl
-        ? [{ src: imageUrl, alt: imageAlt ?? name }]
+        ? [{ src: imageUrl, alt: imageAlt ? formatPropertyTitle(imageAlt) || imageAlt : displayName }]
         : [];
 
   const handleFavorite = useCallback(
@@ -255,7 +257,7 @@ export default function PropertyCard({
           {imageUrl ? (
             <Image
               src={imageUrl}
-              alt={imageAlt ?? name}
+              alt={imageAlt ? formatPropertyTitle(imageAlt) || imageAlt : displayName}
               fill
               sizes="(max-width: 1024px) 50vw, 33vw"
               className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
@@ -318,7 +320,7 @@ export default function PropertyCard({
                 </svg>
                 <span className="min-w-0 flex-1 truncate">{locationLabel}</span>
               </p>
-              <h3 className="mt-2 min-h-[2.75rem] line-clamp-2 text-base font-semibold leading-snug text-heading-primary">{name}</h3>
+              <h3 className="mt-2 min-h-[2.75rem] line-clamp-2 text-base font-semibold leading-snug text-heading-primary">{displayName}</h3>
               <div className="mt-3 flex flex-wrap gap-2 text-sm">
                 <span className="rounded-lg bg-neutral-100 px-2.5 py-1 font-semibold text-body">
                   {bhk > 0 ? `${bhk} BHK` : "—"}
@@ -340,7 +342,7 @@ export default function PropertyCard({
 
             <div className="mb-3 hidden flex-1 lg:block">
               <h3 className="min-h-[2.75rem] line-clamp-2 text-[15px] font-semibold leading-snug tracking-tight text-heading-primary sm:text-base">
-                {name}
+                {displayName}
               </h3>
               <p className="mt-1 flex min-h-5 items-center gap-1 text-sm text-muted">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" className="shrink-0" aria-hidden>

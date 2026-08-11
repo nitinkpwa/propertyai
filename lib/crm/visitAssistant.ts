@@ -1,5 +1,6 @@
 import type { SiteVisitRow } from "@/lib/buyer/types";
 import { buildPropertyChecklist } from "@/lib/crm/visitWorkflow";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import { isReraApproved } from "@/lib/properties/reraStatus";
 
@@ -135,7 +136,7 @@ export function buildBeforeVisitContext(visit: SiteVisitRow & {
 
   return {
     propertySummary: {
-      title: prop?.title ?? "Property",
+      title: formatPropertyTitle(prop?.title) || "Property",
       builder: visit.builder_name ?? prop?.builder_name ?? null,
       area: prop?.area_sqft ? `${prop.area_sqft} sq ft` : null,
       price: prop?.price ?? null,

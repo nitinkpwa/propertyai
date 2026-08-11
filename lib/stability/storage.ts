@@ -4,6 +4,7 @@ import { AREAIQ_STORAGE_PREFIX, APP_VERSION_STORAGE_KEY } from "./version";
 export const AREAIQ_LOCAL_KEYS = [
   "areaiq_app_version",
   "areaiq_tribute_seen",
+  "areaiq_onboarding_completed",
   "areaiq_pending_auth_intent_v1",
   "areaiq_smart_bar_dismissed",
   "areaiq_smart_bar_read",

@@ -7,6 +7,7 @@ import { useComparedPropertyToggle } from "@/lib/buyer/useComparedProperty";
 import type { ListingProperty } from "@/lib/properties/types";
 
 import { BRAND_PRIMARY as EMERALD } from "@/lib/design/colors";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 function ScorePill({ label, value }: { label: string; value: number | null }) {
@@ -52,6 +53,7 @@ export function AskPropertyCarousel({
         {listings.map((p) => {
           const href = p.href ?? `/property/${p.id}`;
           const saved = isSaved(p.id);
+          const displayName = formatPropertyTitle(p.name) || p.name;
           return (
             <article
               key={p.id}
@@ -61,7 +63,7 @@ export function AskPropertyCarousel({
                 {p.imageUrl ? (
                   <Image
                     src={p.imageUrl}
-                    alt={p.imageAlt ?? p.name}
+                    alt={p.imageAlt ? formatPropertyTitle(p.imageAlt) || p.imageAlt : displayName}
                     fill
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="300px"
@@ -88,7 +90,7 @@ export function AskPropertyCarousel({
                     href={href}
                     className="line-clamp-1 text-sm font-bold text-heading-primary hover:text-emerald-700"
                   >
-                    {p.name}
+                    {displayName}
                   </Link>
                   <p className="mt-0.5 line-clamp-1 text-[11px] text-muted">
                     {p.location}
@@ -128,7 +130,7 @@ export function AskPropertyCarousel({
                   </Link>
                   <button
                     type="button"
-                    onClick={() => onAskAbout?.(`Tell me more about ${p.name}`)}
+                    onClick={() => onAskAbout?.(`Tell me more about ${displayName}`)}
                     className="rounded-lg border border-emerald-200 bg-emerald-50 py-1.5 text-[11px] font-semibold text-emerald-800"
                   >
                     Ask AreaIQ

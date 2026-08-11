@@ -11,6 +11,7 @@ import {
   getInitials,
 } from "@/lib/auth/profile";
 import { supabase } from "@/lib/supabase";
+import { requestOnboardingRestart } from "@/lib/onboarding/storage";
 
 export default function UserMenu() {
   const router = useRouter();
@@ -55,6 +56,7 @@ export default function UserMenu() {
     return (
       <Link
         href="/login"
+        data-tour="sign-in"
         className="hidden rounded-full px-5 py-2 text-sm font-semibold text-white shadow-[0_2px_8px_rgba(74, 170, 39,0.35)] transition-all duration-200 hover:shadow-[0_4px_14px_rgba(74, 170, 39,0.45)] hover:brightness-105 sm:inline-flex"
         style={{ backgroundColor: EMERALD }}
       >
@@ -68,7 +70,7 @@ export default function UserMenu() {
   const initials = getInitials(profile?.full_name, profile?.username ?? profile?.phone);
 
   return (
-    <div className="relative hidden sm:block" ref={menuRef}>
+    <div className="relative hidden sm:block" ref={menuRef} data-tour="user-menu">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -141,6 +143,18 @@ export default function UserMenu() {
               {item.label}
             </Link>
           ))}
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false);
+              requestOnboardingRestart();
+            }}
+            className="block w-full px-4 py-2.5 text-left text-sm font-medium text-label transition-colors hover:bg-neutral-50 hover:text-heading-primary"
+          >
+            Restart Tour
+          </button>
 
           <button
             type="button"

@@ -2,6 +2,7 @@ import type {
   LegalComplianceResult,
   LegalVerificationFlags,
 } from "@/lib/properties/legalCompliance";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import type { ListingProperty } from "@/lib/properties/types";
 import { scorePropertyCardFromListing } from "@/lib/scoring/engine";
 import { areaIqLabel, legalLabel } from "@/lib/scoring/score-utils";
@@ -146,7 +147,7 @@ export function listingToIntelligenceCard(
 
   return {
     id: listing.id,
-    name: listing.name,
+    name: formatPropertyTitle(listing.name) || listing.name,
     location: listing.location,
     city: listing.city,
     price: listing.price,

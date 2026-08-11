@@ -6,6 +6,7 @@ import Card, { CardHeader } from "@/components/ui/Card";
 import { formatVisitTime } from "@/lib/buyer/queries";
 import type { SiteVisitRow } from "@/lib/buyer/types";
 import { formatVisitStatusLabel } from "@/lib/crm/visitWorkflow";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 
 const STATUS_VARIANT: Record<string, "warning" | "info" | "success" | "error" | "neutral"> = {
   pending_approval: "warning",
@@ -54,7 +55,9 @@ export default function UpcomingVisitsPanel({ visits }: UpcomingVisitsPanelProps
               </span>
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate font-semibold text-heading-primary">{visit.property?.title ?? "Property"}</p>
+              <p className="truncate font-semibold text-heading-primary">
+                {formatPropertyTitle(visit.property?.title) || "Property"}
+              </p>
               <p className="text-xs text-muted">
                 {formatVisitTime(visit.visit_time)} · {visit.property?.location}
               </p>

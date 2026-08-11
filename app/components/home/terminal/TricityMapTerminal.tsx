@@ -58,7 +58,10 @@ export default function TricityMapTerminal() {
     : "/intelligence-map";
 
   return (
-    <section className="border-y border-neutral-100 bg-[#F7F9FB]">
+    <section
+      className="border-y border-neutral-100 bg-[#F7F9FB]"
+      data-tour="intelligence-map-section"
+    >
       {bundle ? <LiveActivityTicker items={bundle.activity} /> : null}
 
       <div className="mx-auto max-w-[1440px] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
@@ -74,7 +77,10 @@ export default function TricityMapTerminal() {
         </p>
 
         {/* Area chip rail */}
-        <div className="-mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-1">
+        <div
+          className="-mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-1"
+          data-tour="intelligence-map-areas"
+        >
           {nodes.map((n) => {
             const on = n.id === selected?.id;
             return (
@@ -103,15 +109,17 @@ export default function TricityMapTerminal() {
             {loading && !layers ? (
               <SkeletonBlock className="h-[420px] sm:h-[480px]" />
             ) : layers ? (
-              <IntelligenceMap
-                variant="preview"
-                nodes={nodes}
-                layers={layers}
-                activeId={selected?.id ?? null}
-                selectedPropertyId={selectedPropertyId}
-                onSelect={selectArea}
-                onSelectProperty={setSelectedPropertyId}
-              />
+              <div data-tour="intelligence-map" className="min-w-0">
+                <IntelligenceMap
+                  variant="preview"
+                  nodes={nodes}
+                  layers={layers}
+                  activeId={selected?.id ?? null}
+                  selectedPropertyId={selectedPropertyId}
+                  onSelect={selectArea}
+                  onSelectProperty={setSelectedPropertyId}
+                />
+              </div>
             ) : (
               <SkeletonBlock className="h-[420px] sm:h-[480px]" />
             )}

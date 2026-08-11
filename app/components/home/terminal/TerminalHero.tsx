@@ -29,7 +29,7 @@ export default function TerminalHero() {
   };
 
   return (
-    <section className="relative overflow-hidden pt-layout">
+    <section className="relative overflow-hidden pt-layout" data-tour="terminal-hero">
       <div className="mx-auto w-full max-w-7xl px-0 lg:px-8">
         <div className="relative min-h-[420px] overflow-hidden sm:min-h-[560px] lg:min-h-[640px] lg:rounded-2xl">
           <motion.div
@@ -87,7 +87,10 @@ export default function TerminalHero() {
                 <label htmlFor="terminal-ai-search" className="sr-only">
                   Search AreaIQ
                 </label>
-                <div className="flex items-stretch gap-2 rounded-2xl border border-white/25 bg-white p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.18)] sm:gap-3 sm:p-2">
+                <div
+                  className="flex items-stretch gap-2 rounded-2xl border border-white/25 bg-white p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.18)] sm:gap-3 sm:p-2"
+                  data-tour="terminal-search"
+                >
                   <div className="flex min-w-0 flex-1 items-center gap-2 px-2 sm:px-3">
                     <Search className="h-5 w-5 shrink-0 text-neutral-400" aria-hidden />
                     <input

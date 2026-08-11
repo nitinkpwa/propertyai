@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MessageSquare, ShieldCheck, X } from "lucide-react";
 import type { MapPointFeature } from "@/lib/home/terminalTypes";
 import { scoreBandColor } from "@/lib/home/areaListingMarkers";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 import { IQ_GREEN } from "../theme";
 
@@ -14,6 +15,7 @@ export default function ListingPopup({
   listing: MapPointFeature;
   onClose: () => void;
 }) {
+  const displayName = formatPropertyTitle(listing.name) || listing.name;
   const scoreColor = scoreBandColor(listing.score);
   const price =
     listing.price != null && listing.price > 0
@@ -36,7 +38,7 @@ export default function ListingPopup({
           // eslint-disable-next-line @next/next/no-img-element -- live listing CDN URLs vary by host
           <img
             src={listing.imageUrl}
-            alt={listing.name}
+            alt={displayName}
             className="h-full w-full object-cover"
           />
         ) : (
@@ -63,7 +65,7 @@ export default function ListingPopup({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <h4 className="truncate text-sm font-bold text-heading-primary">
-              {listing.name}
+              {displayName}
             </h4>
             <p className="mt-0.5 truncate text-xs text-muted">
               {listing.builderName || "Builder collecting"}
@@ -140,7 +142,7 @@ export default function ListingPopup({
             Book Visit
           </Link>
           <Link
-            href={listing.askHref || `/ask?q=${encodeURIComponent(listing.name)}`}
+            href={listing.askHref || `/ask?q=${encodeURIComponent(displayName)}`}
             className="inline-flex min-h-10 items-center justify-center gap-1 rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-label no-underline hover:bg-neutral-50"
           >
             <MessageSquare className="h-3.5 w-3.5" aria-hidden />

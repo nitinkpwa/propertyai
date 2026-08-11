@@ -12,6 +12,7 @@ import {
   buildAiSummaryFromSources,
   buildPropertyIntelligenceBundle,
 } from "@/lib/properties/intelligenceBundle";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
 import {
   calculateLegalCompliance,
@@ -324,7 +325,7 @@ function buildAiSummary(
   ].filter(Boolean) as string[];
 
   return {
-    summary: `${row.title} in ${row.location}, ${row.city}. Review AreaIQ Intelligence Engine below for verified metrics calculated from our database.`,
+    summary: `${formatPropertyTitle(row.title) || row.title} in ${row.location}, ${row.city}. Review AreaIQ Intelligence Engine below for verified metrics calculated from our database.`,
     pros: pros.length > 0 ? pros : ["Active listing on AreaIQ with verified seller contact"],
     cons: [
       "Verify possession timeline and documentation before booking",
@@ -389,9 +390,11 @@ export function mapPropertyRowToListing(row: PropertyRow): ListingProperty {
   const legalFlags = resolveLegalFlagsFromProperty(row);
   const legalCompliance = calculateLegalComplianceFromProperty(row);
 
+  const displayTitle = formatPropertyTitle(row.title) || "Property";
+
   return {
     id: row.id,
-    name: row.title,
+    name: displayTitle,
     location: row.location,
     city: row.city,
     price: priced.numericPrice,
@@ -409,7 +412,7 @@ export function mapPropertyRowToListing(row: PropertyRow): ListingProperty {
     rentalYield: getRentalYield(row),
     imageUrl:
       resolvePhotoUrl(row.featured_image || row.photos?.[0] || "") ?? null,
-    imageAlt: row.title,
+    imageAlt: displayTitle,
     aiVerified: Boolean(row.ai_verified),
     reraVerified: isReraApproved(row),
     legalFlags,
@@ -463,7 +466,7 @@ export function mapPropertyRowToCardProps(row: PropertyRow): PropertyCardProps {
     const legalCompliance = calculateLegalCompliance(legalFlags);
     return {
       id,
-      name: (row as { title?: string })?.title || "Property",
+      name: formatPropertyTitle((row as { title?: string })?.title) || "Property",
       location: (row as { location?: string })?.location || "",
       city: (row as { city?: string })?.city,
       price: 0,
@@ -546,9 +549,13 @@ export function mapPropertyRowToDetail(
   const legalFlags = resolveLegalFlagsFromProperty(row);
   const legalCompliance = calculateLegalComplianceFromProperty(row);
 
+  const displayTitle = formatPropertyTitle(row.title) || "Property";
+  const displayProject =
+    formatPropertyTitle(row.project_name) || displayTitle;
+
   const intelligenceBundle = buildPropertyIntelligenceBundle({
     id: row.id,
-    name: row.title?.trim() || "Property",
+    name: displayTitle,
     price,
     pricePerSqFt,
     area,
@@ -584,12 +591,12 @@ export function mapPropertyRowToDetail(
   const compiledDescription =
     structuredMeta?.ai?.compiled?.propertySummary?.trim() ||
     row.description?.trim() ||
-    `${row.title} is listed in ${row.location}, ${row.city}. Contact the seller for full details, site visit scheduling, and documentation.`;
+    `${displayTitle} is listed in ${row.location}, ${row.city}. Contact the seller for full details, site visit scheduling, and documentation.`;
 
   return {
     id: row.id,
-    name: row.title?.trim() || "Property",
-    project: row.project_name?.trim() || row.title?.trim() || "Property",
+    name: displayTitle,
+    project: displayProject,
     builder: {
       ...builder,
       projectsDelivered: intelligenceBundle.builder.projectsDelivered,

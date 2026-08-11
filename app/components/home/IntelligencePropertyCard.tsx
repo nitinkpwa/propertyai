@@ -8,6 +8,7 @@ import { useSavedPropertyToggle } from "@/lib/buyer/useSavedProperty";
 import { useComparedProperty } from "@/lib/buyer/useComparedProperty";
 import LegalTrustBadge from "@/components/property/LegalTrustBadge";
 import PropertyCardMediaChrome from "@/components/property/PropertyCardMediaChrome";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatPriceShort } from "@/lib/home/marketSignals";
 import type { IntelligencePropertyCardModel } from "@/lib/home/types";
 import {
@@ -52,6 +53,7 @@ function ScoreBadge({
 }
 
 export default function IntelligencePropertyCard({ property }: Props) {
+  const displayName = formatPropertyTitle(property.name) || property.name;
   const { isSaved, handleFavoriteToggle } = useSavedPropertyToggle();
   const { compared, addAndGo, busy } = useComparedProperty(property.id);
   const saved = isSaved(property.id);
@@ -69,7 +71,10 @@ export default function IntelligencePropertyCard({ property }: Props) {
   const toneColor = SCORE_TONE_COLORS[tone].text;
 
   return (
-    <article className="group flex h-full w-[min(320px,85vw)] shrink-0 flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.1)] sm:w-[340px]">
+    <article
+      data-tour="property-card"
+      className="group flex h-full w-[min(320px,85vw)] shrink-0 flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-[0_4px_24px_rgba(0,0,0,0.04)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_16px_40px_rgba(0,0,0,0.1)] sm:w-[340px]"
+    >
       <Link
         href={property.href}
         className="relative block aspect-[4/3] shrink-0 overflow-hidden bg-neutral-100 no-underline"
@@ -77,7 +82,11 @@ export default function IntelligencePropertyCard({ property }: Props) {
         {property.imageUrl ? (
           <Image
             src={property.imageUrl}
-            alt={property.imageAlt ?? property.name}
+            alt={
+              property.imageAlt
+                ? formatPropertyTitle(property.imageAlt) || property.imageAlt
+                : displayName
+            }
             fill
             sizes="340px"
             className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
@@ -88,7 +97,7 @@ export default function IntelligencePropertyCard({ property }: Props) {
             aria-hidden
           >
             <span className="text-shadow-photo text-sm font-semibold text-white/90">
-              {property.name}
+              {displayName}
             </span>
           </div>
         )}
@@ -118,7 +127,7 @@ export default function IntelligencePropertyCard({ property }: Props) {
               href={property.href}
               className="line-clamp-2 min-h-[2.75rem] text-[15px] font-bold leading-snug text-heading-primary no-underline hover:text-emerald-700"
             >
-              {property.name}
+              {displayName}
             </Link>
             <p className="mt-1 min-h-4 truncate text-xs text-muted">
               {property.location}
@@ -139,6 +148,7 @@ export default function IntelligencePropertyCard({ property }: Props) {
         <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
           <Link
             href={`${property.href}?bookVisit=1`}
+            data-tour="card-book-visit"
             className="inline-flex min-h-10 items-center justify-center rounded-xl text-xs font-bold text-white no-underline"
             style={{ backgroundColor: IQ_GREEN }}
           >
@@ -146,12 +156,14 @@ export default function IntelligencePropertyCard({ property }: Props) {
           </Link>
           <Link
             href={property.askHref}
+            data-tour="card-ask-ai"
             className="inline-flex min-h-10 items-center justify-center rounded-xl border border-neutral-200 bg-white text-xs font-semibold text-label no-underline hover:bg-neutral-50"
           >
             Ask AI
           </Link>
           <button
             type="button"
+            data-tour="card-compare"
             onClick={onCompare}
             disabled={busy}
             className={`inline-flex min-h-10 items-center justify-center rounded-xl border text-xs font-semibold disabled:opacity-60 ${
@@ -164,6 +176,7 @@ export default function IntelligencePropertyCard({ property }: Props) {
           </button>
           <button
             type="button"
+            data-tour="card-save"
             onClick={onSave}
             className={`inline-flex min-h-10 items-center justify-center gap-1 rounded-xl border text-xs font-semibold ${
               saved

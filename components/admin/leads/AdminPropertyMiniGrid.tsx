@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { AdminPropertyEmbed } from "@/lib/admin/leads/types";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
 
 export default function AdminPropertyMiniGrid({
@@ -17,7 +18,9 @@ export default function AdminPropertyMiniGrid({
           href={`/property/${property.id}`}
           className="rounded-xl border border-neutral-200 bg-neutral-50/60 p-4 transition hover:border-emerald-200 hover:bg-emerald-50/40"
         >
-          <p className="font-semibold text-heading-primary">{property.title}</p>
+          <p className="font-semibold text-heading-primary">
+            {formatPropertyTitle(property.title) || property.title}
+          </p>
           <p className="mt-1 text-sm text-muted">
             {[property.location, property.city].filter(Boolean).join(", ") || "—"}
           </p>

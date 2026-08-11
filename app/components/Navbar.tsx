@@ -163,6 +163,7 @@ function NavbarInner() {
           <nav
             className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-0.5 overflow-visible lg:flex"
             aria-label="Main navigation"
+            data-tour="desktop-navigation"
           >
             {NAV_LINKS.map((link) => (
               <NavLink
@@ -178,6 +179,7 @@ function NavbarInner() {
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <Link
               href="/seller"
+              data-tour="list-property"
               className={`hidden rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition-all duration-200 sm:inline-flex ${
                 isHomeHero
                   ? "border-white/20 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20"
@@ -190,6 +192,7 @@ function NavbarInner() {
 
             <button
               type="button"
+              data-tour="mobile-menu"
               onClick={() => setMobileOpen((open) => !open)}
               className={`inline-flex h-10 w-10 items-center justify-center rounded-xl border shadow-sm transition-colors lg:hidden ${
                 isHomeHero

@@ -12,6 +12,7 @@ import BrandJsonLd from "@/components/seo/BrandJsonLd";
 import MainContent from "@/components/layout/MainContent";
 import LayoutProvider from "@/components/layout/engine/LayoutProvider";
 import StabilityProvider from "@/components/stability/StabilityProvider";
+import OnboardingTourProvider from "@/components/onboarding/OnboardingTourProvider";
 import { BRAND } from "@/lib/brand";
 import { APP_VERSION } from "@/lib/stability/version";
 
@@ -123,6 +124,7 @@ export default function RootLayout({
                   <NavbarWrapper />
                   <MainContent>{children}</MainContent>
                   <CompareQueueBar />
+                  <OnboardingTourProvider />
                 </ToastProvider>
               </LayoutProvider>
             </ProgressiveProfileProvider>

@@ -14,6 +14,7 @@ import {
   getInitials,
   getProfileDisplayName,
 } from "@/lib/auth/profile";
+import { requestOnboardingRestart } from "@/lib/onboarding/storage";
 
 type MobileNavPanelProps = {
   open: boolean;
@@ -190,7 +191,17 @@ export default function MobileNavPanel({
           </div>
         ) : null}
 
-        <div className="shrink-0 border-t border-neutral-100 px-6 py-4">
+        <div className="shrink-0 space-y-2 border-t border-neutral-100 px-6 py-4">
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              requestOnboardingRestart();
+            }}
+            className="w-full rounded-xl border border-emerald-100 bg-[#F3FAEF] px-4 py-3 text-left text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50"
+          >
+            Restart Tour
+          </button>
           <SocialLinks variant="drawer" />
         </div>
       </aside>

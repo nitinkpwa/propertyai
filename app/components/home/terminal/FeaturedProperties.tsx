@@ -12,7 +12,7 @@ export default function FeaturedProperties() {
   const { loading, properties } = useTerminalData();
 
   return (
-    <section className="bg-white py-14 sm:py-20">
+    <section className="bg-white py-14 sm:py-20" data-tour="featured-properties">
       <div className="mx-auto max-w-7xl space-y-14 px-4 sm:space-y-16 sm:px-6 lg:px-8">
         <FadeIn>
           <TrendingLocations />

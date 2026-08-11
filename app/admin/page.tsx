@@ -30,6 +30,7 @@ import {
   formatDateTime,
   formatPrice,
 } from "@/lib/admin/constants";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatPropertyPrice } from "@/lib/properties/pricingDisplay";
 import {
   approveProperty,
@@ -699,7 +700,9 @@ function AdminPageInner() {
                       {filteredProperties.map((prop) => (
                         <tr key={prop.id} className="border-b border-neutral-100 hover:bg-neutral-50/50">
                           <td className="px-4 py-3">
-                            <p className="truncate font-medium text-heading-primary">{prop.title}</p>
+                            <p className="truncate font-medium text-heading-primary">
+                              {formatPropertyTitle(prop.title) || prop.title}
+                            </p>
                             <p className="truncate text-xs text-muted">{prop.sub_type}</p>
                           </td>
                           <td className="whitespace-nowrap px-4 py-3 capitalize text-body">{prop.type}</td>
@@ -773,7 +776,7 @@ function AdminPageInner() {
                     return (
                       <DataCard
                         key={prop.id}
-                        title={prop.title}
+                        title={formatPropertyTitle(prop.title) || prop.title}
                         subtitle={`${prop.city} · ${prop.type}`}
                         badges={
                           <span className="inline-flex flex-wrap items-center gap-1.5">
@@ -862,7 +865,9 @@ function AdminPageInner() {
               {pendingProperties.map((prop) => (
                 <article key={prop.id} className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
                   <div className="border-b border-neutral-100 px-5 py-4">
-                    <p className="font-semibold text-heading-primary">{prop.title}</p>
+                    <p className="font-semibold text-heading-primary">
+                      {formatPropertyTitle(prop.title) || prop.title}
+                    </p>
                     <p className="mt-1 text-sm text-muted">
                       {prop.city} ·{" "}
                       {formatPropertyPrice({

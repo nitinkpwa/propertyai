@@ -20,6 +20,7 @@ import { PROFILE_FIELD_LABELS } from "@/lib/buyer/profileFields";
 import type { BuyerCrmSummary, LeadStatus } from "@/lib/crm/types";
 import { supabase } from "@/lib/supabase";
 import EmptyState from "../components/EmptyState";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 
 interface InquiryRow {
   id: string;
@@ -251,7 +252,9 @@ export default function BuyerCrmPage() {
             {enquiries.map((inq) => (
               <Card key={inq.id} padding="sm" hover>
                 <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-heading-primary">{inq.property?.title ?? "Inquiry"}</p>
+                  <p className="font-semibold text-heading-primary">
+                    {formatPropertyTitle(inq.property?.title) || "Inquiry"}
+                  </p>
                   <Badge variant={inq.status === "pending" ? "warning" : "success"}>{inq.status}</Badge>
                 </div>
                 <p className="mt-2 text-sm text-body line-clamp-2">{inq.message}</p>

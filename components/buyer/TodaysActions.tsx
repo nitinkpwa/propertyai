@@ -4,6 +4,7 @@ import Link from "next/link";
 import Badge from "@/components/ui/Badge";
 import { formatVisitDate, formatVisitTime } from "@/lib/buyer/queries";
 import type { SiteVisitRow } from "@/lib/buyer/types";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 
 interface TodaysActionsProps {
   upcomingVisits: SiteVisitRow[];
@@ -25,7 +26,7 @@ export default function TodaysActions({
     actions.push({
       icon: "📅",
       title: `Visit ${next.status === "pending_approval" ? "pending approval" : "tomorrow"}`,
-      desc: `${next.property?.title ?? "Property"} · ${formatVisitDate(next.visit_date)} at ${formatVisitTime(next.visit_time)}`,
+      desc: `${formatPropertyTitle(next.property?.title) || "Property"} · ${formatVisitDate(next.visit_date)} at ${formatVisitTime(next.visit_time)}`,
       href: "/buyer/site-visits",
       urgent: true,
     });

@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import EmptyState from "../components/EmptyState";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 
 const STATUS_VARIANT: Record<string, "warning" | "info" | "success" | "error" | "neutral"> = {
   pending_approval: "warning",
@@ -219,7 +220,9 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
             <p className="text-xs font-semibold uppercase tracking-widest text-emerald-100">
               {isUpcoming ? "Upcoming Visit" : "Site Visit"}
             </p>
-            <h2 className="mt-1 text-lg font-bold">{visit.property?.title ?? "Property"}</h2>
+            <h2 className="mt-1 text-lg font-bold">
+              {formatPropertyTitle(visit.property?.title) || "Property"}
+            </h2>
             <p className="mt-1 text-sm text-emerald-50/90">
               {visit.property?.location}
               {visit.property?.city ? `, ${visit.property.city}` : ""}
@@ -265,7 +268,7 @@ function VisitCard({ visit }: { visit: SiteVisitRow }) {
               </a>
               {hasCalendarDate ? (
                 <a
-                  href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Site Visit: ${visit.property?.title ?? "Property"}`)}&dates=${calendarDate}/${calendarDate}&details=${encodeURIComponent(`Visit at ${visit.property?.location ?? ""}`)}`}
+                  href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`Site Visit: ${formatPropertyTitle(visit.property?.title) || "Property"}`)}&dates=${calendarDate}/${calendarDate}&details=${encodeURIComponent(`Visit at ${visit.property?.location ?? ""}`)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex min-h-12 items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-body transition active:scale-[0.98] hover:bg-neutral-50"

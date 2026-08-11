@@ -11,6 +11,7 @@ import {
   type DuringVisitContext,
 } from "@/lib/crm/visitAssistant";
 import { formatVisitStatusLabel } from "@/lib/crm/visitWorkflow";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import Badge from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 
@@ -130,7 +131,7 @@ export default function SiteVisitAssistant({ visit, onContextSaved }: Props) {
         <div>
           <p className="text-sm font-bold text-emerald-900">Site Visit Assistant</p>
           <p className="text-xs text-emerald-700">
-            {visit.property?.title ?? "Property"} · {formatVisitStatusLabel(visit.status)}
+            {formatPropertyTitle(visit.property?.title) || "Property"} · {formatVisitStatusLabel(visit.status)}
           </p>
         </div>
         <Badge variant="info">

@@ -13,6 +13,7 @@ import { ChevronLeft, ChevronRight, Eye, ShieldCheck, Star } from "lucide-react"
 import type { MapPointFeature, TricityMapNode } from "@/lib/home/terminalTypes";
 import { scoreBandColor } from "@/lib/home/areaListingMarkers";
 import { selectBestPropertyCard } from "@/lib/home/bestPropertyCard";
+import { formatPropertyTitle } from "@/lib/properties/formatPropertyTitle";
 import { formatInrAmount } from "@/lib/properties/pricingDisplay";
 
 function listingMeta(listing: MapPointFeature) {
@@ -296,7 +297,7 @@ export default function BestPropertyFloatCard({
                     >
                       <div className="min-w-0">
                         <p className="truncate text-[15px] font-semibold tracking-tight text-neutral-900">
-                          {display.name}
+                          {formatPropertyTitle(display.name) || display.name}
                         </p>
                         <p className="mt-1.5 text-[1.4rem] font-semibold leading-none tracking-tight tabular-nums text-neutral-900">
                           {meta.price}
@@ -405,7 +406,7 @@ export default function BestPropertyFloatCard({
                   Nearby
                 </p>
                 <p className="mt-1 truncate text-[15px] font-semibold text-neutral-900">
-                  {nearest.listing.name}
+                  {formatPropertyTitle(nearest.listing.name) || nearest.listing.name}
                 </p>
                 <p className="mt-1.5 text-[1.25rem] font-semibold tabular-nums text-neutral-900">
                   {nearest.listing.price != null && nearest.listing.price > 0

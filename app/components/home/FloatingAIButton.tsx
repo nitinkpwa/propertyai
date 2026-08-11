@@ -30,6 +30,7 @@ export default function FloatingAIButton() {
   return (
     <div
       ref={panelRef}
+      data-tour="floating-ask-ai"
       className="fixed bottom-6 right-6 z-50 hidden sm:bottom-8 sm:right-8 sm:block"
     >
       {open ? (
